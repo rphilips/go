@@ -1,0 +1,503 @@
+package fs
+
+import (
+	"bytes"
+	"crypto/sha1"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/url"
+	"os"
+	"os/user"
+	"path"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	qpattern "brocade.be/base/pattern"
+	qregistry "brocade.be/base/registry"
+
+	fatomic "github.com/natefinch/atomic"
+)
+
+var (
+	// ErrNoHome error "No HOME found"
+	ErrNoHome = errors.New("No HOME found")
+	// ErrNotPathMode indicates not a valid pathmode
+	ErrNotPathMode = errors.New("Not a filemode")
+)
+
+// AbsPath creates absolute path for a filename
+func AbsPath(pth string) (abspath string, err error) {
+
+	if !strings.HasPrefix(pth, "~") {
+		abspath, err = pth, nil
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			home = "~"
+		}
+		abspath = home + pth[1:]
+	}
+	abspath = os.ExpandEnv(abspath)
+	abspath = filepath.FromSlash(abspath)
+	abspath, err = filepath.Abs(abspath)
+	if err != nil {
+		abspath, _ = filepath.EvalSymlinks(abspath)
+	}
+	return abspath, err
+}
+
+// PathURI creates a file URI from a filename
+func PathURI(pth string) (uri string, err error) {
+	abspath, err := AbsPath(pth)
+	if err != nil {
+		return
+	}
+	uri = "file://"
+	volume := filepath.VolumeName(abspath)
+	if strings.HasSuffix(volume, ":") {
+		volume = strings.ToUpper(volume)
+		abspath = abspath[len(volume):]
+	} else {
+		if volume != "" {
+			abspath = abspath[2:]
+			volume = ""
+		}
+	}
+	abspath = filepath.ToSlash(abspath)
+	parts := strings.SplitN(abspath, "/", -1)
+	iparts := []string{}
+	for _, part := range parts {
+		iparts = append(iparts, url.PathEscape(part))
+	}
+	uri += strings.Join(iparts, "/")
+
+	return
+}
+
+type Property struct {
+	UID  *user.User
+	GID  *user.Group
+	PERM os.FileMode
+}
+
+// Properties returns:
+//    - uid (*user.User)
+//    - gid / access for a pathmode according to the registry
+func Properties(pathmode string) (prop Property, err error) {
+	mode := pathmode
+	switch {
+	case strings.HasSuffix(pathmode, "dir"):
+		mode = pathmode[:len(pathmode)-3]
+	case strings.HasSuffix(pathmode, "file"):
+		mode = pathmode[:len(pathmode)-4]
+	}
+	key := "fs-owner-" + mode
+	suid := ""
+	sgid := ""
+	var perm os.FileMode
+	value, ok := qregistry.Registry[key]
+	if ok && strings.ContainsRune(value, ':') {
+		parts := strings.Split(value, ":")
+		suid = parts[0]
+		sgid = parts[1]
+	} else {
+		err = ErrNotPathMode
+		return
+	}
+	switch pathmode {
+	case "webdir":
+		perm = 0755
+	case "webfile":
+		perm = 0644
+	case "webdavdir":
+		perm = 0755
+	case "webdavfile":
+		perm = 0644
+	case "scriptdir":
+		perm = 0755
+	case "scriptfile":
+		perm = 0755
+	case "processdir":
+		perm = 0770
+	case "daemonfile":
+		perm = 0755
+	case "daemondir":
+		perm = 0755
+	case "processfile":
+		perm = 0770
+	case "tempdir":
+		perm = 0755
+	case "tempfile":
+		perm = 0664
+	case "qtechdir":
+		perm = 0770
+	case "qtechfile":
+		perm = 0660
+	case "nakeddir":
+		perm = 0777
+	case "nakedfile":
+		perm = 0776
+	default:
+		err = ErrNotPathMode
+		return
+	}
+	uid, err := user.Lookup(suid)
+	gid, err := user.LookupGroup(sgid)
+
+	return Property{uid, gid, perm}, err
+}
+
+// SetPathMode assigns the ownership and access modes to a path
+func SetPathmode(pth string, pathmode string) (err error) {
+	if pathmode == "" {
+		return ErrNotPathMode
+	}
+	p, err := Properties(pathmode)
+	if err == nil && runtime.GOOS != "windows" {
+		gi, _ := strconv.Atoi(p.GID.Gid)
+		ui, _ := strconv.Atoi(p.UID.Uid)
+		_ = os.Chown(pth, ui, gi)
+		_ = os.Chmod(pth, p.PERM.Perm())
+	}
+	return err
+}
+
+// Store writes a file contents atomically
+func Store(fname string, data interface{}, pathmode string) (err error) {
+
+	var r io.Reader
+	switch v := data.(type) {
+	case []byte:
+		r = bytes.NewReader(v)
+	case string:
+		r = strings.NewReader(v)
+	case *string:
+		r = strings.NewReader(*v)
+	case bytes.Buffer:
+		r = &v
+	case *bytes.Buffer:
+		r = v
+	case io.Reader:
+		r = v
+	default:
+		b, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		r = bytes.NewReader(b)
+	}
+	err = fatomic.WriteFile(fname, r)
+	if err != nil {
+		return
+	}
+	if pathmode == "" {
+		return nil
+	}
+	if !strings.HasSuffix(pathmode, "file") {
+		pathmode = pathmode + "file"
+	}
+	return SetPathmode(fname, pathmode)
+}
+
+// Fetch returns the contents of a file as a slice of bytes
+
+var Fetch = ioutil.ReadFile
+
+// Mkdir makes a directory and sets the access
+func Mkdir(dirname string, pathmode string) (err error) {
+	if !strings.HasSuffix(pathmode, "dir") {
+		pathmode = pathmode + "dir"
+	}
+	perm, err := Properties(pathmode)
+	if err != nil {
+		return
+	}
+	prm := perm.PERM
+	err = os.Mkdir(dirname, prm)
+	if err == nil {
+		return SetPathmode(dirname, pathmode)
+	}
+	if os.IsExist(err) {
+		return nil
+	}
+	parent := path.Dir(dirname)
+	if parent == "" || dirname == parent {
+		return err
+	}
+	Mkdir(parent, pathmode)
+	os.Mkdir(dirname, prm)
+	return SetPathmode(dirname, pathmode)
+}
+
+// Rmpath removes a file or a dirctory tree except root
+func Rmpath(dirname string) (err error) {
+	dirname, err = AbsPath(dirname)
+	if err == nil {
+		parent := path.Dir(dirname)
+		if parent == dirname {
+			err = errors.New("Cannot delete a root")
+		} else {
+			err = os.RemoveAll(dirname)
+		}
+	}
+	return err
+}
+
+// EmptyDir Empties a directory
+func EmptyDir(dir string) (err error) {
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return
+}
+
+// Exists checks if a file exists
+func Exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	return !os.IsNotExist(err)
+}
+
+// IsDir checks if a path is an existing directory
+func IsDir(path string) bool {
+	fi, err := os.Stat(path)
+	if err == nil {
+		return fi.Mode().IsDir()
+	}
+	return false
+}
+
+// IsFile checks if a path is an existing regular file
+func IsFile(path string) bool {
+	fi, err := os.Stat(path)
+	if err == nil {
+		return fi.Mode().IsRegular()
+	}
+	return false
+}
+
+// GetSize return the size of a file
+func GetSize(path string) (size int64, err error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	size = fi.Size()
+	return
+}
+
+// GetMTime returns the last modification time of a path
+func GetMTime(path string) (mtime time.Time, err error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	mtime = fi.ModTime()
+	return
+}
+
+// SetMTimes sets the last modification time
+func SetMTime(path string, mtime time.Time) (err error) {
+	ztime := time.Time{}
+	if mtime == ztime {
+		mtime = time.Now()
+	}
+	err = os.Chtimes(path, mtime, mtime)
+	return
+}
+
+// GetSHA1 return SHA-1 (hex) of file contents (or "" if error)
+func GetSHA1(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	//Open a new SHA1 hash interface to write to
+	h := sha1.New()
+
+	if _, err := io.Copy(h, file); err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// IsDirEmpty checks if a directory is empty
+func IsDirEmpty(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err
+}
+
+// TempDir creates a temporary subdirectory  in dir or scratch-dir
+func TempDir(dir string, prefix string) (name string, err error) {
+	if dir == "" {
+		dir = qregistry.Registry["scratch-dir"]
+	}
+	name, err = ioutil.TempDir(dir, prefix)
+	if err != nil {
+		err = SetPathmode(name, "tempdir")
+	}
+	return
+}
+
+// TempFile creates a temporary file  in dir or scratch-dir
+func TempFile(dir, prefix string) (name string, err error) {
+	if dir == "" {
+		dir = qregistry.Registry["scratch-dir"]
+	}
+	f, err := ioutil.TempFile(dir, prefix)
+
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	name = f.Name()
+	if err != nil {
+		err = SetPathmode(name, "tempfile")
+	}
+	return
+}
+
+// CopyFile copies a file to another file or to a directory
+func CopyFile(src, dst, pathmode string) (err error) {
+	if IsDir(dst) {
+		base := filepath.Base(src)
+		dst = filepath.Join(dst, base)
+	}
+
+	in, err := os.Open(src)
+	if err != nil {
+		return
+	}
+	defer in.Close()
+
+	err = Store(dst, in, pathmode)
+	return
+}
+
+// Find lists files matching a pattern on the basename
+func Find(root string, pattern string, recurse bool) (paths []string, err error) {
+	if recurse {
+		err = filepath.Walk(root, func(p string, info os.FileInfo, e error) error {
+			if e != nil {
+				return e
+			}
+			if ok, _ := path.Match(pattern, info.Name()); ok && info.Mode().IsRegular() {
+				paths = append(paths, p)
+			}
+			return nil
+		})
+	} else {
+		files, erro := ioutil.ReadDir(root)
+		if erro != nil {
+			err = erro
+			return
+		}
+		for _, file := range files {
+			name := file.Name()
+			if ok, _ := path.Match(pattern, name); ok && file.Mode().IsRegular() {
+				p := filepath.Join(root, name)
+				paths = append(paths, p)
+			}
+		}
+	}
+	return
+}
+
+// AsyncWork works on all keys in a slice in parallel and returns a result (map indexed on key)
+func AsyncWork(keys []string, fn func(key string) interface{}) (results map[string]interface{}) {
+	if len(keys) == 0 {
+		return
+	}
+	results = make(map[string]interface{})
+
+	if len(keys) == 1 {
+		p := keys[0]
+		results[p] = fn(p)
+		return
+	}
+
+	type res struct {
+		key    string
+		result interface{}
+	}
+	out := make(chan res)
+	var wg sync.WaitGroup
+
+	maxopen := len(keys)
+	borrow, release, finish := qpattern.Number(maxopen)
+
+	for _, key := range keys {
+		wg.Add(1)
+		go func(p string) {
+			defer wg.Done()
+			borrow()
+			defer release()
+			r := fn(p)
+			out <- res{
+				key:    p,
+				result: r,
+			}
+		}(key)
+	}
+	go func() {
+		defer finish()
+		wg.Wait()
+		close(out)
+	}()
+	for re := range out {
+		results[re.key] = re.result
+	}
+	return
+
+}
+
+// FilesDirs gets the regular files and dirs in directory
+func FilesDirs(dir string) (files []os.FileInfo, dirs []os.FileInfo, err error) {
+	fis, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	files = make([]os.FileInfo, 0)
+	dirs = make([]os.FileInfo, 0)
+	for _, fi := range fis {
+		if fi.Mode().IsDir() {
+			dirs = append(dirs, fi)
+			continue
+		}
+		if fi.Mode().IsRegular() {
+			files = append(files, fi)
+		}
+	}
+	return
+}

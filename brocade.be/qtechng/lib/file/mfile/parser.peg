@@ -1,0 +1,62 @@
+{
+package mfile
+
+import qutil "brocade.be/qtechng/util"
+}
+
+
+Command <- 
+    / CmdBreak
+    / CmdCLOSE
+    / CmdDO
+    / CmdELSE
+    / CmdFOR
+    / CmdGOTO
+    / CmdHALT
+    / CmdHANG
+    / CmdIF
+    / CmdJOB
+    / CmdKILL
+    / CmdLOCK
+    / CmdMERGE
+    / CmdNEW
+    / CmdOPEN
+    / CmdQUIT
+    / CmdREAD
+    / CmdSET
+    / CmdTCOMMIT
+    / CmdTRESTART
+    / CmdTROLLBACK
+    / CmdTSTART
+    / CmdUSE
+    / CmdVIEW
+    / CmdWRITE
+    / CmdXECUTE
+    / CmdZ
+
+
+CmdBreak <- ("break"i EOF / "b"i EOF) {
+    
+}
+
+
+
+Commandword (" " ListArguments)
+	p := qutil.Comment(preamble)
+    ms := macros.([]interface{})
+    if len(ms) == 0 {
+        return DFile{
+		    Preamble: p,
+		    Macros: nil,
+	    }, nil
+    }
+	macs := make([]*Macro, len(ms))
+	for i, m := range ms {
+		macs[i] = m.(*Macro)
+	}
+
+    return DFile{
+		Preamble: p,
+		Macros: macs,
+	}, nil
+}

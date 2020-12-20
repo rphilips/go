@@ -1,0 +1,492 @@
+{
+package dfile
+
+import (
+
+    qutil "brocade.be/qtechng/util"
+    qerror "brocade.be/qtechng/error"
+    qregistry "brocade.be/base/registry"
+)
+
+
+
+}
+
+
+File <- preamble:(Preamble?) macros:(Macro*) EOF {
+	p := qutil.Comment(preamble)
+    ms := macros.([]interface{})
+    if len(ms) == 0 {
+        return DFile{
+		    Preamble: p,
+		    Macros: nil,
+	    }, nil
+    }
+	macs := make([]*Macro, len(ms))
+	for i, m := range ms {
+		macs[i] = m.(*Macro)
+	}
+
+    return DFile{
+		Preamble: p,
+		Macros: macs,
+	}, nil
+}
+
+Preamble <- Comment  {
+    value := string(c.text)
+    value = strings.TrimSpace(value)
+    if strings.HasPrefix(value, "'''") || strings.HasPrefix(value, "\"\"\""){
+        value = value[3:]
+    }
+    if strings.HasSuffix(value, "'''") || strings.HasSuffix(value, "\"\"\""){
+        value = value[:len(value)-3]
+    }
+    if strings.HasSuffix(value, "'''") {
+        value = value[:len(value)-3]
+    }
+    value = strings.TrimSpace(value)
+
+    return value, nil
+}
+
+Tripel1 <- WS* "'''" .* "'''" & {
+                preamble := string(c.text)
+                return strings.Count(preamble, "'''") == 2, nil
+                }
+
+Tripel2 <-  WS* "\"\"\"" .* "\"\"\"" & {
+                preamble := string(c.text)
+                return strings.Count(preamble, "\"\"\"") == 2, nil
+                }
+
+Macro <- macro:(MacroHeader1 / MacroHeader2 / MacroHeader3) DELIM1 synopsis:Synopsis vars:Vars examples:Examples DELIM1 WS* actions:Actions WS* &("macro" / EOF) {
+	m := macro.(*Macro)
+	m.Synopsis = synopsis.(string)
+
+    vrs := vars.([][2]string)
+    found := make(map[string]bool)
+    for _, v := range vrs {
+        name := v[0]
+        doc := v[1]
+        if found[name] {
+            return m, errors.New("`" + name + "` double explained!")
+        }
+        found[name] = true
+        ok := false
+        for nr, param := range m.Params {
+            ok = param.ID == name
+            if ok {
+                m.Params[nr].Doc = doc
+                break
+            }
+        }
+        if !ok {
+            return m, errors.New("`" + name + "` not in macro signature")
+        }
+    }
+    m.Examples = examples.([]string)
+
+    acts := actions.([]Action)
+    params := m.Params
+    acties := make([]Action, 0)
+    for _, a := range acts {
+        a.Binary = binary(a.Binary[0], params)
+        acties = append(acties, a)
+    }
+    m.Actions = acties
+
+    // Names params
+    named := false
+    for i, p := range m.Params {
+        if p.Named {
+            named = true
+            continue
+        }
+        if named {
+            m.Params[i].Named = true
+        }
+    }
+
+	return m, nil
+}
+
+MacroHeader1 <- "macro" WS+ id:(MacroID) WS* ":"  {
+	macro := Macro{
+		ID: id.([2]string)[0],
+		Line: id.([2]string)[1],
+	}
+	return &macro, nil
+}
+
+MacroHeader2 <- "macro" WS+ id:(MacroID) WS* "(" WS* ")" WS* ":" {
+	macro := Macro{
+		ID: id.([2]string)[0],
+		Line: id.([2]string)[1],
+	}
+	return &macro, nil
+}
+
+MacroHeader3 <- "macro" WS+ id:(MacroID) WS* "(" params:Params ")" WS* ":" {
+	macro := Macro{
+		ID: id.([2]string)[0],
+		Line: id.([2]string)[1],
+	}
+	macro.Params = params.([]Param)
+	return &macro, nil
+}
+
+Params <- WS* params:(Param+) WS* &")" {
+	p := make([]Param, 0)
+	for _, prm := range params.([]interface{}) {
+		p = append(p, prm.(Param))
+	}
+	return p, nil
+}
+
+
+
+
+
+
+
+
+Param <- WS* param:(ParamDefault / ParamSimple) WS* ("," / &")") {
+	return param.(Param), nil
+}
+
+
+
+
+
+ParamSimple <- "*"? "$" ( [0-9]+ / [a-z][a-z0-9]* ) {
+	name := string(c.text)
+	named := false
+	if strings.HasPrefix(name,"*") {
+		name = name[1:]
+		named = true
+	}
+    param := Param{
+		ID: name,
+		Named: named,
+	}
+	return param, nil
+}
+
+
+
+ParamDefault <- param:ParamSimple WS* "=" WS* def:Default {
+	p := param.(Param)
+	p.Default = def.(string)
+	return p, nil
+}
+
+// Arguments <- WS * args:(Argument+) WS* &")" {
+//     argums := make([]Argument, 0)
+// 	for _, arg := range args.([]interface{}) {
+// 		argums = append(argums, arg.(Argument))
+// 	}
+// 	return argums, nil
+// }
+
+
+// Argument <- WS* arg:(ArgNamed / ArgSimple) WS* ("," / &")") {
+// 	return arg.(Argument), nil
+// }
+
+// ArgNamed <- prefix:ArgPrefix def:Default {
+//     arg := Argument{
+// 		Prefix: prefix.(string),
+// 	    Value: def.(string),
+// 	}
+// 	return arg, nil
+// }
+
+// ArgPrefix <- "$"? ([0-9]+ / [a-z][a-z0-9]*) WS* "=" WS* {
+//     return  string(c.text), nil
+// }
+
+
+// ArgSimple <-  def.Default {
+//     arg := Argument{
+// 		Prefix: "",
+// 	    Value: def.(string),
+// 	}
+// 	return arg, nil
+// }
+
+
+
+
+
+
+Default <- def:( Default1 / Default2 / Default3 )
+
+Default1 <- "⟦" [^⟦⟧]* "⟧" {
+	return strings.Trim(string(c.text), "⟦⟧"), nil
+}
+
+Default2 <-  "«" [^«»]* "»" {
+	return strings.Trim(string(c.text), "«»"), nil
+}
+
+Default3 <- D0 / D1 / D2 / D3 
+
+D0 <- WS* &[,)] {
+	return "", nil
+}
+
+D1 <- [^,()"]+ (&[,)]  / Default3) {
+	return strings.TrimSpace(string(c.text)), nil
+}
+
+D2 <- String (&[,)]  / Default3) {
+	return strings.TrimSpace(string(c.text)), nil
+}
+
+D3 <- "(" Expr ")" (&[,)]  / Default3) {
+	return strings.TrimSpace(string(c.text)), nil
+}
+
+String <-  '"' [^"]* '"' {
+	return string(c.text), nil
+}
+
+Expr <- E0 / E1 / E2 {
+	return string(c.text), nil
+}
+
+E0 <- [^()"]* &")" 
+
+E1 <- [^()"]* String (&")" / Expr) 
+
+E2 <- [^()"]* "(" Expr ")" (&")" / Expr) 
+
+
+
+
+MacroID <- id:([a-zA-Z][a-zA-Z0-9]*) {
+	return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
+	}
+
+
+
+Synopsis <- WS* "$synopsis" WS* ":" Info {
+	return qutil.Info(string(c.text), "$synopsis"), nil
+}
+
+
+
+Vars <- vars:(Var*) WS*  {
+	varcmt := make([][2]string, 0)
+	for _, v := range vars.([]interface{}) {
+        x := v.([2]string)
+        varcmt = append(varcmt, x)
+	}
+	return varcmt, nil
+}
+
+Examples <- WS* examples:(Example+) WS*  {
+	excmt := make([]string, 0)
+	for _, v := range examples.([]interface{}) {
+        x := v.(string)
+        parts := strings.SplitN(x, "\n", -1)
+        for _, p := range parts {
+            y := strings.TrimSpace(p)
+            if y != "" {
+                excmt = append(excmt, y)
+            }
+        }
+	}
+	return excmt, nil
+}
+
+
+
+Var <- WS* "$" !("example" WS* ":") name:Name WS* ":" Info {
+    return [2]string{"$"+name.(string), qutil.Info(string(c.text), name.(string))}, nil
+}
+
+Example <- WS* "$example" WS* ":" WS* Info {
+    return qutil.Info(string(c.text),"$example"), nil
+}
+
+
+Name <- [0-9a-z]+ {
+    return string(c.text), nil
+}
+
+Info <- Line+ {
+	return string(c.text), nil
+	}
+
+
+Line <- ("" !((WS* '$' [0-9a-z]+) / EOF / (WS* DELIM1))) [^\n\r]* EOL 
+
+
+Actions <- WS* actions:(Action+) {
+    acts := make([]Action, 0)
+    for _, act := range actions.([]interface{}) {
+        a := act.(Action)
+        if len(a.Binary) == 0 {
+            continue
+        }
+        acts = append(acts, a)
+    }
+    return acts, nil
+}
+
+
+Action <- Action3 / Action2 / Action1
+
+
+Action1 <- !("macro" / EOF) [^\n\r]+ EOL WS* &("macro" / EOF) {
+    bin := strings.TrimSpace(string(c.text))
+    action := Action{
+        Binary: []string{},
+        Unless: false,
+        Guard: []string{},
+    }
+    if bin != "" {
+        action = Action{
+            Binary: []string{strings.TrimSpace(string(c.text))},
+            Guard: []string{},
+        }
+    }
+    return action, nil
+}
+
+Action2 <- Bracket  WS* &("macro" / EOF) {
+    x := qutil.Fix(string(c.text))
+    action := Action{
+        Binary: []string{x},
+        Guard: []string{},
+    }
+    return action, nil
+}
+
+Action3 <- exe:Bracket  WS+ how:("if" / "unless") WS+ guard:GClause WS* {
+    action := Action{
+        Binary: []string{exe.(string)},
+        Unless: string(how.([]byte)) == "unless",
+        Guard: guard.([]string),
+    }
+    return action, nil
+}
+
+Bracket <- (("«" [^«»]* "»") / ("⟦" [^⟦⟧]* "⟧")) {
+    return qutil.Fix(string(c.text)), nil
+}
+
+// Guard definition
+
+
+GClause <- GClause1 / GClause2
+
+GClause1 <- "«" WS* guard:Guard WS* "»" {
+    return guard.([]string), nil
+    }
+
+GClause2 <- "⟦" WS* guard:Guard WS* "⟧" {
+    return guard.([]string), nil
+    }
+
+
+
+Guard <- WS* expr:GExpr {
+    return expr.([]string), nil
+}
+
+GExpr <- t1:GTerm WS+ "or" WS+ t2:GTerm {
+    return append(t1.([]string), append(t2.([]string), "or") ...), nil
+    }
+    
+    / t3:GTerm {
+        return t3.([]string), nil
+    }
+
+
+GTerm <- f1:GFactor WS+ "and" WS+ f2:GFactor {
+    return append(f1.([]string), append(f2.([]string), "and") ...), nil
+    }
+    / f3:GFactor {
+        return f3.([]string), nil
+    }
+
+
+
+GFactor <- WS* "(" WS* f1:GExpr WS* ")" {
+    return f1.([]string), nil
+    }
+    / WS* "not" WS+ f2:GFactor  {
+        return append(f2.([]string), "not"), nil
+    }
+    / f3:GConstant {
+        return f3.([]string), nil
+    }
+
+GConstant <- WS* three:(GTrue / GFalse / GTripel) {
+    return three.([]string), nil
+}
+
+GTrue <- "true" {
+    return []string{
+        "true",
+    }, nil
+}
+
+GFalse <- "false" {
+    return []string{
+        "false",
+    }, nil
+}
+
+
+GTripel <- first:GOperand1 WS+ op:GOperator WS+ second:GOperand2 {
+    return []string{
+        first.(string),
+        second.(string),
+        op.(string),
+    }, nil
+}
+
+
+GOperand1 <- ("$" [a-z0-9]+ / "%project" / "%qrelpath" / "%qpath" / "%qdir" / "%ext" / "%basename" / "%version" / "%mostype" / "%mclib" / "%systemname" / "%os" / "%systemgroup") {
+    return string(c.text), nil
+}
+
+GOperator <- "not-"? ("sortsAfter" / "sortsBefore" / "contains" / "isEqualTo" / "fileMatches" / "regexpMatches" / "isInstanceOf" / "isIn" / "isEqualTrueAs" / "isPrefixOf" / "isSuffixOf" / "startsWith" / "endsWith") {
+    return string(c.text), nil
+}
+
+GOperand2 <- ("\"" [^"]* "\"")+ {
+    x := string(c.text)
+    x = x[1:len(x)-1]
+    x = strings.ReplaceAll(x, "\"\"","\"")
+    return x, nil
+}
+
+
+
+
+
+
+
+CommentLine <- ("//" [^\n\r]*)
+
+Comment <- comment:(CommentLine / WS+)+ {
+	return string(c.text), nil
+}
+
+
+DELIM1 <- WS* "'''"
+
+DELIM2 <- WS* `"""`
+
+WS <- [ \n\t\r]
+
+EOL <- ("\r\n" / "\n\r" / "\r" / "\n")
+
+EOF <- !.
+
+

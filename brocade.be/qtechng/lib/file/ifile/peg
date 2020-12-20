@@ -1,0 +1,2 @@
+#!/bin/sh
+pigeon -alternate-entrypoints Include iparser.peg > iparser.go

@@ -1,0 +1,194 @@
+{
+    "$id": "https://dev.anet.be/brocade/schema/qtechng.schema.json",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "title": "Project configuratie",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "passive": {
+            "type": "boolean",
+            "default": false,
+            "description": "De waarde `true` zorgt ervoor dat het project *niet* wordt geïnstalleerd. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "mumps": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "enum": [
+                    "gtm",
+                    "cache",
+                    ""
+                ],
+                "description": "Identifier voor de M versie op het target systeem."
+            },
+            "default": [
+                "gtm",
+                "cache",
+                ""
+            ],
+            "description": "Dit project wordt enkel geïnstalleerd als de registry waarde `m-os-type` in `mumps` voorkomt. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "groups": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "description": "Een wildcard voorstelling voor de registry waarde `system-group`."
+            },
+            "default": [
+                "*"
+            ],
+            "description": "Dit project wordt enkel geïnstalleerd als 1 van de array elementen overeenkomt met de registry waarde `system-group`. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "names": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "description": "Een wildcard voorstelling voor de registry waarde `system-name`."
+            },
+            "default": [
+                "*"
+            ],
+            "description": "Dit project wordt enkel geïnstalleerd als 1 van de array elementen overeenkomt met de registry waarde `system-name`. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "roles": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "description": "Verplichte rol op `system-roles`."
+            },
+            "default": [
+                "*"
+            ],
+            "description": "Dit project wordt enkel geïnstalleerd als *alle* rollen uit de registry waarde `system-roles` overeenkomen met minstens 1 element van de array. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "versionlower": {
+            "type": "string",
+            "default": "~",
+            "description": "Dit project wordt enkel geïnstalleerd als de registry waarde `brocade-release` lexicografisch kleiner is dan deze waarde. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "versionupper": {
+            "type": "string",
+            "default": "",
+            "description": "Dit project wordt enkel geïnstalleerd als de registry waarde `brocade-release` lexicografisch groter is dan deze waarde. Bij niet-installatie, worden ook de kind-projecten *niet* geïnstalleerd."
+        },
+        "py3": {
+            "type": "boolean",
+            "default": false,
+            "description": "Indien `true`, dan worden install.py/check.py/local.py/release.py met `python3` uitgevoerd, zoniet met python2. Deze waarde wordt *NIET* overgenomen in kind-projecten."
+        },
+        "core": {
+            "type": "boolean",
+            "default": false,
+            "description": "Indien `true`, dan wordt dit project geïnstalleerd samen met andere core projecten. Deze waarde specificeren binnen kind-projecten heeft geen effect. Indien `true`, dan zijn alle kind-projecten, core projecten."
+        },
+        "priority": {
+            "type": "integer",
+            "default": 10000,
+            "description": "Geeft binnen de 2 groepen, core en niet-core, wat de volgorde is van installatie: hoge prioriteit wordt eerder geïnstalleerd. Kind-projecten worden altijd geïnstalleerd binnen hun ouder (in volgorde van prioriteit)"
+        },
+        "notbrocade": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+            },
+            "default": [],
+            "description": "De bestanden uit het project waarbij de relatieve `qtechpath` overeenkomt met 1 van de elementen van de array, worden niet als een `*.[bdilmx]` file beschouwd. Deze waarde wordt *NIET* overgenomen in de kind-projecten."
+        },
+        "notconfig": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+            },
+            "default": [],
+            "description": "De bestanden uit het project waarbij de relatieve `qtechpath` overeenkomt met 1 van de elementen van de array, worden niet als een Brocade configuratie file (brocade.json) beschouwd. Deze waarde wordt *NIET* overgenomen in de kind-projecten."
+        },
+        "binary": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+            },
+            "default": [],
+            "description": "De bestanden uit het project waarbij de relatieve `qtechpath` overeenkomt met 1 van de elementen van de array, worden als `binary` bestand beschouwd. Er gebeurt geen r4/i4/m4/l4 substitutie. Deze waarde wordt *NIET* overgenomen in kind-projecten."
+        },
+        "objectsnotreplaced": {
+            "type": "object",
+            "default": {},
+            "description": "De objecten, gedefinieerd als sleutel (met prefixen i4, l4, m4, r4), worden *NIET* vervangen in de bestanden die. Deze waarde wordt *NIET* overgenomen in kind-projecten.",
+            "additionalProperties": false,
+            "patternProperties": {
+                "^m4_[a-zA-Z][a-zA-Z0-9]*$": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+                    },
+                    "default": []
+                },
+                "^i4_[a-zA-Z][a-zA-Z0-9]*$": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+                    },
+                    "default": []
+                },
+                "^r4_[a-z])_?([a-z0-9]_)*([a-z0-9])$": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+                    },
+                    "default": []
+                },
+                "^l4_[NEDFU]_[a-zA-Z][a-zA-Z0-9]*$": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+                    },
+                    "default": []
+                }
+            }
+        }
+    },
+    "objectsnotchecked": {
+        "type": "array",
+        "default": [],
+        "description": "De elementen zien er uit als objecten maar hoeven niet gedefinieerd te zijn. Deze waarde wordt *NIET* overgenomen in kind-projecten.",
+        "uniqueItems": true,
+        "items": {
+            "type": "string",
+            "description": "Bevat een object naam met prefix"
+        }
+    },
+    "emptydirs": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+            "type": "string",
+            "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+        },
+        "default": [],
+        "description": "De bestanden uit het project waarbij de relatieve `qtechpath` overeenkomen met 1 van de elementen van de array, wordt als directories beschouwd. Deze worden op werkstations aangemaakt, ook als ze geen bestanden bevatten. Deze waarde wordt *NIET* overgenomen in kind-projecten."
+    },
+    "notunique": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+            "type": "string",
+            "description": "Een wildcard voorstelling op de relatieve `qtechpath` naam van bestanden (dit is relatief ten opzichte van het project)."
+        },
+        "default": [],
+        "description": "De bestanden uit het project waarbij de relatieve `qtechpath` overeenkomen met 1 van de elementen van de array, hoeven geen unieke basename te hebben. Deze waarde wordt *NIET* overgenomen in kind-projecten."
+    }
+}

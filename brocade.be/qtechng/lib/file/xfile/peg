@@ -1,0 +1,3 @@
+#!/bin/sh
+#pigeon -alternate-entrypoints Macro -alternate-entrypoints Params  -alternate-entrypoints Guard -alternate-entrypoints Arguments parser.peg > parser.go
+pigeon -alternate-entrypoints Widget xparser.peg > xparser.go
