@@ -1,9 +1,11 @@
 package project
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode"
@@ -85,6 +87,33 @@ func (Project) New(r string, p string, readonly bool) (project *Project, err err
 		Msg:     []string{"Cannot create a project"},
 	}
 	return
+}
+
+// Orden calculates a string for a project to indicates its ordening under all projects
+func (project Project) Orden() (sort string) {
+	r := project.Release().String()
+	p := project.String() + "/brocade.json"
+	seq, _ := Sequence(r, p, true)
+	sort = "1"
+	if project.IsCore() {
+		sort = "0"
+	}
+	for _, p := range seq {
+		cfg, e := p.LoadConfig()
+		prio := 10000
+		if e == nil && cfg.Priority != 0 {
+			prio = cfg.Priority
+			if prio > 99999 {
+				prio = 99999
+			}
+			if prio < 1 {
+				prio = 1
+			}
+		}
+		prio = 1000000 - prio
+		sort += strconv.Itoa(prio)
+	}
+	return sort
 }
 
 // String of a release: release fulfills the Stringer interface
@@ -248,54 +277,64 @@ func (project Project) Unlink() (err error) {
 }
 
 // IsInstallable vist uit of een project installeerbaar is.
-func (project Project) IsInstallable() bool {
+func (project Project) IsInstallable() error {
 
 	v := project.Release().String()
+	p := project.String()
+
+	err := &qerror.QError{
+		Ref:     []string{"project.installable"},
+		Version: v,
+		Project: p,
+	}
+
 	r := qserver.Canon("")
 	if r != v {
-		return false
+		err.Msg = []string{fmt.Sprintf("`%s` is not the current version", v)}
+		return err
 	}
 
-	sequence, err := Sequence(v, project.String(), true)
+	sequence, e := Sequence(v, project.String(), true)
 
-	if err != nil {
-		return false
+	if e != nil || len(sequence) == 0 || project.String() != sequence[len(sequence)-1].String() {
+		err.Msg = []string{fmt.Sprintf("Structure of `%s` is invalid", p)}
+		return err
 	}
-	if len(sequence) == 0 {
-		return false
-	}
-	if project.String() != sequence[len(sequence)-1].String() {
-		return false
-	}
+
 	for _, proj := range sequence {
 		project := proj
-		config, err := project.LoadConfig()
-		if err != nil {
-			return false
+		config, e := project.LoadConfig()
+		if e != nil {
+			err.Msg = []string{fmt.Sprintf("Project `%s` has invalid `brocade.json`: %s", proj.String(), e.Error())}
+			return err
 		}
 		// Passive
 		if config.Passive {
-			return false
+			err.Msg = []string{fmt.Sprintf("Project `%s` is not active", proj.String())}
+			return err
 		}
 		// Mumps
 		if len(config.Mumps) > 0 && find(config.Mumps, "", true) == -1 {
 			m := qregistry.Registry["m-os-type"]
 			if find(config.Mumps, m, false) == -1 {
-				return false
+				err.Msg = []string{fmt.Sprintf("Project `%s` does not work with `%s`", proj.String(), m)}
+				return err
 			}
 		}
 		// Groups
 		if len(config.Groups) > 0 {
 			g := qregistry.Registry["system-group"]
 			if find(config.Groups, g, true) == -1 {
-				return false
+				err.Msg = []string{fmt.Sprintf("Project `%s` does not install on `%s`", proj.String(), g)}
+				return err
 			}
 		}
 		// Name
 		if len(config.Names) > 0 {
 			g := qregistry.Registry["system-name"]
 			if find(config.Names, g, true) == -1 {
-				return false
+				err.Msg = []string{fmt.Sprintf("Project `%s` does not install on `%s`", proj.String(), g)}
+				return err
 			}
 		}
 		// Roles
@@ -306,7 +345,8 @@ func (project Project) IsInstallable() bool {
 			})
 			for _, role := range config.Roles {
 				if find(rs, role, false) == -1 {
-					return false
+					err.Msg = []string{fmt.Sprintf("Project `%s` does not install with role `%s`", proj.String(), role)}
+					return err
 				}
 			}
 		}
@@ -314,18 +354,20 @@ func (project Project) IsInstallable() bool {
 		if config.VersionLower != "" {
 			r := qregistry.Registry["brocade-release"]
 			if strings.Compare(config.VersionLower, r) != -1 {
-				return false
+				err.Msg = []string{fmt.Sprintf("Version should be higher or equal than `%s` for project `%s`", config.VersionLower, proj.String())}
+				return err
 			}
 		}
 		// VersionUpper
 		if config.VersionUpper != "" {
 			r := qregistry.Registry["brocade-release"]
 			if strings.Compare(r, config.VersionUpper) != -1 {
-				return false
+				err.Msg = []string{fmt.Sprintf("Version should be lower or equal than `%s` for project `%s`", config.VersionUpper, proj.String())}
+				return err
 			}
 		}
 	}
-	return true
+	return nil
 }
 
 // IsCore vist uit of een project een kern project is.
@@ -573,6 +615,26 @@ func GetProject(v string, s string, ronly bool) (project *Project) {
 	version, _ := qserver.Release{}.New(v, ronly)
 	fs := version.FS()
 	s = qutil.Canon(s)
+	r := version.String()
+	pid := r + " " + s
+	if ronly {
+		pid = r + " " + s + " R"
+	}
+	proj, _ := projectCache.Load(pid)
+	if proj != nil {
+		return proj.(*Project)
+	}
+
+	p1, _ := qutil.QPartition(s)
+	pid = r + " " + p1
+	if ronly {
+		pid = r + " " + p1 + " R"
+	}
+	proj, _ = projectCache.Load(pid)
+	if proj != nil {
+		return proj.(*Project)
+	}
+
 	parts := strings.SplitN(s, "/", -1)
 	if len(parts) == 0 {
 		return nil
@@ -673,4 +735,18 @@ func find(slice []string, val string, wildcard bool) int {
 		}
 	}
 	return -1
+}
+
+// Sort Sorteer projecten in volgorde van installeerbaarheid
+func Sort(projects []Project) []Project {
+
+	ordens := make([]string, len(projects))
+	for i, p := range projects {
+		ordens[i] = p.Orden()
+	}
+	less := func(i, j int) bool {
+		return ordens[i] < ordens[j]
+	}
+	sort.SliceStable(projects, less)
+	return projects
 }

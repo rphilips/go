@@ -18,6 +18,8 @@ type Meta struct {
 	Mu     string `json:"mu"`
 	Ct     string `json:"ct"`
 	Mt     string `json:"mt"`
+	It     string `json:"it"`
+	Ft     string `json:"ft"`
 	Digest string `json:"-"`
 }
 

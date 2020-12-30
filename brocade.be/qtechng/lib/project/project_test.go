@@ -94,7 +94,7 @@ func TestCore02(t *testing.T) {
 		if proj == "/a/b/c/d" {
 			continue
 		}
-		config := `{"core": true}`
+		config := `{"core": true,"priority":3333}`
 		project.Store("brocade.json", []byte(config))
 		cfg := Config{}
 		json.Unmarshal([]byte(config), &cfg)
@@ -105,6 +105,11 @@ func TestCore02(t *testing.T) {
 	project, _ := Project{}.New(r, "/a/b", true)
 	if !project.IsCore() {
 		t.Errorf(fmt.Sprintf("Project should be core: %s", project.String()))
+		return
+	}
+	sort := project.Orden()
+	if sort != "1996667" {
+		t.Errorf(fmt.Sprintf("sort: %s", sort))
 		return
 	}
 

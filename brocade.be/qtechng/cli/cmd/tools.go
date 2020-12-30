@@ -17,6 +17,7 @@ import (
 	qssh "brocade.be/base/ssh"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qinstall "brocade.be/qtechng/lib/install"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qsource "brocade.be/qtechng/lib/source"
 	qutil "brocade.be/qtechng/lib/util"
@@ -186,6 +187,29 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 			} else {
 				pcargo.Error = err
 			}
+		}
+	}
+}
+
+func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
+	query := ppayload.Query.Copy()
+	psources := query.Run()
+	if batchid == "" {
+		batchid = "install"
+	}
+	errs := qinstall.Install(batchid, psources, true)
+	switch err := errs.(type) {
+	case qerror.ErrorSlice:
+		if len(err) == 0 {
+			pcargo.Error = nil
+		} else {
+			pcargo.Error = err
+		}
+	default:
+		if err == nil {
+			pcargo.Error = nil
+		} else {
+			pcargo.Error = err
 		}
 	}
 }

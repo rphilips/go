@@ -25,6 +25,7 @@ replace (
 	brocade.be/qtechng/lib/file/xfile => ./lib/file/xfile
 	brocade.be/qtechng/lib/meta => ./lib/meta
 	brocade.be/qtechng/lib/object => ./lib/object
+	brocade.be/qtechng/lib/install => ./lib/install
 	brocade.be/qtechng/lib/project => ./lib/project
 	brocade.be/qtechng/lib/server => ./lib/server
 	brocade.be/qtechng/lib/source => ./lib/source
