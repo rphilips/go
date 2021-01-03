@@ -67,9 +67,11 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 		return nil
 	}
 
-	projs := make([]qproject.Project, len(mproj))
+	projs := make([]*qproject.Project, len(mproj))
+	i := 0
 	for _, p := range mproj {
-		projs = append(projs, *p)
+		projs[i] = p
+		i++
 	}
 
 	projs = qproject.Sort(projs)
@@ -85,7 +87,7 @@ func RSync(r string) (err error) {
 	return nil
 }
 
-func installMfiles(batchid string, projs []qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
 	if mostype == "" {
 		return errs
@@ -105,7 +107,6 @@ func installMfiles(batchid string, projs []qproject.Project, qsources map[string
 }
 
 func installMsources(batchid string, files []string, qsources map[string]*qsource.Source) (errs []error) {
-
 	roudir := qregistry.Registry["gtm-rou-dir"]
 	fn := func(n int) (interface{}, error) {
 		qp := files[n]

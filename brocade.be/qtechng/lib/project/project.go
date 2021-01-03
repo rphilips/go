@@ -738,7 +738,7 @@ func find(slice []string, val string, wildcard bool) int {
 }
 
 // Sort Sorteer projecten in volgorde van installeerbaarheid
-func Sort(projects []Project) []Project {
+func Sort(projects []*Project) []*Project {
 
 	ordens := make([]string, len(projects))
 	for i, p := range projects {
