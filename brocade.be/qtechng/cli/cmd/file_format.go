@@ -64,7 +64,6 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 		fname := files[n]
 		ext := filepath.Ext(fname)
 		buffer := new(bytes.Buffer)
-		fmt.Println("fname:", fname)
 		switch ext {
 		case ".d":
 			err = qdfile.Format(fname, nil, buffer)

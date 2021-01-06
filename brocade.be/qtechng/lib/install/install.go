@@ -2,7 +2,11 @@ package install
 
 import (
 	"bytes"
+	"encoding/json"
+	"io"
+	"os/exec"
 	"path"
+	"path/filepath"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
@@ -79,12 +83,38 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 	// install m-files
 	installMfiles(batchid, projs, qsources, msources)
 
+	// install other auto files
+	installAutofiles(batchid, projs, qsources, msources)
+
 	return nil
 }
 
 // RSync synchronises the version with the development server
 func RSync(r string) (err error) {
 	return nil
+}
+
+func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+
+	for _, proj := range projs {
+		ps := proj.String()
+		files := make([]string, 0)
+		for _, ext := range []string{".l", ".x", ".b"} {
+			sources := msources[ps][ext]
+			if len(sources) > 0 {
+				files = append(files, sources...)
+			}
+		}
+		if len(files) == 0 {
+			continue
+		}
+		err := installAutosources(batchid, files, qsources)
+		if err != nil {
+			errs = append(errs, err...)
+		}
+	}
+	return
+
 }
 
 func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
@@ -111,7 +141,11 @@ func installMsources(batchid string, files []string, qsources map[string]*qsourc
 	fn := func(n int) (interface{}, error) {
 		qp := files[n]
 		qps := qsources[qp]
+		nature := qps.Natures()
 		buf := new(bytes.Buffer)
+		if !nature["auto"] {
+			return buf, nil
+		}
 		qps.MFileToMumps(batchid, buf)
 		if roudir != "" {
 			_, b := qutil.QPartition(qp)
@@ -126,4 +160,72 @@ func installMsources(batchid string, files []string, qsources map[string]*qsourc
 	}
 	return
 
+}
+
+func installAutosources(batchid string, files []string, qsources map[string]*qsource.Source) (errs []error) {
+	mostype := qregistry.Registry["m-os-type"]
+	if mostype == "" {
+		return errs
+	}
+	rou := qregistry.Registry["m-import-auto"]
+	if rou == "" {
+		return errs
+	}
+	rouparts := make([]string, 0)
+	e := json.Unmarshal([]byte(rou), rouparts)
+	if e != nil {
+		e := &qerror.QError{
+			Ref: []string{"source.install.auto.registry"},
+			Msg: []string{"Registry value m-import-auto is not JSON: `" + e.Error() + "`"},
+		}
+		errs = append(errs, e)
+		return
+	}
+	fn := func(n int) (interface{}, error) {
+		qp := files[n]
+		qps := qsources[qp]
+		nature := qps.Natures()
+		buf := new(bytes.Buffer)
+		if !nature["auto"] {
+			return buf, nil
+		}
+		ext := filepath.Ext(qps.String())
+		switch ext {
+		case ".l":
+			qps.LFileToMumps(batchid, buf)
+		case ".x":
+			qps.XFileToMumps(batchid, buf)
+		case ".b":
+			qps.BFileToMumps(batchid, buf)
+		}
+		return buf, nil
+	}
+
+	bufs, _ := qparallel.NMap(len(files), -1, fn)
+
+	inm := rouparts[0]
+	inm, _ = exec.LookPath(inm)
+	cmd := exec.Cmd{
+		Path: inm,
+		Args: rouparts,
+	}
+	stdin, e := cmd.StdinPipe()
+	if e != nil {
+		e := &qerror.QError{
+			Ref: []string{"source.install.auto.pipe"},
+			Msg: []string{"Cannot open pipe to m-import-auto: `" + e.Error() + "`"},
+		}
+		errs = append(errs, e)
+		return
+	}
+	go func() {
+		defer stdin.Close()
+		for _, buf := range bufs {
+			b := buf.(*bytes.Buffer)
+			io.Copy(stdin, b)
+		}
+		io.WriteString(stdin, "\nh\n")
+	}()
+
+	return
 }
