@@ -3,13 +3,16 @@ package install
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
+	qpython "brocade.be/base/python"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qproject "brocade.be/qtechng/lib/project"
@@ -80,6 +83,9 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 
 	projs = qproject.Sort(projs)
 
+	// install releases
+	installReleasefiles(batchid, projs, qsources, msources)
+
 	// install m-files
 	installMfiles(batchid, projs, qsources, msources)
 
@@ -92,6 +98,40 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 // RSync synchronises the version with the development server
 func RSync(r string) (err error) {
 	return nil
+}
+
+func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+	for _, proj := range projs {
+		ps := proj.String()
+		repy := ps + "/release.py"
+		reso, ok := qsources[repy]
+		if !ok {
+			continue
+		}
+		err := installReleasesource(batchid, reso)
+		if err != nil {
+			errs = append(errs, err...)
+		}
+	}
+	return
+}
+
+func installReleasesource(batchid string, reso *qsource.Source) (errs []error) {
+	freso := reso.Path()
+	py := qutil.GetPy(freso)
+	tdir := qregistry.Registry["scratch-dir"]
+
+	extra := []string{
+		"VERSION__='" + reso.Release().String() + "'",
+		"PROJECT__='" + reso.Project().String() + "'",
+		"QPATH__='" + reso.String() + "'",
+		"ID__='" + batchid + "'",
+	}
+	_, serr := qpython.Run(freso, py == "py3", nil, extra, tdir)
+	fmt.Println("serr:", freso, serr)
+	serr = strings.TrimSpace(serr)
+	serr = string(qutil.Ignore([]byte(serr)))
+	return
 }
 
 func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
@@ -213,6 +253,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 		cmd = exec.Command(inm, rouparts[1:]...)
 	}
 	stdin, e := cmd.StdinPipe()
+
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.pipe"},

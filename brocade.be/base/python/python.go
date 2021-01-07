@@ -45,12 +45,10 @@ func Run(scriptpy string, py3 bool, args []string, extra []string, cwd string) (
 		"-c",
 	}
 
-	if len(extra) != 0 {
-		argums = append(argums, strings.Join(extra, "; "))
-	}
 	script := strings.ReplaceAll(scriptpy, "\\", "\\\\")
-	script = strings.ReplaceAll(scriptpy, "\"", "\\\"")
-	argums = append(extra, "exec(open('"+script+"').read())")
+	script = strings.ReplaceAll(script, "\"", "\\\"")
+	extra = append(extra, "exec(open('"+script+"').read())")
+	argums = append(argums, strings.Join(extra, "; "))
 	argums = append(argums, args...)
 
 	if cwd == "" {

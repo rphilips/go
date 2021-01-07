@@ -593,7 +593,9 @@ func GetPy(pyscript string) string {
 	if e != nil {
 		return ""
 	}
-	pyscript, _ = qfs.AbsPath(path.Join(cwd, pyscript))
+	if !filepath.IsAbs(pyscript) {
+		pyscript, _ = qfs.AbsPath(path.Join(cwd, pyscript))
+	}
 	reader, err := os.Open(pyscript)
 	if err != nil {
 		return ""
@@ -907,4 +909,21 @@ func Embrace(s string) string {
 		return "«" + s + "»"
 	}
 	return "⟦" + s + "⟧"
+}
+
+// Ignore ignores part of the string
+func Ignore(s []byte) []byte {
+	if len(s) == 0 {
+		return s
+	}
+	k := bytes.Index(s, []byte("<ignore>"))
+	if k == -1 {
+		return s
+	}
+	rest := s[k:]
+	l := bytes.Index(rest, []byte("</ignore>"))
+	if l == -1 {
+		return s[:k]
+	}
+	return Ignore(append(s[:k], s[k+l+9:]...))
 }

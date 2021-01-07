@@ -545,3 +545,27 @@ h`
 	}
 
 }
+
+func TestIgnore(t *testing.T) {
+	data := []byte(`abc<ignore> </ignore>ABC`)
+	ignore := Ignore(data)
+	if string(ignore) != "abcABC" {
+		t.Errorf("Error: found: [%s]", string(ignore))
+	}
+
+	data = []byte(`abcABC`)
+	ignore = Ignore(data)
+	if string(ignore) != "abcABC" {
+		t.Errorf("Error: found: [%s]", string(ignore))
+	}
+	data = []byte(`abc<ignore> ABC`)
+	ignore = Ignore(data)
+	if string(ignore) != "abc" {
+		t.Errorf("Error: found: [%s]", string(ignore))
+	}
+	data = []byte(`abc<ignore> </ignore>ABC<ignore>D</ignore>E`)
+	ignore = Ignore(data)
+	if string(ignore) != "abcABCE" {
+		t.Errorf("Error: found: [%s]", string(ignore))
+	}
+}
