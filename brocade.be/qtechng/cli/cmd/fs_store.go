@@ -29,7 +29,10 @@ func init() {
 }
 
 func fsStore(cmd *cobra.Command, args []string) error {
-	result := filepath.Join(Fcwd, args[0])
+	result := args[0]
+	if !filepath.IsAbs(result) {
+		result = filepath.Join(Fcwd, result)
+	}
 
 	mode := os.O_WRONLY | os.O_CREATE
 	if Fappend {

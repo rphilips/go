@@ -94,29 +94,6 @@ func RSync(r string) (err error) {
 	return nil
 }
 
-func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
-
-	for _, proj := range projs {
-		ps := proj.String()
-		files := make([]string, 0)
-		for _, ext := range []string{".l", ".x", ".b"} {
-			sources := msources[ps][ext]
-			if len(sources) > 0 {
-				files = append(files, sources...)
-			}
-		}
-		if len(files) == 0 {
-			continue
-		}
-		err := installAutosources(batchid, files, qsources)
-		if err != nil {
-			errs = append(errs, err...)
-		}
-	}
-	return
-
-}
-
 func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
 	if mostype == "" {
@@ -159,6 +136,28 @@ func installMsources(batchid string, files []string, qsources map[string]*qsourc
 		qparallel.NMap(len(files), -1, fn)
 	}
 	return
+}
+
+func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+
+	for _, proj := range projs {
+		ps := proj.String()
+		files := make([]string, 0)
+		for _, ext := range []string{".l", ".x", ".b"} {
+			sources := msources[ps][ext]
+			if len(sources) > 0 {
+				files = append(files, sources...)
+			}
+		}
+		if len(files) == 0 {
+			continue
+		}
+		err := installAutosources(batchid, files, qsources)
+		if err != nil {
+			errs = append(errs, err...)
+		}
+	}
+	return
 
 }
 
@@ -172,7 +171,8 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 		return errs
 	}
 	rouparts := make([]string, 0)
-	e := json.Unmarshal([]byte(rou), rouparts)
+	e := json.Unmarshal([]byte(rou), &rouparts)
+
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.registry"},
@@ -198,16 +198,19 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 		case ".b":
 			qps.BFileToMumps(batchid, buf)
 		}
+
 		return buf, nil
 	}
-
 	bufs, _ := qparallel.NMap(len(files), -1, fn)
 
 	inm := rouparts[0]
 	inm, _ = exec.LookPath(inm)
-	cmd := exec.Cmd{
-		Path: inm,
-		Args: rouparts,
+
+	var cmd *exec.Cmd
+	if len(rouparts) == 1 {
+		cmd = exec.Command(inm)
+	} else {
+		cmd = exec.Command(inm, rouparts[1:]...)
 	}
 	stdin, e := cmd.StdinPipe()
 	if e != nil {
@@ -222,10 +225,22 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 		defer stdin.Close()
 		for _, buf := range bufs {
 			b := buf.(*bytes.Buffer)
+			if b.Len() == 0 {
+				continue
+			}
 			io.Copy(stdin, b)
 		}
 		io.WriteString(stdin, "\nh\n")
 	}()
+	_, e = cmd.CombinedOutput()
+	if e != nil {
+		e := &qerror.QError{
+			Ref: []string{"source.install.auto.exec"},
+			Msg: []string{"Exec problem with m-import-auto: `" + e.Error() + "`"},
+		}
+		errs = append(errs, e)
+		return
+	}
 
 	return
 }
