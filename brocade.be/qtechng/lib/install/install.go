@@ -84,15 +84,28 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 	projs = qproject.Sort(projs)
 
 	// install releases
-	installReleasefiles(batchid, projs, qsources, msources)
+	e := installReleasefiles(batchid, projs, qsources, msources)
+	if len(e) != 0 {
+		errs = append(errs, e...)
+	}
 
 	// install m-files
-	installMfiles(batchid, projs, qsources, msources)
+	e = installMfiles(batchid, projs, qsources, msources)
+	if len(e) != 0 {
+		errs = append(errs, e...)
+	}
 
 	// install other auto files
-	installAutofiles(batchid, projs, qsources, msources)
+	e = installAutofiles(batchid, projs, qsources, msources)
+	if len(e) != 0 {
+		errs = append(errs, e...)
+	}
 
-	return nil
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return qerror.ErrorSlice(errs)
 }
 
 // RSync synchronises the version with the development server
@@ -285,3 +298,5 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 
 	return
 }
+
+func copyTree(qproj string)
