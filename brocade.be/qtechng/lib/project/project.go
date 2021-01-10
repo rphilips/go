@@ -408,7 +408,7 @@ func (project Project) IsConfig(s string) bool {
 	return false
 }
 
-// QPaths finds all paths in project
+// QPaths finds all paths in project (complete paths)
 func (project Project) QPaths(patterns []string, matchonlybasename bool) (qpaths []string) {
 	fs := project.FS()
 	paths := fs.Glob("/", patterns, matchonlybasename)

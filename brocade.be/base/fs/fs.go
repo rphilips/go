@@ -358,7 +358,7 @@ func IsDirEmpty(path string) (bool, error) {
 	return false, err
 }
 
-// TempDir creates a temporary subdirectory  in dir or scratch-dir
+// TempDir creates a temporary subdirectory with prefix in dir or scratch-dir (if dir is empty string)
 func TempDir(dir string, prefix string) (name string, err error) {
 	if dir == "" {
 		dir = qregistry.Registry["scratch-dir"]

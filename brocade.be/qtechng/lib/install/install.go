@@ -3,8 +3,8 @@ package install
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -15,6 +15,7 @@ import (
 	qpython "brocade.be/base/python"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
+	qobject "brocade.be/qtechng/lib/object"
 	qproject "brocade.be/qtechng/lib/project"
 	qserver "brocade.be/qtechng/lib/server"
 	qsource "brocade.be/qtechng/lib/source"
@@ -101,6 +102,12 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 		errs = append(errs, e...)
 	}
 
+	// install projects
+	e = installInstallfiles(batchid, projs, qsources, msources)
+	if len(e) != 0 {
+		errs = append(errs, e...)
+	}
+
 	if len(errs) == 0 {
 		return nil
 	}
@@ -111,6 +118,125 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 // RSync synchronises the version with the development server
 func RSync(r string) (err error) {
 	return nil
+}
+
+func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+
+	tmpdir, e := qfs.TempDir("", "qtechng."+batchid+".")
+	if e != nil {
+		e := &qerror.QError{
+			Ref: []string{"source.install.tmpdir"},
+			Msg: []string{"Cannot make temporary directory: " + e.Error()},
+		}
+		errs = append(errs, e)
+		return
+	}
+	qtos := make(map[string]*qsource.Source)
+	for q, v := range qsources {
+		qtos[q] = v
+	}
+
+	for _, proj := range projs {
+		r := proj.Release()
+		ps := proj.String()
+		parts := strings.SplitN(ps, "/", -1)
+		parts[0] = tmpdir
+		basedir := path.Join(parts...)
+		qpaths := proj.QPaths(nil, true)
+		for _, qp := range qpaths {
+			_, ok := qtos[qp]
+			if !ok {
+				s, e := qsource.Source{}.New(r.String(), qp, true)
+				if e == nil {
+					qtos[qp] = s
+				}
+			}
+		}
+		inpy := ps + "/install.py"
+		inso, ok := qtos[inpy]
+		if !ok {
+			continue
+		}
+		if qfs.IsDir(basedir) {
+			continue
+		}
+		errz := projcopy(proj, qpaths, qtos, tmpdir)
+		if len(errz) != 0 {
+			errs = append(errs, errz...)
+		}
+
+		errz = installInstallsource(basedir, batchid, inso)
+		if errs != nil {
+			errs = append(errs, errz...)
+		}
+
+	}
+	return
+}
+
+func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*qsource.Source, tmpdir string) []error {
+	done := make(map[string]bool)
+	where := make(map[string]string)
+	for _, qp := range qpaths {
+		parts := strings.SplitN(qp, "/", -1)
+		if len(parts) == 1 {
+			continue
+		}
+		parts[0] = tmpdir
+		subdir := path.Join(parts[:len(parts)-1]...)
+		where[qp] = path.Join(subdir, parts[len(parts)-1])
+		_, ok := done[subdir]
+		if ok {
+			continue
+		}
+		os.MkdirAll(subdir, 0770)
+		done[subdir] = true
+	}
+
+	fn := func(n int) (interface{}, error) {
+		qp := qpaths[n]
+		qps := qsources[qp]
+
+		content, err := qps.Fetch()
+		if err != nil {
+			return "", err
+		}
+		env := qps.Env()
+		notreplace := qps.NotReplace()
+		objectmap := make(map[string]qobject.Object)
+		buf := new(bytes.Buffer)
+		_, err = qsource.ResolveText(env, content, "rilm", notreplace, objectmap, nil, buf, "")
+		if err != nil {
+			return "", err
+		}
+
+		place := where[qp]
+
+		err = qfs.Store(place, buf, "process")
+		if err != nil {
+			return "", err
+		}
+		return "", err
+	}
+	_, errorlist := qparallel.NMap(len(qpaths), -1, fn)
+
+	return errorlist
+}
+
+func installInstallsource(tdir string, batchid string, inso *qsource.Source) (errs []error) {
+	finso := inso.Path()
+	py := qutil.GetPy(finso)
+
+	extra := []string{
+		"VERSION__='" + inso.Release().String() + "'",
+		"PROJECT__='" + inso.Project().String() + "'",
+		"QPATH__='" + inso.String() + "'",
+		"ID__='" + batchid + "'",
+	}
+	_, serr := qpython.Run(finso, py == "py3", nil, extra, tdir)
+	serr = strings.TrimSpace(serr)
+	serr = string(qutil.Ignore([]byte(serr)))
+	return
 }
 
 func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
@@ -141,7 +267,6 @@ func installReleasesource(batchid string, reso *qsource.Source) (errs []error) {
 		"ID__='" + batchid + "'",
 	}
 	_, serr := qpython.Run(freso, py == "py3", nil, extra, tdir)
-	fmt.Println("serr:", freso, serr)
 	serr = strings.TrimSpace(serr)
 	serr = string(qutil.Ignore([]byte(serr)))
 	return
