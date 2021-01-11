@@ -75,11 +75,17 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 		return nil
 	}
 
-	projs := make([]*qproject.Project, len(mproj))
-	i := 0
+	projs := make([]*qproject.Project, 0)
 	for _, p := range mproj {
-		projs[i] = p
-		i++
+		e := p.IsInstallable()
+		if e != nil {
+			errs = append(errs, e)
+			continue
+		}
+		projs = append(projs, p)
+	}
+	if len(projs) == 0 {
+		return
 	}
 
 	projs = qproject.Sort(projs)
@@ -423,5 +429,3 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 
 	return
 }
-
-func copyTree(qproj string)
