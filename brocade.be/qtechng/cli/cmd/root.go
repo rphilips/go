@@ -43,6 +43,9 @@ var cfgFile string
 // Fcwd Current working directory
 var Fcwd string // current working directory
 
+//Fenv environment variables
+var Fenv []string
+
 // FUID userid
 var FUID string
 
@@ -169,6 +172,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&Feditor, "editor", "", "editor name")
 	rootCmd.PersistentFlags().StringVar(&Fjq, "jsonpath", "", "JSONpath")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")
+	rootCmd.PersistentFlags().StringSliceVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
 	// rootCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
 	// rootCmd.PersistentFlags().StringVar(&Fproject, "project", "", "project to work with")
 	// rootCmd.PersistentFlags().StringVar(&Fqdir, "qdir", "", "qpath of a directory under a project")
@@ -188,6 +192,25 @@ func init() {
 }
 
 func preRun(cmd *cobra.Command, args []string) (err error) {
+
+	if len(Fenv) != 0 {
+		for _, env := range Fenv {
+			parts := strings.SplitN(env, "=", 2)
+			if len(parts) == 0 {
+				continue
+			}
+			env := strings.TrimSpace(parts[0])
+			if env == "" {
+				continue
+			}
+			value := ""
+			if len(parts) == 2 {
+				value = parts[1]
+			}
+			os.Setenv(env, value)
+		}
+
+	}
 
 	if cmd.Annotations["rstrip-trailing-crlf"] == "yes" {
 		Frstripln = true

@@ -123,12 +123,12 @@ func (release Release) Init() (err error) {
 		fs.MkdirAll(dir, 0o770)
 	}
 
-	if !strings.ContainsRune(qtechType, 'B') || qregistry.Registry["qtechng-hg-enable"] != "1" {
+	if !strings.ContainsRune(qtechType, 'B') || qregistry.Registry["qtechng-vc"] == "" {
 		return nil
 	}
 
 	// initialises mercurial repository
-	cmd := exec.Command("hg", "init")
+	cmd := exec.Command("git", "init")
 	sourcedir, _ := release.FS("").RealPath("/source")
 	cmd.Dir = sourcedir
 	cmd.Run()

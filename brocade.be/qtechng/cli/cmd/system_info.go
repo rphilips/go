@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -42,6 +43,13 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 
 	for key := range regkeys {
 		msg[key] = qregistry.Registry[key]
+	}
+
+	if len(Fenv) != 0 {
+		for _, env := range os.Environ() {
+			parts := strings.SplitN(env, "=", -1)
+			msg["env "+parts[0]] = os.Getenv(parts[0])
+		}
 	}
 
 	Fmsg = qerror.ShowResult(msg, Fjq, nil)
