@@ -290,7 +290,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 		if !ok {
 			err = &qerror.QError{
 				Ref: []string{errRoot + "QtechType"},
-				Msg: []string{fmt.Sprintf("Command not allowed with qtech-type `%s`", QtechType)},
+				Msg: []string{fmt.Sprintf("Command not allowed with qtechng-type `%s`", QtechType)},
 			}
 		}
 	}

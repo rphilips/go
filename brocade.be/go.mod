@@ -12,6 +12,5 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spyzhov/ajson v0.4.2
 	github.com/xanzy/ssh-agent v0.3.0
-	github.com/zloylos/grsync v0.0.0-20201103111841-a3c772f11d26
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 )

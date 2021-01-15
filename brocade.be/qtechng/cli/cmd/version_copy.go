@@ -1,108 +1,69 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"path"
+	"sort"
 
 	"github.com/spf13/cobra"
 
 	qerror "brocade.be/qtechng/lib/error"
 	qserver "brocade.be/qtechng/lib/server"
-	frsync "github.com/zloylos/grsync"
+	qsync "brocade.be/qtechng/lib/sync"
 )
 
 var versionCopyCmd = &cobra.Command{
 	Use:   "copy source target",
 	Short: "Copies all files from one version to another",
-	Long: `Works with two *existing* versions. The files from the first version are copied to the second version.
-- The source directory of the second version should be empty
-- Version control files are not copied`,
+	Long: `The source version should always be 0.00
+The target version should not exist (this condition can be removed
+by using the force flag)
+and should be more recent than the registry value in brocade-release`,
 	Args:    cobra.ExactArgs(2),
-	Example: "qtechng version copy 5.10 5.20",
+	Example: "qtechng version copy 0.00 5.20",
 	RunE:    versionCopy,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
-		"remote-allowed": "yes",
-		"always-remote":  "yes",
-		"with-qtechtype": "BW",
+		"with-qtechtype": "BP",
 	},
 }
 
 func init() {
+	versionCopyCmd.Flags().BoolVar(&Fforce, "force", false, "Copy even if the target version exists")
 	versionCmd.AddCommand(versionCopyCmd)
 }
 
 func versionCopy(cmd *cobra.Command, args []string) error {
 
-	rsource := qserver.Canon(args[0])
+	rsource := args[0]
+	rtarget := args[1]
 
-	orsource, err := qserver.Release{}.New(rsource, true)
+	if !Fforce {
+		r := qserver.Canon(rtarget)
+		ro, _ := qserver.Release{}.New(r, false)
+		ok, _ := ro.Exists("/source/data")
+		if ok {
+			err := &qerror.QError{
+				Ref: []string{"copy.target.exists"},
+				Msg: []string{"Target version exists. Use force!"},
+			}
+			Fmsg = qerror.ShowResult("", Fjq, err)
+			return nil
+		}
+	}
+
+	changed, deleted, err := qsync.Sync(rsource, rtarget, Fforce)
 
 	if err != nil {
-		e := &qerror.QError{
-			Ref:     []string{"version.copy.new.source"},
-			Version: rsource,
-			Msg:     []string{"Cannot instantiate version"},
-		}
-		Fmsg = qerror.ShowResult("", Fjq, e)
+		Fmsg = qerror.ShowResult("", Fjq, err)
 		return nil
 	}
-
-	rtarget := qserver.Canon(args[1])
-
-	ortarget, err := qserver.Release{}.New(rtarget, true)
-	fst := ortarget.FS()
-	if err != nil {
-		e := &qerror.QError{
-			Ref:     []string{"version.copy.new.target"},
-			Version: rtarget,
-			Msg:     []string{"Cannot instantiate version"},
-		}
-		Fmsg = qerror.ShowResult("", Fjq, e)
-		return nil
+	msg := make(map[string][]string)
+	if len(changed) != 0 {
+		sort.Strings(changed)
+		msg["copied"] = changed
 	}
-	dirs := fst.Dir("/", false, true)
-	if len(dirs) != 0 {
-		e := &qerror.QError{
-			Ref:     []string{"version.copy.empty.target"},
-			Version: rtarget,
-			Msg:     []string{"Target is not empty"},
-		}
-		Fmsg = qerror.ShowResult("", Fjq, e)
-		return nil
+	if len(deleted) != 0 {
+		sort.Strings(deleted)
+		msg["deleted"] = deleted
 	}
-
-	source := orsource.Root()
-	source += string(os.PathSeparator)
-
-	destination := ortarget.Root()
-
-	options := frsync.RsyncOptions{
-		Checksum: true,
-		Quiet:    true,
-		//Verbose: true,
-		Archive: true,
-		Timeout: 600,
-		Exclude: []string{
-			path.Join("source", ".hg"),
-			path.Join("source", ".git"),
-		},
-	}
-	task := frsync.NewTask(
-		source,
-		destination,
-		options,
-	)
-
-	if err := task.Run(); err != nil {
-		e := &qerror.QError{
-			Ref: []string{"version.copy.rsync"},
-			Msg: []string{fmt.Sprintf("Could not rsync from`%s` to `%s`", source, destination)},
-		}
-		Fmsg = qerror.ShowResult("", Fjq, e)
-		return nil
-	}
-	Fmsg = qerror.ShowResult(fmt.Sprintf("Copied `%s` to `%s`", source, destination), Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	return nil
 }

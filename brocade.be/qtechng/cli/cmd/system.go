@@ -37,9 +37,12 @@ func regMap() map[string][3]string {
 		"qtechng-editor-exe":          {"W", "[^ ].*", "exe"},
 		"qtechng-merge-exe":           {"W", "[^ ].*", "exe"},
 		"qtechng-type":                {"", "[BPW]", ""},
-		"qtechng-hg-enable":           {"B", "[01]"},
+		"qtechng-vc":                  {"B", ""},
 		"brocade-release":             {"P", "[0-9]+\\.[0-9][0-9][a-zA-Z]*"},
 		"system-name":                 {"", "[^ ].*", ""},
+		"system-group":                {"", "[^ ].*", ""},
+		"private-instname":            {"", "", ""},
+		"private-role":                {"", "", ""},
 	}
 	for key, value := range regmap {
 		if value[0] != "" && !strings.Contains(value[0], QtechType) {

@@ -350,7 +350,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 	if mostype == "" {
 		return errs
 	}
-	rou := qregistry.Registry["m-import-auto"]
+	rou := qregistry.Registry["m-import-auto-exe"]
 	if rou == "" {
 		return errs
 	}
@@ -360,7 +360,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.registry"},
-			Msg: []string{"Registry value m-import-auto is not JSON: `" + e.Error() + "`"},
+			Msg: []string{"Registry value `m-import-auto-exe` is not JSON: `" + e.Error() + "`"},
 		}
 		errs = append(errs, e)
 		return
@@ -401,7 +401,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.pipe"},
-			Msg: []string{"Cannot open pipe to m-import-auto: `" + e.Error() + "`"},
+			Msg: []string{"Cannot open pipe to m-import-auto-exe: `" + e.Error() + "`"},
 		}
 		errs = append(errs, e)
 		return
@@ -421,7 +421,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.exec"},
-			Msg: []string{"Exec problem with m-import-auto: `" + e.Error() + "`"},
+			Msg: []string{"Exec problem with m-import-auto-exe: `" + e.Error() + "`"},
 		}
 		errs = append(errs, e)
 		return
