@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var fsStoreCmd = &cobra.Command{
-	Use:     "store",
-	Short:   "stores stdin to a file",
-	Long:    `Command which reads stdin and stores data to a file in the filesystem`,
+var fsReplaceCmd = &cobra.Command{
+	Use:     "replace",
+	Short:   "replaces stdin to a file",
+	Long:    `Command which reads stdin and replaces data to a file in the filesystem`,
 	Args:    cobra.MinimumNArgs(1),
-	Example: `qtechng fs store cwd=../catalografie`,
-	RunE:    fsStore,
+	Example: `qtechng fs replace cwd=../catalografie`,
+	RunE:    fsReplace,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
@@ -24,11 +24,11 @@ var fsStoreCmd = &cobra.Command{
 var Fappend bool
 
 func init() {
-	fsStoreCmd.Flags().BoolVar(&Fappend, "append", false, "Appends to file")
-	fsCmd.AddCommand(fsStoreCmd)
+	fsReplaceCmd.Flags().BoolVar(&Fappend, "append", false, "Appends to file")
+	fsCmd.AddCommand(fsReplaceCmd)
 }
 
-func fsStore(cmd *cobra.Command, args []string) error {
+func fsReplace(cmd *cobra.Command, args []string) error {
 	result := args[0]
 	if !filepath.IsAbs(result) {
 		result = filepath.Join(Fcwd, result)

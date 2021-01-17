@@ -298,35 +298,19 @@ func findLabel(buffer []X4, from int, label string) ([]X4, bool) {
 			continue
 		}
 
-		haystack := "\n" + text
-		needle := "\n" + label
-		k := -1
-		before := ""
-		after := ""
-		for {
-			k = strings.Index(haystack, needle)
-			if k == -1 {
-				break
-			}
-			before += haystack[:k]
-			after = haystack[k+1:]
-			kan := after
-			n := strings.Index(after, "\n")
-			if n != -1 {
-				kan = after[:n]
-				after = after[n:]
-			} else {
-				after = ""
-			}
-			if strings.TrimSpace(kan) == label {
-				ok = true
-				break
-			}
-		}
-		if !ok {
+		k := strings.Index(text, label)
+		if k == -1 {
 			continue
 		}
-
+		before := strings.TrimRight(text[:k], " \t\r")
+		if before != "" && !strings.HasSuffix(before, "\n") {
+			continue
+		}
+		after := text[k+len(label):]
+		if after != "" && strings.TrimLeft(after, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_") != after {
+			continue
+		}
+		ok = true
 		xi := X4{
 			mode: "-",
 			text: before,

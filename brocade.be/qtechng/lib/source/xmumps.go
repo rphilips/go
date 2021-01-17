@@ -60,7 +60,6 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 		//fmt.Println("err:", err.Error())
 		return
 	}
-
 	objectlist := xf.Objects()
 	textmap := make(map[string]string)
 
@@ -72,7 +71,6 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 			textmap[name] = obj.(*qofile.Widget).Body
 		}
 	}
-
 	env := xfile.Env()
 	notreplace := xfile.NotReplace()
 	objectmap := make(map[string]qobject.Object)
@@ -96,13 +94,11 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 		}
 		buffer.WriteRune('\n')
 	}
-
 	content = buffer.Bytes()
 	err = qobject.Loads(xf, content)
 	if err != nil {
 		return
 	}
-
 	objectlist = xf.Objects()
 	widgets := make([]*qofile.Widget, 0)
 	for _, obj := range objectlist {

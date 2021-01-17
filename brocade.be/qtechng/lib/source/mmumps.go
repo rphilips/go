@@ -195,7 +195,7 @@ func mtransform(line []byte, comment []byte) []byte {
 	dots := []byte{}
 	if rune(line[0]) == '.' {
 		xline := bytes.TrimLeft(line, ". \t")
-		dots = line[:len(line)-len(xline)+1]
+		dots = line[:len(line)-len(xline)]
 		k := bytes.Count(dots, []byte("."))
 		dots = bytes.Repeat([]byte("."), k)
 		line = xline

@@ -72,6 +72,10 @@ var Fremote bool
 
 // Frecurse recurse through the file tree
 var Frecurse bool // recurse ?
+
+// Fbackup recurse through the file tree
+var Fbackup bool // backup ?
+
 // Ftransported indicates if command is transported
 var Ftransported bool
 
@@ -87,7 +91,7 @@ var Fsmartcaseoff bool
 // Fneedle needles to search for
 var Fneedle []string
 
-// Fpattern paaters to select on
+// Fpattern patterns to select on
 var Fpattern []string
 
 // Fforce overrules normal behaviour
@@ -143,6 +147,9 @@ var Fstdout string
 
 //Ffiletype extension of the file
 var Ffiletype string
+
+// FInstallref reference to the installation
+var Finstallref string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

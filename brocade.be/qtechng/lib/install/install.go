@@ -347,6 +347,7 @@ func installAutofiles(batchid string, projs []*qproject.Project, qsources map[st
 
 func installAutosources(batchid string, files []string, qsources map[string]*qsource.Source) (errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
+
 	if mostype == "" {
 		return errs
 	}
@@ -382,11 +383,10 @@ func installAutosources(batchid string, files []string, qsources map[string]*qso
 		case ".b":
 			qps.BFileToMumps(batchid, buf)
 		}
-
 		return buf, nil
 	}
-	bufs, _ := qparallel.NMap(len(files), -1, fn)
 
+	bufs, _ := qparallel.NMap(len(files), -1, fn)
 	inm := rouparts[0]
 	inm, _ = exec.LookPath(inm)
 

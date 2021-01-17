@@ -25,6 +25,7 @@ var sourceInstallCmd = &cobra.Command{
 }
 
 func init() {
+	sourceInstallCmd.PersistentFlags().StringVar(&Finstallref, "installref", "install", "Reference to the installation")
 	sourceCmd.AddCommand(sourceInstallCmd)
 }
 
