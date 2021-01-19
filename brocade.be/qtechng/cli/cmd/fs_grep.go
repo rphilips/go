@@ -149,6 +149,9 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 			if err != nil && err != io.EOF {
 				return lines, err
 			}
+			if Ftolower {
+				buf = bytes.ToLower(buf)
+			}
 			lineno++
 			if !Fregexp {
 				if bytes.Contains(buf, needle) {
