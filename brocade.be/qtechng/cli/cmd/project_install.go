@@ -67,10 +67,8 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 	err := qinstall.Install(Finstallref, sources, false)
 
 	if err != nil {
-		if err != nil {
-			Fmsg = qerror.ShowResult("", Fjq, err)
-			return nil
-		}
+		Fmsg = qerror.ShowResult("", Fjq, err)
+		return nil
 	}
 	msg := make(map[string][]string)
 	if len(sources) != 0 {

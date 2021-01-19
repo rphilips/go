@@ -20,9 +20,6 @@ var fsStoreCmd = &cobra.Command{
 	},
 }
 
-//Fappend appends to file
-var Fappend bool
-
 func init() {
 	fsStoreCmd.Flags().BoolVar(&Fappend, "append", false, "Appends to file")
 	fsCmd.AddCommand(fsStoreCmd)

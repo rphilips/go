@@ -383,3 +383,38 @@ func storeTransport() ([]storer, []error) {
 	}
 	return result, errlist
 }
+
+func glob(cwd string, args []string, recurse bool, patterns []string) (files []string, err error) {
+
+	for _, arg := range args {
+		if !filepath.IsAbs(arg) {
+			arg = filepath.Join(cwd, arg)
+		}
+		if qfs.IsDir(arg) {
+			paths, err := qfs.Find(arg, patterns, recurse)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, paths...)
+			continue
+		}
+		if !qfs.IsFile(arg) {
+			return nil, fmt.Errorf("`%s` is not a file", arg)
+		}
+		if len(patterns) == 0 {
+			files = append(files, arg)
+			continue
+		}
+		ok := false
+		basename := filepath.Base(arg)
+		for _, pattern := range patterns {
+			ok, _ = path.Match(pattern, basename)
+			if ok {
+				break
+			}
+		}
+		files = append(files, arg)
+	}
+	return
+
+}

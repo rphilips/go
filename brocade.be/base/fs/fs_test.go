@@ -90,3 +90,12 @@ func TestMkdir(t *testing.T) {
 		t.Errorf("Cannot remove dir")
 	}
 }
+
+func TestCopyFile(t *testing.T) {
+
+	scratchdir := registry.Registry["scratch-dir"]
+	fname := filepath.Join(scratchdir, "Hello")
+	Store(fname, "World", "process")
+	CopyFile(fname, fname+"2", "=", true)
+	CopyFile(fname, fname+"3", "", true)
+}

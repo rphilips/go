@@ -40,7 +40,7 @@ func fileLint(cmd *cobra.Command, args []string) error {
 		if Fcwd != "" {
 			start = Fcwd
 		}
-		files, _ = qfs.Find(start, "*.[dlimbx]", Frecurse)
+		files, _ = qfs.Find(start, []string{"*.[dlimbx]"}, Frecurse)
 	}
 	lint := func(n int) (interface{}, error) {
 		fname := files[n]

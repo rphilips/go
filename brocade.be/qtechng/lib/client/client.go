@@ -277,7 +277,7 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 	find := false
 	if len(files) == 0 {
 		find = true
-		files, err = qfs.Find(cwd, "*", recurse)
+		files, err = qfs.Find(cwd, nil, recurse)
 		if err != nil {
 			err := &qerror.QError{
 				Ref:  []string{"client.find.io"},

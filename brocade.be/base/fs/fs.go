@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	qpattern "brocade.be/base/pattern"
@@ -389,7 +390,16 @@ func TempFile(dir, prefix string) (name string, err error) {
 }
 
 // CopyFile copies a file to another file or to a directory
-func CopyFile(src, dst, pathmode string) (err error) {
+// - src: sourcefile
+// - dst: destination (if a directory, the basename of src is appended)
+// - pathmode:
+//   - "": nothing extra will be done
+//   - "=": the same values of src will be applied
+//   - otherwise a rgeistere dpathmode will be applied
+// - keepmtime: ctime/mtime of src will be applied to dst
+func CopyFile(src, dst, pathmode string, keepmtime bool) (err error) {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
 	if IsDir(dst) {
 		base := filepath.Base(src)
 		dst = filepath.Join(dst, base)
@@ -401,18 +411,165 @@ func CopyFile(src, dst, pathmode string) (err error) {
 	}
 	defer in.Close()
 
-	err = Store(dst, in, pathmode)
+	out, err := os.Create(dst)
+	if err != nil {
+		return
+	}
+	defer func() {
+		if e := out.Close(); e != nil {
+			err = e
+		}
+	}()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return
+	}
+
+	err = out.Sync()
+	if err != nil {
+		return
+	}
+
+	if pathmode != "" && pathmode != "=" {
+		err = SetPathmode(dst, pathmode)
+		if err != nil {
+			return
+		}
+	}
+	if !keepmtime && pathmode != "=" {
+		return
+	}
+
+	si, err := os.Stat(src)
+	if err != nil {
+		return
+	}
+	if pathmode == "=" {
+		err = os.Chmod(dst, si.Mode())
+		if err != nil {
+			return
+		}
+		if runtime.GOOS != "windows" {
+			if stat, ok := si.Sys().(*syscall.Stat_t); ok {
+				uid := int(stat.Uid)
+				gid := int(stat.Gid)
+				err = os.Chown(dst, uid, gid)
+				if err != nil {
+					return
+				}
+			}
+		}
+	}
+	if keepmtime {
+		mtime := si.ModTime()
+		atime := time.Now()
+		err = os.Chtimes(dst, atime, mtime)
+	}
+
 	return
 }
 
-// Find lists files matching a pattern on the basename
-func Find(root string, pattern string, recurse bool) (paths []string, err error) {
+func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error) {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
+
+	si, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	if !si.IsDir() {
+		return fmt.Errorf("source is not a directory")
+	}
+
+	_, err = os.Stat(dst)
+	if err != nil && !os.IsNotExist(err) {
+		return
+	}
+	if err == nil {
+		return fmt.Errorf("destination already exists")
+	}
+
+	err = os.MkdirAll(dst, si.Mode())
+	if err != nil {
+		return
+	}
+	if pathmode != "" && pathmode != "=" {
+		err = SetPathmode(dst, pathmode)
+		if err != nil {
+			return
+		}
+	}
+	if pathmode == "=" {
+		if runtime.GOOS != "windows" {
+			if stat, ok := si.Sys().(*syscall.Stat_t); ok {
+				uid := int(stat.Uid)
+				gid := int(stat.Gid)
+				err = os.Chown(dst, uid, gid)
+				if err != nil {
+					return
+				}
+			}
+		}
+	}
+	if keepmtime {
+		mtime := si.ModTime()
+		atime := time.Now()
+		err = os.Chtimes(dst, atime, mtime)
+	}
+
+	entries, err := ioutil.ReadDir(src)
+	if err != nil {
+		return
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			err = CopyDir(srcPath, dstPath, pathmode, keepmtime)
+			if err != nil {
+				return
+			}
+		} else {
+			// Skip symlinks.
+			if entry.Mode()&os.ModeSymlink != 0 {
+				continue
+			}
+
+			err = CopyFile(srcPath, dstPath, pathmode, keepmtime)
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
+}
+
+// Find lists files matching one of a list of patterns on the basename
+func Find(root string, patterns []string, recurse bool) (paths []string, err error) {
 	if recurse {
 		err = filepath.Walk(root, func(p string, info os.FileInfo, e error) error {
 			if e != nil {
 				return e
 			}
-			if ok, _ := path.Match(pattern, info.Name()); ok && info.Mode().IsRegular() {
+			ok := true
+			name := info.Name()
+			if len(patterns) != 0 {
+				ok = false
+				for _, pattern := range patterns {
+					ok, _ = path.Match(pattern, name)
+					if ok {
+						break
+					}
+				}
+			}
+			if !ok {
+				return nil
+			}
+
+			if info.Mode().IsRegular() {
 				paths = append(paths, p)
 			}
 			return nil
@@ -425,8 +582,26 @@ func Find(root string, pattern string, recurse bool) (paths []string, err error)
 		}
 		for _, file := range files {
 			name := file.Name()
-			if ok, _ := path.Match(pattern, name); ok && file.Mode().IsRegular() {
-				p := filepath.Join(root, name)
+			ok := true
+			if len(patterns) != 0 {
+				ok = false
+				for _, pattern := range patterns {
+					ok, _ = path.Match(pattern, name)
+					if ok {
+						break
+					}
+				}
+			}
+			if !ok {
+				continue
+			}
+
+			p := filepath.Join(root, name)
+			info, e := os.Stat(p)
+			if e != nil {
+				return
+			}
+			if info.Mode().IsRegular() {
 				paths = append(paths, p)
 			}
 		}

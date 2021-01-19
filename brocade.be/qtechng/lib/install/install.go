@@ -19,6 +19,7 @@ import (
 	qproject "brocade.be/qtechng/lib/project"
 	qserver "brocade.be/qtechng/lib/server"
 	qsource "brocade.be/qtechng/lib/source"
+	qsync "brocade.be/qtechng/lib/sync"
 	qutil "brocade.be/qtechng/lib/util"
 )
 
@@ -28,15 +29,23 @@ import (
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
 func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) {
-	r := qserver.Canon("")
+	if len(sources) == 0 {
+		return nil
+	}
+	sr := sources[0].Release().String()
+	r := qserver.Canon(qregistry.Registry["brocade-release"])
+	if sr != r && sr != "" && sr != "0.00" {
+		return nil
+	}
 	// synchronises if necessary
 	if rsync {
-		err = RSync(r)
+		_, _, err = RSync(sr)
 		if err != nil {
 			return err
 		}
 	}
 	errs := make([]error, 0)
+	badproj := make(map[string]bool)
 	// Find all projects
 	mproj := make(map[string]*qproject.Project)
 	msources := make(map[string]map[string][]string)
@@ -56,6 +65,15 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 		qsources[qp] = s
 		p := s.Project()
 		ps := p.String()
+		if badproj[ps] {
+			continue
+		}
+		err := p.IsInstallable()
+		if err != nil {
+			badproj[ps] = true
+			errs = append(errs, err)
+			continue
+		}
 		mproj[ps] = p
 
 		ext := path.Ext(qp)
@@ -122,8 +140,13 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 }
 
 // RSync synchronises the version with the development server
-func RSync(r string) (err error) {
-	return nil
+func RSync(r string) (changed []string, deleted []string, err error) {
+	qtechType := qregistry.Registry["qtechng-type"]
+	if strings.Contains(qtechType, "B") {
+		return nil, nil, nil
+	}
+	changed, deleted, err = qsync.Sync(r, r, false)
+	return changed, deleted, err
 }
 
 func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {

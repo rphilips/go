@@ -67,6 +67,9 @@ var Fproject string
 // Fversion version to use
 var Fversion string // version to use
 
+//Fappend appends to file
+var Fappend bool
+
 // Fremote true if it should be executed remotely ?
 var Fremote bool
 
@@ -148,7 +151,7 @@ var Fstdout string
 //Ffiletype extension of the file
 var Ffiletype string
 
-// FInstallref reference to the installation
+// Finstallref reference to the installation
 var Finstallref string
 
 // rootCmd represents the base command when called without any subcommands

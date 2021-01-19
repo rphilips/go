@@ -78,7 +78,7 @@ func coRS(project string, tmpdir string) (err error) {
 }
 
 func listTxt(tmpdir string) (paths []string, err error) {
-	paths, err = qfs.Find(tmpdir, "*.txt", false)
+	paths, err = qfs.Find(tmpdir, []string{"*.txt"}, false)
 	return
 }
 
