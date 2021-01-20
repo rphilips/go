@@ -15,29 +15,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var fsRenameCmd = &cobra.Command{
-	Use:   "rename",
-	Short: "renames files",
-	Long: `First argument is part of the absolute filepath that has to be renamed 
+var fsCopyCmd = &cobra.Command{
+	Use:   "copy",
+	Short: "copys files",
+	Long: `First argument is part of the absolute filepath that has to be copiedd 
 Second argument is the replacement of that part
 The other arguments are filenames or directory names. 
-If the argument is a directory name, all files in that directory are handled.`,
+If the argument is a directory name, all files in that directory are handled.
+Use the delete flag if the original files should be deleted
+`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs rename cwd=../catalografie`,
-	RunE:    fsRename,
+	Example: `qtechng fs copy cwd=../catalografie`,
+	RunE:    fsCopy,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
+var Fdelete bool
+
 func init() {
-	fsRenameCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsRenameCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
-	fsRenameCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
-	fsCmd.AddCommand(fsRenameCmd)
+	fsCopyCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
+	fsCopyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsCopyCmd.Flags().BoolVar(&Fdelete, "delete", false, "Delete original files")
+	fsCopyCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsCmd.AddCommand(fsCopyCmd)
 }
 
-func fsRename(cmd *cobra.Command, args []string) error {
+func fsCopy(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	ask := false
@@ -72,6 +77,17 @@ func fsRename(cmd *cobra.Command, args []string) error {
 		}
 		if len(args) == 2 {
 			return nil
+		}
+	}
+	if ask && !Fdelete {
+		fmt.Print("Delete ?                   : <n>")
+		text, _ := reader.ReadString('\n')
+		text = strings.TrimSuffix(text, "\n")
+		if text == "" {
+			text = "n"
+		}
+		if strings.ContainsAny(text, "jJyY1tT") {
+			Fdelete = true
 		}
 	}
 	if ask && !Fregexp {
@@ -110,7 +126,7 @@ func fsRename(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	rename := args[1]
+	copy := args[1]
 	needle := args[0]
 	var rneedle *regexp.Regexp
 	var err error
@@ -128,12 +144,12 @@ func fsRename(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 		msg := make(map[string][]string)
-		msg["renamed"] = files
+		msg["copied"] = files
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 		return nil
 	}
 
-	renamemap := make(map[string]string)
+	copymap := make(map[string]string)
 	folders := make(map[string]string)
 
 	target := ""
@@ -142,9 +158,9 @@ func fsRename(cmd *cobra.Command, args []string) error {
 	for _, file := range files {
 		a, _ := filepath.Abs(file)
 		if Fregexp {
-			target = rneedle.ReplaceAllString(a, rename)
+			target = rneedle.ReplaceAllString(a, copy)
 		} else {
-			target = strings.ReplaceAll(a, needle, rename)
+			target = strings.ReplaceAll(a, needle, copy)
 		}
 		if target == file {
 			continue
@@ -155,7 +171,7 @@ func fsRename(cmd *cobra.Command, args []string) error {
 		tdir := filepath.Dir(target)
 		dir := filepath.Dir(file)
 		folders[tdir] = dir
-		renamemap[file] = target
+		copymap[file] = target
 		rfiles = append(rfiles, file)
 	}
 
@@ -198,9 +214,9 @@ func fsRename(cmd *cobra.Command, args []string) error {
 	fn := func(n int) (interface{}, error) {
 
 		src := files[n]
-		dst := renamemap[src]
+		dst := copymap[src]
 		err := qfs.CopyFile(src, dst, "=", true)
-		if err == nil {
+		if err == nil && Fdelete {
 			err = qfs.Rmpath(src)
 		}
 		return dst, err
@@ -212,7 +228,7 @@ func fsRename(cmd *cobra.Command, args []string) error {
 		src := rfiles[i]
 		if errorlist[i] != nil {
 			e := &qerror.QError{
-				Ref:  []string{"fs.rename"},
+				Ref:  []string{"fs.copy"},
 				File: src,
 				Msg:  []string{errorlist[i].Error()},
 			}
@@ -223,7 +239,7 @@ func fsRename(cmd *cobra.Command, args []string) error {
 	}
 
 	msg := make(map[string][]string)
-	msg["renamed"] = changed
+	msg["copiedd"] = changed
 	if len(errs) == 0 {
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	} else {
