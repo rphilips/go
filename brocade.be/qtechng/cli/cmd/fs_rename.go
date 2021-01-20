@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	qfs "brocade.be/base/fs"
@@ -16,30 +15,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var fsReplaceCmd = &cobra.Command{
-	Use:   "replace",
-	Short: "replaces a string to another string in files",
-	Long: `First argument is the string to search for, the second argument is the replacement.
-Replacement is done line per line.
-Take care: replacement is done over binary files as well!
+var fsRenameCmd = &cobra.Command{
+	Use:   "rename",
+	Short: "renames files",
+	Long: `First argument is part of the absolute filepath that has to be renamed 
+Second argument is the replacement of that part
 The other arguments are filenames or directory names. 
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs replace cwd=../catalografie`,
-	RunE:    fsReplace,
+	Example: `qtechng fs rename cwd=../catalografie`,
+	RunE:    fsRename,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
 func init() {
-	fsReplaceCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsReplaceCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
-	fsReplaceCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
-	fsCmd.AddCommand(fsReplaceCmd)
+	fsRenameCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
+	fsRenameCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsRenameCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsCmd.AddCommand(fsRenameCmd)
 }
 
-func fsReplace(cmd *cobra.Command, args []string) error {
+func fsRename(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	ask := false
@@ -112,14 +110,13 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	replace := []byte(args[1])
-	needle := []byte(args[0])
-	sneedle := args[0]
+	rename := args[1]
+	needle := args[0]
 	var rneedle *regexp.Regexp
 	var err error
 	files := make([]string, 0)
 	if Fregexp {
-		rneedle, err = regexp.Compile(args[0])
+		rneedle, err = regexp.Compile(needle)
 	}
 	if err == nil {
 		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern)
@@ -131,118 +128,102 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 		msg := make(map[string][]string)
-		msg["replaced"] = files
+		msg["renamed"] = files
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 		return nil
+	}
+
+	renamemap := make(map[string]string)
+	folders := make(map[string]string)
+
+	target := ""
+
+	rfiles := make([]string, 0)
+	for _, file := range files {
+		a, _ := filepath.Abs(file)
+		if Fregexp {
+			target = rneedle.ReplaceAllString(a, rename)
+		} else {
+			target = strings.ReplaceAll(a, needle, rename)
+		}
+		if target == file {
+			continue
+		}
+		if target == a {
+			continue
+		}
+		tdir := filepath.Dir(target)
+		dir := filepath.Dir(file)
+		folders[tdir] = dir
+		renamemap[file] = target
+		rfiles = append(rfiles, file)
+	}
+
+	dirs := make([]string, len(folders))
+
+	for dir := range folders {
+		dirs = append(dirs, dir)
+	}
+
+	sort.Strings(dirs)
+
+	errs := make([]error, 0)
+	for _, dir := range dirs {
+		if qfs.IsDir(dir) {
+			continue
+		}
+		if qfs.Exists(dir) {
+			errs = append(errs, fmt.Errorf("`%s` exists and is not a directory", dir))
+		}
+		err := qfs.Mkdir(dir, "process")
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		err = qfs.CopyMeta(folders[dir], dir, true)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+	}
+
+	if len(errs) != 0 {
+		if err != nil {
+			Fmsg = qerror.ShowResult("", Fjq, qerror.ErrorSlice(errs))
+			return nil
+		}
+
 	}
 
 	fn := func(n int) (interface{}, error) {
 
 		src := files[n]
-		in, err := os.Open(src)
-		if err != nil {
-			return false, err
+		dst := renamemap[src]
+		err := qfs.CopyFile(src, dst, "=", true)
+		if err == nil {
+			err = qfs.Rmpath(src)
 		}
-		input := bufio.NewReader(in)
-		defer in.Close()
-
-		ok := false
-		for {
-			// read a chunk
-			buf, err := input.ReadBytes(byte('\n'))
-			if err != nil && err != io.EOF {
-				return false, err
-			}
-			if !Fregexp {
-				if bytes.Contains(buf, needle) {
-					ok = true
-				}
-			} else {
-				ok, _ = regexp.Match(sneedle, buf)
-			}
-			if ok {
-				break
-			}
-			if err != nil {
-				break
-			}
-		}
-		if !ok {
-			return false, nil
-		}
-		in.Close()
-		// make a copy of the file
-		basename := path.Base(src)
-		tmpfile, err := qfs.TempFile("", "fs-replace."+basename+".")
-		if err != nil {
-			return false, err
-		}
-		err = qfs.CopyFile(src, tmpfile, "", false)
-		if err != nil {
-			return false, err
-		}
-		in, err = os.Open(tmpfile)
-		if err != nil {
-			return false, err
-		}
-		input = bufio.NewReader(in)
-		defer in.Close()
-
-		// open output file
-		fo, err := os.Create(src)
-		if err != nil {
-			return false, err
-		}
-		defer func() {
-			if err := fo.Close(); err != nil {
-				panic(err)
-			}
-		}()
-		var rbuf []byte
-		for {
-			// read a chunk
-			buf, err := input.ReadBytes(byte('\n'))
-			if err != nil && err != io.EOF {
-				return false, err
-			}
-			if !Fregexp {
-				rbuf = bytes.ReplaceAll(buf, needle, replace)
-			} else {
-				rbuf = rneedle.ReplaceAll(buf, replace)
-			}
-			_, e := fo.Write(rbuf)
-			if e != nil {
-				return false, e
-			}
-			if err != nil {
-				break
-			}
-		}
-		qfs.Rmpath((tmpfile))
-		return true, nil
+		return dst, err
 	}
 
-	resultlist, errorlist := qparallel.NMap(len(files), -1, fn)
-	var errs []error
+	resultlist, errorlist := qparallel.NMap(len(rfiles), -1, fn)
 	var changed []string
-	for i, r := range resultlist {
-		src := files[i]
+	for i, dst := range resultlist {
+		src := rfiles[i]
 		if errorlist[i] != nil {
 			e := &qerror.QError{
-				Ref:  []string{"fs.replace"},
+				Ref:  []string{"fs.rename"},
 				File: src,
 				Msg:  []string{errorlist[i].Error()},
 			}
 			errs = append(errs, e)
 			continue
 		}
-		if r.(bool) {
-			changed = append(changed, src)
-		}
+		changed = append(changed, dst.(string))
 	}
 
 	msg := make(map[string][]string)
-	msg["replaced"] = changed
+	msg["renamed"] = changed
 	if len(errs) == 0 {
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	} else {

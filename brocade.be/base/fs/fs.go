@@ -470,6 +470,78 @@ func CopyFile(src, dst, pathmode string, keepmtime bool) (err error) {
 	return
 }
 
+// CopyMeta owner, group, permissions from src to dst
+func CopyMeta(src string, dst string, keepmtime bool) (err error) {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
+
+	si, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	di, err := os.Stat(dst)
+	if err != nil {
+		return err
+	}
+
+	iss := IsDir(src)
+	isd := IsDir(dst)
+
+	if iss && !isd {
+		return fmt.Errorf("`%s` is a directory, `%s` is not", src, dst)
+	}
+
+	if !iss && isd {
+		return fmt.Errorf("`%s` is a directory, `%s` is not", dst, src)
+	}
+
+	var suid int
+	var sgid int
+	var duid int
+	var dgid int
+
+	if runtime.GOOS != "windows" {
+		if stat, ok := si.Sys().(*syscall.Stat_t); ok {
+			suid = int(stat.Uid)
+			sgid = int(stat.Gid)
+			if err != nil {
+				return
+			}
+		}
+		if stat, ok := di.Sys().(*syscall.Stat_t); ok {
+			duid = int(stat.Uid)
+			dgid = int(stat.Gid)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	if suid != duid || sgid != dgid {
+		err = os.Chown(dst, suid, sgid)
+		if err != nil {
+			return
+		}
+	}
+	fms := si.Mode().Perm()
+	fmd := si.Mode().Perm()
+
+	if fms == fmd {
+		return nil
+	}
+
+	err = os.Chmod(dst, fms)
+
+	if keepmtime {
+		mtime := si.ModTime()
+		atime := time.Now()
+		err = os.Chtimes(dst, atime, mtime)
+	}
+
+	return
+
+}
+
 func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error) {
 	src = filepath.Clean(src)
 	dst = filepath.Clean(dst)
@@ -478,6 +550,7 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 	if err != nil {
 		return err
 	}
+
 	if !si.IsDir() {
 		return fmt.Errorf("source is not a directory")
 	}
@@ -501,15 +574,9 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 		}
 	}
 	if pathmode == "=" {
-		if runtime.GOOS != "windows" {
-			if stat, ok := si.Sys().(*syscall.Stat_t); ok {
-				uid := int(stat.Uid)
-				gid := int(stat.Gid)
-				err = os.Chown(dst, uid, gid)
-				if err != nil {
-					return
-				}
-			}
+		err = CopyMeta(src, dst, false)
+		if err != nil {
+			return
 		}
 	}
 	if keepmtime {

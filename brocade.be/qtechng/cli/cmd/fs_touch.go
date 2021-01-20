@@ -83,7 +83,7 @@ func fsTouch(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 		msg := make(map[string][]string)
-		msg["files"] = files
+		msg["touched"] = files
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 		return nil
 	}

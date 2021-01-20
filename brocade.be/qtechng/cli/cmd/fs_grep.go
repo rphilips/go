@@ -122,7 +122,7 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 		msg := make(map[string][]string)
-		msg["files"] = files
+		msg["grepped"] = files
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 		return nil
 	}
@@ -194,7 +194,7 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 	}
 
 	msg := make(map[string][]string)
-	msg["grep"] = grep
+	msg["grepped"] = grep
 	if len(errs) == 0 {
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	} else {

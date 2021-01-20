@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 	"path"
-	"regexp"
 	"strings"
+	"unicode"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
@@ -16,52 +16,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var fsReplaceCmd = &cobra.Command{
-	Use:   "replace",
-	Short: "replaces a string to another string in files",
-	Long: `First argument is the string to search for, the second argument is the replacement.
-Replacement is done line per line.
-Take care: replacement is done over binary files as well!
-The other arguments are filenames or directory names. 
+var fsRStripCmd = &cobra.Command{
+	Use:   "rstrip",
+	Short: "rstrips lines files",
+	Long: `Each line in the files is right-stripped and a end-of-line is added
+Default end-of-line conventions is UNIX-style,
+The arguments are filenames or directory names. 
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs replace cwd=../catalografie`,
-	RunE:    fsReplace,
+	Example: `qtechng fs rstrip cwd=../catalografie`,
+	RunE:    fsRStrip,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
+// Fwineol windows end-of-line
+var Fwineol bool
+
 func init() {
-	fsReplaceCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsReplaceCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
-	fsReplaceCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
-	fsCmd.AddCommand(fsReplaceCmd)
+	fsRStripCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsRStripCmd.Flags().BoolVar(&Fwineol, "wineol", false, "Apply MS-Windows end-of-line convention")
+	fsRStripCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsCmd.AddCommand(fsRStripCmd)
 }
 
-func fsReplace(cmd *cobra.Command, args []string) error {
+func fsRStrip(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	ask := false
-	if len(args) == 0 {
-		ask = true
-		fmt.Print("Enter search string     : ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			return nil
-		}
-		args = append(args, text)
-	}
-	if len(args) == 1 {
-		ask = true
-		fmt.Print("Enter replacement string: ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		args = append(args, text)
-	}
 
-	if len(args) == 2 {
+	if len(args) == 0 {
 		ask = true
 		for {
 			fmt.Print("File/directory          : ")
@@ -76,15 +61,15 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 	}
-	if ask && !Fregexp {
-		fmt.Print("Regexp ?                : <n>")
+	if ask && !Fwineol {
+		fmt.Print("Windows end-of-line ?         : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
 			text = "n"
 		}
 		if strings.ContainsAny(text, "jJyY1tT") {
-			Fregexp = true
+			Fwineol = true
 		}
 	}
 
@@ -112,18 +97,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	replace := []byte(args[1])
-	needle := []byte(args[0])
-	sneedle := args[0]
-	var rneedle *regexp.Regexp
-	var err error
-	files := make([]string, 0)
-	if Fregexp {
-		rneedle, err = regexp.Compile(args[0])
-	}
-	if err == nil {
-		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern)
-	}
+	files, err := glob(Fcwd, args, Frecurse, Fpattern)
 
 	if len(files) == 0 {
 		if err != nil {
@@ -131,49 +105,21 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 		msg := make(map[string][]string)
-		msg["replaced"] = files
+		msg["rstripped"] = files
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 		return nil
 	}
 
+	eol := []byte("\n")
+	if Fwineol {
+		eol = []byte("\r\n")
+	}
 	fn := func(n int) (interface{}, error) {
 
 		src := files[n]
-		in, err := os.Open(src)
-		if err != nil {
-			return false, err
-		}
-		input := bufio.NewReader(in)
-		defer in.Close()
-
-		ok := false
-		for {
-			// read a chunk
-			buf, err := input.ReadBytes(byte('\n'))
-			if err != nil && err != io.EOF {
-				return false, err
-			}
-			if !Fregexp {
-				if bytes.Contains(buf, needle) {
-					ok = true
-				}
-			} else {
-				ok, _ = regexp.Match(sneedle, buf)
-			}
-			if ok {
-				break
-			}
-			if err != nil {
-				break
-			}
-		}
-		if !ok {
-			return false, nil
-		}
-		in.Close()
 		// make a copy of the file
 		basename := path.Base(src)
-		tmpfile, err := qfs.TempFile("", "fs-replace."+basename+".")
+		tmpfile, err := qfs.TempFile("", "fs-rstrip."+basename+".")
 		if err != nil {
 			return false, err
 		}
@@ -181,11 +127,11 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return false, err
 		}
-		in, err = os.Open(tmpfile)
+		in, err := os.Open(tmpfile)
 		if err != nil {
 			return false, err
 		}
-		input = bufio.NewReader(in)
+		input := bufio.NewReader(in)
 		defer in.Close()
 
 		// open output file
@@ -199,27 +145,46 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 			}
 		}()
 		var rbuf []byte
+		ok := false
 		for {
 			// read a chunk
 			buf, err := input.ReadBytes(byte('\n'))
 			if err != nil && err != io.EOF {
 				return false, err
 			}
-			if !Fregexp {
-				rbuf = bytes.ReplaceAll(buf, needle, replace)
-			} else {
-				rbuf = rneedle.ReplaceAll(buf, replace)
+			if err == io.EOF {
+				if len(buf) == 0 {
+					break
+				}
+				length := len(buf)
+				buf = bytes.TrimRightFunc(buf, unicode.IsSpace)
+				if len(buf) != length {
+					ok = true
+				}
+				_, e := fo.Write(buf)
+				if e != nil {
+					return false, e
+				}
+				return ok, nil
+			}
+
+			eolok := bytes.HasSuffix(buf, eol)
+			if !eolok {
+				ok = true
+			}
+			length := len(buf)
+			buf = bytes.TrimRightFunc(buf, unicode.IsSpace)
+			buf = append(buf, eol...)
+			if len(buf) != length {
+				ok = true
 			}
 			_, e := fo.Write(rbuf)
 			if e != nil {
 				return false, e
 			}
-			if err != nil {
-				break
-			}
 		}
 		qfs.Rmpath((tmpfile))
-		return true, nil
+		return ok, nil
 	}
 
 	resultlist, errorlist := qparallel.NMap(len(files), -1, fn)
@@ -229,7 +194,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 		src := files[i]
 		if errorlist[i] != nil {
 			e := &qerror.QError{
-				Ref:  []string{"fs.replace"},
+				Ref:  []string{"fs.rstrip"},
 				File: src,
 				Msg:  []string{errorlist[i].Error()},
 			}
@@ -242,7 +207,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 	}
 
 	msg := make(map[string][]string)
-	msg["replaced"] = changed
+	msg["rstripped"] = changed
 	if len(errs) == 0 {
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	} else {
