@@ -245,7 +245,7 @@ func storeRep(payload *qclient.Payload) (pcargo *qclient.Cargo) {
 			return blob, nil
 		}
 
-		results, errs := qsource.StoreList(version, qpaths, fmeta, fdata)
+		results, errs := qsource.StoreList("install", version, qpaths, fmeta, fdata)
 		if errs != nil {
 			errlist = append(errlist, errs)
 		}

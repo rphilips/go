@@ -657,3 +657,26 @@ func (query *Query) Run() []*Source {
 	}
 	return sources
 }
+
+// RunObject search for sources fitting the query
+func (query *Query) RunObject() []*Source {
+	query.harmonised = true
+	// objs := query.Patterns
+	// release, err := qserver.Release{}.New(query.Release, true)
+	// if err != nil {
+	// 	return nil
+	// }
+	// objects := make([]*qobject.Object, len(objs))
+
+	// for i, obj := range objs {
+	// 	prefix := strings.SplitN(obj, "_", 2)[0]
+	// 	switch prefix {
+	// 	case "l4":
+	// 		objects[i] = &Lgcode
+
+	// 	}
+
+	// }
+
+	return nil
+}

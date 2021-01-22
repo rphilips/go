@@ -17,7 +17,6 @@ import (
 	qssh "brocade.be/base/ssh"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
-	qinstall "brocade.be/qtechng/lib/install"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qsource "brocade.be/qtechng/lib/source"
 	qutil "brocade.be/qtechng/lib/util"
@@ -122,9 +121,115 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 	return
 }
 
+func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
+
+	squery := qsource.SQuery{
+		Release:  Fversion,
+		Patterns: args,
+	}
+	Fpayload = &qclient.Payload{
+		ID:     "Once",
+		UID:    FUID,
+		CMD:    "qtechng",
+		Origin: QtechType,
+		Args:   os.Args[1:],
+		Query:  squery,
+	}
+	pcargo = &qclient.Cargo{}
+	if !strings.ContainsRune(QtechType, 'B') && !strings.ContainsRune(QtechType, 'P') {
+		whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
+		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
+		if err != nil {
+			return pcargo, fmt.Errorf("cmd/tools/fetchObject/1:\n%s\n====\n%s", err.Error(), catchErr)
+		}
+		if catchErr.Len() != 0 {
+			return pcargo, fmt.Errorf("cmd/tools/fetchObject/2:\n%s", catchErr)
+		}
+		dec := gob.NewDecoder(catchOut)
+		pcargo = &qclient.Cargo{}
+		for {
+			if err := dec.Decode(pcargo); err == io.EOF {
+				break
+			} else if err != nil {
+				return pcargo, fmt.Errorf("cmd/tools/fetchObject/3:\n%s", err.Error())
+			}
+		}
+	}
+	return
+}
+
 func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
 	query := ppayload.Query.Copy()
 	psources := query.Run()
+	paths := make([]string, len(psources))
+	for i, ps := range psources {
+		paths[i] = ps.String()
+	}
+	bodies := make([][]byte, 0)
+	var errs error
+	if withcontent {
+		bodies, _, errs = qsource.FetchList(query.Release, paths)
+	}
+	buffer := new(bytes.Buffer)
+	transports := make([]qclient.Transport, len(paths))
+
+	for i, qpath := range paths {
+		locfile := qclient.LocalFile{}
+		pmeta, err := qmeta.Meta{}.New(query.Release, qpath)
+		digest := "?"
+		if err == nil {
+			digest = pmeta.Digest
+		}
+		psource := psources[i]
+		locfile.Release = query.Release
+		locfile.QPath = qpath
+		locfile.Project = psource.Project().String()
+		locfile.Digest = digest
+		locfile.Cu = pmeta.Cu
+		locfile.Mu = pmeta.Mu
+		locfile.Ct = pmeta.Ct
+		locfile.Mt = pmeta.Mt
+		transports[i].LocFile = locfile
+		if withcontent && bodies[i] != nil {
+			transports[i].Body = bodies[i]
+		}
+		if batchid != "" && strings.HasPrefix(batchid, "m:") {
+			psource.ToMumps(batchid[2:], buffer)
+			if !strings.HasSuffix(psource.String(), ".m") {
+				qsource.Mend(batchid[2:], buffer)
+			}
+		}
+		if batchid != "" && strings.HasPrefix(batchid, "r:") {
+			err := psource.Resolve(batchid, nil, nil, buffer)
+			pcargo.Error = err
+		}
+
+	}
+	if batchid != "" {
+		pcargo.Buffer = *buffer
+	}
+	pcargo.Transports = transports
+	if withcontent {
+		switch err := errs.(type) {
+		case qerror.ErrorSlice:
+			if len(err) == 0 {
+				pcargo.Error = nil
+			} else {
+				pcargo.Error = err
+			}
+		default:
+			if err == nil {
+				pcargo.Error = nil
+			} else {
+				pcargo.Error = err
+			}
+		}
+	}
+}
+
+func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
+	query := ppayload.Query.Copy()
+	psources := query.RunObject()
 	paths := make([]string, len(psources))
 	for i, ps := range psources {
 		paths[i] = ps.String()
@@ -197,7 +302,7 @@ func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 	if batchid == "" {
 		batchid = "install"
 	}
-	errs := qinstall.Install(batchid, psources, true)
+	errs := qsource.Install(batchid, psources, true)
 	switch err := errs.(type) {
 	case qerror.ErrorSlice:
 		if len(err) == 0 {

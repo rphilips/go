@@ -8,7 +8,6 @@ import (
 
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
-	qinstall "brocade.be/qtechng/lib/install"
 	qserver "brocade.be/qtechng/lib/server"
 	qsource "brocade.be/qtechng/lib/source"
 	qsync "brocade.be/qtechng/lib/sync"
@@ -60,7 +59,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qinstall.Install(Finstallref, sources, false)
+	err := qsource.Install(Finstallref, sources, false)
 
 	if err != nil {
 		if err != nil {

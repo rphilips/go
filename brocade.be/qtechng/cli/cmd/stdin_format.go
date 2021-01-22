@@ -27,7 +27,6 @@ The argument specifies the type of file: b | d | i | l | m | x
 	RunE: stdinFormat,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
-		"with-qtechtype": "BW",
 	},
 }
 

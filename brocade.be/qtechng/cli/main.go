@@ -15,11 +15,13 @@
 package main
 
 import (
-	"brocade.be/qtechng/cli/cmd"
+	"encoding/json"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"brocade.be/qtechng/cli/cmd"
 
 	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
@@ -31,6 +33,13 @@ var buildHost string
 
 func main() {
 
+	if len(os.Args) > 4 && os.Args[1] == "fs" && os.Args[2] == "run" && os.Args[4] != "" {
+		x, e := json.Marshal(os.Args[4:])
+		if e == nil {
+			os.Args[4] = string(x)
+			os.Args = os.Args[:5]
+		}
+	}
 	var payload *qclient.Payload
 	if len(os.Args) == 1 {
 		fi, _ := os.Stdin.Stat()

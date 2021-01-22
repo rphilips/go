@@ -1,4 +1,4 @@
-package install
+package source
 
 import (
 	"bytes"
@@ -18,7 +18,6 @@ import (
 	qobject "brocade.be/qtechng/lib/object"
 	qproject "brocade.be/qtechng/lib/project"
 	qserver "brocade.be/qtechng/lib/server"
-	qsource "brocade.be/qtechng/lib/source"
 	qsync "brocade.be/qtechng/lib/sync"
 	qutil "brocade.be/qtechng/lib/util"
 )
@@ -28,7 +27,7 @@ import (
 // - a project is installed
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
-func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) {
+func Install(batchid string, sources []*Source, rsync bool) (err error) {
 	if len(sources) == 0 {
 		return nil
 	}
@@ -49,7 +48,7 @@ func Install(batchid string, sources []*qsource.Source, rsync bool) (err error) 
 	// Find all projects
 	mproj := make(map[string]*qproject.Project)
 	msources := make(map[string]map[string][]string)
-	qsources := make(map[string]*qsource.Source)
+	qsources := make(map[string]*Source)
 	for _, s := range sources {
 		qp := s.String()
 		if s.Release().String() != r {
@@ -149,7 +148,7 @@ func RSync(r string) (changed []string, deleted []string, err error) {
 	return changed, deleted, err
 }
 
-func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
 
 	tmpdir, e := qfs.TempDir("", "qtechng."+batchid+".")
 	if e != nil {
@@ -160,7 +159,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 		errs = append(errs, e)
 		return
 	}
-	qtos := make(map[string]*qsource.Source)
+	qtos := make(map[string]*Source)
 	for q, v := range qsources {
 		qtos[q] = v
 	}
@@ -175,7 +174,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 		for _, qp := range qpaths {
 			_, ok := qtos[qp]
 			if !ok {
-				s, e := qsource.Source{}.New(r.String(), qp, true)
+				s, e := Source{}.New(r.String(), qp, true)
 				if e == nil {
 					qtos[qp] = s
 				}
@@ -203,7 +202,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 	return
 }
 
-func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*qsource.Source, tmpdir string) []error {
+func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Source, tmpdir string) []error {
 	done := make(map[string]bool)
 	where := make(map[string]string)
 	for _, qp := range qpaths {
@@ -234,7 +233,7 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*qsou
 		notreplace := qps.NotReplace()
 		objectmap := make(map[string]qobject.Object)
 		buf := new(bytes.Buffer)
-		_, err = qsource.ResolveText(env, content, "rilm", notreplace, objectmap, nil, buf, "")
+		_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, buf, "")
 		if err != nil {
 			return "", err
 		}
@@ -252,7 +251,7 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*qsou
 	return errorlist
 }
 
-func installInstallsource(tdir string, batchid string, inso *qsource.Source) (errs []error) {
+func installInstallsource(tdir string, batchid string, inso *Source) (errs []error) {
 	finso := inso.Path()
 	py := qutil.GetPy(finso)
 
@@ -268,7 +267,7 @@ func installInstallsource(tdir string, batchid string, inso *qsource.Source) (er
 	return
 }
 
-func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
 	for _, proj := range projs {
 		ps := proj.String()
 		repy := ps + "/release.py"
@@ -284,7 +283,7 @@ func installReleasefiles(batchid string, projs []*qproject.Project, qsources map
 	return
 }
 
-func installReleasesource(batchid string, reso *qsource.Source) (errs []error) {
+func installReleasesource(batchid string, reso *Source) (errs []error) {
 	freso := reso.Path()
 	py := qutil.GetPy(freso)
 	tdir := qregistry.Registry["scratch-dir"]
@@ -301,7 +300,7 @@ func installReleasesource(batchid string, reso *qsource.Source) (errs []error) {
 	return
 }
 
-func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
 	if mostype == "" {
 		return errs
@@ -320,7 +319,7 @@ func installMfiles(batchid string, projs []*qproject.Project, qsources map[strin
 	return
 }
 
-func installMsources(batchid string, files []string, qsources map[string]*qsource.Source) (errs []error) {
+func installMsources(batchid string, files []string, qsources map[string]*Source) (errs []error) {
 	roudir := qregistry.Registry["gtm-rou-dir"]
 	fn := func(n int) (interface{}, error) {
 		qp := files[n]
@@ -345,7 +344,7 @@ func installMsources(batchid string, files []string, qsources map[string]*qsourc
 	return
 }
 
-func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*qsource.Source, msources map[string]map[string][]string) (errs []error) {
+func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
 
 	for _, proj := range projs {
 		ps := proj.String()
@@ -368,7 +367,7 @@ func installAutofiles(batchid string, projs []*qproject.Project, qsources map[st
 
 }
 
-func installAutosources(batchid string, files []string, qsources map[string]*qsource.Source) (errs []error) {
+func installAutosources(batchid string, files []string, qsources map[string]*Source) (errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
 
 	if mostype == "" {

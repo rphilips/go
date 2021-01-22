@@ -493,7 +493,7 @@ func (source *Source) ToMumps(batchid string, buf *bytes.Buffer) {
 }
 
 // StoreTree installs a tree of projects
-func StoreTree(version string, basedir string, fmeta func(string) qmeta.Meta) (results map[string]*qmeta.Meta, errs error) {
+func StoreTree(batchid string, version string, basedir string, fmeta func(string) qmeta.Meta) (results map[string]*qmeta.Meta, errs error) {
 	release, err := qserver.Release{}.New(version, true)
 	if err != nil {
 		return nil, err
@@ -578,14 +578,14 @@ func StoreTree(version string, basedir string, fmeta func(string) qmeta.Meta) (r
 		return blob, nil
 	}
 
-	results, errs = StoreList(version, sources, fmeta, fdata)
+	results, errs = StoreList(batchid, version, sources, fmeta, fdata)
 
 	return
 
 }
 
 // StoreList creates a list of projects.
-func StoreList(version string, paths []string, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
+func StoreList(batchid string, version string, paths []string, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
 	if len(paths) == 0 {
 		return
 	}
@@ -701,6 +701,26 @@ func StoreList(version string, paths []string, fmeta func(string) qmeta.Meta, fd
 	} else {
 		errs = qerror.ErrorSlice(errslice)
 	}
+
+	// installation
+
+	r := qserver.Canon(qregistry.Registry["brocade-release"])
+	if version != r && version != "" && version != "0.00" {
+		return
+	}
+	sources := make([]*Source, len(results))
+	i := 0
+	for qp := range results {
+		source, _ := Source{}.New(version, qp, true)
+		sources[i] = source
+		i++
+	}
+	e := Install(batchid, sources, true)
+	if e != nil {
+		errslice = append(errslice, e)
+		errs = qerror.ErrorSlice(errslice)
+	}
+
 	return
 }
 

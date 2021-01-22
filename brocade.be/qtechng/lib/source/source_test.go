@@ -580,7 +580,7 @@ func TestSourceTree01(t *testing.T) {
 
 	fmeta := func(p string) qmeta.Meta { return qmeta.Meta{} }
 	basedir := "/media/rphilips/SAN2/brocade"
-	_, errs := StoreTree(r, basedir, fmeta)
+	_, errs := StoreTree("tree", r, basedir, fmeta)
 
 	if errs != nil {
 		t.Errorf(errs.Error())

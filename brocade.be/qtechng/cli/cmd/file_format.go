@@ -46,7 +46,6 @@ With only one argument and no '--inplace' flag, the result is written on stdout.
 	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
-		"with-qtechtype": "BW",
 	},
 }
 
