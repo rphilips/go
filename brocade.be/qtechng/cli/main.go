@@ -33,7 +33,7 @@ var buildHost string
 
 func main() {
 
-	if len(os.Args) > 4 && os.Args[1] == "fs" && os.Args[2] == "run" && os.Args[4] != "" {
+	if len(os.Args) > 4 && os.Args[1] == "lock" && os.Args[2] == "run" && os.Args[4] != "" {
 		x, e := json.Marshal(os.Args[4:])
 		if e == nil {
 			os.Args[4] = string(x)

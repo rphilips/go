@@ -3,38 +3,42 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path"
+	"strconv"
 	"syscall"
+	"time"
 
 	qregistry "brocade.be/base/registry"
+	qerror "brocade.be/qtechng/lib/error"
 	"github.com/spf13/cobra"
 )
 
-var fsRunCmd = &cobra.Command{
+var lockRunCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Runs an executable",
 	Long: `First argument is the name of a lock. 
 If this lock is set, the program does not run.
 If it is not set, the program does run and sets the lock
-and cleans afterwards.
+and cleans up afterwards.
 `,
 	Args:    cobra.ExactArgs(2),
-	Example: `qtechng fs run mylock docpublish -rebuild`,
-	Run:     fsRun,
+	Example: `qtechng lock run mylock docpublish -rebuild`,
+	Run:     lockRun,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
 func init() {
-	fsCmd.AddCommand(fsRunCmd)
+	lockCmd.AddCommand(lockRunCmd)
 }
 
-func fsRun(cmd *cobra.Command, args []string) {
+func lockRun(cmd *cobra.Command, args []string) {
 	lock := args[0]
 	exe := args[1]
 
@@ -49,21 +53,31 @@ func fsRun(cmd *cobra.Command, args []string) {
 		lockdir = qregistry.Registry["scratch-dir"]
 	}
 	if lockdir == "" {
-		log.Fatalln("Cannot find lock-dir in registry")
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot find lock-dir in registry"))
+		return
 	}
 
 	locker := path.Join(lockdir, "brocade_"+lock)
 	err := os.Mkdir(locker, os.ModePerm)
 	if err != nil {
-		log.Fatalln("Cannot create", locker)
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot create lock: %s", err.Error()))
+		return
 	}
-	unlock := func() {
-		os.Rename(locker, locker+".bak")
-		os.Remove(locker + ".bak")
+	unlock := func(cmd *exec.Cmd, code int) {
+		rand.Seed(time.Now().UnixNano())
+		rnd := strconv.FormatInt(rand.Int63n(100000000), 10)
+		tempdir := locker + "." + rnd
+		os.Rename(locker, tempdir)
+		os.Remove(tempdir)
+		if cmd != nil {
+			cmd.Process.Kill()
+			return
+		}
+		os.Exit(code)
 	}
 
 	rcmd := exec.Command(argums[0], argums[1:]...)
-	go signalWatcher(ctx, rcmd, unlock)
+	go signalWatcher(ctx, rcmd, 1, unlock)
 	rcmd.Stdin = os.Stdin
 	rcmd.Stdout = os.Stdout
 	rcmd.Stderr = os.Stderr
@@ -71,21 +85,22 @@ func fsRun(cmd *cobra.Command, args []string) {
 	rcmd.SysProcAttr = &syscall.SysProcAttr{}
 	rcmd.SysProcAttr.Setpgid = true
 	err = rcmd.Run()
-	unlock()
+	unlock(nil, 0)
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				os.Exit(status.ExitStatus())
 			}
 		}
-		log.Fatalln("Unable to run command witch lock", args)
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Unable to run command"))
+		return
 	}
 }
 
-func signalWatcher(ctx context.Context, cmd *exec.Cmd, unlock func()) {
+func signalWatcher(ctx context.Context, cmd *exec.Cmd, code int, unlock func(cmd *exec.Cmd, code int)) {
 	signalChan := make(chan os.Signal, 100)
 	// Listen for all signals
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	<-signalChan
-	unlock()
+	unlock(cmd, code)
 }
