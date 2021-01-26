@@ -23,8 +23,8 @@ var lockRunCmd = &cobra.Command{
 	Short: "Runs an executable",
 	Long: `First argument is the name of a lock. 
 If this lock is set, the program does not run.
-If it is not set, the program does run and sets the lock
-and cleans up afterwards.
+If it is not set, the lock is set and the program runs.
+Afterwards, the lock is deleted.
 `,
 	Args:    cobra.ExactArgs(2),
 	Example: `qtechng lock run mylock docpublish -rebuild`,
@@ -92,7 +92,7 @@ func lockRun(cmd *cobra.Command, args []string) {
 				os.Exit(status.ExitStatus())
 			}
 		}
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Unable to run command"))
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Unable to run command succesfully"))
 		return
 	}
 }
