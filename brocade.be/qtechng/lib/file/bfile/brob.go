@@ -136,6 +136,11 @@ func (brob *Brob) Marshal() ([]byte, error) {
 	return json.MarshalIndent(brob, "", "    ")
 }
 
+// MarshalJSON of macro
+func (brob *Brob) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(brob, "", "    ")
+}
+
 // Unmarshal of macro
 func (brob *Brob) Unmarshal(blob []byte) error {
 	return json.Unmarshal(blob, brob)

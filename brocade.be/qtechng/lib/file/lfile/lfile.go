@@ -2,7 +2,7 @@ package lfile
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	qerror "brocade.be/qtechng/lib/error"
@@ -178,7 +178,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	if blob == nil {
 		var err1 error
-		blob, err1 = ioutil.ReadFile(fname)
+		blob, err1 = os.ReadFile(fname)
 		if err1 != nil {
 			e := &qerror.QError{
 				Ref:    []string{"lfile.format.read"},

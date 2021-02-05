@@ -87,6 +87,11 @@ func (lgcode *Lgcode) Marshal() ([]byte, error) {
 	return json.MarshalIndent(lgcode, "", "    ")
 }
 
+// MarshalJSON of lgcode
+func (lgcode *Lgcode) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(lgcode, "", "    ")
+}
+
 // Unmarshal of lgcode
 func (lgcode *Lgcode) Unmarshal(blob []byte) error {
 	return json.Unmarshal(blob, lgcode)

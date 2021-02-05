@@ -75,6 +75,11 @@ func (include *Include) Marshal() ([]byte, error) {
 	return json.MarshalIndent(include, "", "    ")
 }
 
+// MarshalJSON of include
+func (include *Include) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(include, "", "    ")
+}
+
 // Unmarshal of include
 func (include *Include) Unmarshal(blob []byte) error {
 	return json.Unmarshal(blob, include)

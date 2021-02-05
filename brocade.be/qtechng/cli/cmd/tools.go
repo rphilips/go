@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -124,8 +125,8 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 
 	squery := qsource.SQuery{
-		Release:  Fversion,
-		Patterns: args,
+		Release: Fversion,
+		Objects: args,
 	}
 	Fpayload = &qclient.Payload{
 		ID:     "Once",
@@ -227,73 +228,13 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 	}
 }
 
-func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
+func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, batchid string) {
 	query := ppayload.Query.Copy()
-	psources := query.RunObject()
-	paths := make([]string, len(psources))
-	for i, ps := range psources {
-		paths[i] = ps.String()
-	}
-	bodies := make([][]byte, 0)
-	var errs error
-	if withcontent {
-		bodies, _, errs = qsource.FetchList(query.Release, paths)
-	}
-	buffer := new(bytes.Buffer)
-	transports := make([]qclient.Transport, len(paths))
-
-	for i, qpath := range paths {
-		locfile := qclient.LocalFile{}
-		pmeta, err := qmeta.Meta{}.New(query.Release, qpath)
-		digest := "?"
-		if err == nil {
-			digest = pmeta.Digest
-		}
-		psource := psources[i]
-		locfile.Release = query.Release
-		locfile.QPath = qpath
-		locfile.Project = psource.Project().String()
-		locfile.Digest = digest
-		locfile.Cu = pmeta.Cu
-		locfile.Mu = pmeta.Mu
-		locfile.Ct = pmeta.Ct
-		locfile.Mt = pmeta.Mt
-		transports[i].LocFile = locfile
-		if withcontent && bodies[i] != nil {
-			transports[i].Body = bodies[i]
-		}
-		if batchid != "" && strings.HasPrefix(batchid, "m:") {
-			psource.ToMumps(batchid[2:], buffer)
-			if !strings.HasSuffix(psource.String(), ".m") {
-				qsource.Mend(batchid[2:], buffer)
-			}
-		}
-		if batchid != "" && strings.HasPrefix(batchid, "r:") {
-			err := psource.Resolve(batchid, nil, nil, buffer)
-			pcargo.Error = err
-		}
-
-	}
-	if batchid != "" {
-		pcargo.Buffer = *buffer
-	}
-	pcargo.Transports = transports
-	if withcontent {
-		switch err := errs.(type) {
-		case qerror.ErrorSlice:
-			if len(err) == 0 {
-				pcargo.Error = nil
-			} else {
-				pcargo.Error = err
-			}
-		default:
-			if err == nil {
-				pcargo.Error = nil
-			} else {
-				pcargo.Error = err
-			}
-		}
-	}
+	pubermap := query.RunObject()
+	b, _ := json.Marshal(pubermap)
+	buffer := bytes.NewBuffer(b)
+	pcargo.Buffer = *buffer
+	return
 }
 
 func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
@@ -371,6 +312,10 @@ func listTransport(pcargo *qclient.Cargo) []lister {
 		}
 	}
 	return result
+}
+
+func listObjectTransport(pcargo *qclient.Cargo) bytes.Buffer {
+	return pcargo.Buffer
 }
 
 func storeTransport() ([]storer, []error) {

@@ -23,12 +23,152 @@ type Object interface {
 	Lineno() string
 	SetLineno(lineno string)
 	Marshal() ([]byte, error)
+	MarshalJSON() ([]byte, error)
 	Unmarshal(blob []byte) error
 	Loads(blob []byte) error
 	Lint() qerror.ErrorSlice
 	Format() string
 	Deps() []byte
 	Replacer(env map[string]string, original string) string
+}
+
+// Uber object
+type Uber struct {
+	ID      string `json:"id"`     // Identificatie
+	Body    []byte `json:"meta"`   // Meta
+	Source  string `json:"source"` // Editfile
+	Line    string `json:"-"`      // Lijnnummer
+	Version string `json:"-"`      // Version
+}
+
+// String
+func (uber *Uber) String() string {
+	return uber.ID
+}
+
+// Name of uber
+func (uber *Uber) Name() string {
+	return uber.ID
+}
+
+// SetName of uber
+func (uber *Uber) SetName(id string) {
+	uber.ID = id
+}
+
+// Type of uber
+func (uber *Uber) Type() string {
+	x := uber.String()
+	k := strings.Index(x, "_")
+	if k < 1 {
+		return ""
+	}
+	return x[:k]
+}
+
+// Release of uber
+func (uber *Uber) Release() string {
+	return uber.Version
+}
+
+// SetRelease of uber
+func (uber *Uber) SetRelease(version string) {
+	uber.Version = version
+}
+
+// EditFile of uber
+func (uber *Uber) EditFile() string {
+	return uber.Source
+}
+
+// SetEditFile of uber
+func (uber *Uber) SetEditFile(source string) {
+	uber.Source = source
+}
+
+// Lineno of macro
+func (uber *Uber) Lineno() string {
+	return uber.Line
+}
+
+// SetLineno of macro
+func (uber *Uber) SetLineno(lineno string) {
+	uber.Line = lineno
+}
+
+// Marshal of uber
+func (uber *Uber) Marshal() ([]byte, error) {
+	return uber.MarshalJSON()
+}
+
+// MarshalJSON of uber
+func (uber *Uber) MarshalJSON() ([]byte, error) {
+	v := new(interface{})
+	json.Unmarshal(uber.Body, v)
+	vv := make(map[string]interface{})
+	vv["definition"] = v
+	return json.MarshalIndent(vv, "", "    ")
+}
+
+// Unmarshal of uber
+func (uber *Uber) Unmarshal(blob []byte) error {
+	return nil
+}
+
+// Loads from blob
+func (uber *Uber) Loads(blob []byte) error {
+	return nil
+}
+
+// Deps fake
+func (uber *Uber) Deps() []byte {
+	return nil
+}
+
+// Format fake
+func (uber *Uber) Format() string {
+	return ""
+}
+
+// Lint fake
+func (uber *Uber) Lint() (errslice qerror.ErrorSlice) {
+	return nil
+}
+
+// Replacer fake
+func (uber *Uber) Replacer(env map[string]string, original string) string {
+	return ""
+}
+
+// MakeObjectList makes a list of Objects starting with string
+func MakeObjectList(r string, objstr []string) (objectlist []Object) {
+
+	for _, obj := range objstr {
+		prefix := ""
+		code := ""
+		k := strings.Index(obj, "_")
+		if k > 1 {
+			prefix = obj[:k]
+			code = obj[k+1:]
+		}
+		if prefix == "l4" {
+			if strings.Count(code, "_") == 1 {
+				parts := strings.SplitN(code, "_", 2)
+				obj = "l4_" + parts[1]
+			}
+		}
+		uber := new(Uber)
+		uber.SetName(obj)
+		uber.SetRelease(r)
+		objectlist = append(objectlist, uber)
+	}
+	return
+}
+
+// InfoObjectList maak een structuur aan met object informatie
+func InfoObjectList(r string, objstr []string) (objectmap map[string]Object) {
+	uberlist := MakeObjectList(r, objstr)
+	return FetchList(uberlist)
 }
 
 // SourceList retrieves the source of a list
@@ -132,7 +272,6 @@ func Fetch(object Object) (err error) {
 	dirname := "/" + h[0:2] + "/" + h[2:]
 	fname := dirname + "/obj.json"
 	content, erro := fs.ReadFile(fname)
-
 	if erro != nil {
 		e := &qerror.QError{
 			Ref:     []string{"object.fetch.file"},
@@ -144,6 +283,12 @@ func Fetch(object Object) (err error) {
 			Msg:     []string{"cannot fetch object"},
 		}
 		return qerror.QErrorTune(erro, e)
+	}
+	switch v := object.(type) {
+	case *Uber:
+		v.Body = content
+	default:
+		erro = object.Unmarshal(content)
 	}
 	erro = object.Unmarshal(content)
 	if erro != nil {

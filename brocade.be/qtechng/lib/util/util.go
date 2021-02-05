@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -201,7 +200,7 @@ func Comment(cmt interface{}) string {
 // NoUTF8 zoekt naar lijnen die geen geldige UTF-8 bevatten: geeft een slice van [row, col] terug (en een errorr)
 func NoUTF8(reader io.Reader) (body []byte, result [][2]int, err error) {
 	repl := rune(65533)
-	body, err = ioutil.ReadAll(reader)
+	body, err = io.ReadAll(reader)
 	result = make([][2]int, 0)
 	if err != nil {
 		return
@@ -311,13 +310,13 @@ func MakeBytes(data interface{}) (b []byte, err error) {
 	case *string:
 		return []byte(*v), nil
 	case bytes.Buffer:
-		b, err = ioutil.ReadAll(&v)
+		b, err = io.ReadAll(&v)
 		return
 	case *bytes.Buffer:
-		b, err = ioutil.ReadAll(v)
+		b, err = io.ReadAll(v)
 		return
 	case io.Reader:
-		b, err = ioutil.ReadAll(v)
+		b, err = io.ReadAll(v)
 		return
 	default:
 		b, err := json.MarshalIndent(data, "", "    ")

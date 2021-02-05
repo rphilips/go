@@ -1,7 +1,7 @@
 package client
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -93,7 +93,7 @@ func Pack(cwd string, files []string, release string, qpattern string, force boo
 			}
 		}
 
-		body, err := ioutil.ReadFile(file)
+		body, err := os.ReadFile(file)
 
 		if err != nil {
 			err := &qerror.QError{

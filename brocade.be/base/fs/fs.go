@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"net/url"
 	"os"
 	"os/user"
@@ -208,8 +208,7 @@ func Store(fname string, data interface{}, pathmode string) (err error) {
 }
 
 // Fetch returns the contents of a file as a slice of bytes
-
-var Fetch = ioutil.ReadFile
+var Fetch = os.ReadFile
 
 // Mkdir makes a directory and sets the access
 func Mkdir(dirname string, pathmode string) (err error) {
@@ -364,7 +363,7 @@ func TempDir(dir string, prefix string) (name string, err error) {
 	if dir == "" {
 		dir = qregistry.Registry["scratch-dir"]
 	}
-	name, err = ioutil.TempDir(dir, prefix)
+	name, err = os.MkdirTemp(dir, prefix)
 	if err != nil {
 		err = SetPathmode(name, "tempdir")
 	}
@@ -376,7 +375,7 @@ func TempFile(dir, prefix string) (name string, err error) {
 	if dir == "" {
 		dir = qregistry.Registry["scratch-dir"]
 	}
-	f, err := ioutil.TempFile(dir, prefix)
+	f, err := os.CreateTemp(dir, prefix)
 
 	if err != nil {
 		return
@@ -585,12 +584,16 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 		err = os.Chtimes(dst, atime, mtime)
 	}
 
-	entries, err := ioutil.ReadDir(src)
+	entries, err := os.ReadDir(src)
 	if err != nil {
 		return
 	}
 
-	for _, entry := range entries {
+	for _, ery := range entries {
+		entry, e := ery.Info()
+		if e != nil {
+			continue
+		}
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
@@ -601,6 +604,7 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 			}
 		} else {
 			// Skip symlinks.
+
 			if entry.Mode()&os.ModeSymlink != 0 {
 				continue
 			}
@@ -614,66 +618,91 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 	return
 }
 
-// Find lists files matching one of a list of patterns on the basename
-func Find(root string, patterns []string, recurse bool) (paths []string, err error) {
-	if recurse {
-		err = filepath.Walk(root, func(p string, info os.FileInfo, e error) error {
-			if e != nil {
-				return e
-			}
-			ok := true
-			name := info.Name()
-			if len(patterns) != 0 {
-				ok = false
-				for _, pattern := range patterns {
-					ok, _ = path.Match(pattern, name)
-					if ok {
-						break
-					}
-				}
-			}
-			if !ok {
-				return nil
-			}
+// cleanGlobPath prepares path for glob matching.
+func cleanGlobPath(path string) string {
+	switch path {
+	case "":
+		return "."
+	default:
+		return path[0 : len(path)-1] // chop off trailing separator
+	}
+}
 
-			if info.Mode().IsRegular() {
-				paths = append(paths, p)
-			}
-			return nil
-		})
-	} else {
-		files, erro := ioutil.ReadDir(root)
-		if erro != nil {
-			err = erro
-			return
-		}
-		for _, file := range files {
-			name := file.Name()
-			ok := true
-			if len(patterns) != 0 {
-				ok = false
-				for _, pattern := range patterns {
-					ok, _ = path.Match(pattern, name)
-					if ok {
-						break
-					}
-				}
-			}
-			if !ok {
+// glob searches for files matching pattern in the directory dir
+// and appends them to matches, returning the updated slice.
+// If the directory cannot be opened, glob returns the existing matches.
+// New matches are added in lexicographical order.
+func glob(fsys fs.FS, root string, dir string, patterns []string, matches []string, recurse bool) (m []string, e error) {
+	m = matches
+	infos, err := fs.ReadDir(fsys, dir)
+	if err != nil {
+		return // ignore I/O error
+	}
+
+	for _, info := range infos {
+		n := info.Name()
+		if !info.IsDir() {
+			if len(patterns) == 0 {
+				m = append(m, path.Join(root, dir, n))
 				continue
 			}
-
-			p := filepath.Join(root, name)
-			info, e := os.Stat(p)
-			if e != nil {
-				return
+			for _, pattern := range patterns {
+				matched, err := path.Match(pattern, n)
+				if err != nil {
+					return m, err
+				}
+				if matched {
+					m = append(m, path.Join(root, dir, n))
+					break
+				}
 			}
-			if info.Mode().IsRegular() {
-				paths = append(paths, p)
-			}
+			continue
 		}
+		if !recurse {
+			continue
+		}
+		newdir := dir + "/" + n
+		if dir == "" || dir == "." {
+			newdir = n
+		}
+		m, err = glob(fsys, root, newdir, patterns, m, true)
+		if err != nil {
+			return m, err
+		}
+
 	}
 	return
+}
+
+// hasMeta reports whether path contains any of the magic characters
+// recognized by path.Match.
+func hasMeta(path string) bool {
+	for i := 0; i < len(path); i++ {
+		c := path[i]
+		if c == '*' || c == '?' || c == '[' || runtime.GOOS == "windows" && c == '\\' {
+			return true
+		}
+	}
+	return false
+}
+
+// Find lists regular files matching one of a list of patterns on the basename
+//      if there are no patterns, all files are listed
+//      results start with root
+func Find(root string, patterns []string, recurse bool) (matches []string, err error) {
+	fsys := os.DirFS(root)
+	for _, pattern := range patterns {
+		if _, err := path.Match(pattern, ""); err != nil {
+			return nil, err
+		}
+		if !hasMeta(pattern) {
+			if _, err = fs.Stat(fsys, pattern); err != nil {
+				return nil, nil
+			}
+			return []string{pattern}, nil
+		}
+	}
+	return glob(fsys, root, ".", patterns, nil, recurse)
 }
 
 // AsyncWork works on all keys in a slice in parallel and returns a result (map indexed on key)
@@ -726,13 +755,17 @@ func AsyncWork(keys []string, fn func(key string) interface{}) (results map[stri
 
 // FilesDirs gets the regular files and dirs in directory
 func FilesDirs(dir string) (files []os.FileInfo, dirs []os.FileInfo, err error) {
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
 	files = make([]os.FileInfo, 0)
 	dirs = make([]os.FileInfo, 0)
-	for _, fi := range fis {
+	for _, f := range fis {
+		fi, e := f.Info()
+		if e != nil {
+			continue
+		}
 		if fi.Mode().IsDir() {
 			dirs = append(dirs, fi)
 			continue

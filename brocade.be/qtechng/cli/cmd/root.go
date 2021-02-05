@@ -17,6 +17,7 @@ import (
 
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qserver "brocade.be/qtechng/lib/server"
 	"github.com/spf13/cobra"
 	"github.com/spyzhov/ajson"
 )
@@ -469,6 +470,8 @@ func fillVersion() {
 		}
 	}
 	Fversion = qregistry.Registry["qtechng-version"]
+	Fversion = qserver.Canon(Fversion)
+
 	return
 }
 

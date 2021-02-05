@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -35,7 +35,7 @@ func stdinFormat(cmd *cobra.Command, args []string) error {
 	if !strings.HasPrefix(ext, ".") {
 		ext = "." + ext
 	}
-	data, err := ioutil.ReadAll(os.Stdin)
+	data, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return err
 	}

@@ -152,7 +152,7 @@ func (release Release) Init() (err error) {
 		fs.MkdirAll(dir, 0o770)
 	}
 
-	if !strings.ContainsRune(qtechType, 'B') || qregistry.Registry["qtechng-vc"] == "" {
+	if !strings.ContainsRune(qtechType, 'B') || qregistry.Registry["qtechng-git-enable"] == "1" {
 		return nil
 	}
 
@@ -169,7 +169,7 @@ hgext.highlight=
 [web]
 pygments_style = default`
 
-	backup := qregistry.Registry["qtechng-hg-backup"]
+	backup := qregistry.Registry["qtechng-git-backup"]
 	if backup != "" {
 		backup = strings.Replace(backup, "{version}", release.String(), -1)
 		data += "\n\n[paths]\ndefault-push = " + backup + "\n"
@@ -194,14 +194,23 @@ pygments_style = default`
 
 // Canon maakt een officiele string van de versie
 func Canon(r string) string {
-	if r == "" || r == "0.00" {
-		r = qregistry.Registry["brocade-release"]
+	br := qregistry.Registry["brocade-release"]
+	br = strings.TrimRight(br, " -_betaBETA")
+	rr := strings.TrimRight(r, " -_betaBETA")
+	qtechType := qregistry.Registry["qtechng-type"]
+	if strings.Contains(qtechType, "B") {
+		if rr == br {
+			return "0.00"
+		}
+		if rr == "" {
+			return "0.00"
+		}
+		return rr
 	}
-	r = strings.TrimRight(r, " -_betaBETA")
-	if r == "" || r == "0.00" {
-		r = qregistry.Registry["qtechng-version"]
+	if rr == "" || rr == "0.00" {
+		return br
 	}
-	return r
+	return rr
 }
 
 func fs(r string, readonly bool) func(s ...string) qvfs.QFs {

@@ -3,7 +3,6 @@ package source
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -571,7 +570,7 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 
 	fdata := func(p string) ([]byte, error) {
 		fname := path.Join(basedir, filepath.FromSlash(p[1:]))
-		blob, err := ioutil.ReadFile(fname)
+		blob, err := os.ReadFile(fname)
 		if err != nil {
 			blob = nil
 		}
@@ -586,6 +585,10 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 
 // StoreList creates a list of projects.
 func StoreList(batchid string, version string, paths []string, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
+	if batchid == "" {
+		batchid = "install"
+	}
+
 	if len(paths) == 0 {
 		return
 	}

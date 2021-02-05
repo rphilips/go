@@ -77,6 +77,11 @@ func (widget *Widget) Marshal() ([]byte, error) {
 	return json.MarshalIndent(widget, "", "    ")
 }
 
+// MarshalJSON of macro
+func (widget *Widget) MarshalJSON() ([]byte, error) {
+	return json.MarshalIndent(widget, "", "    ")
+}
+
 // Unmarshal of macro
 func (widget *Widget) Unmarshal(blob []byte) error {
 	return json.Unmarshal(blob, widget)

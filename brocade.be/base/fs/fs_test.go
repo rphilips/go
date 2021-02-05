@@ -1,8 +1,11 @@
 package fs
 
 import (
-	"io/ioutil"
+	"fmt"
+	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"brocade.be/base/registry"
@@ -26,14 +29,14 @@ func TestPathURI(t *testing.T) {
 func TestAbsPath(t *testing.T) {
 
 	path, err := AbsPath("$BROCADE_REGISTRY")
-	_, err = ioutil.ReadFile(path)
+	_, err = os.ReadFile(path)
 
 	if err != nil {
 		t.Errorf("fs.AbsPath fails")
 	}
 
 	path, err = AbsPath("$BROCADE_REGISTRY/shouldnotexist")
-	_, err = ioutil.ReadFile(path)
+	_, err = os.ReadFile(path)
 	if err == nil {
 		t.Errorf("fs.AbsPath fails")
 	}
@@ -98,4 +101,47 @@ func TestCopyFile(t *testing.T) {
 	Store(fname, "World", "process")
 	CopyFile(fname, fname+"2", "=", true)
 	CopyFile(fname, fname+"3", "", true)
+}
+
+func TestFind(t *testing.T) {
+	files := []string{
+		"/a/f.pdf",
+		"/a/f.txt",
+		"/a/g.txt",
+		"/a/b/ff.txt",
+		"/a/b/ff.pdf",
+		"/a/b/c/fff.pdf",
+	}
+	tmpdir, _ := TempDir("", "tst")
+	for _, fname := range files {
+		parts := strings.SplitN(fname, "/", -1)
+		parts[0] = tmpdir
+		p := path.Join(parts...)
+		dirname := filepath.Dir(p)
+		os.MkdirAll(dirname, os.ModePerm)
+		Store(p, "", "")
+	}
+
+	matches, err := Find(tmpdir, []string{"f*"}, true)
+
+	if err != nil {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+		return
+	}
+	if len(matches) != 5 {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+	}
+	matches, err = Find(tmpdir, []string{"g*", "fff*.pdf"}, true)
+	if err != nil {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+		return
+	}
+	if len(matches) != 2 {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+	}
+
 }

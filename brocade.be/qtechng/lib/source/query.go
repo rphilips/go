@@ -10,6 +10,7 @@ import (
 	qfnmatch "brocade.be/base/fnmatch"
 	qparallel "brocade.be/base/parallel"
 	qmeta "brocade.be/qtechng/lib/meta"
+	qobject "brocade.be/qtechng/lib/object"
 	qproject "brocade.be/qtechng/lib/project"
 	qserver "brocade.be/qtechng/lib/server"
 	qutil "brocade.be/qtechng/lib/util"
@@ -21,6 +22,7 @@ type Query struct {
 	CmpRelease     string                                   `json:"cmprelease"`
 	QDirs          []string                                 `json:"qdirs"`
 	Patterns       []string                                 `json:"patterns"`
+	Objects        []string                                 `json:"objects"`
 	Natures        []string                                 `json:"natures"`
 	Cu             []string                                 `json:"cu"`
 	Mu             []string                                 `json:"mu"`
@@ -54,6 +56,7 @@ type SQuery struct {
 	CmpRelease     string   `json:"cmprelease"`
 	QDirs          []string `json:"qdirs"`
 	Patterns       []string `json:"patterns"`
+	Objects        []string `json:"objects"`
 	Natures        []string `json:"natures"`
 	Cu             []string `json:"cu"`
 	Mu             []string `json:"mu"`
@@ -76,6 +79,7 @@ func (squery SQuery) Copy() (query Query) {
 	query.CmpRelease = squery.CmpRelease
 	query.QDirs = squery.QDirs
 	query.Patterns = squery.Patterns
+	query.Objects = squery.Objects
 	query.Natures = squery.Natures
 	query.Cu = squery.Cu
 	query.Mu = squery.Mu
@@ -99,6 +103,18 @@ func (query *Query) Harmonise() {
 		return
 	}
 	query.harmonised = true
+
+	if len(query.Objects) != 0 {
+		objects := make([]string, 0)
+		for _, obj := range query.Objects {
+			if strings.HasPrefix(obj, "l4_") && strings.Count(obj, "_") == 2 {
+				parts := strings.SplitN(obj, "_", 3)
+				obj = "l4_" + parts[2]
+			}
+			objects = append(objects, obj)
+		}
+		query.Objects = objects
+	}
 
 	patterns := query.Patterns
 	if len(patterns) == 0 {
@@ -497,6 +513,7 @@ func (query *Query) Run() []*Source {
 	if err != nil {
 		return nil
 	}
+
 	patterns := query.Patterns
 	starters := make(map[string]bool)
 	sures := make([]string, 0)
@@ -659,24 +676,23 @@ func (query *Query) Run() []*Source {
 }
 
 // RunObject search for sources fitting the query
-func (query *Query) RunObject() []*Source {
-	query.harmonised = true
-	// objs := query.Patterns
-	// release, err := qserver.Release{}.New(query.Release, true)
-	// if err != nil {
-	// 	return nil
-	// }
-	// objects := make([]*qobject.Object, len(objs))
-
-	// for i, obj := range objs {
-	// 	prefix := strings.SplitN(obj, "_", 2)[0]
-	// 	switch prefix {
-	// 	case "l4":
-	// 		objects[i] = &Lgcode
-
-	// 	}
-
-	// }
-
-	return nil
+func (query *Query) RunObject() map[string]*qobject.Uber {
+	query.Harmonise()
+	if len(query.Objects) == 0 {
+		return nil
+	}
+	r, err := qserver.Release{}.New(query.Release, true)
+	if err != nil {
+		return nil
+	}
+	objmap := qobject.InfoObjectList(r.String(), query.Objects)
+	length := len(objmap)
+	if length == 0 {
+		return nil
+	}
+	ubermap := make(map[string]*qobject.Uber)
+	for k, v := range objmap {
+		ubermap[k] = v.(*qobject.Uber)
+	}
+	return ubermap
 }

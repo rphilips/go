@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	qerror "brocade.be/qtechng/lib/error"
@@ -33,7 +33,7 @@ func fileJsonpath(cmd *cobra.Command, args []string) (err error) {
 		}
 		return
 	}
-	data, err := ioutil.ReadAll(os.Stdin)
+	data, err := io.ReadAll(os.Stdin)
 	result, err := ajson.JSONPath(data, jsonpath)
 
 	if err != nil {

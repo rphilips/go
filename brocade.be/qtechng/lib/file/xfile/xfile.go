@@ -2,7 +2,7 @@ package xfile
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 
@@ -165,7 +165,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	if blob == nil {
 		var err1 error
-		blob, err1 = ioutil.ReadFile(fname)
+		blob, err1 = os.ReadFile(fname)
 		if err1 != nil {
 			e := &qerror.QError{
 				Ref:    []string{"xfile.format.read"},

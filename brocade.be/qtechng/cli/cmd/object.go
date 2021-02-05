@@ -13,6 +13,6 @@ var objectCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(sourceCmd)
+	rootCmd.AddCommand(objectCmd)
 	objectCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
 }

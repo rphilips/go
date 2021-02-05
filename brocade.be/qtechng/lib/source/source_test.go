@@ -2,7 +2,7 @@ package source
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"sort"
 	"strconv"
@@ -596,7 +596,7 @@ func TestSourceObj01(t *testing.T) {
 	r = release.String()
 
 	testfile := path.Join(qregistry.Registry["qtechng-test-dir"], "cat.d")
-	data, _ := ioutil.ReadFile(testfile)
+	data, _ := os.ReadFile(testfile)
 
 	p := proj + "/acat.d"
 	source, err := Source{}.New(r, p, false)

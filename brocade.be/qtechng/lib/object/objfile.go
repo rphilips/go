@@ -2,7 +2,7 @@ package object
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -30,7 +30,7 @@ type OFile interface {
 func Loads(ofile OFile, blob []byte) (err error) {
 	fname := ofile.EditFile()
 	if blob == nil {
-		blob, err = ioutil.ReadFile(fname)
+		blob, err = os.ReadFile(fname)
 		if err != nil {
 			e := &qerror.QError{
 				Ref:    []string{"objfile.loads.read"},
@@ -93,7 +93,7 @@ func StoreFileObjects(ofile OFile) (changedmap map[string]bool, errorlist []erro
 func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 	fname := ofile.EditFile()
 	if len(blob) == 0 {
-		blob, err = ioutil.ReadFile(fname)
+		blob, err = os.ReadFile(fname)
 		if err != nil {
 			e := &qerror.QError{
 				Ref:    []string{"objfile.lint.read"},

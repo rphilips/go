@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -102,7 +101,7 @@ func ReceivePayload(wire io.Reader) (ppayload *Payload) {
 	gob.Register(qerror.ErrorSlice{})
 	gob.Register(qerror.QError{})
 	ppayload = &Payload{}
-	//all, err := ioutil.ReadAll(wire)
+	//all, err := io.ReadAll(wire)
 	//log.Fatal("readDataBySSH decoding/0: ", string(all), "\n====\n", err)
 	dec := gob.NewDecoder(wire)
 	for {
@@ -156,7 +155,7 @@ func (dir *Dir) Load() {
 		return
 	}
 	qjson := path.Join(dir.Dir, ".qtechng")
-	blob, err := ioutil.ReadFile(qjson)
+	blob, err := os.ReadFile(qjson)
 	if err != nil {
 		dir.Files = nil
 		return

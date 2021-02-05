@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"log"
 	"strings"
 
@@ -12,7 +13,7 @@ import (
 var objectListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "Lists objects in the repository",
-	Long:    `Lists objects by name or by pattern`,
+	Long:    `Lists objects by name (prefix included)`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng object list m4_getCatIsbdTitles m4_CO`,
 	RunE:    objectList,
@@ -28,8 +29,11 @@ func init() {
 }
 
 func objectList(cmd *cobra.Command, args []string) error {
-	result := listTransport(Fcargo)
-	Fmsg = qerror.ShowResult(result, Fjq, nil)
+	r := listObjectTransport(Fcargo)
+	result := r.Bytes()
+	v := make(map[string]interface{})
+	json.Unmarshal(result, &v)
+	Fmsg = qerror.ShowResult(v, Fjq, nil)
 	return nil
 }
 
@@ -43,7 +47,7 @@ func preObjectList(cmd *cobra.Command, args []string) {
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		addObjectData(Fpayload, Fcargo, false, "")
+		addObjectData(Fpayload, Fcargo, "")
 	}
 
 	if Ftransported {

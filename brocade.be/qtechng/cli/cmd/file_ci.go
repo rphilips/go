@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -168,7 +167,7 @@ func getPayload(args []string, uid string, cwd string, version string, recurse b
 		if plocfil.Time == touch {
 			continue
 		}
-		blob, e := ioutil.ReadFile(place)
+		blob, e := os.ReadFile(place)
 		if e != nil {
 			err := qerror.QError{
 				Ref:  []string{"ci.read.file"},

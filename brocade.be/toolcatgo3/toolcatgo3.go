@@ -16,20 +16,26 @@ import (
 
 func main() {
 	ruid := syscall.Getuid()
-	if ruid == 0 {
-		syscall.Setresgid(ruid, ruid, ruid)
-		ruid = syscall.Getuid()
+	euid := syscall.Geteuid()
+
+	rgid := syscall.Getgid()
+	egid := syscall.Getegid()
+
+	if ruid != euid {
+		syscall.Setresuid(euid, euid, euid)
 	}
+	if rgid != egid {
+		syscall.Setresgid(egid, egid, egid)
+	}
+
 	toolcat := filepath.Base(os.Args[0])
 	toolcat = strings.TrimSuffix(toolcat, filepath.Ext(toolcat))
 
-	work := GetPython(true)
-	// if ruid != 0 {
-	// 	work, _ = exec.LookPath("sudo")
-	// }
+	pyexe := GetPython(true)
+
 	cmd := exec.Cmd{
-		Path:   work,
-		Args:   append(Compile(toolcat, ruid), os.Args[1:]...),
+		Path:   pyexe,
+		Args:   append(Compile(toolcat, pyexe), os.Args[1:]...),
 		Stdout: os.Stdout,
 		Stdin:  os.Stdin,
 		Stderr: os.Stderr,
@@ -57,15 +63,10 @@ func GetPython(py3 bool) string {
 }
 
 // Compile finds additional atguments
-func Compile(toolcat string, ruid int) []string {
-	pyexe := GetPython(true)
-	if ruid == 0 {
-		pyexe = filepath.Base(pyexe)
+func Compile(toolcat string, pyexe string) []string {
+	return []string{
+		filepath.Base(pyexe),
+		"-c",
+		`import sys; from anet.toolcatng import toolcat; toolcat.launch("` + toolcat + `", sys.argv[1:])`,
 	}
-	argums := make([]string, 0)
-	if ruid != 0 {
-		argums = append(argums, "sudo")
-	}
-	argums = append(argums, pyexe, "-c", `import sys; from anet.toolcatng import toolcat; toolcat.launch("`+toolcat+`", sys.argv[1:])`)
-	return argums
 }

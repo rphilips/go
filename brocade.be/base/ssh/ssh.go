@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -144,7 +144,7 @@ func publicKeyFile(file string) ssh.AuthMethod {
 	if file == "" {
 		file = qregistry.Registry["ssh-default-privatekey"]
 	}
-	buffer, err := ioutil.ReadFile(file)
+	buffer, err := os.ReadFile(file)
 	if err != nil {
 		return nil
 	}

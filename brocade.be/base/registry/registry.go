@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -18,7 +17,7 @@ func init() {
 	if registryFile == "" {
 		log.Fatal("BROCADE_REGISTRY environment variable is not defined")
 	}
-	b, err := ioutil.ReadFile(registryFile)
+	b, err := os.ReadFile(registryFile)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)\n", registryFile), err)
 	}
@@ -34,7 +33,7 @@ func SetRegistry(key, value string) error {
 	if registryFile == "" {
 		return fmt.Errorf("BROCADE_REGISTRY environment variable is not defined")
 	}
-	b, err := ioutil.ReadFile(registryFile)
+	b, err := os.ReadFile(registryFile)
 	if err != nil {
 		return fmt.Errorf("Cannot read file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
 	}

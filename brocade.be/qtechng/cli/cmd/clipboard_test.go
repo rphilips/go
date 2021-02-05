@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -18,7 +18,7 @@ func TestClip01(t *testing.T) {
 	os.Stdout = w
 	clipboardGet(cmd, nil)
 	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	out, _ := io.ReadAll(r)
 	os.Stdout = old
 
 	if string(out) != "Hello World" {

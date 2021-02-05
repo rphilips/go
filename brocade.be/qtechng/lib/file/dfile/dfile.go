@@ -3,7 +3,7 @@ package dfile
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -80,7 +80,7 @@ func (df *DFile) Parse(blob []byte) (preamble string, objs []qobject.Object, err
 		pardoc["_"] = ""
 		x := path.Join(strings.SplitN(qregistry.Registry["qtechng-support-project"], "/", -1)[1:]...)
 		name := path.Join(qregistry.Registry["qtechng-workstation-basedir"], x, "pardoc.json")
-		data, e := ioutil.ReadFile(name)
+		data, e := os.ReadFile(name)
 		if e == nil {
 			json.Unmarshal(data, &pardoc)
 		}
@@ -192,7 +192,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	if blob == nil {
 		var err1 error
-		blob, err1 = ioutil.ReadFile(fname)
+		blob, err1 = os.ReadFile(fname)
 		if err1 != nil {
 			e := &qerror.QError{
 				Ref:    []string{"dfile.format.read"},
@@ -245,7 +245,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	if len(pardoc) != 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') {
 		x := path.Join(strings.SplitN(qregistry.Registry["qtechng-support-project"], "/", -1)[1:]...)
 		name := path.Join(qregistry.Registry["qtechng-workstation-basedir"], x, "pardoc.json")
-		data, e := ioutil.ReadFile(name)
+		data, e := os.ReadFile(name)
 		if e == nil {
 			json.Unmarshal(data, &pardoc)
 		}
