@@ -692,7 +692,9 @@ func (query *Query) RunObject() map[string]*qobject.Uber {
 	}
 	ubermap := make(map[string]*qobject.Uber)
 	for k, v := range objmap {
-		ubermap[k] = v.(*qobject.Uber)
+		if v != nil {
+			ubermap[k] = v.(*qobject.Uber)
+		}
 	}
 	return ubermap
 }

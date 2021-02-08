@@ -72,14 +72,9 @@ func (widget *Widget) SetLineno(lineno string) {
 	widget.Line = lineno
 }
 
-// Marshal of macro
-func (widget *Widget) Marshal() ([]byte, error) {
-	return json.MarshalIndent(widget, "", "    ")
-}
-
 // MarshalJSON of macro
 func (widget *Widget) MarshalJSON() ([]byte, error) {
-	return json.MarshalIndent(widget, "", "    ")
+	return json.Marshal(*widget)
 }
 
 // Unmarshal of macro

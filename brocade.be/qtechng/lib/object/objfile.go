@@ -83,7 +83,7 @@ func Format(ofile OFile) (lines []string) {
 	return
 }
 
-// StoreFile stores a list of object form an OFile
+//StoreFileObjects stores a list of object form an OFile
 func StoreFileObjects(ofile OFile) (changedmap map[string]bool, errorlist []error) {
 	objs := ofile.Objects()
 	return StoreList(objs)

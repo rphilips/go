@@ -70,14 +70,9 @@ func (include *Include) SetLineno(lineno string) {
 	include.Line = lineno
 }
 
-// Marshal of include
-func (include *Include) Marshal() ([]byte, error) {
-	return json.MarshalIndent(include, "", "    ")
-}
-
 // MarshalJSON of include
 func (include *Include) MarshalJSON() ([]byte, error) {
-	return json.MarshalIndent(include, "", "    ")
+	return json.Marshal(*include)
 }
 
 // Unmarshal of include

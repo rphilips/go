@@ -131,14 +131,9 @@ func (brob *Brob) SetLineno(lineno string) {
 	brob.Line = lineno
 }
 
-// Marshal of macro
-func (brob *Brob) Marshal() ([]byte, error) {
-	return json.MarshalIndent(brob, "", "    ")
-}
-
 // MarshalJSON of macro
 func (brob *Brob) MarshalJSON() ([]byte, error) {
-	return json.MarshalIndent(brob, "", "    ")
+	return json.Marshal(*brob)
 }
 
 // Unmarshal of macro

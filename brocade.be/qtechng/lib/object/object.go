@@ -2,6 +2,8 @@ package object
 
 import (
 	"encoding/json"
+	"fmt"
+	"sort"
 	"strings"
 
 	qparallel "brocade.be/base/parallel"
@@ -22,7 +24,6 @@ type Object interface {
 	SetEditFile(editfile string)
 	Lineno() string
 	SetLineno(lineno string)
-	Marshal() ([]byte, error)
 	MarshalJSON() ([]byte, error)
 	Unmarshal(blob []byte) error
 	Loads(blob []byte) error
@@ -34,8 +35,9 @@ type Object interface {
 
 // Uber object
 type Uber struct {
-	ID      string `json:"id"`     // Identificatie
-	Body    []byte `json:"meta"`   // Meta
+	ID      string `json:"id"`   // Identificatie
+	Body    []byte `json:"meta"` // Meta
+	UsedBy  []string
 	Source  string `json:"source"` // Editfile
 	Line    string `json:"-"`      // Lijnnummer
 	Version string `json:"-"`      // Version
@@ -107,6 +109,11 @@ func (uber *Uber) MarshalJSON() ([]byte, error) {
 	json.Unmarshal(uber.Body, v)
 	vv := make(map[string]interface{})
 	vv["definition"] = v
+	usedby := uber.UsedBy
+	if len(usedby) != 0 {
+		sort.Strings(usedby)
+	}
+	vv["usedby"] = usedby
 	return json.MarshalIndent(vv, "", "    ")
 }
 
@@ -287,6 +294,9 @@ func Fetch(object Object) (err error) {
 	switch v := object.(type) {
 	case *Uber:
 		v.Body = content
+		deps, _ := GetDependenciesDeep(rel, v.ID)
+		v.UsedBy = deps[v.ID]
+
 	default:
 		erro = object.Unmarshal(content)
 	}
@@ -590,9 +600,100 @@ func UnLink(r string, name string, object interface{}) error {
 	return nil
 }
 
-// GetDependencies geeft de bestanden die afhankelijk zijn van een object
-func GetDependencies(version *qserver.Release, objs ...string) map[string][]string {
+// GetDependenciesDeep geeft de bestanden die afhankelijk zijn van een aantal objecten
+func GetDependenciesDeep(version *qserver.Release, objs ...string) (result map[string][]string, err error) {
+	result = make(map[string][]string)
+	iresult := make(map[string]map[string]bool)
+	todo := append([]string{}, objs...)
+	for {
+		newobjs := make([]string, 0)
+		for _, obj := range todo {
+			if iresult[obj] != nil {
+				continue
+			}
+			newobjs = append(newobjs, obj)
+		}
+		if len(newobjs) == 0 {
+			break
+		}
+		todo = []string{}
+		between := GetDependencies(version, newobjs...)
+		for _, obj := range newobjs {
+			if iresult[obj] == nil {
+				iresult[obj] = make(map[string]bool)
+			}
+			deps := between[obj]
+			for _, d := range deps {
+				// if d == obj {
+				// 	err := &qerror.QError{
+				// 		Ref:    []string{"cyclic.equal"},
+				// 		Object: obj,
+				// 		Type:   "Error",
+				// 		Msg:    []string{fmt.Sprintf("`%s` has cyclic dependency", obj)},
+				// 	}
+				// 	return nil, err
+				// }
+				iresult[obj][d] = true
+				if !strings.HasPrefix(d, "/") {
+					todo = append(todo, d)
+				}
+			}
+		}
+	}
 
+	run := true
+	for run {
+		run = false
+		for obj, mdeps := range iresult {
+			if len(mdeps) == 0 {
+				continue
+			}
+			if mdeps[obj] {
+				err := &qerror.QError{
+					Ref:    []string{"cyclic.equal"},
+					Object: obj,
+					Type:   "Error",
+					Msg:    []string{fmt.Sprintf("`%s` has cyclic dependency", obj)},
+				}
+				return nil, err
+			}
+			add := make([]string, 0)
+			for d := range mdeps {
+				if !strings.HasPrefix(d, "/") {
+					mc := iresult[d]
+					if len(mc) == 0 {
+						continue
+					}
+					for k := range mc {
+						add = append(add, k)
+					}
+				}
+			}
+			if len(add) != 0 {
+				for _, d := range add {
+					if !mdeps[d] {
+						mdeps[d] = true
+						run = true
+					}
+				}
+			}
+			iresult[obj] = mdeps
+		}
+	}
+
+	for _, obj := range objs {
+		result[obj] = make([]string, len(iresult[obj]))
+		i := -1
+		for k := range iresult[obj] {
+			i++
+			result[obj][i] = k
+		}
+	}
+	return result, nil
+}
+
+// GetDependencies retrieves a map pointin for each object the things dependent on that object
+func GetDependencies(version *qserver.Release, objs ...string) (result map[string][]string) {
 	fs := version.FS("/objects")
 	fn := func(n int) (interface{}, error) {
 		obj := objs[n]
@@ -620,17 +721,11 @@ func GetDependencies(version *qserver.Release, objs ...string) map[string][]stri
 		}
 		return dono, nil
 	}
-
+	result = make(map[string][]string)
 	rlist, _ := qparallel.NMap(len(objs), -1, fn)
-	result := make(map[string][]string)
-
 	for n, obj := range objs {
 		dono := rlist[n].([]string)
-		if len(dono) == 0 {
-			result[obj] = nil
-		} else {
-			result[obj] = dono
-		}
+		result[obj] = dono
 	}
-	return result
+	return
 }

@@ -115,14 +115,9 @@ func (macro *Macro) SetLineno(lineno string) {
 	macro.Line = lineno
 }
 
-// Marshal of macro
-func (macro *Macro) Marshal() ([]byte, error) {
-	return json.MarshalIndent(macro, "", "    ")
-}
-
 // MarshalJSON of macro
 func (macro *Macro) MarshalJSON() ([]byte, error) {
-	return json.MarshalIndent(macro, "", "    ")
+	return json.Marshal(*macro)
 }
 
 // Unmarshal of macro

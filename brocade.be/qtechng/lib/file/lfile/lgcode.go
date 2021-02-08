@@ -82,14 +82,9 @@ func (lgcode *Lgcode) SetLineno(lineno string) {
 	lgcode.Line = lineno
 }
 
-// Marshal of lgcode
-func (lgcode *Lgcode) Marshal() ([]byte, error) {
-	return json.MarshalIndent(lgcode, "", "    ")
-}
-
 // MarshalJSON of lgcode
 func (lgcode *Lgcode) MarshalJSON() ([]byte, error) {
-	return json.MarshalIndent(lgcode, "", "    ")
+	return json.Marshal(*lgcode)
 }
 
 // Unmarshal of lgcode
