@@ -12,9 +12,9 @@ var fileAwkCmd = &cobra.Command{
 	Use:   "awk statement",
 	Short: "AWK interpreter",
 	Long: `
-Filters stdin through through an AWK statement and writes on stdout`,
+Filters a file through an AWK statement and writes on stdout`,
 	Example: `
-  qtechng file awk '{print $2}'`,
+  qtechng file myfile.txt awk '{print $2}'`,
 
 	Args: cobra.ExactArgs(1),
 	RunE: fileAwk,

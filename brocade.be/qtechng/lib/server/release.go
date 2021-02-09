@@ -157,33 +157,16 @@ func (release Release) Init() (err error) {
 	}
 
 	// initialises mercurial repository
-	cmd := exec.Command("git", "init")
+	cmd := exec.Command("git", "init", "--quiet")
 	sourcedir, _ := release.FS("").RealPath("/source")
 	cmd.Dir = sourcedir
 	cmd.Run()
 
-	// initialise hg webserver
-	data := `[extensions]
-hgext.highlight=
-
-[web]
-pygments_style = default`
-
-	backup := qregistry.Registry["qtechng-git-backup"]
-	if backup != "" {
-		backup = strings.Replace(backup, "{version}", release.String(), -1)
-		data += "\n\n[paths]\ndefault-push = " + backup + "\n"
-	}
-	_, _, _, err = release.FS("source").Store("/.hg/hgrc", data, "")
-	if err != nil {
-		return
-	}
-
-	cmd = exec.Command("hg", "add", "--quiet")
+	cmd = exec.Command("git", "add", "--all")
 	cmd.Dir = sourcedir
 	cmd.Run()
 
-	cmd = exec.Command("hg", "commit", "--quiet", "--message", "Init")
+	cmd = exec.Command("git", "commit", "--quiet", "--message", "Init")
 	cmd.Dir = sourcedir
 	cmd.Run()
 
@@ -194,23 +177,26 @@ pygments_style = default`
 
 // Canon maakt een officiele string van de versie
 func Canon(r string) string {
+
 	br := qregistry.Registry["brocade-release"]
 	br = strings.TrimRight(br, " -_betaBETA")
 	rr := strings.TrimRight(r, " -_betaBETA")
 	qtechType := qregistry.Registry["qtechng-type"]
-	if strings.Contains(qtechType, "B") {
-		if rr == br {
-			return "0.00"
-		}
-		if rr == "" {
-			return "0.00"
+
+	if !strings.Contains(qtechType, "B") {
+		if rr == "" || rr == "0.00" {
+			return br
 		}
 		return rr
 	}
-	if rr == "" || rr == "0.00" {
-		return br
+	if rr == br {
+		return "0.00"
+	}
+	if rr == "" {
+		return "0.00"
 	}
 	return rr
+
 }
 
 func fs(r string, readonly bool) func(s ...string) qvfs.QFs {

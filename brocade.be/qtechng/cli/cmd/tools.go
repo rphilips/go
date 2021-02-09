@@ -334,7 +334,7 @@ func storeTransport() ([]storer, []error) {
 			Ftree = true
 		}
 		if Fauto && strings.ContainsRune(QtechType, 'W') {
-			dir = qregistry.Registry["qtechng-workstation-basedir"]
+			dir = qregistry.Registry["qtechng-work-dir"]
 			if dir == "" {
 				dir = Fcwd
 			}

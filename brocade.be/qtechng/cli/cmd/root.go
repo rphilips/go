@@ -513,7 +513,7 @@ func fillQdir() {
 	}
 
 	if strings.ContainsRune(QtechType, 'W') {
-		bdir := qregistry.Registry["qtechng-workstation-basedir"]
+		bdir := qregistry.Registry["qtechng-work-dir"]
 		rel, e := filepath.Rel(bdir, Fcwd)
 		if e == nil && !strings.HasPrefix(rel, "..") && strings.HasSuffix(Fcwd, rel) {
 			rel = filepath.ToSlash(rel)
