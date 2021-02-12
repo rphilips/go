@@ -25,7 +25,7 @@ If arguments are given, they are shown in 'hexified' format.`,
 
 func init() {
 
-	rootCmd.Flags().BoolVar(&Fremote, "remote", false, "Execute on the remote server")
+	aboutCmd.Flags().BoolVar(&Fremote, "remote", false, "Execute on the remote server")
 	rootCmd.AddCommand(aboutCmd)
 }
 

@@ -15,7 +15,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"strings"
@@ -33,13 +32,13 @@ var buildHost string
 
 func main() {
 
-	if len(os.Args) > 4 && os.Args[1] == "lock" && os.Args[2] == "run" && os.Args[4] != "" {
-		x, e := json.Marshal(os.Args[4:])
-		if e == nil {
-			os.Args[4] = string(x)
-			os.Args = os.Args[:5]
-		}
-	}
+	// if len(os.Args) > 4 && os.Args[1] == "lock" && os.Args[2] == "run" && os.Args[4] != "" {
+	// 	x, e := json.Marshal(os.Args[4:])
+	// 	if e == nil {
+	// 		os.Args[4] = string(x)
+	// 		os.Args = os.Args[:5]
+	// 	}
+	// }
 	var payload *qclient.Payload
 	if len(os.Args) == 1 {
 		fi, _ := os.Stdin.Stat()

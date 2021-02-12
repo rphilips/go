@@ -48,7 +48,7 @@ func lockDelete(cmd *cobra.Command, args []string) {
 	rnd := strconv.FormatInt(rand.Int63n(100000000), 10)
 	tempdir := locker + "." + rnd
 	os.Rename(locker, tempdir)
-	os.Remove(tempdir)
+	os.RemoveAll(tempdir)
 	if qfs.IsDir(locker) {
 		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot remove lock: %s", lock))
 		return

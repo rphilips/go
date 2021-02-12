@@ -80,7 +80,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if ask && !Fdelete {
-		fmt.Print("Delete ?                   : <n>")
+		fmt.Print("Delete ?                : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -239,7 +239,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	}
 
 	msg := make(map[string][]string)
-	msg["copiedd"] = changed
+	msg["copied"] = changed
 	if len(errs) == 0 {
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	} else {
