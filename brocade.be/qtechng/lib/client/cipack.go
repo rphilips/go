@@ -24,7 +24,7 @@ func Pack(cwd string, files []string, release string, qpattern string, force boo
 	find := false
 	if len(files) == 0 {
 		find = true
-		files, err = qfs.Find(cwd, nil, true)
+		files, err = qfs.Find(cwd, nil, true, true, false)
 		if err != nil {
 			err := &qerror.QError{
 				Ref:  []string{"cipack.pack.find"},

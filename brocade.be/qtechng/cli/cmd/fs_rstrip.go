@@ -49,7 +49,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		ask = true
 		for {
-			fmt.Print("File/directory          : ")
+			fmt.Print("File/directory               : ")
 			text, _ := reader.ReadString('\n')
 			text = strings.TrimSuffix(text, "\n")
 			if text == "" {
@@ -62,7 +62,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if ask && !Fwineol {
-		fmt.Print("Windows end-of-line ?         : <n>")
+		fmt.Print("Windows end-of-line ?        : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -74,7 +74,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 	}
 
 	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
+		fmt.Print("Recurse ?                    : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -87,7 +87,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 
 	if ask && len(Fpattern) == 0 {
 		for {
-			fmt.Print("Pattern on basename     : ")
+			fmt.Print("Pattern on basename          : ")
 			text, _ := reader.ReadString('\n')
 			text = strings.TrimSuffix(text, "\n")
 			if text == "" {
@@ -97,7 +97,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	files, err := glob(Fcwd, args, Frecurse, Fpattern)
+	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false)
 
 	if len(files) == 0 {
 		if err != nil {

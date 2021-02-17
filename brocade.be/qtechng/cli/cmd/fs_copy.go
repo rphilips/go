@@ -33,11 +33,13 @@ Use the delete flag if the original files should be deleted
 }
 
 var Fdelete bool
+var Fconfirm bool
 
 func init() {
 	fsCopyCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
 	fsCopyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
 	fsCopyCmd.Flags().BoolVar(&Fdelete, "delete", false, "Delete original files")
+	fsCopyCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
 	fsCopyCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsCopyCmd)
 }
@@ -126,6 +128,18 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if ask && !Fconfirm {
+		fmt.Print("Confirm first time ?    : <n>")
+		text, _ := reader.ReadString('\n')
+		text = strings.TrimSuffix(text, "\n")
+		if text == "" {
+			text = "n"
+		}
+		if strings.ContainsAny(text, "jJyY1tT") {
+			Fconfirm = true
+		}
+	}
+
 	copy := args[1]
 	needle := args[0]
 	var rneedle *regexp.Regexp
@@ -135,7 +149,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		rneedle, err = regexp.Compile(needle)
 	}
 	if err == nil {
-		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern)
+		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern, true, false)
 	}
 
 	if len(files) == 0 {
@@ -167,6 +181,24 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		}
 		if target == a {
 			continue
+		}
+		if Fconfirm {
+			Fconfirm = false
+			fmt.Printf("Copy `%s` to `%s`: <n>", a, target)
+			text, _ := reader.ReadString('\n')
+			text = strings.TrimSuffix(text, "\n")
+			if text == "" {
+				text = "n"
+			}
+			ok := false
+			if strings.ContainsAny(text, "jJyY1tT") {
+				ok = true
+			}
+			if !ok {
+				rfiles = make([]string, 0)
+				folders = make(map[string]string)
+				break
+			}
 		}
 		tdir := filepath.Dir(target)
 		dir := filepath.Dir(file)

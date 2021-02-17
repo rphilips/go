@@ -122,7 +122,7 @@ func TestFind(t *testing.T) {
 		Store(p, "", "")
 	}
 
-	matches, err := Find(tmpdir, []string{"f*"}, true)
+	matches, err := Find(tmpdir, []string{"f*"}, true, true, false)
 
 	if err != nil {
 		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
@@ -133,13 +133,35 @@ func TestFind(t *testing.T) {
 		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
 		fmt.Println(matches)
 	}
-	matches, err = Find(tmpdir, []string{"g*", "fff*.pdf"}, true)
+	matches, err = Find(tmpdir, []string{"g*", "fff*.pdf"}, true, true, false)
 	if err != nil {
 		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
 		fmt.Println(matches)
 		return
 	}
 	if len(matches) != 2 {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+	}
+
+	matches, err = Find(tmpdir, []string{"[bf]*"}, true, true, true)
+	if err != nil {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+		return
+	}
+	if len(matches) != 6 {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+	}
+
+	matches, err = Find(tmpdir, []string{"[bf]*"}, true, false, true)
+	if err != nil {
+		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
+		fmt.Println(matches)
+		return
+	}
+	if len(matches) != 1 {
 		t.Errorf("\nFail:\n%s\n%s\n", tmpdir, err)
 		fmt.Println(matches)
 	}

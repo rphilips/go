@@ -632,44 +632,40 @@ func cleanGlobPath(path string) string {
 // and appends them to matches, returning the updated slice.
 // If the directory cannot be opened, glob returns the existing matches.
 // New matches are added in lexicographical order.
-func glob(fsys fs.FS, root string, dir string, patterns []string, matches []string, recurse bool) (m []string, e error) {
+func glob(fsys fs.FS, root string, dir string, patterns []string, matches []string, recurse bool, files bool, dirs bool) (m []string, e error) {
 	m = matches
 	infos, err := fs.ReadDir(fsys, dir)
 	if err != nil {
 		return // ignore I/O error
 	}
-
 	for _, info := range infos {
 		n := info.Name()
-		if !info.IsDir() {
-			if len(patterns) == 0 {
+		isdir := info.IsDir()
+		matched := len(patterns) == 0
+		for _, pattern := range patterns {
+			matched, err = path.Match(pattern, n)
+			if err != nil {
+				return m, err
+			}
+			if matched {
+				break
+			}
+		}
+		if matched {
+			if (files && !isdir) || (dirs && isdir) {
 				m = append(m, path.Join(root, dir, n))
-				continue
 			}
-			for _, pattern := range patterns {
-				matched, err := path.Match(pattern, n)
-				if err != nil {
-					return m, err
-				}
-				if matched {
-					m = append(m, path.Join(root, dir, n))
-					break
-				}
+		}
+		if isdir && recurse {
+			newdir := dir + "/" + n
+			if dir == "" || dir == "." {
+				newdir = n
 			}
-			continue
+			m, err = glob(fsys, root, newdir, patterns, m, true, files, dirs)
+			if err != nil {
+				return m, err
+			}
 		}
-		if !recurse {
-			continue
-		}
-		newdir := dir + "/" + n
-		if dir == "" || dir == "." {
-			newdir = n
-		}
-		m, err = glob(fsys, root, newdir, patterns, m, true)
-		if err != nil {
-			return m, err
-		}
-
 	}
 	return
 }
@@ -689,7 +685,7 @@ func hasMeta(path string) bool {
 // Find lists regular files matching one of a list of patterns on the basename
 //      if there are no patterns, all files are listed
 //      results start with root
-func Find(root string, patterns []string, recurse bool) (matches []string, err error) {
+func Find(root string, patterns []string, recurse bool, files bool, dirs bool) (matches []string, err error) {
 	fsys := os.DirFS(root)
 	for _, pattern := range patterns {
 		if _, err := path.Match(pattern, ""); err != nil {
@@ -702,7 +698,7 @@ func Find(root string, patterns []string, recurse bool) (matches []string, err e
 			return []string{pattern}, nil
 		}
 	}
-	return glob(fsys, root, ".", patterns, nil, recurse)
+	return glob(fsys, root, ".", patterns, nil, recurse, files, dirs)
 }
 
 // AsyncWork works on all keys in a slice in parallel and returns a result (map indexed on key)

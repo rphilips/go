@@ -56,7 +56,7 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 		if Fcwd != "" {
 			start = Fcwd
 		}
-		files, _ = qfs.Find(start, []string{"*.[dlixmb]"}, Frecurse)
+		files, _ = qfs.Find(start, []string{"*.[dlixmb]"}, Frecurse, true, false)
 	}
 
 	format := func(n int) (result interface{}, err error) {

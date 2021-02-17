@@ -122,7 +122,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 		rneedle, err = regexp.Compile(args[0])
 	}
 	if err == nil {
-		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern)
+		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern, true, false)
 	}
 
 	if len(files) == 0 {
@@ -218,7 +218,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 				break
 			}
 		}
-		qfs.Rmpath((tmpfile))
+		qfs.Rmpath(tmpfile)
 		return true, nil
 	}
 

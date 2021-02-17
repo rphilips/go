@@ -2,50 +2,46 @@ package cmd
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"os"
-	"regexp"
-	"strconv"
 	"strings"
 
+	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
+	qsed "github.com/rwtodd/Go.Sed/sed"
 	"github.com/spf13/cobra"
 )
 
-var fsGrepCmd = &cobra.Command{
-	Use:   "grep",
-	Short: "Searches for a string in files",
-	Long: `First argument is the string to search for, 
-Search is done line per line.
-Take care: search is done over binary files as well!
+var fsSedCmd = &cobra.Command{
+	Use:   "sed",
+	Short: "Executes a sed command",
+	Long: `First argument is a sed command. This command is executed on every file
+Take care: replacement is done over binary files as well!
 The other arguments are filenames or directory names. 
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs grep cwd=../catalografie`,
-	RunE:    fsGrep,
+	Example: `qtechng fs sed "/remark/d" cwd=../catalografie`,
+	RunE:    fsSed,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
 func init() {
-	fsGrepCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsGrepCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
-	fsGrepCmd.Flags().BoolVar(&Ftolower, "tolower", false, "Lowercase before grepping")
-	fsGrepCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
-	fsCmd.AddCommand(fsGrepCmd)
+	fsSedCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsSedCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsCmd.AddCommand(fsSedCmd)
 }
 
-func fsGrep(cmd *cobra.Command, args []string) error {
+func fsSed(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	ask := false
 	if len(args) == 0 {
 		ask = true
-		fmt.Print("Enter search string     : ")
+		fmt.Print("Enter sed command       : ")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -53,11 +49,10 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 		}
 		args = append(args, text)
 	}
-
 	if len(args) == 1 {
 		ask = true
 		for {
-			fmt.Print("File/directory        : ")
+			fmt.Print("File/directory          : ")
 			text, _ := reader.ReadString('\n')
 			text = strings.TrimSuffix(text, "\n")
 			if text == "" {
@@ -65,19 +60,8 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 			}
 			args = append(args, text)
 		}
-		if len(args) == 1 {
+		if len(args) == 2 {
 			return nil
-		}
-	}
-	if ask && !Fregexp {
-		fmt.Print("Regexp ?                : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fregexp = true
 		}
 	}
 
@@ -105,16 +89,15 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	needle := []byte(args[0])
-	sneedle := args[0]
-	var err error
+	program := strings.NewReader(args[0])
+	engine, err := qsed.New(program)
+
+	if err != nil {
+		return err
+	}
+
 	files := make([]string, 0)
-	if Fregexp {
-		_, err = regexp.Compile(args[0])
-	}
-	if err == nil {
-		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
-	}
+	files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
 
 	if len(files) == 0 {
 		if err != nil {
@@ -122,79 +105,73 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 		msg := make(map[string][]string)
-		msg["grepped"] = files
+		msg["sed"] = files
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 		return nil
 	}
-	type line struct {
-		lineno  int
-		content []byte
+
+	if err != nil {
+		return err
 	}
 
 	fn := func(n int) (interface{}, error) {
-		lines := make([]line, 0)
 		src := files[n]
+
 		in, err := os.Open(src)
 		if err != nil {
-			return lines, err
+			return false, err
 		}
+		tmpfile, err := qfs.TempFile("", ".sed")
+		defer qfs.Rmpath(tmpfile)
+
+		f, err := os.Create(tmpfile)
+
+		if err != nil {
+			return false, err
+		}
+
 		input := bufio.NewReader(in)
 		defer in.Close()
 
-		lineno := 0
-		for {
-			ok := false
-			// read a chunk
-			buf, err := input.ReadBytes(byte('\n'))
-			if err != nil && err != io.EOF {
-				return lines, err
-			}
-			if Ftolower {
-				buf = bytes.ToLower(buf)
-			}
-			lineno++
-			if !Fregexp {
-				if bytes.Contains(buf, needle) {
-					ok = true
-				}
-			} else {
-				ok, _ = regexp.Match(sneedle, buf)
-			}
-			if ok {
-				lines = append(lines, line{lineno, buf})
-			}
-			if err != nil {
-				break
-			}
+		_, err = io.Copy(f, engine.Wrap(input))
+
+		if err != nil {
+			return false, err
 		}
-		return lines, nil
+
+		in.Close()
+		f.Close()
+
+		qfs.CopyMeta(src, tmpfile, false)
+		err = qfs.CopyFile(tmpfile, src, "=", false)
+		if err != nil {
+			return false, err
+		}
+		qfs.Rmpath(tmpfile)
+		return true, nil
 	}
 
 	resultlist, errorlist := qparallel.NMap(len(files), -1, fn)
 	var errs []error
-	var grep []string
+	var changed []string
 	for i, r := range resultlist {
 		src := files[i]
 		if errorlist[i] != nil {
 			e := &qerror.QError{
-				Ref:  []string{"fs.grep"},
+				Ref:  []string{"fs.sed"},
 				File: src,
 				Msg:  []string{errorlist[i].Error()},
 			}
 			errs = append(errs, e)
 			continue
 		}
-		lins := r.([]line)
-		if len(lins) != 0 {
-			for _, lin := range lins {
-				t := src + ":" + strconv.Itoa(lin.lineno) + ":" + string(lin.content)
-				grep = append(grep, t)
-			}
+		if r.(bool) {
+			changed = append(changed, src)
 		}
 	}
 
 	msg := make(map[string][]string)
-	msg["grepped"] = grep
+	msg["sed"] = changed
 	if len(errs) == 0 {
 		Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	} else {
