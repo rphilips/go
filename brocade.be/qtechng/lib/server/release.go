@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -62,31 +63,15 @@ func (Release) New(r string, readonly bool) (release *Release, err error) {
 
 // Lowest returns lowest release
 func Lowest(r1 string, r2 string) string {
-	s1 := Canon(r1)
-	s2 := Canon(r2)
-	p1 := strings.SplitN(s1, ".", -1)
-	p2 := strings.SplitN(s2, ".", -1)
-	i := -1
-	for {
-		i++
-		pa1 := ""
-		pa2 := ""
-		if len(p1) > i {
-			pa1 = p1[i]
-		}
-		if len(p2) > i {
-			pa2 = p2[i]
-		}
-		if pa1 == "" && pa2 == "" {
-			return r1
-		}
-		if pa1 < pa2 {
-			return r1
-		}
-		if pa1 > pa2 {
-			return r2
-		}
+	if r1 == r2 {
+		return r1
 	}
+	s1, _ := strconv.ParseFloat(r1, 64)
+	s2, _ := strconv.ParseFloat(r2, 64)
+	if s1 < s2 {
+		return r1
+	}
+	return r2
 }
 
 // String of a release: release fulfills the Stringer interface

@@ -104,7 +104,6 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		return
 	}
 
-	vtarget = qserver.Canon(vtarget)
 	lowest := qserver.Lowest(current, vtarget)
 	if current != lowest {
 		err = &qerror.QError{

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -25,6 +27,7 @@ var versionInfoCmd = &cobra.Command{
 }
 
 func init() {
+	versionInfoCmd.Flags().BoolVar(&Fremote, "remote", false, "Execute on the remote server")
 	versionCmd.AddCommand(versionInfoCmd)
 }
 
@@ -54,6 +57,14 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 	msg["basedir"] = release.Root()
 	msg["sources"], _ = fs.RealPath("/")
 	msg["version"] = release.String()
+
+	if strings.Contains(QtechType, "B") {
+		if filepath.Base(msg["basedir"]) == "0.00" {
+			msg["~status"] = "ACTIVE"
+		} else {
+			msg["~status"] = "CLOSED"
+		}
+	}
 	Fmsg = qerror.ShowResult(msg, Fjq, nil)
 	return nil
 }
