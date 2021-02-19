@@ -30,8 +30,7 @@ type Config struct {
 	NotUnique          []string            `json:"notunique"`
 }
 
-// IsValid checks if a blob is a validd configuaration
-
+// IsValidConfig checks if a blob is a validd configuaration
 func IsValidConfig(blob []byte) bool {
 	cfg := Config{}
 	e := json.Unmarshal(blob, &cfg)

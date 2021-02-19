@@ -37,6 +37,8 @@ type Query struct {
 	FilesInProject bool                                     `json:"filesinproject"`
 	Contains       []string                                 `json:"contains"`
 	Mumps          bool                                     `json:"mumps"`
+	Installable    bool                                     `json:"installable"`
+	Rooted         bool                                     `json:"rooted"`
 	Any            [](func(qpath string, blob []byte) bool) `json:"_any"`
 	All            [](func(qpath string, blob []byte) bool) `json:"_all"`
 	regexp         []*regexp.Regexp
@@ -71,6 +73,8 @@ type SQuery struct {
 	FilesInProject bool     `json:"filesinproject"`
 	Contains       []string `json:"contains"`
 	Mumps          bool     `json:"mumps"`
+	Installable    bool     `json:"installable"`
+	Rooted         bool     `json:"rooted"`
 }
 
 // Copy SQuery simple query
@@ -94,6 +98,8 @@ func (squery SQuery) Copy() (query Query) {
 	query.Contains = squery.Contains
 	query.FilesInProject = squery.FilesInProject
 	query.Mumps = squery.Mumps
+	query.Installable = squery.Installable
+	query.Rooted = squery.Rooted
 	return
 }
 
@@ -281,6 +287,27 @@ func (query *Query) Harmonise() {
 		return ok
 	}
 	pipe = append(pipe, f)
+
+	// installable
+	if query.Installable {
+		f := func(source *Source) bool {
+			project := source.Project()
+			e := project.IsInstallable()
+			return e == nil
+		}
+		pipe = append(pipe, f)
+	}
+
+	// rooted
+	if query.Rooted {
+		f := func(source *Source) bool {
+			project := source.Project()
+			s := source.String()
+			s = strings.TrimPrefix(s, project.String()+"/")
+			return !strings.Contains(s, "/")
+		}
+		pipe = append(pipe, f)
+	}
 
 	// Natures
 	if len(query.Natures) != 0 {

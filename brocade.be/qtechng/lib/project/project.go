@@ -24,9 +24,11 @@ var projectCache = new(sync.Map)
 
 // Project models a Brocade project
 type Project struct {
-	p        string
-	readonly bool
-	r        *qserver.Release
+	p           string
+	readonly    bool
+	r           *qserver.Release
+	installable bool
+	reason      string
 }
 
 // New constructs a new Project
@@ -64,7 +66,7 @@ func (Project) New(r string, p string, readonly bool) (project *Project, err err
 		return proj.(*Project), nil
 	}
 
-	project = &Project{p, readonly, version}
+	project = &Project{p, readonly, version, false, ""}
 
 	if ok, _ := version.Exists("/source/data", p, "brocade.json"); ok {
 		prj, _ := projectCache.LoadOrStore(pid, project)
@@ -277,7 +279,10 @@ func (project Project) Unlink() (err error) {
 }
 
 // IsInstallable vist uit of een project installeerbaar is.
-func (project Project) IsInstallable() error {
+func (project *Project) IsInstallable() error {
+	if project.installable {
+		return nil
+	}
 
 	v := project.Release().String()
 	p := project.String()
@@ -288,85 +293,110 @@ func (project Project) IsInstallable() error {
 		Project: p,
 	}
 
+	if project.reason != "" {
+		err.Msg = []string{project.reason}
+		return err
+	}
+
 	r := qserver.Canon("")
 	if r != v {
-		err.Msg = []string{fmt.Sprintf("`%s` is not the current version", v)}
+		project.reason = fmt.Sprintf("`%s` is not the current version", v)
+		err.Msg = []string{project.reason}
 		return err
 	}
 
 	sequence, e := Sequence(v, project.String(), true)
 
 	if e != nil || len(sequence) == 0 || project.String() != sequence[len(sequence)-1].String() {
-		err.Msg = []string{fmt.Sprintf("Structure of `%s` is invalid", p)}
+		project.reason = fmt.Sprintf("Structure of `%s` is invalid", p)
+		err.Msg = []string{project.reason}
 		return err
 	}
 
 	for _, proj := range sequence {
-		project := proj
-		config, e := project.LoadConfig()
+		if proj.String() == project.String() {
+			continue
+		}
+		e := proj.IsInstallable()
 		if e != nil {
-			err.Msg = []string{fmt.Sprintf("Project `%s` has invalid `brocade.json`: %s", proj.String(), e.Error())}
+			project.reason = fmt.Sprintf("Parent project `%s` is not installable", proj.String())
+			err.Msg = []string{project.reason}
 			return err
 		}
-		// Passive
-		if config.Passive {
-			err.Msg = []string{fmt.Sprintf("Project `%s` is not active", proj.String())}
+	}
+
+	config, e := project.LoadConfig()
+	if e != nil {
+		err.Msg = []string{fmt.Sprintf("Project `%s` has invalid `brocade.json`: %s", project.String(), e.Error())}
+		project.reason = err.Msg[0]
+		return err
+	}
+	// Passive
+	if config.Passive {
+		err.Msg = []string{fmt.Sprintf("Project `%s` is not active", project.String())}
+		project.reason = err.Msg[0]
+		return err
+	}
+	// Mumps
+	if len(config.Mumps) > 0 && find(config.Mumps, "", true) == -1 {
+		m := qregistry.Registry["m-os-type"]
+		if find(config.Mumps, m, false) == -1 {
+			err.Msg = []string{fmt.Sprintf("Project `%s` does not work with `%s`", project.String(), m)}
+			project.reason = err.Msg[0]
 			return err
 		}
-		// Mumps
-		if len(config.Mumps) > 0 && find(config.Mumps, "", true) == -1 {
-			m := qregistry.Registry["m-os-type"]
-			if find(config.Mumps, m, false) == -1 {
-				err.Msg = []string{fmt.Sprintf("Project `%s` does not work with `%s`", proj.String(), m)}
-				return err
-			}
+	}
+	// Groups
+	if len(config.Groups) > 0 {
+		g := qregistry.Registry["system-group"]
+		if find(config.Groups, g, true) == -1 {
+			err.Msg = []string{fmt.Sprintf("Project `%s` does not install on `%s`", project.String(), g)}
+			project.reason = err.Msg[0]
+			return err
 		}
-		// Groups
-		if len(config.Groups) > 0 {
-			g := qregistry.Registry["system-group"]
-			if find(config.Groups, g, true) == -1 {
-				err.Msg = []string{fmt.Sprintf("Project `%s` does not install on `%s`", proj.String(), g)}
-				return err
-			}
+	}
+	// Name
+	if len(config.Names) > 0 {
+		g := qregistry.Registry["system-name"]
+		if find(config.Names, g, true) == -1 {
+			err.Msg = []string{fmt.Sprintf("Project `%s` does not install on `%s`", project.String(), g)}
+			project.reason = err.Msg[0]
+			return err
 		}
-		// Name
-		if len(config.Names) > 0 {
-			g := qregistry.Registry["system-name"]
-			if find(config.Names, g, true) == -1 {
-				err.Msg = []string{fmt.Sprintf("Project `%s` does not install on `%s`", proj.String(), g)}
-				return err
-			}
-		}
-		// Roles
-		if len(config.Roles) > 0 {
-			r := qregistry.Registry["system-roles"]
-			rs := strings.FieldsFunc(r, func(c rune) bool {
-				return !unicode.IsLetter(c) && !unicode.IsNumber(c)
-			})
-			for _, role := range config.Roles {
-				if find(rs, role, false) == -1 {
-					err.Msg = []string{fmt.Sprintf("Project `%s` does not install with role `%s`", proj.String(), role)}
-					return err
-				}
-			}
-		}
-		// VersionLower
-		if config.VersionLower != "" {
-			r := qregistry.Registry["brocade-release"]
-			if strings.Compare(config.VersionLower, r) != -1 {
-				err.Msg = []string{fmt.Sprintf("Version should be higher or equal than `%s` for project `%s`", config.VersionLower, proj.String())}
-				return err
-			}
-		}
-		// VersionUpper
-		if config.VersionUpper != "" {
-			r := qregistry.Registry["brocade-release"]
-			if strings.Compare(r, config.VersionUpper) != -1 {
-				err.Msg = []string{fmt.Sprintf("Version should be lower or equal than `%s` for project `%s`", config.VersionUpper, proj.String())}
+	}
+	// Roles
+	if len(config.Roles) > 0 {
+		r := qregistry.Registry["system-roles"]
+		rs := strings.FieldsFunc(r, func(c rune) bool {
+			return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+		})
+		for _, role := range config.Roles {
+			if find(rs, role, false) == -1 {
+				err.Msg = []string{fmt.Sprintf("Project `%s` does not install with role `%s`", project.String(), role)}
+				project.reason = err.Msg[0]
 				return err
 			}
 		}
 	}
+	// VersionLower
+	if config.VersionLower != "" {
+		r := qregistry.Registry["brocade-release"]
+		if strings.Compare(config.VersionLower, r) != -1 {
+			err.Msg = []string{fmt.Sprintf("Version should be higher or equal than `%s` for project `%s`", config.VersionLower, project.String())}
+			project.reason = err.Msg[0]
+			return err
+		}
+	}
+	// VersionUpper
+	if config.VersionUpper != "" {
+		r := qregistry.Registry["brocade-release"]
+		if strings.Compare(r, config.VersionUpper) != -1 {
+			err.Msg = []string{fmt.Sprintf("Version should be lower or equal than `%s` for project `%s`", config.VersionUpper, project.String())}
+			project.reason = err.Msg[0]
+			return err
+		}
+	}
+	project.installable = true
 	return nil
 }
 
@@ -674,8 +704,8 @@ func GetProject(v string, s string, ronly bool) (project *Project) {
 }
 
 // Sequence produces a list of projects to which p belongs
-func Sequence(v string, p string, ronly bool) (projects []Project, err error) {
-	projects = make([]Project, 0)
+func Sequence(v string, p string, ronly bool) (projects []*Project, err error) {
+	projects = make([]*Project, 0)
 	p = qutil.Canon(p)
 	version, _ := qserver.Release{}.New(v, ronly)
 	fs := version.FS()
@@ -705,7 +735,7 @@ func Sequence(v string, p string, ronly bool) (projects []Project, err error) {
 		}
 		if exists, _ := fs.Exists(cfg); exists {
 			project, _ := Project{}.New(v, start, ronly)
-			projects = append(projects, *project)
+			projects = append(projects, project)
 			config, err := project.LoadConfig()
 			if err != nil {
 				return nil, err
