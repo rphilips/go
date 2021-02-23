@@ -57,7 +57,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 			}
 			args = append(args, text)
 		}
-		if len(args) == 2 {
+		if len(args) == 0 {
 			return nil
 		}
 	}

@@ -14,6 +14,7 @@ var metaCache = new(sync.Map)
 
 //Meta modeleert een meta ingang
 type Meta struct {
+	Source string `json:"source"`
 	Cu     string `json:"cu"`
 	Mu     string `json:"mu"`
 	Ct     string `json:"ct"`
@@ -73,6 +74,7 @@ func (meta Meta) Store(r string, s string) (pmeta *Meta, err error) {
 	fs := version.FS("/meta")
 	digest := qutil.Digest([]byte(s))
 	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
+	meta.Source = s
 	changed, _, _, err := fs.Store(place, meta, "")
 	if err != nil {
 		e := &qerror.QError{

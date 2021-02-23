@@ -36,7 +36,7 @@ func init() {
 
 func versionClose(cmd *cobra.Command, args []string) error {
 	nextversion := Fnextversion
-	if Fnextversion == "" || Fnextversion == "0.00" {
+	if nextversion == "" || nextversion == "0.00" {
 		err := fmt.Errorf("Next version `%s` is invalid", nextversion)
 		Fmsg = qerror.ShowResult(Fmsg, Fjq, err)
 		return nil
@@ -44,24 +44,24 @@ func versionClose(cmd *cobra.Command, args []string) error {
 
 	current := qregistry.Registry["brocade-release"]
 	br := strings.TrimRight(current, " -_betaBETA")
-	Fnextversion = strings.TrimRight(Fnextversion, " -_betaBETA")
+	nextversion = strings.TrimRight(nextversion, " -_betaBETA")
 
-	Fnextversion = qserver.Canon(Fnextversion)
+	nextversion = qserver.Canon(nextversion)
 
-	if br == Fnextversion {
+	if br == nextversion {
 		err := fmt.Errorf("Version `%s` is already closed", br)
 		Fmsg = qerror.ShowResult(Fmsg, Fjq, err)
 		return nil
 	}
 
-	_, err := qserver.Release{}.New(Fnextversion, true)
+	_, err := qserver.Release{}.New(nextversion, true)
 	if err != nil {
 		Fmsg = qerror.ShowResult(Fmsg, Fjq, err)
 		return nil
 	}
 
-	lowest := qserver.Lowest(Fnextversion, br)
-	if lowest == Fnextversion {
+	lowest := qserver.Lowest(nextversion, br)
+	if lowest == nextversion {
 		err = &qerror.QError{
 			Ref: []string{"close.version.lowest"},
 			Msg: []string{"The version of the new release `" + nextversion + "` should be higher than `" + br + "`"},
@@ -77,12 +77,12 @@ func versionClose(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	err = qregistry.SetRegistry("brocade-release", Fnextversion)
+	err = qregistry.SetRegistry("brocade-release", nextversion)
 	if err != nil {
 		Fmsg = qerror.ShowResult(Fmsg, Fjq, err)
 		return nil
 	}
-	err = qregistry.SetRegistry("brocade-release-say", Fnextversion+"beta")
+	err = qregistry.SetRegistry("brocade-release-say", nextversion+"beta")
 	if err != nil {
 		Fmsg = qerror.ShowResult(Fmsg, Fjq, err)
 		return nil

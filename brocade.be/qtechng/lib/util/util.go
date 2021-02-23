@@ -779,7 +779,7 @@ func BlobSplit(blob []byte, split []string, qreg bool) [][]byte {
 	return result
 }
 
-// Decomment haalt beginnede  '//' commentaar weg
+// Decomment haalt beginnende  '//' commentaar weg
 func Decomment(blob []byte, cmts string) (buf *bytes.Buffer) {
 	buf = new(bytes.Buffer)
 	content := About(blob)
