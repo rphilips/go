@@ -244,3 +244,45 @@ func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 
 	return errslice
 }
+
+// LintObject parst objecten zonder naar het repository te gaan
+func LintObjects(ofile OFile) (err error) {
+	// check on doubles
+	fname := ofile.EditFile()
+	found := make(map[string]int)
+
+	objs := ofile.Objects()
+
+	for nr, obj := range objs {
+		id := obj.Name()
+		if found[id] != 0 {
+			lineno, _ := strconv.Atoi(obj.Lineno())
+			err = &qerror.QError{
+				Ref:    []string{"objfile.lint.double"},
+				File:   fname,
+				Lineno: lineno,
+				Object: obj.String(),
+				Type:   "Error",
+				Msg:    []string{"`" + id + "` found at " + objs[found[id]-1].Lineno() + " and " + obj.Lineno()},
+			}
+			return
+		}
+		found[id] = nr + 1
+	}
+
+	// /individual tests
+	errslice := qerror.NewErrorSlice()
+
+	for _, obj := range objs {
+		errs := obj.Lint()
+		for _, e := range errs {
+			if e != nil {
+				errslice = append(errslice, e)
+			}
+		}
+	}
+	if len(errslice) == 0 {
+		return nil
+	}
+	return errslice
+}
