@@ -207,7 +207,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	screfors := qutil.BlobSplit(body, []string{"screen", "text", "format"}, false)
 	wrote := false
 	if len(screfors) != 0 {
-		output.Write(screfors[0])
+		output.Write(bytes.TrimSpace(screfors[0]))
 		wrote = true
 	}
 
@@ -223,7 +223,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 			err := widget.Loads(screfor)
 			output.WriteString("\n\n")
 			if err != nil {
-				output.Write(screfor)
+				output.Write(bytes.TrimSpace(screfor))
 			} else {
 				output.WriteString(widget.ID + ":\n")
 				output.WriteString(widget.Body)

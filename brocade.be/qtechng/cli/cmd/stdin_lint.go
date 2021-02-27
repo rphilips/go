@@ -13,6 +13,7 @@ func init() {
 	stdinCmd.AddCommand(stdinLintCmd)
 	stdinLintCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces stdin")
 	stdinLintCmd.Flags().BoolVar(&Fforce, "force", false, "Lint even if the file is not in repository")
+	stdinLintCmd.Flags().StringVar(&Frefname, "refname", "", "Reference name instead of actual filename")
 }
 
 var stdinLintCmd = &cobra.Command{

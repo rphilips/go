@@ -223,7 +223,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	lgcodes := qutil.BlobSplit(body, delims, false)
 	wrote := false
 	if len(lgcodes) != 0 {
-		output.Write(lgcodes[0])
+		output.Write(bytes.TrimSpace(lgcodes[0]))
 		wrote = true
 	}
 	first := true
@@ -236,7 +236,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 		err := lgcode.Loads(part)
 		output.WriteString("\n\n")
 		if err != nil {
-			output.Write(part)
+			output.Write(bytes.TrimSpace(part))
 		} else {
 			output.WriteString(lgcode.Format())
 		}

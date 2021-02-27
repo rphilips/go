@@ -219,7 +219,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	brobs := qutil.BlobSplit(body, delims, false)
 	wrote := false
 	if len(brobs) != 0 {
-		output.Write(brobs[0])
+		output.Write(bytes.TrimSpace(brobs[0]))
 		wrote = true
 	}
 	first := true
@@ -232,7 +232,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 		err := brob.Loads(part)
 		output.WriteString("\n\n")
 		if err != nil {
-			output.Write(part)
+			output.Write(bytes.TrimSpace(part))
 		} else {
 			output.WriteString(brob.Format())
 		}
