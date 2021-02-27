@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"bytes"
+	"os"
+	"path"
 	"path/filepath"
-	"strings"
 
-	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
+	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qofile "brocade.be/qtechng/lib/file/ofile"
 	qobject "brocade.be/qtechng/lib/object"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -20,51 +23,139 @@ var fileLintCmd = &cobra.Command{
 	Example: `qtechng file lint cwd=../strings
 qtechng file lint --cwd=../strings --remote
 qtechng file lint mymfile.d
-qtechng file lint /stdlib/strings/mymfile.d --remote --version=5.10`,
+qtechng file lint /stdlib/strings/mymfile.d --version=5.10`,
 	RunE:   fileLint,
 	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
+		"fill-version":   "yes",
 	},
 }
 
+// Frefname is a reference name
+var Frefname string
+
 func init() {
+	fileLintCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileLintCmd.Flags().BoolVar(&Fforce, "force", false, "Lint even if the file is not in repository")
+	fileLintCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileLintCmd.Flags().StringVar(&Frefname, "refname", "", "Reference name instead of actual filename")
 	fileCmd.AddCommand(fileLintCmd)
 }
 
 func fileLint(cmd *cobra.Command, args []string) error {
-	files := args
-	if len(args) == 0 && strings.ContainsRune(QtechType, 'W') {
-		start := "."
-		if Fcwd != "" {
-			start = Fcwd
+	var files []string
+	errlist := make([]error, 0)
+	if !Fforce {
+		plocfils, elist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
+		if elist != nil {
+			errlist = append(errlist, elist)
+			return qerror.ErrorSlice(errlist)
 		}
-		files, _ = qfs.Find(start, []string{"*.[dlimbx]"}, Frecurse, true, false)
+		if len(plocfils) == 0 {
+			return nil
+		}
+
+		files = make([]string, len(plocfils))
+
+		for i, plocfil := range plocfils {
+			place := plocfil.Place
+			files[i] = place
+		}
 	}
+	if Fforce {
+		files = make([]string, len(args))
+		for i, fname := range args {
+			if filepath.IsAbs(fname) {
+				files[i] = fname
+
+			} else {
+				files[i] = path.Join(Fcwd, fname)
+				files[i] = path.Join(Fcwd, fname)
+			}
+		}
+	}
+
 	lint := func(n int) (interface{}, error) {
 		fname := files[n]
+		refname := fname
+		if Frefname != "" {
+			refname = Frefname
+		}
 		ext := filepath.Ext(fname)
-		var err error
+		blob, err := os.ReadFile(fname)
+		if err != nil {
+			e := &qerror.QError{
+				Ref:    []string{"file.lint.read"},
+				File:   refname,
+				Lineno: 1,
+				Type:   "Error",
+				Msg:    []string{err.Error()},
+			}
+			return false, e
+		}
+		// check utf8
+		_, result, e := qutil.NoUTF8(bytes.NewReader(blob))
+		if e != nil || len(result) > 0 {
+			lineno := -1
+			if len(result) > 1 {
+				lineno = result[0][0]
+			}
+			err := &qerror.QError{
+				Ref:    []string{"file.lint.utf8"},
+				File:   refname,
+				Lineno: lineno,
+				Type:   "Error",
+				Msg:    []string{"UTF-8 error in file"},
+			}
+			return false, err
+		}
+		// About line
+		switch ext {
+		case ".b", ".d", ".i", ".l", ".m", ".x":
+			about := qutil.About(blob)
+			aboutline := qutil.AboutLine(about)
+			if len(aboutline) < 2 {
+				err := &qerror.QError{
+					Ref:    []string{"file.lint.about"},
+					File:   refname,
+					Lineno: -1,
+					Type:   "Error",
+					Msg:    []string{"`About:` is missing or empty"},
+				}
+				return false, err
+			}
+		}
+
 		var objfile qobject.OFile
 		switch ext {
+		case ".b":
+			objfile = new(qofile.BFile)
 		case ".d":
 			objfile = new(qofile.DFile)
 		case ".i":
 			objfile = new(qofile.IFile)
 		case ".l":
 			objfile = new(qofile.LFile)
+		case ".x":
+			objfile = new(qofile.XFile)
 		}
 		if objfile != nil {
-			objfile.SetEditFile(fname)
-			err = qobject.Lint(objfile, nil, nil)
+			objfile.SetEditFile(refname)
+			err = qobject.Loads(objfile, blob)
+			if err != nil {
+				return false, err
+			}
+			errlist := qobject.LintObjects(objfile)
+			if errlist == nil {
+				return false, errlist
+			}
 		}
-		return err == nil, err
+		return true, nil
 	}
 	_, errorlist := qparallel.NMap(len(files), -1, lint)
-	elist := qerror.FlattenErrors(qerror.ErrorSlice(errorlist))
-	if len(elist) == 0 {
-		return nil
-	}
-	return qerror.ErrorSlice(errorlist)
+	//errlist = qerror.FlattenErrors(qerror.ErrorSlice(errorlist))
+	Fmsg = qerror.ShowResult("", Fjq, errorlist)
+	return nil
 }

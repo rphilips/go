@@ -26,7 +26,7 @@ var fileDeleteCmd = &cobra.Command{
 func init() {
 	fileDeleteCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
-	fileDeleteCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern (multiple)")
+	fileDeleteCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileDeleteCmd)
 }
 
@@ -57,7 +57,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fpattern)
+	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
 	direxists := make(map[string][]qclient.LocalFile)
 
 	result := make([]deleter, 0)

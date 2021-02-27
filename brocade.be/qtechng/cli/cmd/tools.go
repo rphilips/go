@@ -49,12 +49,12 @@ type storer struct {
 
 func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (pcargo *qclient.Cargo, err error) {
 	if len(args) != 0 {
-		if len(Fpattern) == 0 {
-			Fpattern = args
+		if len(Fqpattern) == 0 {
+			Fqpattern = args
 		} else {
 			for _, arg := range args {
-				ok := len(Fpattern) == 0
-				for _, p := range Fpattern {
+				ok := len(Fqpattern) == 0
+				for _, p := range Fqpattern {
 					if p == arg {
 						ok = true
 						break
@@ -65,7 +65,7 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 					}
 				}
 				if ok {
-					Fpattern = append(Fpattern, arg)
+					Fqpattern = append(Fqpattern, arg)
 				}
 			}
 		}
@@ -75,7 +75,7 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 		Release:        Fversion,
 		CmpRelease:     Fcmpversion,
 		QDirs:          qdirs,
-		Patterns:       Fpattern,
+		Patterns:       Fqpattern,
 		FilesInProject: filesinproject,
 		Natures:        Fnature,
 		Cu:             Fcu,
@@ -341,7 +341,7 @@ func storeTransport() ([]storer, []error) {
 		}
 		qpath := locfil.QPath
 		qdir, qbase := qutil.QPartition(qpath)
-		tdir := Fcwd
+		tdir := dir
 		if Ftree {
 			parts := strings.SplitN(qdir, "/", -1)
 			parts[0] = tdir

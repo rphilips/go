@@ -32,7 +32,10 @@ Use the delete flag if the original files should be deleted
 	},
 }
 
+//Fdelete delete after copy
 var Fdelete bool
+
+// Fconfirm ask for confirmation
 var Fconfirm bool
 
 func init() {

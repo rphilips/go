@@ -3,8 +3,8 @@ package bfile
 
 import (
 
-    qutil "brocade.be/qtechng/util"
-    qerror "brocade.be/qtechng/error"
+    qutil "brocade.be/qtechng/lib/util"
+    qerror "brocade.be/qtechng/lib/error"
     qregistry "brocade.be/base/registry"
 )
 
@@ -67,7 +67,7 @@ Header <- ty:Type WSS+ id:(BrobID) WSS* ":"  WS* cmt:(Cmt) {
     return [3]string{ty.(string), id.(string), cmt.(string)}, nil
 }
 
-Type <- ("mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
+Type <- ("oai" / "process" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
     return string(c.text), nil
 }
 
@@ -94,11 +94,15 @@ Body <- fields:Field+ {
     return flds, nil
 }
 
-Key <- [a-z][a-z0-9]* {
+Key1 <- [a-z][a-zA-Z0-9]* {
     return string(c.text), nil
 }
 
-Field <- WS* "$" key:Key WSS* ":" WSS* value:( Value1 / Value2 / Value3 ) WS* Cmt?  attribs:Attrib* {
+Key2 <- [a-z][a-z0-9]* {
+    return string(c.text), nil
+}
+
+Field <- WS* "$" key:Key1 WSS* ":" WSS* value:( Value1 / Value2 / Value3 ) WS* Cmt?  attribs:Attrib* {
     x := attribs.([]interface{})
     attr := make([]*Duo, len(x))
     for i, a := range x {
@@ -113,7 +117,7 @@ Field <- WS* "$" key:Key WSS* ":" WSS* value:( Value1 / Value2 / Value3 ) WS* Cm
 }
 
 
-Attrib <- WS* "$$" key:Key WSS* ":" WSS* value:(Value1 / Value2 / Value3) WS* Cmt? {
+Attrib <- WS* "$$" key:Key2 WSS* ":" WSS* value:(Value1 / Value2 / Value3) WS* Cmt? {
     d := Duo {
         key: key.(string),
         value: value.(string),
@@ -137,6 +141,9 @@ Value3 <- [^\n\r]* (EOL / EOF) {
     k := strings.Index(x, "//")
     if k == 0 {
         return "", nil
+    }
+    if k == -1 {
+
     }
     if k != -1 {
        return strings.TrimSpace(x[:k]), nil

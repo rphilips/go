@@ -144,7 +144,7 @@ func (brob *Brob) Unmarshal(blob []byte) error {
 // Loads from blob
 func (brob *Brob) Loads(blob []byte) error {
 	fname := brob.EditFile()
-	blob = bytes.TrimSpace(qutil.Decomment(blob, "/").Bytes())
+	blob = bytes.TrimSpace(qutil.Decomment(blob).Bytes())
 
 	x, ep := Parse(fname, blob, Entrypoint("Brob"))
 

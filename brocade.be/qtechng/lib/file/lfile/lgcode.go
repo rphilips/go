@@ -95,7 +95,7 @@ func (lgcode *Lgcode) Unmarshal(blob []byte) error {
 // Loads from blob
 func (lgcode *Lgcode) Loads(blob []byte) error {
 	fname := lgcode.EditFile()
-	blob = bytes.TrimSpace(qutil.Decomment(blob, "/").Bytes())
+	blob = bytes.TrimSpace(qutil.Decomment(blob).Bytes())
 	x, ep := Parse(fname, blob, Entrypoint("Lgcode"))
 
 	if ep != nil {

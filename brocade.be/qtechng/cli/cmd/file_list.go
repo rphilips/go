@@ -25,12 +25,12 @@ var fileListCmd = &cobra.Command{
 func init() {
 	fileListCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
-	fileListCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern (multiple)")
+	fileListCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileListCmd)
 }
 
 func fileList(cmd *cobra.Command, args []string) error {
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fpattern)
+	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
 	type adder struct {
 		Name    string `json:"arg"`
 		Changed bool   `json:"changed"`

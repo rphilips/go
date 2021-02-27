@@ -10,27 +10,28 @@ import (
 )
 
 func init() {
-	stdinCmd.AddCommand(stdinFormatCmd)
-	stdinFormatCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces stdin")
+	stdinCmd.AddCommand(stdinLintCmd)
+	stdinLintCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces stdin")
+	stdinLintCmd.Flags().BoolVar(&Fforce, "force", false, "Lint even if the file is not in repository")
 }
 
-var stdinFormatCmd = &cobra.Command{
-	Use:   "format",
-	Short: "Formats stdin",
-	Long: `Command formats stdin an writes result on stdout.
+var stdinLintCmd = &cobra.Command{
+	Use:   "lint",
+	Short: "Lints stdin",
+	Long: `Command lints stdin an writes result on stdout.
 
 The argument specifies the type of file: b | d | i | l | m | x
 `,
 	Args: cobra.MinimumNArgs(1),
 	Example: `
-  qtechng stdin format m`,
-	RunE: stdinFormat,
+  qtechng stdin lint m`,
+	RunE: stdinLint,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
-func stdinFormat(cmd *cobra.Command, args []string) error {
+func stdinLint(cmd *cobra.Command, args []string) error {
 	ext := args[0]
 	if !strings.HasPrefix(ext, ".") {
 		ext = "." + ext
@@ -46,5 +47,5 @@ func stdinFormat(cmd *cobra.Command, args []string) error {
 	defer qfs.Rmpath(tmpfile)
 	qfs.Store(tmpfile+ext, data, "")
 	args[0] = tmpfile + ext
-	return fileFormat(cmd, args)
+	return fileLint(cmd, args)
 }

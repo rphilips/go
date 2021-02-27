@@ -474,12 +474,12 @@ B
 
 func TestAbout09(t *testing.T) {
 	data := []byte(`"""
- about: Hello
+ About: Hello
 """
 
  // a b c`)
 	expected := []byte(`//
-// about: Hello
+// About: Hello
 //
 
  // a b c`)
@@ -487,6 +487,10 @@ func TestAbout09(t *testing.T) {
 	about := About(data)
 	if string(expected) != string(about) {
 		t.Errorf("Error: about: \n`%s`\n\nexpected:\n`%s`\n", string(about), string(expected))
+	}
+	aboutline := AboutLine(about)
+	if aboutline != "Hello" {
+		t.Errorf("Error: aboutline : \n`%s`\n\nexpected:\n`Hello`\n", aboutline)
 	}
 }
 

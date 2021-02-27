@@ -117,6 +117,29 @@ func About(blob []byte) (result []byte) {
 	}
 }
 
+// AboutLine retrieves the first About line
+func AboutLine(blob []byte) string {
+	buffer := bytes.NewBuffer(blob)
+	eol := byte('\n')
+	slash := []byte("//")
+	for {
+		line, err := buffer.ReadBytes(eol)
+		if err != nil && err != io.EOF {
+			return ""
+		}
+		if !bytes.HasPrefix(line, slash) {
+			return ""
+		}
+		sline := string(line)
+		k := strings.Index(sline, "About:")
+		if k < 0 {
+			continue
+		}
+		sline = sline[k+6:]
+		return strings.TrimSpace(sline)
+	}
+}
+
 // Time make a string
 func Time(times ...string) string {
 	t := ""
@@ -514,7 +537,7 @@ func ExtractLineno(msg string, body []byte) (int, string) {
 	if len(parts) < 2 {
 		return -1, ""
 	}
-	lineno, err := strconv.Atoi(parts[1])
+	lineno, err := strconv.Atoi(parts[0])
 	if err != nil {
 		return -1, ""
 	}
@@ -780,102 +803,87 @@ func BlobSplit(blob []byte, split []string, qreg bool) [][]byte {
 }
 
 // Decomment haalt beginnende  '//' commentaar weg
-func Decomment(blob []byte, cmts string) (buf *bytes.Buffer) {
+func Decomment(blob []byte) (buf *bytes.Buffer) {
 	buf = new(bytes.Buffer)
-	content := About(blob)
-	lines := bytes.SplitN(content, []byte("\n"), -1)
+	content := bytes.NewBuffer(blob)
+	eol := byte('\n')
+	cmt := []byte("//")
 	preamble := true
+	var err error
+	var line []byte
+	for err != io.EOF {
+		line, err = content.ReadBytes(eol)
+		if len(line) == 0 {
+			break
+		}
 
-	for _, line := range lines {
-		if preamble && len(line) > 1 && line[0] == byte('/') && line[1] == byte('/') {
+		if preamble && bytes.HasPrefix(line, cmt) {
 			buf.Write(line)
-			buf.WriteRune('\n')
 			continue
 		}
+
 		preamble = false
 
-		if len(line) < 2 {
-			buf.Write(line)
-			buf.WriteRune('\n')
-			continue
-		}
+		line, dlm, _ := sdecomment(line)
 
-		xline := bytes.TrimLeft(line, " \t")
-		if len(xline) < 2 {
-			buf.Write(line)
-			buf.WriteRune('\n')
+		if len(dlm) == 0 || err != nil {
+			if len(line) != 0 {
+				buf.Write(line)
+			}
 			continue
-		}
-
-		if line[0] == byte('/') && line[1] == byte('/') {
-			continue
-		}
-		if cmts != "" {
-			line, _ = mdecomment(line, cmts)
 		}
 		buf.Write(line)
-		buf.WriteRune('\n')
-		continue
+		buf.WriteByte(eol)
 	}
 	return
 }
 
-func mdecomment(line []byte, cmts string) ([]byte, []byte) {
-	k := bytes.IndexAny(line, cmts)
-	if k == -1 {
-		return line, []byte{}
+func sdecomment(line []byte) (before []byte, dlm []byte, after []byte) {
+	cmt := []byte("//")
+	start := 0
+	for {
+		k := bytes.Index(line[start:], cmt)
+		if k == -1 {
+			return line, nil, nil
+		}
+		k = start + k
+		start = k + 2
+		if k == 0 {
+			return nil, cmt, line[2:]
+		}
+		if line[k-1] == byte(':') {
+			continue
+		}
+		nra := bytes.Count(line[:k], []byte(`"`))
+		if nra%2 != 0 {
+			continue
+		}
+
+		nra1 := bytes.Count(line[:k], []byte(`«`))
+		nra2 := bytes.Count(line[:k], []byte(`»`))
+		if nra1 != nra2 {
+			continue
+		}
+		nra1 = bytes.Count(line[start:], []byte(`«`))
+		nra2 = bytes.Count(line[start:], []byte(`»`))
+		if nra1 != nra2 {
+			continue
+		}
+
+		nra1 = bytes.Count(line[:k], []byte(`⟦`))
+		nra2 = bytes.Count(line[:k], []byte(`⟧`))
+		if nra1 != nra2 {
+			continue
+		}
+
+		nra1 = bytes.Count(line[:start], []byte(`⟦`))
+		nra2 = bytes.Count(line[:start], []byte(`⟧`))
+		if nra1 != nra2 {
+			continue
+		}
+
+		return line[:k], cmt, line[start:]
 	}
-	if k == 0 {
-		if line[k] == byte(';') {
-			return []byte{}, line
-		}
-		if len(line) == k+1 {
-			return line, []byte{}
-		}
-		if line[k+1] == byte('/') {
-			return []byte{}, line
-		}
-		x, y := mdecomment(line[1:], cmts)
-		return line[:1+len(x)], y
-	}
-
-	pre := line[:k]
-	l := bytes.IndexAny(pre, `"«⟦`)
-	if l == -1 {
-		if line[k] == byte(';') {
-			return line[:k], line[k:]
-		}
-		if len(line) == k+1 {
-			return line, []byte{}
-		}
-		if line[k+1] == byte('/') {
-			return line[:k], line[k:]
-		}
-		x, y := mdecomment(line[k+1:], cmts)
-		return line[:1+len(x)], y
-	}
-
-	t := '"'
-
-	switch {
-	case line[l] == byte('"'):
-		t = '"'
-	case bytes.HasPrefix(line[l:], []byte("«")):
-		t = '»'
-	default:
-		t = '⟧'
-	}
-
-	f := bytes.IndexRune(line[l+1:], t)
-
-	if f == -1 {
-		return line, []byte{}
-	}
-	f += l + 1
-
-	x, y := mdecomment(line[f+1:], cmts)
-	return append(line[:f+1], x...), y
-
 }
 
 // Embrace creates a delimited string

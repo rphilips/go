@@ -40,14 +40,14 @@ var fileTellCmd = &cobra.Command{
 func init() {
 	fileTellCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileTellCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
-	fileTellCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern (multiple)")
+	fileTellCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileTellCmd.Flags().StringVar(&Ftell, "tell", "", "abspath/relpath/ext/dirname/basename/version/project/qpath/python")
 	fileCmd.AddCommand(fileTellCmd)
 }
 
 func fileTell(cmd *cobra.Command, args []string) error {
 
-	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fpattern)
+	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
 
 	if len(plocfils) == 0 {
 		err := qerror.QError{

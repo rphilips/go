@@ -34,7 +34,7 @@ func init() {
 	sourceCmd.PersistentFlags().StringVar(&Fmtbefore, "mbefore", "", "Modified before")
 	sourceCmd.PersistentFlags().StringVar(&Fmtafter, "mafter", "", "Modified after")
 	sourceCmd.PersistentFlags().StringSliceVar(&Fneedle, "needle", []string{}, "Find substring")
-	sourceCmd.PersistentFlags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern")
+	sourceCmd.PersistentFlags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern on qpath")
 	sourceCmd.PersistentFlags().BoolVar(&Ffilesinproject, "neighbours", false, "Indicate if all files in project are selected")
 	sourceCmd.PersistentFlags().StringVar(&Fqdir, "qdir", "", "qpath of a directory under a project")
 	sourceCmd.PersistentFlags().BoolVar(&Fperline, "perline", false, "searches per line")

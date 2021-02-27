@@ -128,7 +128,7 @@ func (macro *Macro) Unmarshal(blob []byte) error {
 // Loads from blob
 func (macro *Macro) Loads(blob []byte) error {
 	fname := macro.EditFile()
-	blob = bytes.TrimSpace(qutil.Decomment(blob, "/").Bytes())
+	blob = bytes.TrimSpace(qutil.Decomment(blob).Bytes())
 	x, ep := Parse(fname, blob, Entrypoint("Macro"))
 
 	if ep != nil {

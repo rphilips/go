@@ -61,7 +61,7 @@ func (bf *BFile) String() string {
 // Parse parst een []byte
 func (bf *BFile) Parse(blob []byte) (preamble string, objs []qobject.Object, err error) {
 	fname := bf.EditFile()
-	x, err := Parse(fname, qutil.Decomment(blob, "/").Bytes())
+	x, err := Parse(fname, qutil.Decomment(blob).Bytes())
 	if err != nil {
 		return
 	}

@@ -238,8 +238,8 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	wrote := false
 
 	if len(macros) != 0 {
-		output.Write(macros[0])
-		wrote = true
+		m0 := bytes.TrimSpace(macros[0])
+		output.Write(m0)
 	}
 
 	if len(pardoc) != 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') {
@@ -268,7 +268,8 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 		output.WriteString("\n\n")
 		wrote = true
 		if err != nil {
-			output.Write(part)
+			m0 := bytes.TrimSpace(part)
+			output.Write(m0)
 			continue
 		}
 		for i, param := range macro.Params {

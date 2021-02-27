@@ -27,12 +27,12 @@ var fileTouchCmd = &cobra.Command{
 func init() {
 	fileTouchCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileTouchCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
-	fileTouchCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern (multiple)")
+	fileTouchCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileTouchCmd)
 }
 
 func fileTouch(cmd *cobra.Command, args []string) error {
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fpattern)
+	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
 
 	h := time.Now().Local()
 	t := h.Format(time.RFC3339)

@@ -33,7 +33,7 @@ var fileCiCmd = &cobra.Command{
 
 func init() {
 	fileCiCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
-	fileCiCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern (multiple)")
+	fileCiCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileCiCmd)
 }
 
@@ -113,7 +113,7 @@ func preCi(cmd *cobra.Command, args []string) {
 	}
 
 	var errlist []error
-	Fpayload, errlist = getPayload(args, FUID, Fcwd, Fversion, Frecurse, Fpattern)
+	Fpayload, errlist = getPayload(args, FUID, Fcwd, Fversion, Frecurse, Fqpattern)
 
 	if len(errlist) == 0 {
 		errlist = nil

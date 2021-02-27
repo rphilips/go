@@ -98,6 +98,9 @@ var Fneedle []string
 // Fpattern patterns to select on
 var Fpattern []string
 
+// Fqpattern patterns to select on
+var Fqpattern []string
+
 // Fforce overrules normal behaviour
 var Fforce bool // force ?
 var finfo bool  // Fakes command and lists all arguments
