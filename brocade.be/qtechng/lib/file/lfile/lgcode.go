@@ -354,6 +354,7 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 			Msg:    []string{"`" + id + "` has no translation or alias"},
 		}
 		errslice = append(errslice, err)
+		return errslice
 	}
 
 	nature := lgcode.Nature
@@ -433,8 +434,24 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 			errslice = append(errslice, err)
 		}
 	}
-
-	return
+	if alias == "" {
+		y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U
+		if strings.TrimSpace(y) == "" {
+			err := &qerror.QError{
+				Ref:    []string{"lgcode.lint.notalias.empty"},
+				File:   fname,
+				Lineno: lineno,
+				Object: name,
+				Type:   "Error",
+				Msg:    []string{"`" + id + "` should have translations"},
+			}
+			errslice = append(errslice, err)
+		}
+	}
+	if len(errslice) == 0 {
+		return nil
+	}
+	return errslice
 
 }
 
@@ -450,23 +467,34 @@ func (lgcode *Lgcode) Format() string {
 		sep1 = "⟦"
 		sep2 = "⟧"
 	}
+	ok := false
 	if lgcode.N != "" {
 		lines = append(lines, "    N: "+sep1+lgcode.N+sep2)
+		ok = true
 	}
 	if lgcode.E != "" {
 		lines = append(lines, "    E: "+sep1+lgcode.E+sep2)
+		ok = true
 	}
 	if lgcode.F != "" {
 		lines = append(lines, "    F: "+sep1+lgcode.F+sep2)
+		ok = true
 	}
 	if lgcode.D != "" {
 		lines = append(lines, "    D: "+sep1+lgcode.D+sep2)
+		ok = true
 	}
 	if lgcode.U != "" {
 		lines = append(lines, "    U: "+sep1+lgcode.U+sep2)
+		ok = true
 	}
 	if lgcode.Alias != "" {
 		lines = append(lines, "    Alias: "+lgcode.Alias)
+		ok = true
+	}
+	if !ok {
+		lines = append(lines, "    N: "+sep1+lgcode.N+sep2)
+		ok = true
 	}
 	if lgcode.Nature != "" {
 		lines = append(lines, "    Nature: "+lgcode.Nature)

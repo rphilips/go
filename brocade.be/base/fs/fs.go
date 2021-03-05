@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	qpattern "brocade.be/base/pattern"
@@ -450,9 +449,8 @@ func CopyFile(src, dst, pathmode string, keepmtime bool) (err error) {
 			return
 		}
 		if runtime.GOOS != "windows" {
-			if stat, ok := si.Sys().(*syscall.Stat_t); ok {
-				uid := int(stat.Uid)
-				gid := int(stat.Gid)
+			uid, gid, ok := uidgid(si)
+			if ok {
 				err = os.Chown(dst, uid, gid)
 				if err != nil {
 					return
@@ -500,20 +498,8 @@ func CopyMeta(src string, dst string, keepmtime bool) (err error) {
 	var dgid int
 
 	if runtime.GOOS != "windows" {
-		if stat, ok := si.Sys().(*syscall.Stat_t); ok {
-			suid = int(stat.Uid)
-			sgid = int(stat.Gid)
-			if err != nil {
-				return
-			}
-		}
-		if stat, ok := di.Sys().(*syscall.Stat_t); ok {
-			duid = int(stat.Uid)
-			dgid = int(stat.Gid)
-			if err != nil {
-				return
-			}
-		}
+		suid, sgid, _ = uidgid(si)
+		duid, dgid, _ = uidgid(di)
 	}
 
 	if suid != duid || sgid != dgid {

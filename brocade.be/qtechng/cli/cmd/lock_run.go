@@ -69,8 +69,8 @@ func lockRun(cmd *cobra.Command, args []string) {
 	rcmd.Stdout = os.Stdout
 	rcmd.Stderr = os.Stderr
 	rcmd.Dir = Fcwd
-	rcmd.SysProcAttr = &syscall.SysProcAttr{}
-	rcmd.SysProcAttr.Setpgid = true
+	// rcmd.SysProcAttr = &syscall.SysProcAttr{}
+	// rcmd.SysProcAttr.Setpgid = true
 	err := rcmd.Run()
 	unlock(nil, 0)
 	if err != nil {

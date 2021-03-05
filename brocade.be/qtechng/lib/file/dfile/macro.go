@@ -302,6 +302,7 @@ func (macro *Macro) Format() string {
 		plus := ""
 		if len(id) < k {
 			plus = strings.Repeat(" ", k-len(id))
+			plus = ""
 		}
 		prefix := param.ID + plus
 		value := param.Doc

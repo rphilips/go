@@ -2,7 +2,7 @@
 package lfile
 
 import (
-    qutil "brocade.be/qtechng/util"
+    qutil "brocade.be/qtechng/lib/util"
 )
 }
 
@@ -58,8 +58,8 @@ Lgcode <- "lgcode" WS+ id:(LgcodeID) WS* ":" WS*  translations:(Translation*) WS
 LgcodeID <- id:(ScopeID / TextID / NsID / SimpleID) {
 	return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
 	}
-ScopeID  <- [a-zA-Z] [a-zA-Z0-9]* "." [a-zA-Z] [a-zA-Z0-9]* ".scope"
-TextID   <- [a-zA-Z] [a-zA-Z0-9]* "." [a-zA-Z] [a-zA-Z0-9]*
+ScopeID  <- [a-zA-Z] [a-zA-Z0-9]* "." [a-zA-Z0-9]+ ".scope"
+TextID   <- [a-zA-Z] [a-zA-Z0-9]* "." [a-zA-Z0-9]+
 NsID     <- [a-zA-Z] [a-zA-Z0-9]* "."
 SimpleID <- [a-zA-Z0-9_ -]+
 

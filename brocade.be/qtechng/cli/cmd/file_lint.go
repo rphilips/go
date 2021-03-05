@@ -148,14 +148,14 @@ func fileLint(cmd *cobra.Command, args []string) error {
 				return false, err
 			}
 			errlist := qobject.LintObjects(objfile)
-			if errlist == nil {
+			if errlist != nil {
 				return false, errlist
 			}
 		}
 		return true, nil
 	}
 	_, errorlist := qparallel.NMap(len(files), -1, lint)
-	//errlist = qerror.FlattenErrors(qerror.ErrorSlice(errorlist))
+
 	Fmsg = qerror.ShowResult("", Fjq, errorlist)
 	return nil
 }
