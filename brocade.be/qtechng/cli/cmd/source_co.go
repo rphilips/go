@@ -14,7 +14,7 @@ var sourceCoCmd = &cobra.Command{
 	Short:   "Checks out QtechNG files",
 	Long:    `Command to retrieve files from the QtechNG repository`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source co --pattern=/catalografie/application/bcawedit.m`,
+	Example: `qtechng source co --qpattern=/catalografie/application/bcawedit.m`,
 	RunE:    sourceCo,
 	PreRun:  preSourceCo,
 	Annotations: map[string]string{

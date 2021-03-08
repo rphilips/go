@@ -116,7 +116,7 @@ var regmapqtechng = []regitem{
 			}
 			return "qtechng"
 		},
-		doc: "Basename of the `qtechng` binary. Take care is installed in the :envvar:`PATH`.\n\nExamples are:\n\n    - `qtechng` (on Linux and OSX)`\n    - `qtechng.exe` (on Windows)",
+		doc: "Basename of the `qtechng` binary. Take care it is installed in the :envvar:`PATH`.\n\nExamples are:\n\n    - `qtechng` (on Linux and OSX)`\n    - `qtechng.exe` (on Windows)",
 	},
 	{
 		name:      "qtechng-copy-exe",
