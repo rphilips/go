@@ -1,7 +1,7 @@
 {
 package mfile
 
-import qutil "brocade.be/qtechng/util"
+import qutil "brocade.be/qtechng/lib/util"
 }
 
 // see: https://github.com/antlr/grammars-v4/blob/master/mumps/mumps.g4

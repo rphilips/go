@@ -2,8 +2,8 @@
 package ifile
 
 import (
-   qutil "brocade.be/qtechng/util"
-   qobject "brocade.be/qtechng/object"
+   qutil "brocade.be/qtechng/lib/util"
+   qobject "brocade.be/qtechng/lib/object"
 )
 }
 

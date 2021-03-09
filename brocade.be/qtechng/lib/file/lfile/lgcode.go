@@ -334,6 +334,8 @@ func (lgcode *Lgcode) Deps() []byte {
 // Lint lgcode
 func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 
+	testempty := false
+
 	fname := lgcode.EditFile()
 	lineno, _ := strconv.Atoi(lgcode.Lineno())
 	name := lgcode.String()
@@ -344,7 +346,7 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 
 	id := lgcode.ID
 	x := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U + lgcode.Alias + lgcode.Nature
-	if !isscope && strings.TrimSpace(x) == "" && lgcode.Nature != "empty" {
+	if testempty && !isscope && strings.TrimSpace(x) == "" && lgcode.Nature != "empty" {
 		err := &qerror.QError{
 			Ref:    []string{"lgcode.lint.empty"},
 			File:   fname,
@@ -436,7 +438,7 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 	}
 	if alias == "" {
 		y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U
-		if strings.TrimSpace(y) == "" {
+		if testempty && strings.TrimSpace(y) == "" {
 			err := &qerror.QError{
 				Ref:    []string{"lgcode.lint.notalias.empty"},
 				File:   fname,

@@ -14,7 +14,6 @@ import (
 // Brob staat voor een Brocade macro
 type Brob struct {
 	ID      string   `json:"id"`     // Identificatie
-	Ty      string   `json:"type"`   // Type
 	Source  string   `json:"source"` // Editfile
 	Body    []*Field `json:"body"`   // Body
 	Line    string   `json:"-"`      // Lijnnummer
@@ -83,7 +82,7 @@ func (brob *Brob) List() [][3]string {
 
 // String
 func (brob *Brob) String() string {
-	return "b4_" + brob.Name()
+	return brob.ID
 }
 
 // Name of brob
@@ -98,7 +97,8 @@ func (brob *Brob) SetName(id string) {
 
 // Type of macro
 func (brob *Brob) Type() string {
-	return "b4_" + brob.Ty
+	x := brob.ID
+	return strings.SplitN(x, " ", 1)[0]
 }
 
 // Release of macro
@@ -188,7 +188,7 @@ func (brob *Brob) Lint() (errslice qerror.ErrorSlice) {
 // Format ...
 func (brob *Brob) Format() string {
 	lines := make([]string, 0)
-	lines = append(lines, brob.Ty+" "+brob.ID+":")
+	lines = append(lines, brob.ID+":")
 	for _, field := range brob.Body {
 		value := qutil.Embrace(field.value)
 		lines = append(lines, "    $"+field.key+": "+value)
@@ -233,7 +233,7 @@ func (brob *Brob) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "type"},
-		Value:  brob.Ty,
+		Value:  brob.Type(),
 		Action: "set",
 	}
 
@@ -241,7 +241,7 @@ func (brob *Brob) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "id"},
-		Value:  brob.ID,
+		Value:  strings.SplitN(brob.ID, " ", 1)[1],
 		Action: "set",
 	}
 	mumps = append(mumps, m)

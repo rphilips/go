@@ -3,8 +3,8 @@ package xfile
 
 import (
 
-    qutil "brocade.be/qtechng/util"
-    qerror "brocade.be/qtechng/error"
+    qutil "brocade.be/qtechng/lib/util"
+    qerror "brocade.be/qtechng/lib/error"
     qregistry "brocade.be/base/registry"
 )
 

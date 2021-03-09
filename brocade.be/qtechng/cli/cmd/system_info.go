@@ -38,6 +38,12 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 	}
 	msg["UID"] = FUID
 	msg["GOMAXPROCS"] = strconv.Itoa(runtime.GOMAXPROCS(-1))
+	beol := []byte("\n")
+	eol := ""
+	for _, b := range beol {
+		eol += strconv.Itoa(int(b))
+	}
+	msg["eol"] = eol
 
 	regkeys := regMap()
 

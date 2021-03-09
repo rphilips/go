@@ -23,7 +23,7 @@ type Widget struct {
 
 // String
 func (widget *Widget) String() string {
-	return widget.Name()
+	return widget.ID
 }
 
 // Name of widget

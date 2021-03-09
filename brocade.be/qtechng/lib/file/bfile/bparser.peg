@@ -51,29 +51,29 @@ Preamble <- Comment  {
 }
 
 
-Brob <- head:(Header) body:(Body) &(Type / EOF) {
-    x := [3]string(head.([3]string))
+Brob <- brob:(BrobLine) body:(Body) &(BrobMode / EOF) {
+    x := [4]string(brob.([4]string))
     b := Brob{
-        ID: x[1],
-        Ty: x[0],
+        ID: x[0] + " " + x[1],
         Body: body.([]*Field),
+        Line: x[2],
     }
 	return &b, nil
 }
 
 
 
-Header <- ty:Type WSS+ id:(BrobID) WSS* ":"  WS* cmt:(Cmt) {
-    return [3]string{ty.(string), id.(string), cmt.(string)}, nil
+BrobLine <- mode:BrobMode WSS+ id:(BrobID) WSS* ":"  WS* cmt:(Cmt) {
+    return [4]string{mode.(string), id.([2]string)[0], id.([2]string)[1], cmt.(string)}, nil
 }
 
-Type <- ("oai" / "oaiset" / "process" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
+BrobMode <- ("oai" / "oaiset" / "process" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
     return string(c.text), nil
 }
 
 
 BrobID <- [?0-9A-Za-z_./%^]+ {
-    return string(c.text), nil
+    return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
 }
 
 Cmt <- CmtLine* {
