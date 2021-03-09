@@ -21,7 +21,7 @@ De te behandelen bestanden worden gespecificeerd door:
 
     - de argumenten 
     - de :option:`recurse` vlag
-    - de :option:`pattern` vlag(gen)
+    - de :option:`qpattern` vlag(gen)
 
     
 
@@ -54,8 +54,10 @@ Opties
 
 --cwd=<dir>                  De te behandelen bestanden (de *sources*) worden relatief genomen tegenover `dir`
 
---pattern=<wildcard>         Er kunnen meeerdere dergelijke vlaggen worden gespecificeerd. 
+--qpattern=<wildcard>        Er kunnen meeerdere dergelijke vlaggen worden gespecificeerd. 
                              Deze filteren de *sources* op hun *basename*
+
+
 
 
 --recurse                    Alle reguliere bestanden, stroomafwaarts van de de argumenten die directories zijn
@@ -67,13 +69,13 @@ Opties
 Voorbeelden
 ~~~~~~~~~~~~~
 
-:samp:`qtechng file lint --pattern='*'  --recurse --jsonpath='$..file'
+:samp:`qtechng file lint --qpattern='*'  --recurse --jsonpath='$..file'
 
-:samp:`qtechng file lint --pattern='*/zcowchs.m'  --recurse --jsonpath='$..file'
+:samp:`qtechng file lint --qpattern='*/zcowchs.m'  --recurse --jsonpath='$..file'
 
-:samp:`qtechng file lint --pattern='*'  --recurse --jsonpath="\$.ERROR[?(@.ref[0] == 'file.lint.about')]..file"`
+:samp:`qtechng file lint --qpattern='*'  --recurse --jsonpath="\$.ERROR[?(@.ref[0] == 'file.lint.about')]..file"`
 
-:samp:`qtechng file lint --pattern='*'  --recurse --jsonpath="\$.ERROR[?(@.ref[0] == 'file.lint.utf8')]..file"`
+:samp:`qtechng file lint --qpattern='*'  --recurse --jsonpath="\$.ERROR[?(@.ref[0] == 'file.lint.utf8')]..file"`
 
 
 
