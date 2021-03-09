@@ -22,20 +22,25 @@ var fileListCmd = &cobra.Command{
 	},
 }
 
+//Fonlychanged flag to indicate only changed files
+var Fonlychanged bool
+
 func init() {
 	fileListCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileListCmd.Flags().BoolVar(&Fonlychanged, "changed", false, "Consider only modified files")
 	fileListCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileListCmd)
 }
 
 func fileList(cmd *cobra.Command, args []string) error {
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
+	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, Fonlychanged)
 	type adder struct {
 		Name    string `json:"arg"`
 		Changed bool   `json:"changed"`
 		Release string `json:"version"`
 		Qpath   string `json:"qpath"`
+		Path    string `json:"file"`
 		Time    string `json:"time"`
 		Digest  string `json:"digest"`
 		Cu      string `json:"cu"`
@@ -48,7 +53,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 	for _, locfil := range plocfils {
 		changed := locfil.Changed()
 		rel, _ := filepath.Rel(Fcwd, locfil.Place)
-		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
+		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
 	}
 	Fmsg = qerror.ShowResult(result, Fjq, errlist)
 	return nil

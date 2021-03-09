@@ -10,6 +10,7 @@ import (
 	fatomic "github.com/natefinch/atomic"
 )
 
+//Registry holds the registry
 var Registry map[string]string
 
 func init() {
@@ -28,6 +29,7 @@ func init() {
 
 }
 
+//SetRegistry set a value to a key in the registry
 func SetRegistry(key, value string) error {
 	registryFile := os.Getenv("BROCADE_REGISTRY")
 	if registryFile == "" {
@@ -35,20 +37,20 @@ func SetRegistry(key, value string) error {
 	}
 	b, err := os.ReadFile(registryFile)
 	if err != nil {
-		return fmt.Errorf("Cannot read file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
+		return fmt.Errorf("cannot read file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
 	}
 	err = json.Unmarshal(b, &Registry)
 	if err != nil {
-		return fmt.Errorf("Registry file `%s` does not contain valid JSON.\nUse http://jsonlint.com/\n", registryFile)
+		return fmt.Errorf("registry file `%s` does not contain valid JSON.\nUse http://jsonlint.com/", registryFile)
 	}
 	Registry[key] = value
 	r, err := json.Marshal(Registry)
 	if err != nil {
-		fmt.Errorf("Cannot marshal to valid JSON: %s", err.Error())
+		return fmt.Errorf("cannot marshal to valid JSON: %s", err.Error())
 	}
 	err = fatomic.WriteFile(registryFile, bytes.NewReader(r))
 	if err != nil {
-		fmt.Errorf("Cannot write file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
+		return fmt.Errorf("cannot write file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
 	}
 	return nil
 }

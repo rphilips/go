@@ -143,7 +143,7 @@ func preCi(cmd *cobra.Command, args []string) {
 }
 
 func getPayload(args []string, uid string, cwd string, version string, recurse bool, patterns []string) (payload *qclient.Payload, errlist []error) {
-	plocfils, elist := qclient.Find(cwd, args, version, recurse, patterns)
+	plocfils, elist := qclient.Find(cwd, args, version, recurse, patterns, false)
 	errlist = make([]error, 0)
 	if elist != nil {
 		errlist = append(errlist, elist)

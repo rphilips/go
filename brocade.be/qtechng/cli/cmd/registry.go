@@ -105,6 +105,21 @@ func isbwp(value string) string {
 
 var regmapqtechng = []regitem{
 	{
+		name:      "qtechng-type",
+		mode:      "ask",
+		qtechtype: "BWP",
+		test:      isbwp,
+		nature:    "string",
+		deffunc: func() string {
+			x := qregistry.Registry["qtech-user"]
+			if x == "" {
+				x = "W"
+			}
+			return x
+		},
+		doc: "Working with Brocade, there are 3 types of machines:\n    - `W`: workstations of developers\n    - `B`: the development machine\n    - `P`: production servers",
+	},
+	{
 		name:      "qtechng-exe",
 		mode:      "ask",
 		qtechtype: "BPW",
@@ -245,21 +260,7 @@ var regmapqtechng = []regitem{
 		},
 		doc: "Registry entry used for testing purposes.",
 	},
-	{
-		name:      "qtechng-type",
-		mode:      "ask",
-		qtechtype: "BWP",
-		test:      isbwp,
-		nature:    "string",
-		deffunc: func() string {
-			x := qregistry.Registry["qtech-user"]
-			if x == "" {
-				x = "W"
-			}
-			return x
-		},
-		doc: "Working with Brocade, there are 3 types of machines:\n    - `W`: workstations of developers\n    - `B`: the development machine\n    - `P`: production servers",
-	},
+
 	{
 		name:      "qtechng-user",
 		mode:      "ask",

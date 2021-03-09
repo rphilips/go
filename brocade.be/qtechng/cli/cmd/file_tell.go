@@ -47,7 +47,7 @@ func init() {
 
 func fileTell(cmd *cobra.Command, args []string) error {
 
-	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
+	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
 
 	if len(plocfils) == 0 {
 		err := qerror.QError{

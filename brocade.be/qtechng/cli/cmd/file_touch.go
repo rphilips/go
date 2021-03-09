@@ -32,7 +32,7 @@ func init() {
 }
 
 func fileTouch(cmd *cobra.Command, args []string) error {
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
+	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
 
 	h := time.Now().Local()
 	t := h.Format(time.RFC3339)
@@ -40,6 +40,7 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 		Name    string `json:"arg"`
 		Release string `json:"version"`
 		Qpath   string `json:"qpath"`
+		Place   string `json:"file"`
 		Time    string `json:"time"`
 	}
 
@@ -49,7 +50,7 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 		et := os.Chtimes(file.Place, h, h)
 		if et == nil {
 			rel, _ := filepath.Rel(Fcwd, place)
-			result = append(result, adder{rel, file.Release, file.QPath, t})
+			result = append(result, adder{rel, file.Release, file.QPath, place, t})
 		}
 	}
 	Fmsg = qerror.ShowResult(result, Fjq, errlist)

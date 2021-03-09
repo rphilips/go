@@ -48,7 +48,7 @@ func fileLint(cmd *cobra.Command, args []string) error {
 	var files []string
 	errlist := make([]error, 0)
 	if !Fforce {
-		plocfils, elist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern)
+		plocfils, elist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
 		if elist != nil {
 			errlist = append(errlist, elist)
 			return qerror.ErrorSlice(errlist)

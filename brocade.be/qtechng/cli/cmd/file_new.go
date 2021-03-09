@@ -41,6 +41,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 		Name    string `json:"arg"`
 		Release string `json:"version"`
 		Qpath   string `json:"qpath"`
+		Place   string `json:"file"`
 	}
 	direxists := make(map[string]bool)
 	done := make(map[string]bool)
@@ -130,7 +131,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			QPath:   Fqdir + "/" + rel,
 		}
 		d.Add(locfil)
-		result = append(result, adder{arg, Fversion, Fqdir + "/" + rel})
+		result = append(result, adder{arg, Fversion, place, Fqdir + "/" + rel})
 	}
 	if len(errorlist) == 0 {
 		Fmsg = qerror.ShowResult(result, Fjq, nil)

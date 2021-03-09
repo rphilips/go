@@ -272,7 +272,7 @@ func (dir *Dir) Repository() map[string]map[string][]LocalFile {
 }
 
 // Find searches/reduces an argument list
-func Find(cwd string, files []string, release string, recurse bool, qpattern []string) (result []*LocalFile, err error) {
+func Find(cwd string, files []string, release string, recurse bool, qpattern []string, onlychanged bool) (result []*LocalFile, err error) {
 	find := false
 	if len(files) == 0 {
 		find = true
@@ -317,6 +317,9 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 		}
 		plocfil := d.Get(base)
 		if plocfil == nil {
+			if onlychanged {
+				continue
+			}
 			if !find {
 				err := &qerror.QError{
 					Ref:  []string{"client.find.get"},
@@ -328,9 +331,12 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 			}
 			continue
 		}
-
+		if onlychanged && !plocfil.Changed() {
+			continue
+		}
 		if release != "" {
 			rok := qfnmatch.Match(release, plocfil.Release)
+
 			if !rok && !find {
 				err := &qerror.QError{
 					Ref:  []string{"client.find.version"},
