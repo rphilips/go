@@ -67,7 +67,7 @@ Header <- ty:Type WSS+ id:(BrobID) WSS* ":"  WS* cmt:(Cmt) {
     return [3]string{ty.(string), id.(string), cmt.(string)}, nil
 }
 
-Type <- ("oai" / "process" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
+Type <- ("oai" / "oaiset" / "process" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
     return string(c.text), nil
 }
 
