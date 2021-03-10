@@ -98,7 +98,7 @@ func About(blob []byte) (result []byte) {
 			continue
 		}
 		if ok == 0 {
-			s = strings.TrimRightFunc(s, unicode.IsSpace)
+			s = strings.TrimSpace(s)
 			if strings.HasSuffix(s, delim) {
 				bdelim := []byte(delim)
 				k := bytes.LastIndex(line, bdelim)
@@ -111,7 +111,12 @@ func About(blob []byte) (result []byte) {
 				ok = 1
 			}
 			result = append(result, slash...)
-			result = append(result, line...)
+			if strings.HasPrefix(s, "About:") {
+				result = append(result, byte(' '))
+				result = append(result, bytes.TrimLeft(line, " \t")...)
+			} else {
+				result = append(result, line...)
+			}
 			continue
 		}
 	}
