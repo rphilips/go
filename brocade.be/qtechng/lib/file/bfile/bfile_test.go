@@ -98,16 +98,19 @@ loi c:
 	}
 
 	// brob id
+	parts := strings.SplitN(brob.ID, " ", -1)
+	id := parts[0]
+	ty := parts[1]
 
-	if brob.ID != "c" {
+	if id != "c" {
 		t.Errorf("ID1: `%s`", brob.ID)
 		return
 	}
 
 	// brob type
 
-	if brob.Ty != "loi" {
-		t.Errorf("Ty1: `%s`", brob.Ty)
+	if ty != "loi" {
+		t.Errorf("Ty1: `%s`", ty)
 		return
 	}
 
@@ -200,15 +203,19 @@ mprocess %Search^pcasnoup:
 
 	// brob id
 
-	if brob.ID != "%Search^pcasnoup" {
-		t.Errorf("ID1: `%s`", brob.ID)
+	parts := strings.SplitN(brob.ID, " ", -1)
+	id := parts[0]
+	ty := parts[1]
+
+	if id != "%Search^pcasnoup" {
+		t.Errorf("ID1: `%s`", id)
 		return
 	}
 
 	// brob type
 
-	if brob.Ty != "mprocess" {
-		t.Errorf("Ty1: `%s`", brob.Ty)
+	if ty != "mprocess" {
+		t.Errorf("Ty1: `%s`", ty)
 		return
 	}
 

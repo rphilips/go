@@ -85,7 +85,7 @@ func (widget *Widget) Unmarshal(blob []byte) error {
 // Loads from blob
 func (widget *Widget) Loads(blob []byte) error {
 	fname := widget.EditFile()
-	blob = bytes.TrimSpace(qutil.Decomment(blob).Bytes())
+	//blob = bytes.TrimSpace(qutil.Decomment(blob).Bytes())
 	x, ep := Parse(fname, blob, Entrypoint("Widget"))
 
 	if ep != nil {

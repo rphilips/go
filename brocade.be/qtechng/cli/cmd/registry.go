@@ -258,7 +258,7 @@ var regmapqtechng = []regitem{
 		deffunc: func() string {
 			return "test-entry"
 		},
-		doc: "Registry entry used for testing purposes.",
+		doc: "Registry entry used for testing purposes. Should always be present.",
 	},
 
 	{

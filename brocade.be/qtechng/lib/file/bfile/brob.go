@@ -98,7 +98,7 @@ func (brob *Brob) SetName(id string) {
 // Type of macro
 func (brob *Brob) Type() string {
 	x := brob.ID
-	return strings.SplitN(x, " ", 1)[0]
+	return strings.SplitN(x, " ", 2)[0]
 }
 
 // Release of macro
@@ -241,7 +241,7 @@ func (brob *Brob) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "id"},
-		Value:  strings.SplitN(brob.ID, " ", 1)[1],
+		Value:  strings.SplitN(brob.ID, " ", 2)[1],
 		Action: "set",
 	}
 	mumps = append(mumps, m)

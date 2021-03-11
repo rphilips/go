@@ -25,6 +25,7 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	if err != nil {
 		return
 	}
+	content = qutil.Decomment(content).Bytes()
 	bufnoc := new(bytes.Buffer)
 	//qpath := xfile.String()
 

@@ -164,6 +164,7 @@ func getPayload(args []string, uid string, cwd string, version string, recurse b
 			continue
 		}
 		touch := mt.Format(time.RFC3339)
+
 		if plocfil.Time == touch {
 			continue
 		}

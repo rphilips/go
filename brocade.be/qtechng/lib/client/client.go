@@ -129,10 +129,11 @@ func ReceiveCargo(wire *bytes.Buffer) (pcargo *Cargo) {
 	return pcargo
 }
 
-// Changed true/file a localfiel is changed
-func (locfil LocalFile) Changed() bool {
+// Changed true/file a localfile is changed
+func (locfil LocalFile) Changed(place string) bool {
 	status := false
-	mt, e := qfs.GetMTime(locfil.Place)
+
+	mt, e := qfs.GetMTime(place)
 	if e != nil {
 		return false
 	}
@@ -286,7 +287,6 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 			return nil, err
 		}
 	}
-
 	done := make(map[string]bool)
 	qpaths := make(map[string]string)
 
@@ -331,7 +331,7 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 			}
 			continue
 		}
-		if onlychanged && !plocfil.Changed() {
+		if onlychanged && !plocfil.Changed(place) {
 			continue
 		}
 		if release != "" {

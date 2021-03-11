@@ -51,7 +51,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 
 	result := make([]adder, 0)
 	for _, locfil := range plocfils {
-		changed := locfil.Changed()
+		changed := locfil.Changed(locfil.Place)
 		rel, _ := filepath.Rel(Fcwd, locfil.Place)
 		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
 	}

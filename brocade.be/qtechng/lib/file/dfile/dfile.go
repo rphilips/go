@@ -204,6 +204,15 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 			return e
 		}
 	}
+
+	objfile := new(DFile)
+	objfile.SetEditFile(fname)
+	err := qobject.Loads(objfile, blob)
+	if err != nil {
+		output.Write(blob)
+		return nil
+	}
+
 	blob = qutil.About(blob)
 	// check on UTF-8
 	body, badutf8, e := qutil.NoUTF8(bytes.NewReader(blob))
