@@ -209,7 +209,6 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	delims := []string{
 		"oai",
 		"oaiset",
-		"process",
 		"mprocess",
 		"mailtrg",
 		"usergroup",
