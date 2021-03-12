@@ -175,35 +175,35 @@ func (lgcode *Lgcode) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "dut"},
-		Value:  lgco.N,
+		Value:  aquo(lgco.N),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "eng"},
-		Value:  lgco.E,
+		Value:  aquo(lgco.E),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "fre"},
-		Value:  lgco.F,
+		Value:  aquo(lgco.F),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "ger"},
-		Value:  lgco.D,
+		Value:  aquo(lgco.D),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "unv"},
-		Value:  lgco.U,
+		Value:  aquo(lgco.U),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
@@ -239,6 +239,15 @@ func (lgcode *Lgcode) Mumps(batchid string) (mumps qmumps.MUMPS) {
 	mumps = append(mumps, m)
 
 	return
+}
+
+func aquo(s string) string {
+	if s == "" {
+		return ""
+	}
+	s = strings.ReplaceAll(s, "&laquo;", string([]rune{171}))
+	s = strings.ReplaceAll(s, "&raquo;", string([]rune{187}))
+	return s
 }
 
 func replaceit(lgcode *Lgcode) {
