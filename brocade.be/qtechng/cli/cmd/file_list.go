@@ -5,6 +5,7 @@ import (
 
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -41,6 +42,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 		Release string `json:"version"`
 		Qpath   string `json:"qpath"`
 		Path    string `json:"file"`
+		URL     string `json:"fileurl"`
 		Time    string `json:"time"`
 		Digest  string `json:"digest"`
 		Cu      string `json:"cu"`
@@ -53,7 +55,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 	for _, locfil := range plocfils {
 		changed := locfil.Changed(locfil.Place)
 		rel, _ := filepath.Rel(Fcwd, locfil.Place)
-		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
+		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, qutil.FileURL(locfil.Place, -1), locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
 	}
 	Fmsg = qerror.ShowResult(result, Fjq, errlist)
 	return nil

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	qutil "brocade.be/qtechng/lib/util"
+
 	"github.com/spyzhov/ajson"
 )
 
@@ -90,10 +92,15 @@ type QError struct {
 	Version string   `json:"version"`
 	Project string   `json:"project"`
 	File    string   `json:"file"`
+	Url     string   `json:"fileurl"`
 	Lineno  int      `json:"lineno"`
 	Object  string   `json:"object"`
 
 	Msg []string `json:"message"`
+}
+
+func (qerr *QError) MarshalJSON() ([]byte, error) {
+	return []byte((*qerr).String()), nil
 }
 
 type QER struct {
@@ -132,6 +139,9 @@ func FillQError(qerr *QError) (err *QError) {
 // }
 
 func (e QError) String() (result string) {
+	if e.Url == "" && e.File != "" {
+		e.Url = qutil.FileURL(e.File, e.Lineno)
+	}
 	r, _ := json.MarshalIndent(e, "", "    ")
 	result = string(r)
 	return

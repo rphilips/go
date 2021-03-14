@@ -14,6 +14,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qsource "brocade.be/qtechng/lib/source"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +51,8 @@ func fileCi(cmd *cobra.Command, args []string) error {
 	type lister struct {
 		Release string `json:"version"`
 		Qpath   string `json:"qpath"`
+		File    string `json:"file"`
+		Url     string `json:"fileurl"`
 		Changed bool   `json:"changed"`
 		Time    string `json:"time"`
 		Digest  string `json:"digest"`
@@ -88,6 +91,8 @@ func fileCi(cmd *cobra.Command, args []string) error {
 			result = append(result, lister{
 				Release: plocfil.Release,
 				Qpath:   plocfil.QPath,
+				File:    place,
+				Url:     qutil.FileURL(place, -1),
 				Time:    plocfil.Time,
 				Digest:  plocfil.Digest,
 				Cu:      plocfil.Cu,

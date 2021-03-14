@@ -7,6 +7,7 @@ import (
 
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -41,6 +42,7 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 		Release string `json:"version"`
 		Qpath   string `json:"qpath"`
 		Place   string `json:"file"`
+		Url     string `json:"fileurl"`
 		Time    string `json:"time"`
 	}
 
@@ -50,7 +52,7 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 		et := os.Chtimes(file.Place, h, h)
 		if et == nil {
 			rel, _ := filepath.Rel(Fcwd, place)
-			result = append(result, adder{rel, file.Release, file.QPath, place, t})
+			result = append(result, adder{rel, file.Release, file.QPath, place, qutil.FileURL(place, -1), t})
 		}
 	}
 	Fmsg = qerror.ShowResult(result, Fjq, errlist)

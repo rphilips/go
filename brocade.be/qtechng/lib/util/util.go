@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -938,4 +939,19 @@ func Ignore(s []byte) []byte {
 		return s[:k]
 	}
 	return Ignore(append(s[:k], s[k+l+9:]...))
+}
+
+//FileURL gives the file as URL
+func FileURL(fname string, lineno int) string {
+	x := ""
+	if lineno > 0 {
+		x = strconv.Itoa(lineno)
+	}
+	u := &url.URL{
+		Scheme:   "file",
+		Host:     "",
+		Path:     fname,
+		Fragment: x,
+	}
+	return u.String()
 }

@@ -81,6 +81,7 @@ func fileTell(cmd *cobra.Command, args []string) error {
 	result["qpath"] = ""
 	result["python"] = ""
 	result["relpath"] = relpath
+	result["fileurl"] = qutil.FileURL(fname, -1)
 
 	py := qutil.GetPy(fname)
 	if py != "" {
