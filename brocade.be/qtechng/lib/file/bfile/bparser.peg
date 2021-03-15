@@ -67,7 +67,7 @@ BrobLine <- mode:BrobMode WSS+ id:(BrobID) WSS* ":"  WS* cmt:(Cmt) {
     return [4]string{mode.(string), id.([2]string)[0], id.([2]string)[1], cmt.(string)}, nil
 }
 
-BrobMode <- ("oai" / "oaiset" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
+BrobMode <- ("oaiset" / "oai" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
     return string(c.text), nil
 }
 

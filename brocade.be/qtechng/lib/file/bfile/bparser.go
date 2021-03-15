@@ -192,12 +192,12 @@ var g = &grammar{
 					alternatives: []interface{}{
 						&litMatcher{
 							pos:        position{line: 70, col: 14, offset: 1378},
-							val:        "oai",
+							val:        "oaiset",
 							ignoreCase: false,
 						},
 						&litMatcher{
-							pos:        position{line: 70, col: 22, offset: 1386},
-							val:        "oaiset",
+							pos:        position{line: 70, col: 25, offset: 1389},
+							val:        "oai",
 							ignoreCase: false,
 						},
 						&litMatcher{
