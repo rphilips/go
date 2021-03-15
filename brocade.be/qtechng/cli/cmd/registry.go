@@ -327,6 +327,17 @@ var regmapqtechng = []regitem{
 		},
 		doc: "Contains a timestamp. This timestamp prevents documentation publishing",
 	},
+	{
+		name:      "qtechng-vc-url",
+		mode:      "set",
+		qtechtype: "BPW",
+		test:      nil,
+		nature:    "string",
+		deffunc: func() string {
+			return "https://dev.anet.be/hg/file/tip/{qpath}"
+		},
+		doc: "Contains a link to the version control. The registry value should contain a `{qpath}` placeholder which is replaced by the escaped qpath.",
+	},
 }
 
 func init() {
