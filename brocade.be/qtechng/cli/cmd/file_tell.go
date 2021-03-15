@@ -93,7 +93,7 @@ func fileTell(cmd *cobra.Command, args []string) error {
 		result["version"] = locfil.Release
 		result["project"] = locfil.Project
 		result["qpath"] = locfil.QPath
-
+		result["vcurl"] = qutil.VCURL(locfil.QPath)
 	}
 
 	tell, ok := result[Ftell]

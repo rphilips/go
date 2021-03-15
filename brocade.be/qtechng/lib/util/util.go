@@ -955,3 +955,21 @@ func FileURL(fname string, lineno int) string {
 	}
 	return u.String()
 }
+
+//VCURL gives the file in version control
+func VCURL(qpath string) string {
+	vcurl := qregistry.Registry["qtechng-vc-url"]
+
+	parts := strings.SplitN(qpath, "/", -1)
+	u := ""
+	for _, x := range parts {
+		if x == "" {
+			continue
+		}
+		u += "/" + url.PathEscape(x)
+	}
+	if u != "" {
+		u = u[1:]
+	}
+	return strings.ReplaceAll(vcurl, "{qpath}", u)
+}
