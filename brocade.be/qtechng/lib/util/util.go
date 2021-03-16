@@ -133,6 +133,9 @@ func AboutLine(blob []byte) string {
 		if err != nil && err != io.EOF {
 			return ""
 		}
+		if len(bytes.TrimSpace(line)) == 0 {
+			continue
+		}
 		if !bytes.HasPrefix(line, slash) {
 			return ""
 		}

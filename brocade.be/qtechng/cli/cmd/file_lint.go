@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	qparallel "brocade.be/base/parallel"
 	qclient "brocade.be/qtechng/lib/client"
@@ -116,6 +117,12 @@ func fileLint(cmd *cobra.Command, args []string) error {
 		case ".b", ".d", ".i", ".l", ".m", ".x":
 			about := qutil.About(blob)
 			aboutline := qutil.AboutLine(about)
+			if ext == ".m" && len(aboutline) < 2 {
+				basename := path.Base(refname)
+				if strings.HasPrefix(basename, "z") || strings.HasPrefix(basename, "w") {
+					aboutline = "xx"
+				}
+			}
 			if len(aboutline) < 2 {
 				err := &qerror.QError{
 					Ref:    []string{"file.lint.about"},

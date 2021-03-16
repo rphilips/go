@@ -15,6 +15,9 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -40,6 +43,79 @@ func main() {
 	// 	}
 	// }
 	var payload *qclient.Payload
+	if len(os.Args) > 2 && os.Args[1] == "arg" {
+		ok := false
+		mode := os.Args[2]
+		args := make([]string, 0)
+		switch mode {
+		case "file", "stdin":
+			if mode == "file" && len(os.Args) == 3 {
+				break
+			}
+			file := os.Stdin
+			if mode == "file" {
+				if len(os.Args) == 3 {
+					break
+				}
+				fname := os.Args[3]
+				var err error
+				file, err = os.Open(fname)
+				defer file.Close()
+				if err != nil {
+					break
+				}
+			}
+
+			reader := bufio.NewReader(file)
+			for {
+				a, err := reader.ReadString('\n')
+				if err != nil && err != io.EOF {
+					break
+				}
+				if strings.HasSuffix(a, "\n") {
+					a = strings.TrimSuffix(a, "\n")
+				}
+				if strings.HasSuffix(a, "\r") {
+					a = strings.TrimSuffix(a, "\r")
+				}
+				if a != "" {
+					args = append(args, a)
+				}
+				if err != nil {
+					ok = true
+					break
+				}
+			}
+		case "json":
+			if len(os.Args) == 3 {
+				break
+			}
+			jarg := os.Args[3]
+			if !strings.HasPrefix(jarg, "[") {
+				break
+			}
+			err := json.Unmarshal([]byte(jarg), &args)
+			if err != nil {
+				break
+			}
+			ok = true
+		}
+		if ok {
+			length := len(os.Args)
+			k := 0
+			for i, a := range args {
+				k = i + 1
+				if k < length {
+					os.Args[i+1] = a
+				} else {
+					os.Args = append(os.Args, a)
+				}
+			}
+			if k+1 < length {
+				os.Args = os.Args[:k+1]
+			}
+		}
+	}
 	if len(os.Args) == 1 {
 		fi, _ := os.Stdin.Stat()
 		if (fi.Mode() & os.ModeCharDevice) == 0 {
