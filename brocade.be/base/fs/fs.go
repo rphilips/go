@@ -626,6 +626,7 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 	}
 	for _, info := range infos {
 		n := info.Name()
+		fmt.Println(n)
 		isdir := info.IsDir()
 		matched := len(patterns) == 0
 		for _, pattern := range patterns {
@@ -676,12 +677,6 @@ func Find(root string, patterns []string, recurse bool, files bool, dirs bool) (
 	for _, pattern := range patterns {
 		if _, err := path.Match(pattern, ""); err != nil {
 			return nil, err
-		}
-		if !hasMeta(pattern) {
-			if _, err = fs.Stat(fsys, pattern); err != nil {
-				return nil, nil
-			}
-			return []string{pattern}, nil
 		}
 	}
 	return glob(fsys, root, ".", patterns, nil, recurse, files, dirs)

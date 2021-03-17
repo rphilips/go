@@ -49,7 +49,7 @@ func fileJsonpath(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Fprint(f, result)
 	defer f.Close()
+	fmt.Fprint(f, result)
 	return err
 }

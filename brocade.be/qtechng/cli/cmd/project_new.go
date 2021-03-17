@@ -1,19 +1,27 @@
 package cmd
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/spf13/cobra"
 
+	qfs "brocade.be/base/fs"
 	qerror "brocade.be/qtechng/lib/error"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qproject "brocade.be/qtechng/lib/project"
 )
 
 var projectNewCmd = &cobra.Command{
-	Use:     "new",
-	Short:   "Creates a new project",
-	Long:    `Command creates a new project on the development server`,
-	Args:    cobra.MinimumNArgs(1),
-	Example: "qtechng project new /stdlib/template\nqtechng project create /stdlib/template  --version=5.10",
+	Use:   "new",
+	Short: "Creates a new project",
+	Long: `Command creates a new project on the development server.
+	With the treeprefix not empty, starting from the current working directory, all projects 
+	are installed. The name of the project is determied by the relative path of the directories 
+	and prefixed with the treeprefix.
+	`,
+	Args:    cobra.MinimumNArgs(0),
+	Example: "qtechng project new /stdlib/template\nqtechng project new /stdlib/template  --version=5.10",
 	RunE:    projectNew,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
@@ -24,11 +32,37 @@ var projectNewCmd = &cobra.Command{
 	},
 }
 
+//Ftreeprefix defines the prefix which has to prepended to the directories
+var Ftreeprefix string
+
 func init() {
+	projectNewCmd.Flags().StringVar(&Ftreeprefix, "treeprefix", "", "Find projects starting with cwd")
 	projectCmd.AddCommand(projectNewCmd)
 }
 
 func projectNew(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 && strings.HasPrefix(Ftreeprefix, "/") {
+		Ftreeprefix = strings.TrimRight(Ftreeprefix, "/") + "/"
+		argums, err := qfs.Find(Fcwd, []string{"brocade.json"}, true, true, false)
+		if err != nil {
+			return err
+		}
+		for _, arg := range argums {
+			dirname := filepath.Dir(arg)
+			rel, _ := filepath.Rel(Fcwd, dirname)
+			rel = filepath.Clean(rel)
+			rel = filepath.ToSlash(rel)
+			if strings.HasPrefix(rel, "./") {
+				rel = rel[2:]
+			}
+			if strings.HasPrefix(rel, "/") {
+				rel = rel[1:]
+			}
+			rel = strings.TrimRight(rel, "/")
+			rel = strings.TrimLeft(rel, "/")
+			args = append(args, Ftreeprefix+rel)
+		}
+	}
 	meta := qmeta.Meta{
 		Mu: FUID,
 	}
