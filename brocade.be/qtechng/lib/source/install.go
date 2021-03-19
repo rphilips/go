@@ -43,6 +43,7 @@ func Install(batchid string, sources []*Source, rsync bool) (err error) {
 			return err
 		}
 	}
+
 	errs := make([]error, 0)
 	badproj := make(map[string]bool)
 	// Find all projects
