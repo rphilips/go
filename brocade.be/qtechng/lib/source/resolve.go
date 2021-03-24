@@ -97,10 +97,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 	}
 	r := env["%version"]
 	split := qutil.ObjectSplitter(body)
-	ssplit := make([]string, 0)
-	for _, x := range split {
-		ssplit = append(ssplit, "'"+string(x)+"'")
-	}
+
 	check := true
 	t4y := strings.Contains(what, "t")
 	r4y := strings.Contains(what, "r")
@@ -350,11 +347,6 @@ func m4ResolveText(env map[string]string, macro string, extra string, what strin
 	obj := macro
 	object := objectmap[obj].(*qofile.Macro)
 	args, rest, err := object.Args(extra)
-	// if err != nil {
-	// 	buffer.WriteString(macro)
-	// 	buffer.WriteString(extra)
-	// 	return err
-	// }
 
 	envex := make(map[string]string)
 

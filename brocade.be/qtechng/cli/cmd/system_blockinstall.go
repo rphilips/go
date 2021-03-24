@@ -10,9 +10,9 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 )
 
-var systemBlockdocCmd = &cobra.Command{
-	Use:   "blockdoc sec",
-	Short: "Blocks documentation publishing",
+var systemBlockinstallCmd = &cobra.Command{
+	Use:   "blockinstall sec",
+	Short: "Blocks installation of software",
 	Long: `
 Give a number of seconds during with the block applies.
 This action has to be initiated on the servers itself.
@@ -20,24 +20,24 @@ This action has to be initiated on the servers itself.
 Blocking with 0 sec., unblocks the server`,
 	Args: cobra.ExactArgs(1),
 	Example: `
-  qtechng system blockdoc 3600
-  qtechng system blockdoc 0`,
+  qtechng system blockinstall 3600
+  qtechng system blockinstall 0`,
 
-	RunE: systemBlockdoc,
+	RunE: systemBlockinstall,
 	Annotations: map[string]string{
 		"with-qtechtype": "BP",
 	},
 }
 
 func init() {
-	systemCmd.AddCommand(systemBlockdocCmd)
+	systemCmd.AddCommand(systemBlockinstallCmd)
 }
 
-func systemBlockdoc(cmd *cobra.Command, args []string) error {
+func systemBlockinstall(cmd *cobra.Command, args []string) error {
 	offset := args[0]
 	ioffset, err := strconv.Atoi(offset)
 	if err != nil {
-		err := qregistry.SetRegistry("qtechng-block-doc", "0")
+		err := qregistry.SetRegistry("qtechng-block-install", "0")
 		return err
 	}
 	msg := ""
@@ -45,14 +45,14 @@ func systemBlockdoc(cmd *cobra.Command, args []string) error {
 		h := time.Now()
 		h = h.Add(time.Second * time.Duration(ioffset))
 		t := h.Format(time.RFC3339)
-		err = qregistry.SetRegistry("qtechng-block-doc", t)
-		msg = "Documentation publishing blocked until `" + t + "`"
+		err = qregistry.SetRegistry("qtechng-block-install", t)
+		msg = "Installation blocked until `" + t + "`"
 		if err != nil {
 			msg = ""
 		}
 	} else {
-		err = qregistry.SetRegistry("qtechng-block-doc", "0")
-		msg = "Documentation is published again!"
+		err = qregistry.SetRegistry("qtechng-block-install", "0")
+		msg = "Installation is possible again!"
 		if err != nil {
 			msg = ""
 		}

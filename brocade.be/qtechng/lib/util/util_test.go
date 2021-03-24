@@ -573,3 +573,22 @@ func TestIgnore(t *testing.T) {
 		t.Errorf("Error: found: [%s]", string(ignore))
 	}
 }
+
+func TestBuidArgs01(t *testing.T) {
+	datas := []string{
+		`($p(RAdetAd(x,i,"st"),m4_CRLF)_$c(1)_x_":post:gn"_i)`,
+		`($g(FDid("layout","set",iset,x)))XYZ`,
+		`(check, old="\u005E", new="^", all=1)`,
+		`($exist=«exist», $reason=«x», $palnr=«RDpal»)`,
+		`(   )`,
+		`($palnr=«RDpaln», $paltype=«FDid», $test=«"1"»)`,
+		`("","pallet lijst vervallen","["_$s(lsx="lsb":"barcodes",lsx="lso":"object",1:"scan")_"]")`,
+		`(x,ZAtmp,del=m4_CRLF,seq=1,uniq=1)`,
+	}
+	for _, data := range datas {
+		xargs, until, msg := BuildArgs(data)
+		if true {
+			t.Errorf("\n\nError:\ndata:%s\nlen(xargs):%d\nxargs:%s\nuntil:%s\nmsg:%s\n", data, len(xargs), strings.Join(xargs, "|"), until, msg)
+		}
+	}
+}

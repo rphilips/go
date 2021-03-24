@@ -34,14 +34,6 @@ var goVersion string
 var buildHost string
 
 func main() {
-
-	// if len(os.Args) > 4 && os.Args[1] == "lock" && os.Args[2] == "run" && os.Args[4] != "" {
-	// 	x, e := json.Marshal(os.Args[4:])
-	// 	if e == nil {
-	// 		os.Args[4] = string(x)
-	// 		os.Args = os.Args[:5]
-	// 	}
-	// }
 	var payload *qclient.Payload
 	if len(os.Args) > 2 && os.Args[1] == "arg" {
 		ok := false

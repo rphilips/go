@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -32,7 +31,7 @@ var stdinResolveCmd = &cobra.Command{
 var Fcsv string
 
 func init() {
-	stdinResolveCmd.Flags().StringVar(&Fcsv, "csv", "", "source column, target column")
+	stdinResolveCmd.Flags().StringVar(&Fcsv, "csv", "", "qpath column,source column,target column,editfile column")
 	stdinResolveCmd.PersistentFlags().StringVar(&Frilm, "rilm", "", "specify the substitutions")
 	stdinCmd.AddCommand(stdinResolveCmd)
 }
@@ -41,6 +40,7 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 	qpath := -1
 	csource := -1
 	ctarget := -1
+	cedit := -1
 	if Frilm == "" {
 		Frilm = "rilm"
 	}
@@ -58,7 +58,7 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 				Msg:  []string{"csv flag should be of the form `--csv=i,j` or `--csv=i,j,k`"},
 			}
 			return err
-		case 3:
+		case 3, 4:
 			x, err := strconv.Atoi(strings.TrimSpace(parts[0]))
 			if err != nil {
 				return err
@@ -98,6 +98,22 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 				return err
 			}
 			ctarget = x
+			if len(parts) == 4 {
+				x, err = strconv.Atoi(strings.TrimSpace(parts[3]))
+				if err != nil {
+					return err
+				}
+				if x < 1 {
+					err := &qerror.QError{
+						Ref:  []string{"stdin.resolve.invalidcsv5"},
+						Type: "Error",
+						Msg:  []string{"Numbers in `--csv` flag should be greater dan 0"},
+					}
+					return err
+				}
+				cedit = x
+			}
+
 		default:
 			err := &qerror.QError{
 				Ref:  []string{"stdin.resolve.invalidcsv5"},
@@ -119,6 +135,7 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 		}
 		defer output.Close()
 	}
+	edfiles := make(map[string]string)
 
 	for {
 		eol := ""
@@ -168,11 +185,19 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 			for len(parts) < csource {
 				parts = append(parts, "")
 			}
+			source := parts[csource-1]
 			for len(parts) < ctarget {
 				parts = append(parts, "")
 			}
 			qp := parts[qpath-1]
-			source := parts[csource-1]
+			if cedit > -1 {
+				for len(parts) < cedit {
+					parts = append(parts, "")
+				}
+
+				s := editfile(source, edfiles)
+				parts[cedit-1] = s
+			}
 			r, e := resolve(source, qp)
 			parts[ctarget-1] = r
 			output.WriteString(strings.Join(parts, delim))
@@ -196,7 +221,6 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 }
 
 func resolve(s string, qpath string) (result string, err error) {
-	fmt.Println(">>>>", s)
 	if strings.Contains(qpath, "#") {
 		qpath = strings.TrimSpace(strings.SplitN(qpath, "#", 2)[0])
 	}
@@ -205,6 +229,9 @@ func resolve(s string, qpath string) (result string, err error) {
 	}
 	r := "0.00"
 	source, err := qsource.Source{}.New(r, qpath, true)
+	if err != nil {
+		return "qpath `" + qpath + "` does not exist", nil
+	}
 	body := []byte(s)
 
 	if !bytes.Contains(body, []byte("4_")) {
@@ -224,4 +251,27 @@ func resolve(s string, qpath string) (result string, err error) {
 	_, err = qsource.ResolveText(env, body, Frilm, notreplace, objectmap, nil, bufmac, "")
 	result = string(bufmac.Bytes())
 	return
+}
+
+func editfile(s string, edfiles map[string]string) (result string) {
+	k := strings.Index(s, "(")
+	if k != -1 {
+		s = s[:k]
+	}
+	ed, ok := edfiles[s]
+	if ok {
+		return ed
+	}
+	objlst := []string{s}
+	objmap := qobject.InfoObjectList("0.00", objlst)
+	if len(objmap) != 1 {
+		return "?"
+	}
+	if objmap[s] == nil {
+		return "?"
+	}
+	edo := objmap[s].(*qobject.Uber)
+
+	edfiles[s] = edo.EditFile()
+	return edfiles[s]
 }

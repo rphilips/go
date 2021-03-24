@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/afero"
 
@@ -133,7 +134,7 @@ func (release Release) Init() (err error) {
 		return err
 	}
 	fs := release.FS("/")
-	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/objects/m4", "/objects/l4", "/objects/i4", "/admin"} {
+	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4", "/admin"} {
 		fs.MkdirAll(dir, 0o770)
 	}
 
@@ -156,6 +157,35 @@ func (release Release) Init() (err error) {
 	cmd.Run()
 
 	return err
+}
+
+// IsInstallable checks if th erelease can be installed.
+func (release Release) IsInstallable() bool {
+	qtechType := qregistry.Registry["qtechng-type"]
+	if strings.Contains(qtechType, "B") && release.String() != "0.00" {
+		return false
+	}
+	blocktime := qregistry.Registry["qtechng-block-install"]
+	if blocktime != "" {
+		h := time.Now()
+		t := h.Format(time.RFC3339)
+		if strings.Compare(blocktime, t) < 0 {
+			blocktime = ""
+			qregistry.SetRegistry("qtechng-block-install", "")
+		}
+	}
+	if blocktime == "0" {
+		blocktime = ""
+		qregistry.SetRegistry("qtechng-block-install", "")
+	}
+	if blocktime != "" {
+		return false
+	}
+	if strings.Contains(qtechType, "B") {
+		return true
+	}
+	r := Canon(qregistry.Registry["brocade-release"])
+	return release.String() == r
 }
 
 ////////////////////////////// Help functions ///////////////

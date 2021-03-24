@@ -40,7 +40,7 @@ func Waste(object qobject.Object) (changed bool, err error) {
 		}
 		return false, qerror.QErrorTune(e, err)
 	}
-	fs := rel.FS("objects", object.Type())
+	fs := rel.FS("object", object.Type())
 	h := qutil.Digest([]byte(object.String()))
 	dirname := "/" + h[0:2] + "/" + h[2:]
 

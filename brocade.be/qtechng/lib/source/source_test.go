@@ -334,7 +334,7 @@ func TestSourceList01(t *testing.T) {
 	}
 
 	fs := release.FS("/")
-	for _, dir := range []string{"/source/data", "/meta", "/unique", "/tmp", "/objects/m4", "/objects/l4", "/objects/i4"} {
+	for _, dir := range []string{"/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4"} {
 		if ok, _ := fs.Exists(dir); !ok {
 			t.Errorf("%s should exist", dir)
 			return
@@ -446,7 +446,7 @@ func TestSourceObject01(t *testing.T) {
 	}
 
 	fs := release.FS("/")
-	for _, dir := range []string{"/source/data", "/meta", "/unique", "/tmp", "/objects/m4", "/objects/l4", "/objects/i4"} {
+	for _, dir := range []string{"/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4"} {
 		if ok, _ := fs.Exists(dir); !ok {
 			t.Errorf("%s should exist", dir)
 			return
@@ -558,7 +558,7 @@ func TestSourceObject02(t *testing.T) {
 	}
 
 	fs := release.FS("/")
-	for _, dir := range []string{"/source/data", "/meta", "/unique", "/tmp", "/objects/m4", "/objects/l4", "/objects/i4"} {
+	for _, dir := range []string{"/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4"} {
 		if ok, _ := fs.Exists(dir); !ok {
 			t.Errorf("%s should exist", dir)
 			return

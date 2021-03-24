@@ -707,10 +707,10 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 
 	// installation
 
-	r := qserver.Canon(qregistry.Registry["brocade-release"])
-	if version != r && version != "" && version != "0.00" {
+	if !release.IsInstallable() {
 		return
 	}
+
 	sources := make([]*Source, len(results))
 	i := 0
 	for qp := range results {

@@ -365,6 +365,7 @@ func ObjectSplitter(blob []byte) (result [][]byte) {
 		if len(rest) == 0 {
 			break
 		}
+		// look for m4_
 		k := bytes.Index(rest, []byte("4_"))
 		if k < 0 {
 			result[max] = append(result[max], rest...)
@@ -398,7 +399,13 @@ func ObjectSplitter(blob []byte) (result [][]byte) {
 		}
 		result = append(result, rest[:3+len(obj)])
 		rest = rest[3+len(obj):]
-		result = append(result, []byte{})
+		if prev == 'm' && bytes.HasPrefix(rest, []byte{'('}) {
+			_, until, _ := BuildArgs(string(rest))
+			result = append(result, []byte(until))
+			rest = rest[len(until):]
+		} else {
+			result = append(result, []byte{})
+		}
 		max = len(result) - 1
 	}
 	return
@@ -745,8 +752,12 @@ func BuildArgs(s string) (args []string, until string, msg string) {
 			closer = '"'
 
 		case ',':
-			args = append(args, strings.TrimSpace(arg))
-			arg = ""
+			if nest == 0 {
+				args = append(args, strings.TrimSpace(arg))
+				arg = ""
+				continue
+			}
+			arg += string(ch)
 		default:
 			arg += string(ch)
 		}
@@ -771,11 +782,11 @@ func CleanArg(s string) string {
 	}
 
 	if strings.HasPrefix(s, "«") {
-		return strings.TrimSuffix(s, "»")
+		return strings.TrimSuffix(strings.TrimPrefix(s, "«"), "»")
 	}
 
 	if strings.HasPrefix(s, "⟦") {
-		return strings.TrimSuffix(s, "⟧")
+		return strings.TrimSuffix(strings.TrimPrefix(s, "⟦"), "⟧")
 	}
 	return s
 }

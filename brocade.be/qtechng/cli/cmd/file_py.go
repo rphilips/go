@@ -31,10 +31,12 @@ var filePyCmd = &cobra.Command{
 	},
 }
 
-// Fpyonly Python exe only
+// Fpy pythontype
+var Fpy string
 
 func init() {
 	filePyCmd.Flags().BoolVar(&Fpyonly, "pyonly", false, "return python executable")
+	filePyCmd.Flags().StringVar(&Fpy, "py", "", "Python default executable (py2 | py3")
 	fileCmd.AddCommand(filePyCmd)
 }
 
@@ -52,6 +54,9 @@ func filePy(cmd *cobra.Command, args []string) error {
 	fname, _ := qfs.AbsPath(path.Join(Fcwd, pyscript))
 
 	py := qutil.GetPy(pyscript)
+	if py == "" {
+		py = Fpy
+	}
 
 	if py == "" {
 		e := &qerror.QError{

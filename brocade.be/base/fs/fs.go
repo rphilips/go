@@ -626,7 +626,6 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 	}
 	for _, info := range infos {
 		n := info.Name()
-		fmt.Println(n)
 		isdir := info.IsDir()
 		matched := len(patterns) == 0
 		for _, pattern := range patterns {

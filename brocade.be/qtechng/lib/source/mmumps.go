@@ -116,53 +116,54 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) {
 }
 
 func mdetag(line []byte) ([]byte, []byte, string) {
-	short := bytes.TrimLeft(line, "%1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	k := len(line) - len(short)
-	if k == 0 {
-		return []byte{}, bytes.TrimSpace(line), ""
-	}
-	if len(line) == k {
-		return line, []byte{}, ""
-	}
 	fun := ""
-	if line[k] == byte(' ') {
+	k := bytes.IndexAny(line, " \t")
+	if k != -1 {
 		stag := string(line[:k])
 		if stag == "def" || stag == "sub" || stag == "fn" {
 			fun = stag
-			line = bytes.TrimSpace(line[k+1:])
-			short = bytes.TrimLeft(line, "%1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-			k = len(line) - len(short)
-			if k == 0 {
-				return []byte{}, bytes.TrimSpace(line), fun
-			}
-			if len(line) == k {
-				return line, []byte{}, fun
-			}
+			line = bytes.TrimSpace(line[k:])
 		}
+	}
+	rest := bytes.TrimLeft(line, "%1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	k = len(line) - len(rest)
+	if k == 0 {
+		return []byte{}, line, fun
+	}
+	if len(line) == k {
+		return line, []byte{}, fun
 	}
 	name := line[:k]
-	short = bytes.TrimSpace(short)
-	if len(short) == 0 {
-		return name, short, fun
+	rest = bytes.TrimSpace(rest)
+
+	if len(rest) == 0 {
+		return name, []byte{}, fun
 	}
-	if short[0] != byte('(') {
+
+	if !bytes.HasPrefix(rest, []byte("(")) {
 		if fun != "" {
-			short = bytes.TrimLeft(short, ": \t")
+			rest = bytes.TrimLeft(rest, ": \t")
 		}
-		return name, short, fun
+		return name, rest, fun
 	}
-	pargs := bytes.TrimLeft(short[1:], "\t ,%1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	pargs := bytes.TrimLeft(rest, "(\t ,%1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	if len(pargs) == 0 || pargs[0] != byte(')') {
-		return name, short, fun
+		return name, rest, fun
 	}
-	k = len(short) - len(pargs) + 2
-
-	name = append(name, bytes.ReplaceAll(short[:k], []byte(" "), []byte{})...)
-
+	k = bytes.Index(rest, []byte(")"))
+	args := bytes.ReplaceAll(rest[1:k], []byte(" "), []byte{})
+	name = append(name, byte('('))
+	name = append(name, args...)
+	name = append(name, byte(')'))
+	if len(rest) == k+1 {
+		return name, []byte{}, fun
+	}
+	rest = rest[k+1:]
 	if fun != "" {
-		short = bytes.TrimLeft(short[k:], ": \t")
+		rest = bytes.TrimLeft(rest, ": \t")
 	}
-	return name, short, fun
+	return name, rest, fun
 }
 
 func mtransform(line []byte, comment []byte) []byte {

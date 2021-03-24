@@ -2,6 +2,7 @@ package dfile
 
 import (
 	"testing"
+
 	qobject "brocade.be/qtechng/lib/object"
 )
 

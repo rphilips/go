@@ -317,6 +317,17 @@ var regmapqtechng = []regitem{
 		doc: "Contains a timestamp. This timestamp prevents remote users to modify the repository",
 	},
 	{
+		name:      "qtechng-block-install",
+		mode:      "set",
+		qtechtype: "BP",
+		test:      nil,
+		nature:    "string",
+		deffunc: func() string {
+			return "0"
+		},
+		doc: "Contains a timestamp. This timestamp prevents installation of the Brocade software. Updating the repository remains possible.",
+	},
+	{
 		name:      "qtechng-block-doc",
 		mode:      "set",
 		qtechtype: "BP",

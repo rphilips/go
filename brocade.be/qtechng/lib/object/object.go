@@ -274,7 +274,7 @@ func Fetch(object Object) (err error) {
 		return err
 	}
 
-	fs := rel.FS("objects", ty)
+	fs := rel.FS("object", ty)
 	h := qutil.Digest([]byte(object.String()))
 	dirname := "/" + h[0:2] + "/" + h[2:]
 	fname := dirname + "/obj.json"
@@ -296,6 +296,9 @@ func Fetch(object Object) (err error) {
 		v.Body = content
 		deps, _ := GetDependenciesDeep(rel, v.ID)
 		v.UsedBy = deps[v.ID]
+		u := make(map[string]string)
+		json.Unmarshal(content, &u)
+		v.Source = u["source"]
 
 	default:
 		erro = object.Unmarshal(content)
@@ -412,7 +415,7 @@ func Store(object Object) (changed bool, err error) {
 		}
 		return false, qerror.QErrorTune(e, err)
 	}
-	fs := rel.FS("objects", object.Type())
+	fs := rel.FS("object", object.Type())
 	h := qutil.Digest([]byte(name))
 	dirname := "/" + h[0:2] + "/" + h[2:]
 	fs.MkdirAll(dirname, 0770)
@@ -479,7 +482,7 @@ func Link(r string, name string, object interface{}) error {
 		return qerror.QErrorTune(e, err)
 	}
 	data := map[string]string{"source": name}
-	fs := version.FS("/objects")
+	fs := version.FS("/object")
 	digest := qutil.Digest([]byte(name))
 	dir2 := "/" + digest[:2] + "/" + digest[2:] + ".dep"
 	if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
@@ -587,7 +590,7 @@ func UnLink(r string, name string, object interface{}) error {
 		return qerror.QErrorTune(e, err)
 	}
 	mode := obj[:2]
-	fs := version.FS("objects", mode)
+	fs := version.FS("object", mode)
 	digest := qutil.Digest([]byte(name))
 	dir2 := "/" + digest[:2] + "/" + digest[2:] + ".dep"
 	if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
@@ -694,7 +697,7 @@ func GetDependenciesDeep(version *qserver.Release, objs ...string) (result map[s
 
 // GetDependencies retrieves a map pointin for each object the things dependent on that object
 func GetDependencies(version *qserver.Release, objs ...string) (result map[string][]string) {
-	fs := version.FS("/objects")
+	fs := version.FS("/object")
 	fn := func(n int) (interface{}, error) {
 		obj := objs[n]
 		if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {

@@ -395,43 +395,51 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 	for _, param := range macro.Params {
 		args[param.ID] = param.Default
 	}
-	for i, x := range xargs {
+	for i, arg := range xargs {
 		if msg != "" {
 			break
 		}
 		if i >= len(macro.Params) {
 			msg = "Too many arguments"
-			continue
+			break
 		}
-		k := strings.Index(x, "=")
-		if k == -1 && macro.Params[i].Named {
-			msg = "Parameter `" + macro.Params[i].ID + "` should be named"
-			continue
-		}
-		z := macro.Params[i].ID
-		value := x
+		k := strings.Index(arg, "=")
+		isarg := false
 		if k != -1 {
-			z = strings.TrimSpace(x[:k])
-			value = x[k+1:]
-		}
-		_, ok := args[z]
-		if !ok {
-			z = "$" + z
-			_, ok = args[z]
-		}
-		if ok {
-			if done[z] {
-				msg = "Parameter `" + z + "` occurs twice"
+			prefix := strings.TrimSpace(qutil.CleanArg(arg[:k]))
+			if !strings.HasPrefix(prefix, "$") {
+				prefix = "$" + prefix
+			}
+			_, isarg = args[prefix]
+			if isarg {
+				if done[prefix] {
+					msg = "Parameter `" + prefix + "` occurs twice"
+					break
+				}
+				done[prefix] = true
+				args[prefix] = qutil.CleanArg(arg[k+1:])
 				continue
 			}
+		}
+		if macro.Params[i].Named {
+			msg = "Parameter `" + macro.Params[i].ID + "` should be named"
+			break
+		}
+		z := macro.Params[i].ID
+		if done[z] {
+			msg = "Parameter `" + z + "` occurs twice"
+			break
+		}
+		done[z] = true
+		args[z] = qutil.CleanArg(arg)
+	}
 
-			args[z] = qutil.CleanArg(value)
-			done[z] = true
+	for _, param := range macro.Params {
+		if param.Ref == "" {
 			continue
 		}
-		if !ok {
-			msg = "Parameter `" + z + "` is not specified"
-			continue
+		if args[param.ID] == param.Ref {
+			args[param.ID] = args[param.Ref]
 		}
 	}
 

@@ -98,7 +98,9 @@ Macro <- macro:(MacroHeader1 / MacroHeader2 / MacroHeader3) DELIM1 synopsis:Syno
 
     // Names params
     named := false
-    for i, p := range m.Params {
+    refmap := make(map[string]int)
+    for i, p := range params {
+        refmap[p.ID] = i+1
         if p.Named {
             named = true
             continue
@@ -107,6 +109,13 @@ Macro <- macro:(MacroHeader1 / MacroHeader2 / MacroHeader3) DELIM1 synopsis:Syno
             m.Params[i].Named = true
         }
     }
+    for i, p := range params {
+        if refmap[p.Default]<1 {
+            continue
+        }
+        m.Params[i].Ref = p.Default
+    }
+
 
 	return m, nil
 }
