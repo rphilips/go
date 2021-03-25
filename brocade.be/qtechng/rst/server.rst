@@ -19,7 +19,6 @@ Key                                Value
 -------------------------------    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 qtechng-type                       "B"
 qtechng-exe                        "qtechng"
-qtechng-git-enable                 "1"
 qtechng-max-parallel               "32"
 qtechng-repository-dir             "/library/repository"
 qtechng-test                       "test-entry"
@@ -37,7 +36,7 @@ De volgende directories dienen te worden uitgerust met een `setgid` bit:
     - /library/tmp
     - /library/repository
 
-
+De gebruiker `usystem` dient te bestaan en tot de group `db` te behoren.
 
 De `qtechng` binary
 =======================
