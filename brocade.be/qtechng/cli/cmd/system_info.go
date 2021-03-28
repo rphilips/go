@@ -58,6 +58,6 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	Fmsg = qerror.ShowResult(msg, Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	return nil
 }

@@ -39,7 +39,7 @@ func lockDelete(cmd *cobra.Command, args []string) {
 		lockdir = qregistry.Registry["scratch-dir"]
 	}
 	if lockdir == "" {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot find lock-dir in registry"))
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot find lock-dir in registry"), Fyaml)
 		return
 	}
 
@@ -50,7 +50,7 @@ func lockDelete(cmd *cobra.Command, args []string) {
 	os.Rename(locker, tempdir)
 	os.RemoveAll(tempdir)
 	if qfs.IsDir(locker) {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot remove lock: %s", lock))
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot remove lock: %s", lock), Fyaml)
 		return
 	}
 }

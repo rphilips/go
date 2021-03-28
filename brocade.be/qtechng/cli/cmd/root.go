@@ -18,8 +18,8 @@ import (
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qserver "brocade.be/qtechng/lib/server"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
-	"github.com/spyzhov/ajson"
 )
 
 // BuildTime defined by compilation
@@ -113,6 +113,9 @@ var Fmsg string // result as a string
 // Fjq JSONPath
 var Fjq string
 
+// Fyaml YAML
+var Fyaml bool
+
 // Funhex decides if the args are to be unhexed (if starting with `.`)
 var Funhex bool
 
@@ -185,6 +188,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&Funhex, "unhex", false, "Unhexify the arguments starting with `.`")
 	rootCmd.PersistentFlags().StringVar(&Feditor, "editor", "", "editor name")
 	rootCmd.PersistentFlags().StringVar(&Fjq, "jsonpath", "", "JSONpath")
+	rootCmd.PersistentFlags().BoolVar(&Fyaml, "yaml", false, "Convert to YAML")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")
 	rootCmd.PersistentFlags().StringSliceVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
 	// rootCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
@@ -243,7 +247,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 
 	// Jq
 	if Fjq != "" && !Ftransported {
-		_, err = ajson.ParseJSONPath(Fjq)
+		_, err = qutil.Transform(nil, Fjq, false)
 		if err != nil {
 			err = &qerror.QError{
 				Ref: []string{errRoot + "jsonpath"},

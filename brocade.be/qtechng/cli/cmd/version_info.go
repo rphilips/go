@@ -41,14 +41,14 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(r, true)
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("Version `%s` does NOT exist", release.String())
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err)
+		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
 		return nil
 	}
 
@@ -65,6 +65,6 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 			msg["~status"] = "CLOSED"
 		}
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	return nil
 }

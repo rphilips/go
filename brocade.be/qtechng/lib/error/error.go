@@ -242,7 +242,7 @@ func FlattenErrors(err ErrorSlice) []error {
 }
 
 // ShowResult toont het resultaat in JSON
-func ShowResult(r interface{}, jsonpath string, e interface{}) string {
+func ShowResult(r interface{}, jsonpath string, e interface{}, yaml bool) string {
 	host, _ := os.Hostname()
 	h := time.Now()
 	t := h.Format(time.RFC3339)
@@ -300,7 +300,8 @@ func ShowResult(r interface{}, jsonpath string, e interface{}) string {
 			case 1:
 				blob, err := ajson.Marshal(result[0])
 				if err == nil {
-					return string(blob)
+					r, _ := qutil.Transform(blob, "", yaml)
+					return r
 				}
 				ermsg = err.Error()
 			default:
@@ -322,7 +323,12 @@ func ShowResult(r interface{}, jsonpath string, e interface{}) string {
 				}
 				if ermsg == "" {
 					r[len(result)+1] = "]"
-					return strings.Join(r, "\n")
+					res := strings.Join(r, "\n")
+					if !yaml {
+						return res
+					}
+					res, _ = qutil.Transform([]byte(res), "", yaml)
+					return res
 				}
 			}
 		}
@@ -339,9 +345,16 @@ func ShowResult(r interface{}, jsonpath string, e interface{}) string {
 				se = jshowresult{host, t, ermsg, e, r}
 			}
 			s, _ = json.MarshalIndent(se, "", "    ")
-			return string(s)
+			if !yaml {
+				return string(s)
+			}
+			res, _ := qutil.Transform(s, "", yaml)
+			return res
 		}
 	}
-
-	return string(s)
+	if !yaml {
+		return string(s)
+	}
+	res, _ := qutil.Transform(s, "", yaml)
+	return res
 }

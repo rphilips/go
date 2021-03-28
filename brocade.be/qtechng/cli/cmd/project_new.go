@@ -68,6 +68,6 @@ func projectNew(cmd *cobra.Command, args []string) error {
 	}
 	result, errs := qproject.InitList(Fversion, args, func(a string) qmeta.Meta { return meta })
 
-	Fmsg = qerror.ShowResult(result, Fjq, errs)
+	Fmsg = qerror.ShowResult(result, Fjq, errs, Fyaml)
 	return nil
 }

@@ -30,6 +30,6 @@ func systemEnable(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		msg = ""
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, err)
+	Fmsg = qerror.ShowResult(msg, Fjq, err, Fyaml)
 	return nil
 }

@@ -38,7 +38,7 @@ func versionSync(cmd *cobra.Command, args []string) error {
 			Ref: []string{"sync.bp"},
 			Msg: []string{"No sync necessary: server is both production and development"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 
@@ -48,14 +48,14 @@ func versionSync(cmd *cobra.Command, args []string) error {
 			Ref: []string{"sync.production"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 
 	changed, deleted, err := qsync.Sync(current, current, false)
 
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 	msg := make(map[string][]string)
@@ -67,6 +67,6 @@ func versionSync(cmd *cobra.Command, args []string) error {
 		sort.Strings(deleted)
 		msg["deleted"] = deleted
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	return nil
 }

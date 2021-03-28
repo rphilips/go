@@ -31,10 +31,10 @@ func init() {
 func sourceCo(cmd *cobra.Command, args []string) error {
 	result, errlist := storeTransport()
 	if len(errlist) == 0 {
-		Fmsg = qerror.ShowResult(result, Fjq, nil)
+		Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
 		return nil
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errlist))
+	Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errlist), Fyaml)
 	return nil
 }
 

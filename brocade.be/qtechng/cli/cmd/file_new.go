@@ -51,7 +51,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 	if Fqdir == "" || Fqdir == "/" || Fqdir == "." {
@@ -60,7 +60,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce directory in repository"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 	if Fcwd == "" {
@@ -69,7 +69,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to place the files"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 	result := make([]adder, 0)
@@ -134,9 +134,9 @@ func fileNew(cmd *cobra.Command, args []string) error {
 		result = append(result, adder{arg, Fversion, place, Fqdir + "/" + rel})
 	}
 	if len(errorlist) == 0 {
-		Fmsg = qerror.ShowResult(result, Fjq, nil)
+		Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
 	} else {
-		Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errorlist))
+		Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errorlist), Fyaml)
 	}
 	return nil
 }

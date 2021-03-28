@@ -111,12 +111,12 @@ func fsDelete(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qerror.ShowResult("", Fjq, err)
+			Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["deleted"] = files
-		Fmsg = qerror.ShowResult(msg, Fjq, nil)
+		Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 		return nil
 	}
 
@@ -146,9 +146,9 @@ func fsDelete(cmd *cobra.Command, args []string) error {
 	msg := make(map[string][]string)
 	msg["deleted"] = changed
 	if len(errs) == 0 {
-		Fmsg = qerror.ShowResult(msg, Fjq, nil)
+		Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	} else {
-		Fmsg = qerror.ShowResult(msg, Fjq, qerror.ErrorSlice(errs))
+		Fmsg = qerror.ShowResult(msg, Fjq, qerror.ErrorSlice(errs), Fyaml)
 	}
 	return nil
 }

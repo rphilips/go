@@ -41,6 +41,6 @@ func about(cmd *cobra.Command, args []string) error {
 			msg["hexified "+arg] = hex.EncodeToString([]byte(arg))
 		}
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	return nil
 }

@@ -45,7 +45,7 @@ func lockSet(cmd *cobra.Command, args []string) {
 	locker := checkLock(lock, until)
 
 	if locker == "" {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot create lock `%s`", lock))
+		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot create lock `%s`", lock), Fyaml)
 		return
 	}
 }

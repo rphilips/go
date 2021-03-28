@@ -31,7 +31,7 @@ func init() {
 
 func sourceInstall(cmd *cobra.Command, args []string) error {
 	result := listTransport(Fcargo)
-	Fmsg = qerror.ShowResult(result, Fjq, nil)
+	Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
 	return nil
 }
 

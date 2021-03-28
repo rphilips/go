@@ -85,7 +85,7 @@ func versionPopulate(cmd *cobra.Command, args []string) error {
 	Fversion = "0.00"
 	result, errs := qproject.InitList(Fversion, args, func(a string) qmeta.Meta { return meta })
 	if errs != nil {
-		Fmsg = qerror.ShowResult(result, Fjq, errs)
+		Fmsg = qerror.ShowResult(result, Fjq, errs, Fyaml)
 		return nil
 	}
 

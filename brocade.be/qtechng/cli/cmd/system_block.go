@@ -58,6 +58,6 @@ func systemBlock(cmd *cobra.Command, args []string) error {
 			msg = ""
 		}
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, err)
+	Fmsg = qerror.ShowResult(msg, Fjq, err, Fyaml)
 	return nil
 }

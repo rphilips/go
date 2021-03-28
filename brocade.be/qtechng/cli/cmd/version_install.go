@@ -41,7 +41,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 			Ref: []string{"install.version"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 	if Finstallref == "" {
@@ -63,7 +63,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	if err != nil {
 		if err != nil {
-			Fmsg = qerror.ShowResult("", Fjq, err)
+			Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 			return nil
 		}
 	}
@@ -76,6 +76,6 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 		sort.Strings(qpaths)
 		msg["installed"] = qpaths
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	return nil
 }

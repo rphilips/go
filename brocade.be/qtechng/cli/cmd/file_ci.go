@@ -108,7 +108,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	Fmsg = qerror.ShowResult(result, Fjq, Fcargo.Error)
+	Fmsg = qerror.ShowResult(result, Fjq, Fcargo.Error, Fyaml)
 	return nil
 }
 
@@ -127,7 +127,7 @@ func preCi(cmd *cobra.Command, args []string) {
 	}
 
 	if errlist != nil {
-		Fmsg = qerror.ShowResult("", Fjq, qerror.ErrorSlice(errlist))
+		Fmsg = qerror.ShowResult("", Fjq, qerror.ErrorSlice(errlist), Fyaml)
 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 		return
 	}

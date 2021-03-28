@@ -114,6 +114,6 @@ func fileTell(cmd *cobra.Command, args []string) error {
 		err = w.Flush()
 		return err
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, nil)
+	Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
 	return nil
 }

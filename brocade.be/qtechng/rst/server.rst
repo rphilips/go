@@ -38,6 +38,7 @@ De volgende directories dienen te worden uitgerust met een `setgid` bit:
 
 De gebruiker `usystem` dient te bestaan en tot de group `db` te behoren.
 
+
 De `qtechng` binary
 =======================
 
@@ -48,3 +49,24 @@ De directory waarin dit bestand staat, wordt aangegeven door de registry waarde 
 Deze file moet worden geplaatst in de directory, gegeven door de registry waarde `bindir`.
 
 De *owner* van dit bestand moet `root` zijn, de *group* is `db`, het `setuid` bit moet worden gezet.
+
+
+Installatie van versie `0.00`
+==============================
+
+Op de ontwikkelserver kan het repository (waarbij de directory `Registry("qtechng-repository-dir")` passend is aangemaakt) het best worden geïnstalleerd doro middel van de instructie::
+
+    qtechng version new 0.00    
+
+
+Controle op de Installatie
+=============================
+
+Een installatie kan worden gecontroleerd doro midden van de instructie::
+
+    qtechng system check --jsonpath='$..RESULT[0]'
+
+Is de installatie succesvol, dan schrijft dit commando op `stdout` de waarde::
+
+    "OK"
+

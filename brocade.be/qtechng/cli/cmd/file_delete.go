@@ -44,7 +44,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 	if Fcwd == "" {
@@ -53,7 +53,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to find the files"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err)
+		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
 		return nil
 	}
 
@@ -103,6 +103,6 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			})
 		}
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errlist)
+	Fmsg = qerror.ShowResult(result, Fjq, errlist, Fyaml)
 	return nil
 }

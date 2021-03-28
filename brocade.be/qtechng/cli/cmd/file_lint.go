@@ -163,6 +163,6 @@ func fileLint(cmd *cobra.Command, args []string) error {
 	}
 	_, errorlist := qparallel.NMap(len(files), -1, lint)
 
-	Fmsg = qerror.ShowResult("", Fjq, errorlist)
+	Fmsg = qerror.ShowResult("", Fjq, errorlist, Fyaml)
 	return nil
 }

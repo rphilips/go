@@ -33,7 +33,7 @@ func objectList(cmd *cobra.Command, args []string) error {
 	result := r.Bytes()
 	v := make(map[string]interface{})
 	json.Unmarshal(result, &v)
-	Fmsg = qerror.ShowResult(v, Fjq, nil)
+	Fmsg = qerror.ShowResult(v, Fjq, nil, Fyaml)
 	return nil
 }
 

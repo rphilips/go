@@ -55,6 +55,6 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 			result = append(result, adder{rel, file.Release, file.QPath, place, qutil.FileURL(place, -1), t})
 		}
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errlist)
+	Fmsg = qerror.ShowResult(result, Fjq, errlist, Fyaml)
 	return nil
 }

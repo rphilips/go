@@ -5,9 +5,8 @@ import (
 	"io"
 	"os"
 
-	qerror "brocade.be/qtechng/lib/error"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
-	"github.com/spyzhov/ajson"
 )
 
 var stdinJsonpathCmd = &cobra.Command{
@@ -15,7 +14,7 @@ var stdinJsonpathCmd = &cobra.Command{
 	Short:   "jsonpath selection",
 	Long:    `Filters stdin - as a JSON string - through jsonpath and writes on stdout`,
 	Example: "  qtechng stdin jsonpath '$.store.book[*].author'",
-	Args:    cobra.ExactArgs(1),
+	Args:    cobra.MaximumNArgs(1),
 	RunE:    stdinJsonpath,
 }
 
@@ -24,24 +23,18 @@ func init() {
 }
 
 func stdinJsonpath(cmd *cobra.Command, args []string) (err error) {
-	jsonpath := args[0]
-	_, err = ajson.ParseJSONPath(jsonpath)
-	if err != nil {
-		err = &qerror.QError{
-			Ref: []string{errRoot + "jsonpath"},
-			Msg: []string{fmt.Sprintf("JSONpath `" + jsonpath + "` error: " + err.Error())},
-		}
-		return
+	jsonpath := ""
+	if len(args) != 0 {
+		jsonpath = args[0]
 	}
 	data, err := io.ReadAll(os.Stdin)
-	result, err := ajson.JSONPath(data, jsonpath)
-
+	output, err := qutil.Transform(data, jsonpath, Fyaml)
 	if err != nil {
 		return err
 	}
 
 	if Fstdout == "" || Ftransported {
-		fmt.Print(result)
+		fmt.Print(output)
 		return nil
 	}
 
@@ -49,7 +42,7 @@ func stdinJsonpath(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Fprint(f, result)
+	fmt.Fprint(f, output)
 	defer f.Close()
 	return err
 }

@@ -62,6 +62,6 @@ func registryGet(cmd *cobra.Command, args []string) (err error) {
 		msg[key] = qregistry.Registry[key]
 	}
 
-	Fmsg = qerror.ShowResult(msg, Fjq, nil)
+	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
 	return nil
 }
