@@ -2,15 +2,13 @@ package source
 
 import (
 	"bytes"
-	"encoding/json"
-	"io"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 
 	qfs "brocade.be/base/fs"
+	qmumps "brocade.be/base/mumps"
 	qparallel "brocade.be/base/parallel"
 	qpython "brocade.be/base/python"
 	qregistry "brocade.be/base/registry"
@@ -374,21 +372,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 	if mostype == "" {
 		return errs
 	}
-	rou := qregistry.Registry["m-import-auto-exe"]
-	if rou == "" {
-		return errs
-	}
-	rouparts := make([]string, 0)
-	e := json.Unmarshal([]byte(rou), &rouparts)
 
-	if e != nil {
-		e := &qerror.QError{
-			Ref: []string{"source.install.auto.registry"},
-			Msg: []string{"Registry value `m-import-auto-exe` is not JSON: `" + e.Error() + "`"},
-		}
-		errs = append(errs, e)
-		return
-	}
 	fn := func(n int) (interface{}, error) {
 		qp := files[n]
 		qps := qsources[qp]
@@ -410,37 +394,12 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 	}
 
 	bufs, _ := qparallel.NMap(len(files), -1, fn)
-	inm := rouparts[0]
-	inm, _ = exec.LookPath(inm)
 
-	var cmd *exec.Cmd
-	if len(rouparts) == 1 {
-		cmd = exec.Command(inm)
-	} else {
-		cmd = exec.Command(inm, rouparts[1:]...)
+	buffers := make([]*bytes.Buffer, len(bufs))
+	for i, b := range bufs {
+		buffers[i] = b.(*bytes.Buffer)
 	}
-	stdin, e := cmd.StdinPipe()
-
-	if e != nil {
-		e := &qerror.QError{
-			Ref: []string{"source.install.auto.pipe"},
-			Msg: []string{"Cannot open pipe to m-import-auto-exe: `" + e.Error() + "`"},
-		}
-		errs = append(errs, e)
-		return
-	}
-	go func() {
-		defer stdin.Close()
-		for _, buf := range bufs {
-			b := buf.(*bytes.Buffer)
-			if b.Len() == 0 {
-				continue
-			}
-			io.Copy(stdin, b)
-		}
-		io.WriteString(stdin, "\nh\n")
-	}()
-	_, e = cmd.CombinedOutput()
+	e := qmumps.PipeTo("", buffers)
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.exec"},

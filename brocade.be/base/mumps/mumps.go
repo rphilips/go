@@ -1,10 +1,16 @@
 package mumps
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
+
+	qregistry "brocade.be/base/registry"
 )
 
 type MUMPS []M
@@ -141,4 +147,53 @@ func Print(w io.Writer, mumps MUMPS) {
 	for _, m := range mumps {
 		fmt.Fprint(w, m.String())
 	}
+}
+
+// PipeTo writes M instructions to M
+func PipeTo(mdb string, buffers []*bytes.Buffer) (err error) {
+	rou := qregistry.Registry["m-import-auto-exe"]
+	rouparts := make([]string, 0)
+	if rou != "" {
+		e := json.Unmarshal([]byte(rou), &rouparts)
+		if e != nil {
+			return fmt.Errorf("Registry value `m-import-auto-exe` is not JSON: `%s`", e.Error())
+		}
+	} else {
+		target := filepath.Join(qregistry.Registry["scratch-dir"], "mumpssinc")
+		rouparts = []string{
+			"qtechng",
+			"fs",
+			"store",
+			target,
+			"--append",
+		}
+	}
+	inm := rouparts[0]
+	inm, _ = exec.LookPath(inm)
+	var cmd *exec.Cmd
+	if len(rouparts) == 1 {
+		cmd = exec.Command(inm)
+	} else {
+		cmd = exec.Command(inm, rouparts[1:]...)
+	}
+	if mdb == "" {
+		mdb = qregistry.Registry["m-db"]
+	}
+	cmd.Dir = mdb
+	stdin, e := cmd.StdinPipe()
+	if e != nil {
+		return e
+	}
+	go func() {
+		defer stdin.Close()
+		for _, b := range buffers {
+			if b.Len() == 0 {
+				continue
+			}
+			io.Copy(stdin, b)
+		}
+		io.WriteString(stdin, "\n\nq\nh\n")
+	}()
+	_, e = cmd.CombinedOutput()
+	return e
 }

@@ -26,7 +26,7 @@ qtechng-user                       "usystem"
 qtechng-unique-ext                 ".m .x"
 qtechng-version                    "0.00"
 qtechng-copy-exe                   "[\"rsync\", \"-ai\", \"--delete\", \"--exclude=source/.hg\",  \"--exclude=source/.git\", \"/library/repository/{versionsource}/\", \"/library/repository/{versiontarget}\"]"
-m-import-auto-exe                  [\"qtechng\", \"fs\", \"store\", \"/library/tmp/tomumps\", \"--append\"]"
+m-import-auto-exe                  "[\"qtechng\", \"fs\", \"store\", \"/library/tmp/tomumps\", \"--append\"]"
 lock-dir                           "/run/lock/subsys"
 -------------------------------    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

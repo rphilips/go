@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"os"
 	"path/filepath"
 	"time"
 
+	qfs "brocade.be/base/fs"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qutil "brocade.be/qtechng/lib/util"
@@ -47,14 +47,23 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 	}
 
 	result := make([]adder, 0)
+	tail := make([]byte, 0)
+
+	errslice := make([]error, 0)
+	if errlist != nil {
+		errslice = append(errslice, errlist)
+	}
+
 	for _, file := range plocfils {
 		place := file.Place
-		et := os.Chtimes(file.Place, h, h)
+		et := qfs.Append(place, tail)
 		if et == nil {
 			rel, _ := filepath.Rel(Fcwd, place)
 			result = append(result, adder{rel, file.Release, file.QPath, place, qutil.FileURL(place, -1), t})
+		} else {
+			errslice = append(errslice, et)
 		}
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errlist, Fyaml)
+	Fmsg = qerror.ShowResult(result, Fjq, errslice, Fyaml)
 	return nil
 }

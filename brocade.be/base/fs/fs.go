@@ -209,6 +209,30 @@ func Store(fname string, data interface{}, pathmode string) (err error) {
 // Fetch returns the contents of a file as a slice of bytes
 var Fetch = os.ReadFile
 
+// Append write bytes to a file. File has to exist
+func Append(fname string, tail []byte) (err error) {
+	f, err := os.OpenFile(fname, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	if len(tail) != 0 {
+		if _, err = f.Write(tail); err != nil {
+			return
+		}
+	} else {
+		if _, err = f.Write([]byte{10}); err != nil {
+			return
+		}
+		fi, err := f.Stat()
+		if err != nil {
+			return err
+		}
+		return f.Truncate(fi.Size() - 1)
+	}
+	return
+}
+
 // Mkdir makes a directory and sets the access
 func Mkdir(dirname string, pathmode string) (err error) {
 	if !strings.HasSuffix(pathmode, "dir") {
