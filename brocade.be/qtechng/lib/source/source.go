@@ -644,11 +644,11 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 		if e != nil {
 			return nil, e
 		}
-		nmeta, x, _, y := source.Store(met, blob)
-
-		if !x || y != nil {
+		nmeta, _, _, y := source.Store(met, blob)
+		if y != nil {
 			nmeta = nil
 		}
+
 		return nmeta, y
 	}
 
