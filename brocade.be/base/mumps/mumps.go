@@ -1,6 +1,7 @@
 package mumps
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -151,35 +152,10 @@ func Print(w io.Writer, mumps MUMPS) {
 
 // PipeTo writes M instructions to M
 func PipeTo(mdb string, buffers []*bytes.Buffer) (err error) {
-	rou := qregistry.Registry["m-import-auto-exe"]
-	rouparts := make([]string, 0)
-	if rou != "" {
-		e := json.Unmarshal([]byte(rou), &rouparts)
-		if e != nil {
-			return fmt.Errorf("Registry value `m-import-auto-exe` is not JSON: `%s`", e.Error())
-		}
-	} else {
-		target := filepath.Join(qregistry.Registry["scratch-dir"], "mumpssinc")
-		rouparts = []string{
-			"qtechng",
-			"fs",
-			"store",
-			target,
-			"--append",
-		}
+	cmd, err := newMCMD(mdb)
+	if err != nil {
+		return
 	}
-	inm := rouparts[0]
-	inm, _ = exec.LookPath(inm)
-	var cmd *exec.Cmd
-	if len(rouparts) == 1 {
-		cmd = exec.Command(inm)
-	} else {
-		cmd = exec.Command(inm, rouparts[1:]...)
-	}
-	if mdb == "" {
-		mdb = qregistry.Registry["m-db"]
-	}
-	cmd.Dir = mdb
 	stdin, e := cmd.StdinPipe()
 	if e != nil {
 		return e
@@ -196,4 +172,59 @@ func PipeTo(mdb string, buffers []*bytes.Buffer) (err error) {
 	}()
 	_, e = cmd.CombinedOutput()
 	return e
+}
+
+// PipeLineTo writes M instructions to M
+func PipeLineTo(mdb string, reader *bufio.Reader) (err error) {
+	cmd, err := newMCMD(mdb)
+	if err != nil {
+		return
+	}
+
+	stdin, e := cmd.StdinPipe()
+	if e != nil {
+		return e
+	}
+	go func() {
+		defer stdin.Close()
+		io.Copy(stdin, reader)
+		io.WriteString(stdin, "\n\nq\nh\n")
+	}()
+	_, e = cmd.CombinedOutput()
+	return e
+}
+
+func newMCMD(mdb string) (cmd *exec.Cmd, err error) {
+	rou := qregistry.Registry["m-import-auto-exe"]
+	rouparts := make([]string, 0)
+	if rou != "" {
+		e := json.Unmarshal([]byte(rou), &rouparts)
+		if e != nil {
+			return nil, fmt.Errorf("Registry value `m-import-auto-exe` is not JSON: `%s`", e.Error())
+		}
+	} else {
+		target := filepath.Join(qregistry.Registry["scratch-dir"], "mumpssinc")
+		rouparts = []string{
+			"qtechng",
+			"fs",
+			"store",
+			target,
+			"--append",
+		}
+	}
+	inm := rouparts[0]
+	inm, err = exec.LookPath(inm)
+	if err != nil {
+		return
+	}
+	if len(rouparts) == 1 {
+		cmd = exec.Command(inm)
+	} else {
+		cmd = exec.Command(inm, rouparts[1:]...)
+	}
+	if mdb == "" {
+		mdb = qregistry.Registry["m-db"]
+	}
+	cmd.Dir = mdb
+	return cmd, nil
 }

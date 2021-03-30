@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -24,20 +25,31 @@ var stdinMumpsCmd = &cobra.Command{
 	},
 }
 
+// Fmdb directory with the M database
 var Fmdb string
+
+// Fbulk send to M in bulk
+var Fbulk bool
 
 func init() {
 	stdinMumpsCmd.Flags().StringVar(&Fmdb, "mdb", "", "directory with the M database")
+	stdinMumpsCmd.Flags().BoolVar(&Fbulk, "bulk", false, "send to M in bulk")
 	stdinCmd.AddCommand(stdinMumpsCmd)
 }
 
 func stdinMumps(cmd *cobra.Command, args []string) (err error) {
-	data, err := io.ReadAll(os.Stdin)
-	if err != nil {
+	if Fbulk {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+		buffer := bytes.NewBuffer(data)
+		err = qmumps.PipeTo(Fmdb, []*bytes.Buffer{buffer})
+
 		return err
 	}
-	buffer := bytes.NewBuffer(data)
-	err = qmumps.PipeTo(Fmdb, []*bytes.Buffer{buffer})
-
+	// send line per line
+	reader := bufio.NewReader(os.Stdin)
+	err = qmumps.PipeLineTo(Fmdb, reader)
 	return err
 }
