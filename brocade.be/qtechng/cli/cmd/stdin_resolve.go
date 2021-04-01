@@ -11,6 +11,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qobject "brocade.be/qtechng/lib/object"
 	qsource "brocade.be/qtechng/lib/source"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -29,10 +30,14 @@ var stdinResolveCmd = &cobra.Command{
 }
 
 var Fcsv string
+var Fdelim string
+var Fencoded bool
 
 func init() {
 	stdinResolveCmd.Flags().StringVar(&Fcsv, "csv", "", "qpath column,source column,target column,editfile column")
-	stdinResolveCmd.PersistentFlags().StringVar(&Frilm, "rilm", "", "specify the substitutions")
+	stdinResolveCmd.Flags().StringVar(&Frilm, "rilm", "", "specify the substitutions")
+	stdinResolveCmd.Flags().StringVar(&Fdelim, "delimiter", "", "specify the delimiter. Default is tab")
+	stdinResolveCmd.Flags().BoolVar(&Fencoded, "encode", false, "JSON encoded")
 	stdinCmd.AddCommand(stdinResolveCmd)
 }
 
@@ -41,6 +46,13 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 	csource := -1
 	ctarget := -1
 	cedit := -1
+	delim := "\t"
+	if Fdelim != "" {
+		delim = Fdelim
+	}
+	if Fcsv == "" {
+		delim = ""
+	}
 	if Frilm == "" {
 		Frilm = "rilm"
 	}
@@ -139,7 +151,6 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 
 	for {
 		eol := ""
-		delim := ""
 		a, err := reader.ReadString('\n')
 		if strings.HasSuffix(a, "\n") {
 			a = strings.TrimSuffix(a, "\n")
@@ -157,17 +168,12 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 			}
 			continue
 		}
-		if delim == "" && qpath > 0 {
-			for _, r := range a {
-				if r == 124 || r > 128 {
-					delim = string(r)
-					break
-				}
-			}
-		}
 		switch delim {
 		case "":
 			r, e := resolve(a, "")
+			if Fencoded {
+				r = qutil.Encode(r)
+			}
 			output.WriteString(r)
 			output.WriteString(eol)
 			if e != nil {
@@ -199,6 +205,9 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 				parts[cedit-1] = s
 			}
 			r, e := resolve(source, qp)
+			if Fencoded {
+				r = qutil.Encode(r)
+			}
 			parts[ctarget-1] = r
 			output.WriteString(strings.Join(parts, delim))
 			output.WriteString(eol)

@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/spyzhov/ajson"
 	qyaml "gopkg.in/yaml.v2"
@@ -36,6 +37,18 @@ func Transform(input []byte, jsonpath string, yaml bool) (output string, err err
 		if e == nil {
 			output = string(y)
 		}
+		if len(output) < 10 && strings.TrimSpace(output) == "" {
+			json.Unmarshal(input, &x)
+			y, e := qyaml.Marshal(&x)
+			if e == nil {
+				output = string(y)
+			}
+		}
 	}
 	return
+}
+
+func Encode(s string) string {
+	z, _ := json.Marshal(s)
+	return string(z)
 }

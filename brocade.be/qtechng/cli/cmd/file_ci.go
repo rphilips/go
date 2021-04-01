@@ -258,7 +258,9 @@ func storeRep(payload *qclient.Payload) (pcargo *qclient.Cargo) {
 			if pmeta == nil {
 				continue
 			}
-			i := mpaths[qpath]
+
+			ipath := version + " " + qpath
+			i := mpaths[ipath]
 			locfil := plocfils[i]
 			locfil.Cu = pmeta.Cu
 			locfil.Mu = pmeta.Mu
@@ -270,6 +272,7 @@ func storeRep(payload *qclient.Payload) (pcargo *qclient.Cargo) {
 				LocFile: *locfil,
 			}
 			stored = append(stored, tr)
+
 		}
 	}
 	if len(errlist) == 0 {

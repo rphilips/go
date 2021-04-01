@@ -60,7 +60,7 @@ func fileTell(cmd *cobra.Command, args []string) error {
 	if len(plocfils) != 1 {
 		err := qerror.QError{
 			Ref: []string{"tell.args.2"},
-			Msg: []string{"Toom many files found: need exactly 1"},
+			Msg: []string{"Too many files found: need exactly 1"},
 		}
 		return err
 	}

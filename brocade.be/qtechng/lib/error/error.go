@@ -296,6 +296,10 @@ func ShowResult(r interface{}, jsonpath string, e interface{}, yaml bool) string
 		if err == nil {
 			switch len(result) {
 			case 0:
+				if yaml {
+					r, _ := qutil.Transform(s, "", yaml)
+					return r
+				}
 				return ""
 			case 1:
 				blob, err := ajson.Marshal(result[0])
