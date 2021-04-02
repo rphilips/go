@@ -79,6 +79,7 @@ func fileTell(cmd *cobra.Command, args []string) error {
 	result["version"] = ""
 	result["project"] = ""
 	result["qpath"] = ""
+	result["qdir"] = ""
 	result["python"] = ""
 	result["relpath"] = relpath
 	result["fileurl"] = qutil.FileURL(fname, -1)
@@ -94,6 +95,8 @@ func fileTell(cmd *cobra.Command, args []string) error {
 		result["project"] = locfil.Project
 		result["qpath"] = locfil.QPath
 		result["vcurl"] = qutil.VCURL(locfil.QPath)
+		qdir, _ := qutil.QPartition(locfil.QPath)
+		result["qdir"] = qdir
 	}
 
 	tell, ok := result[Ftell]
