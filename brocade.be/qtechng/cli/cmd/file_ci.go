@@ -50,7 +50,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 
 	type lister struct {
 		Release string `json:"version"`
-		Qpath   string `json:"qpath"`
+		QPath   string `json:"qpath"`
 		File    string `json:"file"`
 		Url     string `json:"fileurl"`
 		Changed bool   `json:"changed"`
@@ -90,7 +90,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 			locfiles = append(locfiles, *plocfil)
 			result = append(result, lister{
 				Release: plocfil.Release,
-				Qpath:   plocfil.QPath,
+				QPath:   plocfil.QPath,
 				File:    place,
 				Url:     qutil.FileURL(place, -1),
 				Time:    plocfil.Time,

@@ -34,7 +34,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 	type deleter struct {
 		Name    string `json:"arg"`
 		Release string `json:"version"`
-		Qpath   string `json:"qpath"`
+		QPath   string `json:"qpath"`
 	}
 
 	done := make(map[string]bool)
@@ -99,7 +99,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			result = append(result, deleter{
 				Name:    locfil.Place,
 				Release: locfil.Release,
-				Qpath:   locfil.QPath,
+				QPath:   locfil.QPath,
 			})
 		}
 	}

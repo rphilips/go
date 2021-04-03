@@ -40,7 +40,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 		Name    string `json:"arg"`
 		Changed bool   `json:"changed"`
 		Release string `json:"version"`
-		Qpath   string `json:"qpath"`
+		QPath   string `json:"qpath"`
 		Path    string `json:"file"`
 		URL     string `json:"fileurl"`
 		Time    string `json:"time"`

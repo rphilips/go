@@ -40,7 +40,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 	type adder struct {
 		Name    string `json:"arg"`
 		Release string `json:"version"`
-		Qpath   string `json:"qpath"`
+		QPath   string `json:"qpath"`
 		Place   string `json:"file"`
 	}
 	direxists := make(map[string]bool)

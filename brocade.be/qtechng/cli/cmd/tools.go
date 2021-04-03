@@ -27,6 +27,8 @@ type lister struct {
 	Release string `json:"version"`
 	QPath   string `json:"qpath"`
 	Project string `json:"project"`
+	Path    string `json:"file"`
+	URL     string `json:"fileurl"`
 	Cu      string `json:"cu"`
 	Mu      string `json:"mu"`
 	Ct      string `json:"ct"`
@@ -39,8 +41,9 @@ type projlister struct {
 }
 type storer struct {
 	Release string `json:"version"`
-	Qpath   string `json:"qpath"`
+	QPath   string `json:"qpath"`
 	Project string `json:"project"`
+	URL     string `json:"fileurl"`
 	Changed bool   `json:"changed"`
 	Time    string `json:"time"`
 	Digest  string `json:"digest"`
@@ -308,6 +311,8 @@ func listTransport(pcargo *qclient.Cargo) []lister {
 				Release: locfil.Release,
 				QPath:   locfil.QPath,
 				Project: locfil.Project,
+				Path:    locfil.Place,
+				URL:     qutil.FileURL(locfil.Place, -1),
 				Cu:      locfil.Cu,
 				Mu:      locfil.Mu,
 				Ct:      locfil.Ct,
@@ -342,6 +347,9 @@ func storeTransport() ([]storer, []error) {
 			Fclear = false
 			Fauto = false
 		}
+	}
+	if !Fauto {
+		Flist = ""
 	}
 
 	for i, transport := range Fcargo.Transports {
@@ -424,7 +432,12 @@ func storeTransport() ([]storer, []error) {
 		errlist = append(errlist, errs)
 	}
 	if len(errorlist) != 0 {
-		errlist = append(errlist, errorlist...)
+		for _, e := range errorlist {
+			if e == nil {
+				continue
+			}
+			errlist = append(errlist, e)
+		}
 	}
 
 	i := -1
@@ -433,8 +446,9 @@ func storeTransport() ([]storer, []error) {
 			i++
 			result[i] = storer{
 				Release: locfil.Release,
-				Qpath:   locfil.QPath,
+				QPath:   locfil.QPath,
 				Project: locfil.Project,
+				URL:     qutil.FileURL(locfil.Place, -1),
 				Time:    locfil.Time,
 				Digest:  locfil.Digest,
 				Cu:      locfil.Cu,

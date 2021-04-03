@@ -97,6 +97,9 @@ func dirTell(cmd *cobra.Command, args []string) error {
 			if strings.HasPrefix(subdir, "./") {
 				subdir = subdir[2:]
 			}
+			if subdir == "." {
+				subdir = ""
+			}
 			subdir = "/" + subdir
 			first := ""
 			last := ""
