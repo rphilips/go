@@ -161,8 +161,26 @@ func (dir *Dir) Load() {
 		dir.Files = nil
 		return
 	}
+	fis, _, err := qfs.FilesDirs(dir.Dir)
+	isfis := make(map[string]bool)
+	for _, fi := range fis {
+		isfis[fi.Name()] = true
+	}
+
 	files := make(map[string]LocalFile)
 	json.Unmarshal(blob, &files)
+	change := false
+	for base, _ := range files {
+		if isfis[base] {
+			continue
+		}
+		delete(files, base)
+		change = true
+	}
+	if change {
+		qjson := path.Join(dir.Dir, ".qtechng")
+		qfs.Store(qjson, files, "")
+	}
 	dir.Files = files
 }
 

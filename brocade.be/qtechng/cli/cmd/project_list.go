@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	qclient "brocade.be/qtechng/lib/client"
+	qerror "brocade.be/qtechng/lib/error"
 	"github.com/spf13/cobra"
 )
 
@@ -26,8 +27,6 @@ func init() {
 	projectCmd.AddCommand(projectListCmd)
 }
 
-var projectList = sourceList
-
 func preProjectList(cmd *cobra.Command, args []string) {
 	if !Ftransported {
 		var err error
@@ -47,4 +46,33 @@ func preProjectList(cmd *cobra.Command, args []string) {
 			log.Fatal("cmd/project_list/2:\n", err)
 		}
 	}
+}
+
+func projectList(cmd *cobra.Command, args []string) error {
+
+	result := projlistTransport(Fcargo)
+	Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
+	return nil
+}
+
+func projlistTransport(pcargo *qclient.Cargo) []projlister {
+	result := make([]projlister, 0)
+	done := make(map[string]bool)
+	if pcargo != nil && len(pcargo.Transports) != 0 {
+		for _, transport := range Fcargo.Transports {
+			locfil := transport.LocFile
+			p := locfil.Project
+			r := locfil.Release
+			inx := r + " " + p
+			if done[inx] {
+				continue
+			}
+			done[inx] = true
+			result = append(result, projlister{
+				Release: locfil.Release,
+				Project: locfil.Project,
+			})
+		}
+	}
+	return result
 }

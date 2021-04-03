@@ -33,6 +33,10 @@ type lister struct {
 	Mt      string `json:"mt"`
 }
 
+type projlister struct {
+	Release string `json:"version"`
+	Project string `json:"project"`
+}
 type storer struct {
 	Release string `json:"version"`
 	Qpath   string `json:"qpath"`
@@ -326,31 +330,35 @@ func storeTransport() ([]storer, []error) {
 	}
 	dirs := make(map[string][]int)
 	idirs := make([]string, 0)
+
+	coredir := Fcwd
+	if Fauto {
+		Ftree = true
+	}
+	if Fauto && strings.ContainsRune(QtechType, 'W') {
+		coredir = qregistry.Registry["qtechng-work-dir"]
+		if coredir == "" {
+			coredir = Fcwd
+			Fclear = false
+			Fauto = false
+		}
+	}
+
 	for i, transport := range Fcargo.Transports {
 		locfil := transport.LocFile
-
-		dir := Fcwd
-		if Fauto {
-			Ftree = true
-		}
-		if Fauto && strings.ContainsRune(QtechType, 'W') {
-			dir = qregistry.Registry["qtechng-work-dir"]
-			if dir == "" {
-				dir = Fcwd
-			}
-		}
 		qpath := locfil.QPath
-		qdir, qbase := qutil.QPartition(qpath)
-		tdir := dir
+		place := ""
 		if Ftree {
-			parts := strings.SplitN(qdir, "/", -1)
-			parts[0] = tdir
-			tdir = filepath.Join(parts...)
+			parts := strings.SplitN(qpath, "/", -1)
+			parts[0] = coredir
+			place = filepath.Join(parts...)
+		} else {
+			_, qbase := qutil.QPartition(qpath)
+			place = filepath.Join(coredir, qbase)
 		}
-		place := filepath.Join(tdir, qbase)
 		locfil.Place = place
 		Fcargo.Transports[i].LocFile = locfil
-		dir = path.Dir(place)
+		dir := path.Dir(place)
 		islice, ok := dirs[dir]
 		if !ok {
 			islice = make([]int, 0)
@@ -359,6 +367,12 @@ func storeTransport() ([]storer, []error) {
 		islice = append(islice, i)
 		dirs[dir] = islice
 	}
+	if Fclear {
+		for _, dir := range idirs {
+			qfs.Rmpath((dir))
+		}
+	}
+
 	fn := func(n int) (interface{}, error) {
 		errlist := make([]error, 0)
 		dir := idirs[n]

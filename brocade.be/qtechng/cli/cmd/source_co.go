@@ -24,7 +24,11 @@ var sourceCoCmd = &cobra.Command{
 	},
 }
 
+// Fclear Clears visited directories, if in auto mode
+var Fclear bool
+
 func init() {
+	sourceCoCmd.Flags().BoolVar(&Fclear, "clear", false, "Clears visited directories, if in auto mode")
 	sourceCmd.AddCommand(sourceCoCmd)
 }
 
