@@ -42,4 +42,5 @@ func init() {
 	sourceCmd.PersistentFlags().BoolVar(&Fregexp, "regexp", false, "searches as a regular expression")
 	sourceCmd.PersistentFlags().BoolVar(&Ftolower, "tolower", false, "transforms to lowercase")
 	sourceCmd.PersistentFlags().BoolVar(&Fsmartcaseoff, "smartcaseoff", false, "Forbids smartcase transformation")
+	sourceCoCmd.Flags().StringVar(&Flist, "list", "", "List with qpaths, if in auto mode")
 }

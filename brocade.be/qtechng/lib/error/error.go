@@ -284,6 +284,10 @@ func ShowResult(r interface{}, jsonpath string, e interface{}, yaml bool) string
 	default:
 		se = showresult{host, t, e, r}
 	}
+	if se.Error == nil {
+		jsonpath = ""
+		yaml = false
+	}
 
 	s, _ := json.MarshalIndent(se, "", "    ")
 

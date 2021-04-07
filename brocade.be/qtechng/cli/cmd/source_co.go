@@ -35,13 +35,19 @@ var Flist string
 
 func init() {
 	sourceCoCmd.Flags().BoolVar(&Fclear, "clear", false, "Clears visited directories, if in auto mode")
-	sourceCoCmd.Flags().StringVar(&Flist, "list", "", "List with qpaths, if in auto mode")
 	sourceCmd.AddCommand(sourceCoCmd)
 }
 
 func sourceCo(cmd *cobra.Command, args []string) error {
 	result, errlist := storeTransport()
-	if len(errlist) == 0 {
+	errs := make([]error, 0)
+	for _, e := range errlist {
+		if e != nil {
+			errs = append(errs, e)
+		}
+	}
+
+	if len(errs) == 0 {
 
 		supportdir := qregistry.Registry["qtechng-support-dir"]
 		if Flist != "" && supportdir != "" {
@@ -59,7 +65,7 @@ func sourceCo(cmd *cobra.Command, args []string) error {
 		Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
 		return nil
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errlist), Fyaml)
+	Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errs), Fyaml)
 	return nil
 }
 

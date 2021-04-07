@@ -131,7 +131,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			QPath:   Fqdir + "/" + rel,
 		}
 		d.Add(locfil)
-		result = append(result, adder{arg, Fversion, place, Fqdir + "/" + rel})
+		result = append(result, adder{arg, Fversion, Fqdir + "/" + rel, place})
 	}
 	if len(errorlist) == 0 {
 		Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)

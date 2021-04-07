@@ -170,7 +170,7 @@ func (dir *Dir) Load() {
 	files := make(map[string]LocalFile)
 	json.Unmarshal(blob, &files)
 	change := false
-	for base, _ := range files {
+	for base := range files {
 		if isfis[base] {
 			continue
 		}
