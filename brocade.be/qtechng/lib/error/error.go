@@ -269,24 +269,31 @@ func ShowResult(r interface{}, jsonpath string, e interface{}, yaml bool) string
 		ers := FlattenErrors(err)
 		if len(ers) == 0 {
 			ers = nil
+		} else {
+			yaml = false
+			jsonpath = ""
 		}
 		se = showresult{host, t, ers, r}
 	case []error:
 		ers := FlattenErrors(ErrorSlice(err))
 		if len(ers) == 0 {
 			ers = nil
+		} else {
+			jsonpath = ""
+			yaml = false
 		}
 		se = showresult{host, t, ers, r}
 	case error:
+		if err != nil {
+			jsonpath = ""
+			yaml = false
+		}
 		se = showresult{host, t, err.Error(), r}
+
 	case fmt.Stringer:
 		se = showresult{host, t, err.String(), r}
 	default:
 		se = showresult{host, t, e, r}
-	}
-	if se.Error == nil {
-		jsonpath = ""
-		yaml = false
 	}
 
 	s, _ := json.MarshalIndent(se, "", "    ")
