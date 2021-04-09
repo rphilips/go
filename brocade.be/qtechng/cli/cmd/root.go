@@ -368,7 +368,7 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 	err := rootCmd.Execute()
 	stderr := ""
 	if err != nil && len(os.Args) != 1 {
-		stderr = qreport.Report("", err, Fjq, Fyaml)
+		stderr = qreport.Report(nil, err, Fjq, Fyaml)
 		if stderr != "" {
 			l := log.New(os.Stderr, "", 0)
 			l.Println(stderr)

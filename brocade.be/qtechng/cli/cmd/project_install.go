@@ -40,7 +40,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 			Ref: []string{"install.project"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	if Finstallref == "" {
@@ -67,7 +67,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 	err := qsource.Install(Finstallref, sources, false)
 
 	if err != nil {
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	msg := make(map[string][]string)

@@ -52,7 +52,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	if Fqdir == "" || Fqdir == "/" || Fqdir == "." {
@@ -61,7 +61,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce directory in repository"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	if Fcwd == "" {
@@ -70,7 +70,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to place the files"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	result := make([]adder, 0)

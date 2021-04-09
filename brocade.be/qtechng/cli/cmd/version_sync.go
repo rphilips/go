@@ -39,7 +39,7 @@ func versionSync(cmd *cobra.Command, args []string) error {
 			Ref: []string{"sync.bp"},
 			Msg: []string{"No sync necessary: server is both production and development"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 
@@ -49,14 +49,14 @@ func versionSync(cmd *cobra.Command, args []string) error {
 			Ref: []string{"sync.production"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 
 	changed, deleted, err := qsync.Sync(current, current, false)
 
 	if err != nil {
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	msg := make(map[string][]string)

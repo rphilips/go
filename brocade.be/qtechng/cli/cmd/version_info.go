@@ -41,7 +41,7 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(r, true)
 	if err != nil {
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 

@@ -119,7 +119,7 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report("", err, Fjq, Fyaml)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 			return nil
 		}
 		msg := make(map[string][]string)

@@ -158,7 +158,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report("", err, Fjq, Fyaml)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 			return nil
 		}
 		msg := make(map[string][]string)
@@ -241,7 +241,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 
 	if len(errs) != 0 {
 		if err != nil {
-			Fmsg = qreport.Report("", qerror.ErrorSlice(errs), Fjq, Fyaml)
+			Fmsg = qreport.Report(nil, qerror.ErrorSlice(errs), Fjq, Fyaml)
 			return nil
 		}
 

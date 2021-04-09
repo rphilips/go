@@ -55,7 +55,7 @@ func versionDelete(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(version, true)
 	if err != nil {
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 

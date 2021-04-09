@@ -14,7 +14,7 @@ type header struct {
 	Host   string   `json:"host" yaml:"host"`
 	Time   string   `json:"time" yaml:"time"`
 	Args   []string `json:"args" yaml:"args"`
-	Jerror string   `json:"jsonpatherror" yaml:"jsonpatherror"`
+	Jerror string   `json:"jsonpatherror,omitempty" yaml:"jsonpatherror,omitempty"`
 }
 
 type report struct {
@@ -50,7 +50,7 @@ func Report(r interface{}, e interface{}, jsonpath string, yaml bool) string {
 	show.Result = r
 
 	// Errors
-	show.Errors = flatten(e)
+	show.Errors = qerror.FlattenErrors(e)
 
 	// to JSON
 
@@ -90,76 +90,4 @@ func Report(r interface{}, e interface{}, jsonpath string, yaml bool) string {
 	}
 
 	return string(y)
-}
-
-func flatten(err interface{}) []error {
-	if err == nil {
-		return nil
-	}
-	errs := make([]error, 0)
-	switch v := err.(type) {
-	case []error:
-		if len(v) == 0 {
-			return nil
-		}
-		errs = append(errs, v...)
-	case qerror.ErrorSlice:
-		if len(v) == 0 {
-			return nil
-		}
-		errs = append(errs, v...)
-	case *qerror.ErrorSlice:
-		es := []error(*v)
-		if len(es) != 0 {
-			errs = append(errs, es...)
-		} else {
-			return nil
-		}
-	case error:
-		if v == nil {
-			return nil
-		}
-		errs = append(errs, v)
-	case []interface{}:
-		if len(v) == 0 {
-			return nil
-		}
-		for _, e := range v {
-			errs = append(errs, e.(error))
-		}
-	default:
-		errs = append(errs, v.(error))
-	}
-	errs2 := make([]error, 0)
-
-	for _, e := range errs {
-		if e == nil {
-			continue
-		}
-		switch v := e.(type) {
-		case qerror.ErrorSlice:
-			if len(v) == 0 {
-				continue
-			}
-			es := []error(v)
-			errs2 = append(errs2, flatten(es)...)
-		case *qerror.ErrorSlice:
-			if len(*v) == 0 {
-				continue
-			}
-			es := []error(*v)
-			errs2 = append(errs2, flatten(es)...)
-		case error, interface{}:
-			if v == nil {
-				continue
-			}
-			errs2 = append(errs2, v)
-		default:
-			errs2 = append(errs2, v)
-		}
-	}
-	if len(errs2) == 0 {
-		return nil
-	}
-	return errs2
 }

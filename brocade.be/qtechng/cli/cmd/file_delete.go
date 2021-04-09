@@ -45,7 +45,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 	if Fcwd == "" {
@@ -54,7 +54,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to find the files"},
 		}
-		Fmsg = qreport.Report("", err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 
