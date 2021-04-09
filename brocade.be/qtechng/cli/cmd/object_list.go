@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +33,7 @@ func objectList(cmd *cobra.Command, args []string) error {
 	result := r.Bytes()
 	v := make(map[string]interface{})
 	json.Unmarshal(result, &v)
-	Fmsg = qerror.ShowResult(v, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(v, nil, Fjq, Fyaml)
 	return nil
 }
 

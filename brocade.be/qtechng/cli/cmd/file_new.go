@@ -8,6 +8,7 @@ import (
 	qfs "brocade.be/base/fs"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +52,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	if Fqdir == "" || Fqdir == "/" || Fqdir == "." {
@@ -60,7 +61,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce directory in repository"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	if Fcwd == "" {
@@ -69,7 +70,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to place the files"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	result := make([]adder, 0)
@@ -134,9 +135,9 @@ func fileNew(cmd *cobra.Command, args []string) error {
 		result = append(result, adder{arg, Fversion, Fqdir + "/" + rel, place})
 	}
 	if len(errorlist) == 0 {
-		Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	} else {
-		Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errorlist), Fyaml)
+		Fmsg = qreport.Report(result, qerror.ErrorSlice(errorlist), Fjq, Fyaml)
 	}
 	return nil
 }

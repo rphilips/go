@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 )
 
@@ -34,13 +34,13 @@ func versionNew(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(r, false)
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, nil, Fyaml)
+		Fmsg = qreport.Report("", nil, Fjq, Fyaml)
 		return nil
 	}
 
 	err = release.Init()
 	if err != nil {
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 
@@ -50,6 +50,6 @@ func versionNew(cmd *cobra.Command, args []string) error {
 	} else {
 		err = fmt.Errorf("Version `%s` is NOT created", release.String())
 	}
-	Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+	Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 	return nil
 }

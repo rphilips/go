@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 )
 
 var systemBlockinstallCmd = &cobra.Command{
@@ -57,6 +57,6 @@ func systemBlockinstall(cmd *cobra.Command, args []string) error {
 			msg = ""
 		}
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, err, Fyaml)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml)
 	return nil
 }

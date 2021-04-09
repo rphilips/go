@@ -12,6 +12,7 @@ import (
 
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -118,12 +119,12 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+			Fmsg = qreport.Report("", err, Fjq, Fyaml)
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["grepped"] = files
-		Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 		return nil
 	}
 	type line struct {
@@ -196,9 +197,9 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 	msg := make(map[string][]string)
 	msg["grepped"] = grep
 	if len(errs) == 0 {
-		Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	} else {
-		Fmsg = qerror.ShowResult(msg, Fjq, qerror.ErrorSlice(errs), Fyaml)
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml)
 	}
 	return nil
 }

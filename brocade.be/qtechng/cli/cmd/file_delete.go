@@ -6,6 +6,7 @@ import (
 	qfs "brocade.be/base/fs"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +45,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	if Fcwd == "" {
@@ -53,7 +54,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to find the files"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 
@@ -103,6 +104,6 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			})
 		}
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errlist, Fyaml)
+	Fmsg = qreport.Report(result, errlist, Fjq, Fyaml)
 	return nil
 }

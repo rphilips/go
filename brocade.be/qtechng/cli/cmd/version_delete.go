@@ -8,7 +8,7 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 )
 
@@ -32,7 +32,7 @@ func init() {
 func versionDelete(cmd *cobra.Command, args []string) error {
 	if !Fforce && strings.Contains(QtechType, "B") {
 		err := fmt.Errorf("On a development server, this command can only be used with `force`")
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 	version := args[0]
@@ -40,7 +40,7 @@ func versionDelete(cmd *cobra.Command, args []string) error {
 
 	if version == "0.00" || version == "" {
 		err := fmt.Errorf("Version `0.00` cannot be deleted")
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 
@@ -49,25 +49,25 @@ func versionDelete(cmd *cobra.Command, args []string) error {
 
 	if strings.Contains(QtechType, "B") && br == version {
 		err := fmt.Errorf("Current version `" + br + "` cannot be deleted")
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 
 	release, err := qserver.Release{}.New(version, true)
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("Version `%s` does NOT exist", release.String())
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 	err = qfs.Rmpath(release.Root())
 	if err != nil {
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 	return nil

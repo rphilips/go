@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 )
 
 var systemInfoCmd = &cobra.Command{
@@ -58,6 +58,6 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	return nil
 }

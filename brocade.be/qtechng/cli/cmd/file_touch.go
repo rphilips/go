@@ -6,7 +6,7 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
@@ -64,6 +64,6 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 			errslice = append(errslice, et)
 		}
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errslice, Fyaml)
+	Fmsg = qreport.Report(result, errslice, Fjq, Fyaml)
 	return nil
 }

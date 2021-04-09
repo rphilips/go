@@ -8,7 +8,7 @@ import (
 
 	qfnmatch "brocade.be/base/fnmatch"
 	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -62,6 +62,6 @@ func registryGet(cmd *cobra.Command, args []string) (err error) {
 		msg[key] = qregistry.Registry[key]
 	}
 
-	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	return nil
 }

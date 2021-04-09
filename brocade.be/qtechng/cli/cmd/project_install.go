@@ -8,6 +8,7 @@ import (
 	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 	qsource "brocade.be/qtechng/lib/source"
 	qsync "brocade.be/qtechng/lib/sync"
@@ -39,7 +40,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 			Ref: []string{"install.project"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	if Finstallref == "" {
@@ -66,7 +67,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 	err := qsource.Install(Finstallref, sources, false)
 
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	msg := make(map[string][]string)
@@ -78,7 +79,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 		sort.Strings(qpaths)
 		msg["installed"] = qpaths
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	return nil
 }
 

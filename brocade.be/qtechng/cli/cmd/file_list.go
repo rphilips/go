@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
@@ -57,6 +57,6 @@ func fileList(cmd *cobra.Command, args []string) error {
 		rel, _ := filepath.Rel(Fcwd, locfil.Place)
 		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, qutil.FileURL(locfil.Place, -1), locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errlist, Fyaml)
+	Fmsg = qreport.Report(result, errlist, Fjq, Fyaml)
 	return nil
 }

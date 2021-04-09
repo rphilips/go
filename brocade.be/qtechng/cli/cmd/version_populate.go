@@ -14,6 +14,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qproject "brocade.be/qtechng/lib/project"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 )
 
@@ -85,7 +86,7 @@ func versionPopulate(cmd *cobra.Command, args []string) error {
 	Fversion = "0.00"
 	result, errs := qproject.InitList(Fversion, args, func(a string) qmeta.Meta { return meta })
 	if errs != nil {
-		Fmsg = qerror.ShowResult(result, Fjq, errs, Fyaml)
+		Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
 		return nil
 	}
 

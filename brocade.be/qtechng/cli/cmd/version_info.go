@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 )
 
@@ -41,14 +41,14 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(r, true)
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("Version `%s` does NOT exist", release.String())
-		Fmsg = qerror.ShowResult(Fmsg, Fjq, err, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 
@@ -65,6 +65,6 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 			msg["~status"] = "CLOSED"
 		}
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	return nil
 }

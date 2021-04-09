@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"os"
 
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -41,6 +41,6 @@ func about(cmd *cobra.Command, args []string) error {
 			msg["hexified "+arg] = hex.EncodeToString([]byte(arg))
 		}
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	return nil
 }

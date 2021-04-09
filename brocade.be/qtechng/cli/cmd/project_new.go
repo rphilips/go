@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 
 	qfs "brocade.be/base/fs"
-	qerror "brocade.be/qtechng/lib/error"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qproject "brocade.be/qtechng/lib/project"
+	qreport "brocade.be/qtechng/lib/report"
 )
 
 var projectNewCmd = &cobra.Command{
@@ -68,6 +68,6 @@ func projectNew(cmd *cobra.Command, args []string) error {
 	}
 	result, errs := qproject.InitList(Fversion, args, func(a string) qmeta.Meta { return meta })
 
-	Fmsg = qerror.ShowResult(result, Fjq, errs, Fyaml)
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
 	return nil
 }

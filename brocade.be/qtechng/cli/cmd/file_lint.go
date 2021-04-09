@@ -12,6 +12,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qofile "brocade.be/qtechng/lib/file/ofile"
 	qobject "brocade.be/qtechng/lib/object"
+	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
@@ -163,6 +164,6 @@ func fileLint(cmd *cobra.Command, args []string) error {
 	}
 	_, errorlist := qparallel.NMap(len(files), -1, lint)
 
-	Fmsg = qerror.ShowResult("", Fjq, errorlist, Fyaml)
+	Fmsg = qreport.Report("", errorlist, Fjq, Fyaml)
 	return nil
 }

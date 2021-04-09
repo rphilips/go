@@ -11,6 +11,7 @@ import (
 	qpy "brocade.be/base/python"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
@@ -117,6 +118,6 @@ func fileTell(cmd *cobra.Command, args []string) error {
 		err = w.Flush()
 		return err
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func lockDelete(cmd *cobra.Command, args []string) {
 		lockdir = qregistry.Registry["scratch-dir"]
 	}
 	if lockdir == "" {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot find lock-dir in registry"), Fyaml)
+		Fmsg = qreport.Report(nil, fmt.Errorf("Cannot find lock-dir in registry"), Fjq, Fyaml)
 		return
 	}
 
@@ -50,7 +50,7 @@ func lockDelete(cmd *cobra.Command, args []string) {
 	os.Rename(locker, tempdir)
 	os.RemoveAll(tempdir)
 	if qfs.IsDir(locker) {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot remove lock: %s", lock), Fyaml)
+		Fmsg = qreport.Report(nil, fmt.Errorf("Cannot remove lock: %s", lock), Fjq, Fyaml)
 		return
 	}
 }

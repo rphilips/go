@@ -9,6 +9,46 @@ import (
 	qyaml "gopkg.in/yaml.v2"
 )
 
+func JSONpath(b []byte, jsonpath string) (string, error) {
+	result, err := ajson.JSONPath(b, jsonpath)
+	if err != nil {
+		return string(b), err
+	}
+
+	switch len(result) {
+	case 0:
+		return "", nil
+	case 1:
+		blob, _ := ajson.Marshal(result[0])
+		return string(blob), nil
+	default:
+		r := make([]string, len(result)+2)
+		r[0] = "["
+		for i, pnode := range result {
+			blob, _ := ajson.Marshal(pnode)
+			comma := ","
+			if i == len(result)-1 {
+				comma = ""
+			}
+			s := "    " + string(blob) + comma
+			r[i+1] = s
+			continue
+		}
+		r[len(result)+1] = "]"
+		res := strings.Join(r, "\n")
+		return res, nil
+	}
+}
+
+func ParsePath(jsonpath string) error {
+	_, err := ajson.ParseJSONPath(jsonpath)
+	return err
+}
+
+func Yaml(in interface{}) ([]byte, error) {
+	return qyaml.Marshal(in)
+}
+
 func Transform(input []byte, jsonpath string, yaml bool) (output string, err error) {
 	if jsonpath == "" && !yaml {
 		return string(input), nil

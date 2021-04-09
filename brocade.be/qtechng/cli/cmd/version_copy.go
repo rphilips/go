@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 	qsync "brocade.be/qtechng/lib/sync"
 )
@@ -44,7 +45,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 				Ref: []string{"copy.target.exists"},
 				Msg: []string{"Target version exists. Use force!"},
 			}
-			Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+			Fmsg = qreport.Report("", err, Fjq, Fyaml)
 			return nil
 		}
 	}
@@ -52,7 +53,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 	changed, deleted, err := qsync.Sync(rsource, rtarget, Fforce)
 
 	if err != nil {
-		Fmsg = qerror.ShowResult("", Fjq, err, Fyaml)
+		Fmsg = qreport.Report("", err, Fjq, Fyaml)
 		return nil
 	}
 	msg := make(map[string][]string)
@@ -64,6 +65,6 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 		sort.Strings(deleted)
 		msg["deleted"] = deleted
 	}
-	Fmsg = qerror.ShowResult(msg, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 	return nil
 }

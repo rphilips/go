@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,7 @@ func lockRun(cmd *cobra.Command, args []string) {
 
 	locker := checkLock(lock, until)
 	if locker == "" {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot obtain lock `%s`", lock), Fyaml)
+		Fmsg = qreport.Report(nil, fmt.Errorf("Cannot obtain lock `%s`", lock), Fjq, Fyaml)
 		return
 	}
 
@@ -79,7 +79,7 @@ func lockRun(cmd *cobra.Command, args []string) {
 				os.Exit(status.ExitStatus())
 			}
 		}
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Unable to run command succesfully"), Fyaml)
+		Fmsg = qreport.Report(nil, fmt.Errorf("Unable to run command succesfully"), Fjq, Fyaml)
 		return
 	}
 }

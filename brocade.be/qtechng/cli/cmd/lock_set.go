@@ -9,7 +9,7 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +45,7 @@ func lockSet(cmd *cobra.Command, args []string) {
 	locker := checkLock(lock, until)
 
 	if locker == "" {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot create lock `%s`", lock), Fyaml)
+		Fmsg = qreport.Report(nil, fmt.Errorf("Cannot create lock `%s`", lock), Fjq, Fyaml)
 		return
 	}
 }

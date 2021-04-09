@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +34,7 @@ func init() {
 
 func sourceMumps(cmd *cobra.Command, args []string) error {
 	if Fcargo.Error != nil {
-		Fmsg = qerror.ShowResult("", Fjq, Fcargo.Error, Fyaml)
+		Fmsg = qreport.Report("", Fcargo.Error, Fjq, Fyaml)
 		return nil
 	}
 	Fmsg = Fcargo.Buffer.String()

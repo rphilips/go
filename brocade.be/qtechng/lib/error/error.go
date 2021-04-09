@@ -14,35 +14,11 @@ import (
 
 const maxerrorlines = 100
 
-type ErrorMap map[string]error
 type ErrorSlice []error
-
-// NewErrorMap creates a new errormap
-func NewErrorMap() ErrorMap {
-	return ErrorMap(make(map[string]error))
-}
 
 // NewErrorSlice creates a new errorslice
 func NewErrorSlice() ErrorSlice {
 	return ErrorSlice(make([]error, 0))
-}
-
-func (errmap ErrorMap) MarshalJSON() (js []byte, err error) {
-	if len(errmap) == 0 {
-		return
-	}
-	errs := make(map[string]map[string]string)
-	errs["ERROR"] = make(map[string]string)
-	for key, value := range errmap {
-		if value == nil {
-			continue
-		}
-		errs["ERROR"][key] = value.Error()
-	}
-	if len(errs["ERROR"]) == 0 {
-		return
-	}
-	return json.MarshalIndent(errs, "", "    ")
 }
 
 func (errslice ErrorSlice) MarshalJSON() (js []byte, err error) {
@@ -56,11 +32,6 @@ func (errslice ErrorSlice) MarshalJSON() (js []byte, err error) {
 	return json.MarshalIndent(eslice, "", "    ")
 }
 
-func (errmap ErrorMap) Error() string {
-	js, _ := json.Marshal(errmap)
-	return string(js)
-}
-
 func (errslice ErrorSlice) Error() string {
 	eslice := FlattenErrors(errslice)
 	if len(eslice) == 0 {
@@ -68,14 +39,6 @@ func (errslice ErrorSlice) Error() string {
 	}
 	blob, _ := json.MarshalIndent(eslice, "", "    ")
 	return string(blob)
-}
-
-func (errmap *ErrorMap) AddError(key string, err error) {
-	if len(*errmap) == 0 {
-		x := ErrorMap(make(map[string]error))
-		errmap = &x
-	}
-	(*errmap)[key] = err
 }
 
 func (errslice *ErrorSlice) AddError(err error) {
@@ -191,7 +154,7 @@ func ShowError(e error) string {
 
 	s := make([]byte, 0)
 	switch err := e.(type) {
-	case QError, *QError, ErrorMap, ErrorSlice:
+	case QError, *QError, ErrorSlice:
 		se := showerror{host, t, err}
 		s, _ = json.MarshalIndent(se, "", "    ")
 	case error:
@@ -263,7 +226,7 @@ func ShowResult(r interface{}, jsonpath string, e interface{}, yaml bool) string
 
 	se := showresult{}
 	switch err := e.(type) {
-	case *QError, ErrorMap:
+	case *QError:
 		se = showresult{host, t, err, r}
 	case ErrorSlice:
 		ers := FlattenErrors(err)
@@ -350,7 +313,7 @@ func ShowResult(r interface{}, jsonpath string, e interface{}, yaml bool) string
 		if ermsg != "" {
 			se := jshowresult{}
 			switch err := e.(type) {
-			case *QError, ErrorMap, ErrorSlice:
+			case *QError, ErrorSlice:
 				se = jshowresult{host, t, ermsg, err, r}
 			case error:
 				se = jshowresult{host, t, ermsg, err.Error(), r}

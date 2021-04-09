@@ -8,7 +8,7 @@ import (
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -62,10 +62,10 @@ func sourceCo(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 		return nil
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, qerror.ErrorSlice(errs), Fyaml)
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
 	return nil
 }
 

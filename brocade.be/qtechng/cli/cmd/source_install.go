@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,7 @@ func init() {
 
 func sourceInstall(cmd *cobra.Command, args []string) error {
 	result := listTransport(Fcargo)
-	Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	return nil
 }
 

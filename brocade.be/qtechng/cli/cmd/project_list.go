@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +51,7 @@ func preProjectList(cmd *cobra.Command, args []string) {
 func projectList(cmd *cobra.Command, args []string) error {
 
 	result := projlistTransport(Fcargo)
-	Fmsg = qerror.ShowResult(result, Fjq, nil, Fyaml)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	return nil
 }
 

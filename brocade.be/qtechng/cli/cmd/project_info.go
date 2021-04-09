@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	qerror "brocade.be/qtechng/lib/error"
 	qproject "brocade.be/qtechng/lib/project"
+	qreport "brocade.be/qtechng/lib/report"
 )
 
 var projectInfoCmd = &cobra.Command{
@@ -29,10 +29,10 @@ func init() {
 func projectInfo(cmd *cobra.Command, args []string) error {
 	result, errs := qproject.Info(Fversion, args)
 	if errs != nil {
-		Fmsg = qerror.ShowResult(result, Fjq, errs, Fyaml)
+		Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
 		return nil
 	}
-	Fmsg = qerror.ShowResult(result, Fjq, errs, Fyaml)
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
 	return nil
 
 }

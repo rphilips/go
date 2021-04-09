@@ -17,6 +17,7 @@ import (
 
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
@@ -367,7 +368,7 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 	err := rootCmd.Execute()
 	stderr := ""
 	if err != nil && len(os.Args) != 1 {
-		stderr = qerror.ShowError(err)
+		stderr = qreport.Report("", err, Fjq, Fyaml)
 		if stderr != "" {
 			l := log.New(os.Stderr, "", 0)
 			l.Println(stderr)
