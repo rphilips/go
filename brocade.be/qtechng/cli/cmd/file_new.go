@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -32,12 +34,65 @@ qtechng file new bcawedit.m install.py
 	},
 }
 
+// Fcreate create a new file
+var Fcreate bool
+
 func init() {
 	fileNewCmd.Flags().StringVar(&Fqdir, "qdir", "", "Directory the file belongs to in repository")
+	fileNewCmd.Flags().BoolVar(&Fcreate, "create", false, "Create a new file")
 	fileCmd.AddCommand(fileNewCmd)
 }
 
 func fileNew(cmd *cobra.Command, args []string) error {
+
+	if Fcreate {
+		for _, fname := range args {
+			if !path.IsAbs(fname) {
+				fname = path.Join(Fcwd, fname)
+			}
+			if qfs.IsFile(fname) {
+				err := &qerror.QError{
+					Ref:  []string{"file.create.isfile"},
+					Type: "Error",
+					Msg:  []string{fmt.Sprintf("File `%s` exists already", fname)},
+				}
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+				return nil
+			}
+			if qfs.IsDir(fname) {
+				err := &qerror.QError{
+					Ref:  []string{"file.create.isdir"},
+					Type: "Error",
+					Msg:  []string{fmt.Sprintf("`%s` is the name of a directory", fname)},
+				}
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+				return nil
+			}
+			dirname := path.Dir(fname)
+			if !qfs.IsDir(dirname) {
+				err := &qerror.QError{
+					Ref:  []string{"file.create.notdir"},
+					Type: "Error",
+					Msg:  []string{fmt.Sprintf("Directory `%s` does not exist", dirname)},
+				}
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+				return nil
+			}
+			e := qutil.FileCreate(fname)
+			if e != nil {
+				err := &qerror.QError{
+					Ref:  []string{"file.create.create"},
+					Type: "Error",
+					Msg:  []string{fmt.Sprintf("Error in creating `%s`: `%s`", fname, e.Error())},
+				}
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+				return nil
+			}
+
+		}
+
+	}
+
 	type adder struct {
 		Name    string `json:"arg"`
 		Release string `json:"version"`
