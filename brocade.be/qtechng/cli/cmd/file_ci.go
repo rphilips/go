@@ -13,6 +13,7 @@ import (
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qmeta "brocade.be/qtechng/lib/meta"
+	qreport "brocade.be/qtechng/lib/report"
 	qsource "brocade.be/qtechng/lib/source"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
@@ -108,7 +109,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	Fmsg = qerror.ShowResult(result, Fjq, Fcargo.Error, Fyaml)
+	Fmsg = qreport.Report(result, []error{Fcargo.Error}, Fjq, Fyaml)
 	return nil
 }
 
@@ -127,7 +128,7 @@ func preCi(cmd *cobra.Command, args []string) {
 	}
 
 	if errlist != nil {
-		Fmsg = qerror.ShowResult("", Fjq, qerror.ErrorSlice(errlist), Fyaml)
+		Fmsg = qreport.Report("", qerror.ErrorSlice(errlist), Fjq, Fyaml)
 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 		return
 	}
