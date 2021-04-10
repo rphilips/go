@@ -12,11 +12,13 @@ import (
 )
 
 type Profile struct {
+	Comment string `json:"comment"`
 	Pattern string `json:"pattern"`
 	Model   string `json:"model"`
+	Hint    string `json:"hint"`
 }
 
-func FileCreate(fname string) error {
+func FileCreate(fname string, hint string) error {
 	profiledir := path.Join(qregistry.Registry["qtechng-support-dir"], "profiles")
 	profilefile := path.Join(profiledir, "profiles.json")
 
@@ -34,9 +36,13 @@ func FileCreate(fname string) error {
 	basename := path.Base(fname)
 	model := ""
 
-	for _, pair := range profiles {
-		pat := pair.Pattern
-		mod := pair.Model
+	for _, tripel := range profiles {
+		pat := tripel.Pattern
+		mod := tripel.Model
+		h := tripel.Hint
+		if hint != "" && h != hint {
+			continue
+		}
 		if qfnmatch.Match(pat, basename) {
 			model = mod
 			break

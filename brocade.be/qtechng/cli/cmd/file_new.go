@@ -37,8 +37,12 @@ qtechng file new bcawedit.m install.py
 // Fcreate create a new file
 var Fcreate bool
 
+// Fhint for new files
+var Fhint string
+
 func init() {
 	fileNewCmd.Flags().StringVar(&Fqdir, "qdir", "", "Directory the file belongs to in repository")
+	fileNewCmd.Flags().StringVar(&Fhint, "hint", "", "Hint for new files")
 	fileNewCmd.Flags().BoolVar(&Fcreate, "create", false, "Create a new file")
 	fileCmd.AddCommand(fileNewCmd)
 }
@@ -78,7 +82,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 				return nil
 			}
-			e := qutil.FileCreate(fname)
+			e := qutil.FileCreate(fname, Fhint)
 			if e != nil {
 				err := &qerror.QError{
 					Ref:  []string{"file.create.create"},
