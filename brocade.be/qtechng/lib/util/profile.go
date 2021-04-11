@@ -62,7 +62,7 @@ func FileCreate(fname string, hint string) error {
 
 	filler := make(map[string]string)
 	filler["basename"] = basename
-	filler["ext"] = path.Ext(basename)
+	filler["ext"] = strings.TrimPrefix(path.Ext(basename), ".")
 	filler["root"] = strings.TrimSuffix(basename, path.Ext(basename))
 	filler["root1"] = filler["root"][1:]
 	filler["user"] = qregistry.Registry["qtechng-user"]
