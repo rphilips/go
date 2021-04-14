@@ -106,7 +106,7 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 		Args:   os.Args[1:],
 		Query:  squery,
 	}
-	pcargo = &qclient.Cargo{}
+	pcargo = new(qclient.Cargo)
 	if !strings.ContainsRune(QtechType, 'B') && !strings.ContainsRune(QtechType, 'P') {
 		whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
@@ -117,13 +117,12 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 			return pcargo, fmt.Errorf("cmd/tools/fetchData/2:\n%s", catchErr)
 		}
 		dec := gob.NewDecoder(catchOut)
-		pcargo = &qclient.Cargo{}
-		for {
-			if err := dec.Decode(pcargo); err == io.EOF {
-				break
-			} else if err != nil {
-				return pcargo, fmt.Errorf("cmd/tools/fetchData/3:\n%s", err.Error())
-			}
+		err = dec.Decode(pcargo)
+		if err == io.EOF {
+			err = nil
+		}
+		if err != nil {
+			return pcargo, fmt.Errorf("cmd/tools/fetchData/3:\n%s", err.Error())
 		}
 	}
 	return
@@ -213,8 +212,9 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		}
 
 	}
+	pcargo.Data = make([]byte, 0)
 	if batchid != "" {
-		pcargo.Buffer = *buffer
+		pcargo.Data = buffer.Bytes()
 	}
 	pcargo.Transports = transports
 	if withcontent {
@@ -240,7 +240,7 @@ func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, batchid str
 	pubermap := query.RunObject()
 	b, _ := json.Marshal(pubermap)
 	buffer := bytes.NewBuffer(b)
-	pcargo.Buffer = *buffer
+	pcargo.Data = buffer.Bytes()
 	return
 }
 
@@ -323,8 +323,8 @@ func listTransport(pcargo *qclient.Cargo) []lister {
 	return result
 }
 
-func listObjectTransport(pcargo *qclient.Cargo) bytes.Buffer {
-	return pcargo.Buffer
+func listObjectTransport(pcargo *qclient.Cargo) []byte {
+	return pcargo.Data
 }
 
 func storeTransport() ([]storer, []error) {

@@ -55,7 +55,7 @@ var FUID string
 var Fpayload *qclient.Payload
 
 // Fcargo pointer to payoff information
-var Fcargo *qclient.Cargo = &qclient.Cargo{}
+var Fcargo *qclient.Cargo = new(qclient.Cargo)
 
 // Fqdir qpath of a directory in version
 var Fqdir string

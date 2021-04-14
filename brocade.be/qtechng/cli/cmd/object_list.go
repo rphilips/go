@@ -29,8 +29,7 @@ func init() {
 }
 
 func objectList(cmd *cobra.Command, args []string) error {
-	r := listObjectTransport(Fcargo)
-	result := r.Bytes()
+	result := listObjectTransport(Fcargo)
 	v := make(map[string]interface{})
 	json.Unmarshal(result, &v)
 	Fmsg = qreport.Report(v, nil, Fjq, Fyaml)

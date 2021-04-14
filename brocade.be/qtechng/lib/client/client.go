@@ -42,7 +42,7 @@ type Transport struct {
 
 type Cargo struct {
 	Transports []Transport
-	Buffer     bytes.Buffer
+	Data       []byte
 	Error      error
 }
 

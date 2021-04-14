@@ -32,7 +32,7 @@ func init() {
 }
 
 func sourceResolve(cmd *cobra.Command, args []string) error {
-	Fmsg = Fcargo.Buffer.String()
+	Fmsg = string(Fcargo.Data)
 	return nil
 }
 
