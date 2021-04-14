@@ -18,9 +18,9 @@ type header struct {
 }
 
 type report struct {
-	Header header      `json:"aHEADER" yaml:"aHEADER"`
-	Result interface{} `json:"bRESULT" yaml:"bRESULT"`
-	Errors []error     `json:"cERRORS" yaml:"cERRORS"`
+	Header header      `json:"aHEADER" yaml:"ABOUT"`
+	Result interface{} `json:"bRESULT" yaml:"DATA"`
+	Errors []error     `json:"cERRORS" yaml:"ERRORS"`
 }
 
 func Report(r interface{}, e interface{}, jsonpath string, yaml bool) string {

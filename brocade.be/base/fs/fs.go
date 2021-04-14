@@ -776,3 +776,32 @@ func FilesDirs(dir string) (files []os.FileInfo, dirs []os.FileInfo, err error) 
 	}
 	return
 }
+
+// Refresh executable
+func RefreshEXE(oldexe string, newexe string) error {
+	old, err := os.Stat(oldexe)
+	if err != nil {
+		return err
+	}
+	new, err := os.Stat(newexe)
+	if err != nil {
+		return err
+	}
+	if os.SameFile(old, new) {
+		return nil
+	}
+	shadow := oldexe + ".bak"
+	os.Remove(shadow)
+	err = os.Rename(oldexe, shadow)
+	if err != nil {
+		return err
+	}
+	err = CopyFile(newexe, oldexe, "", true)
+	if err != nil {
+		return err
+	}
+	err = CopyMeta(shadow, oldexe, false)
+
+	return err
+
+}
