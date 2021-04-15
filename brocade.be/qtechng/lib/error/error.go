@@ -31,43 +31,43 @@ func (pqerr *QError) String() (result string) {
 	return
 }
 
-func (pqerr *QError) MarshalJSON() ([]byte, error) {
+func (qerr QError) MarshalJSON() ([]byte, error) {
 	m := make(map[string]string)
-	if len(pqerr.Ref) == 0 {
+	if len(qerr.Ref) == 0 {
 		m["ref"] = "unknown"
 	} else {
-		m["ref"] = strings.Join(pqerr.Ref, " > ")
+		m["ref"] = strings.Join(qerr.Ref, " > ")
 	}
-	if pqerr.Version != "" {
-		m["version"] = pqerr.Version
+	if qerr.Version != "" {
+		m["version"] = qerr.Version
 	}
-	if pqerr.Project != "" {
-		m["project"] = pqerr.Project
+	if qerr.Project != "" {
+		m["project"] = qerr.Project
 	}
-	if pqerr.File != "" {
-		m["file"] = pqerr.File
-	}
-
-	if pqerr.Url == "" && pqerr.File != "" {
-		pqerr.Url = qutil.FileURL(pqerr.File, pqerr.Lineno)
+	if qerr.File != "" {
+		m["file"] = qerr.File
 	}
 
-	if pqerr.Url != "" {
-		m["fileurl"] = pqerr.Url
+	if qerr.Url == "" && qerr.File != "" {
+		qerr.Url = qutil.FileURL(qerr.File, qerr.Lineno)
 	}
-	if pqerr.Lineno > 0 {
-		m["lineno"] = strconv.Itoa(pqerr.Lineno)
+
+	if qerr.Url != "" {
+		m["fileurl"] = qerr.Url
+	}
+	if qerr.Lineno > 0 {
+		m["lineno"] = strconv.Itoa(qerr.Lineno)
 		lineno := m["lineno"]
 		if m["fileurl"] != "" && !strings.HasSuffix(m["fileurl"], "#"+lineno) {
 			m["fileurl"] = m["fileurl"] + "#" + lineno
 		}
 
 	}
-	if pqerr.Object != "" {
-		m["object"] = pqerr.Object
+	if qerr.Object != "" {
+		m["object"] = qerr.Object
 	}
-	if len(pqerr.Msg) != 0 {
-		m["message"] = strings.Join(pqerr.Msg, "\n")
+	if len(qerr.Msg) != 0 {
+		m["message"] = strings.Join(qerr.Msg, "\n")
 	}
 
 	return json.MarshalIndent(m, "", "    ")
@@ -146,6 +146,7 @@ func FlattenErrors(err interface{}) []error {
 	if err == nil {
 		return nil
 	}
+
 	errs := make([]error, 0)
 	switch v := err.(type) {
 	case []error:
@@ -170,6 +171,13 @@ func FlattenErrors(err interface{}) []error {
 			return nil
 		}
 		errs = append(errs, v)
+	case map[string]interface{}:
+		if len(v) == 0 {
+			return nil
+		}
+		for _, e := range v {
+			errs = append(errs, e.(error))
+		}
 	case []interface{}:
 		if len(v) == 0 {
 			return nil
@@ -187,6 +195,10 @@ func FlattenErrors(err interface{}) []error {
 			continue
 		}
 		switch v := e.(type) {
+		case QError:
+			errs2 = append(errs2, v)
+		case *QError:
+			errs2 = append(errs2, *v)
 		case ErrorSlice:
 			if len(v) == 0 {
 				continue
@@ -199,11 +211,14 @@ func FlattenErrors(err interface{}) []error {
 			}
 			es := []error(*v)
 			errs2 = append(errs2, FlattenErrors(es)...)
-		case error, interface{}:
+		case error:
 			if v == nil {
 				continue
 			}
-			errs2 = append(errs2, v)
+			es := QError{
+				Msg: []string{v.Error()},
+			}
+			errs2 = append(errs2, es)
 		default:
 			errs2 = append(errs2, v)
 		}

@@ -120,14 +120,13 @@ func preCi(cmd *cobra.Command, args []string) {
 
 	var errlist []error
 	Fpayload, errlist = getPayload(args, FUID, Fcwd, Fversion, Frecurse, Fqpattern)
-
 	if len(errlist) == 0 {
 		errlist = nil
 	} else {
 		errlist = qerror.FlattenErrors(qerror.ErrorSlice(errlist))
 	}
 
-	if errlist != nil {
+	if errlist != nil || Fpayload == nil {
 		Fmsg = qreport.Report(nil, qerror.ErrorSlice(errlist), Fjq, Fyaml)
 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 		return
@@ -149,10 +148,13 @@ func preCi(cmd *cobra.Command, args []string) {
 }
 
 func getPayload(args []string, uid string, cwd string, version string, recurse bool, patterns []string) (payload *qclient.Payload, errlist []error) {
-	plocfils, elist := qclient.Find(cwd, args, version, recurse, patterns, false)
+	plocfils, elist := qclient.Find(cwd, args, version, recurse, patterns, true)
 	errlist = make([]error, 0)
 	if elist != nil {
 		errlist = append(errlist, elist)
+	}
+	if len(plocfils) == 0 {
+		return nil, errlist
 	}
 
 	transports := make([]qclient.Transport, 0)

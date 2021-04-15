@@ -119,11 +119,12 @@ func ReceiveCargo(wire *bytes.Buffer) (pcargo *Cargo) {
 	gob.Register(qerror.ErrorSlice{})
 	gob.Register(qerror.QError{})
 	dec := gob.NewDecoder(wire)
+	pcargo = new(Cargo)
 	for {
 		if err := dec.Decode(pcargo); err == io.EOF {
 			break
 		} else if err != nil {
-			log.Fatal("readdDataBySSH decoding/2: ", err)
+			log.Fatal("readDataBySSH decoding/2: ", err)
 		}
 	}
 	return pcargo

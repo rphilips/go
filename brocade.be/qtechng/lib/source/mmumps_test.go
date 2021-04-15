@@ -67,6 +67,11 @@ func TestMtransform(t *testing.T) {
 			";hello world",
 			" s x=1 q  ;hello world",
 		},
+		{
+			" s x=1    s y=1",
+			";hello world",
+			" s x=1 s y=1 ;hello world",
+		},
 	}
 
 	for _, test := range tests {

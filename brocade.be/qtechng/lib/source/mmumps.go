@@ -128,7 +128,7 @@ func mdetag(line []byte) ([]byte, []byte, string) {
 	rest := bytes.TrimLeft(line, "%1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	k = len(line) - len(rest)
 	if k == 0 {
-		return []byte{}, line, fun
+		return []byte{}, bytes.TrimSpace(line), fun
 	}
 	if len(line) == k {
 		return line, []byte{}, fun
@@ -252,6 +252,7 @@ func mbeautify(line string) (string, bool) {
 	winarg := false
 	waitcmd := false
 	witharg := false
+	//fmt.Println("[" + line + "]")
 	for _, ru := range line {
 		if ru == '"' {
 			instring = !instring
