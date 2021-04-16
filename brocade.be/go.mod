@@ -12,6 +12,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spyzhov/ajson v0.4.2
 	github.com/xanzy/ssh-agent v0.3.0
+	github.com/zserge/lorca v0.1.9
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	gopkg.in/yaml.v2 v2.2.8
 )

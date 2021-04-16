@@ -12,6 +12,7 @@ func TestMtransform(t *testing.T) {
 			"",
 			"",
 		},
+
 		{
 			"",
 			"; hello",
@@ -71,6 +72,21 @@ func TestMtransform(t *testing.T) {
 			" s x=1    s y=1",
 			";hello world",
 			" s x=1 s y=1 ;hello world",
+		},
+		{
+			". ",
+			";hello world",
+			" . ;hello world",
+		},
+		{
+			` s ihex=+$p((PDi/16),".")`,
+			"",
+			` s ihex=+$p((PDi/16),".")`,
+		},
+		{
+			` s ihex=+$p((PDi/16),".")`,
+			";hello world",
+			` s ihex=+$p((PDi/16),".") ;hello world`,
 		},
 	}
 
@@ -259,6 +275,11 @@ func TestMdecomment(t *testing.T) {
 			"",
 		},
 		{
+			` s ihex=+$p((PDi/16),".")`,
+			` s ihex=+$p((PDi/16),".")`,
+			"",
+		},
+		{
 			";",
 			"",
 			";",
@@ -325,7 +346,7 @@ func TestMdecomment(t *testing.T) {
 		sx := string(x)
 		sy := string(y)
 
-		if test[1] != sx && test[2] != sy {
+		if test[1] != sx || test[2] != sy {
 			t.Errorf("\nTested: [%s]\n    line   : [%s]\n    comment: [%s]\n", test[0], sx, sy)
 		}
 

@@ -32,6 +32,7 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) {
 		bufnoc.WriteString(" ; ctime=" + meta.Ct + "\n")
 		bufnoc.WriteString(" ; muser=" + meta.Mu + "\n")
 		bufnoc.WriteString(" ; mtime=" + meta.Mt + "\n")
+		bufnoc.WriteString(" ;\n")
 	}
 
 	content = qutil.About(content)
@@ -45,7 +46,7 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) {
 		if line[0] == byte('/') {
 			if preamble {
 				bufnoc.WriteString(" ; ")
-				bufnoc.Write(line)
+				bufnoc.Write(bytes.ReplaceAll(line, []byte{'\t'}, []byte{' '}))
 				bufnoc.WriteRune('\n')
 				continue
 			}
@@ -214,6 +215,10 @@ func mtransform(line []byte, comment []byte) []byte {
 		if len(tag) != 0 {
 			buffer.Write(tag)
 		}
+		if len(dots) != 0 {
+			buffer.WriteRune(' ')
+			buffer.Write(dots)
+		}
 		buffer.WriteString(" ;")
 		if len(comment) == 0 {
 			buffer.WriteString(fun)
@@ -300,55 +305,59 @@ func mdecomment(line []byte) ([]byte, []byte) {
 	if k == -1 {
 		return line, []byte{}
 	}
-	if k == 0 {
-		if line[k] == byte(';') {
-			return []byte{}, line
+	bl := new(bytes.Buffer)
+	closer := ' '
+	found := false
+	offset := 0
+	stop := false
+	for _, r := range string(line) {
+		if stop {
+			break
 		}
-		if len(line) == k+1 {
-			return line, []byte{}
+		if found {
+			if r == '/' {
+				offset = 1
+				break
+			}
+			found = false
 		}
-		if line[k+1] == byte('/') {
-			return []byte{}, line
+		switch r {
+		case closer:
+			bl.WriteRune(r)
+			closer = ' '
+			continue
+		case '"':
+			bl.WriteRune(r)
+			closer = '"'
+			continue
+		case '«':
+			bl.WriteRune(r)
+			closer = '»'
+			continue
+		case '⟦':
+			bl.WriteRune(r)
+			closer = '⟧'
+			continue
+		default:
+			if closer != ' ' {
+				bl.WriteRune(r)
+				continue
+			}
 		}
-		x, y := mdecomment(line[1:])
-		return line[:1+len(x)], y
+		switch r {
+		case ';':
+			stop = true
+		case '/':
+			bl.WriteRune(r)
+			found = true
+		default:
+			bl.WriteRune(r)
+		}
 	}
 
-	pre := line[:k]
-	l := bytes.IndexAny(pre, `"«⟦`)
-	if l == -1 {
-		if line[k] == byte(';') {
-			return line[:k], line[k:]
-		}
-		if len(line) == k+1 {
-			return line, []byte{}
-		}
-		if line[k+1] == byte('/') {
-			return line[:k], line[k:]
-		}
-		x, y := mdecomment(line[k+1:])
-		return line[:1+len(x)], y
+	n := bl.Len()
+	if offset == 0 {
+		return line[:n], line[n:]
 	}
-
-	t := '"'
-
-	switch {
-	case line[l] == byte('"'):
-		t = '"'
-	case bytes.HasPrefix(line[l:], []byte("«")):
-		t = '»'
-	default:
-		t = '⟧'
-	}
-
-	f := bytes.IndexRune(line[l+1:], t)
-
-	if f == -1 {
-		return line, []byte{}
-	}
-	f += l + 1
-
-	x, y := mdecomment(line[f+1:])
-	return append(line[:f+1], x...), y
-
+	return line[:n-1], line[n-1:]
 }
