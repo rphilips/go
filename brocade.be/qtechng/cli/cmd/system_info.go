@@ -10,6 +10,7 @@ import (
 
 	qregistry "brocade.be/base/registry"
 	qreport "brocade.be/qtechng/lib/report"
+	qserver "brocade.be/qtechng/lib/server"
 )
 
 var systemInfoCmd = &cobra.Command{
@@ -35,6 +36,9 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 	host, e := os.Hostname()
 	if e == nil {
 		msg["!!uname"] = host
+	}
+	if strings.Contains(QtechType, "B") {
+		msg["releases"] = qserver.Releases(5)
 	}
 	msg["UID"] = FUID
 	msg["GOMAXPROCS"] = strconv.Itoa(runtime.GOMAXPROCS(-1))

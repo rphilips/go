@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var systemSetupCmd = &cobra.Command{
@@ -130,6 +132,17 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	kdm, err := exec.LookPath("kdiff3")
 	if err == nil && kdm != "" {
 		qregistry.InitRegistry("qtechng-diff-exe", "[\"kdiff3\", \"{source}\", \"{target}\"]")
+	}
+
+	// releases
+	sout, _, _ := qutil.QtechNG([]string{"system", "info", "--remote"}, "$..releases", false)
+	if sout != "" {
+		x := ""
+		err := json.Unmarshal([]byte(sout), &x)
+		if err == nil && x != "" {
+			qregistry.SetRegistry("qtechng-releases", x)
+		}
+
 	}
 
 	return nil

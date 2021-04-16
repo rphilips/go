@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/spf13/afero"
 
+	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qvfs "brocade.be/qtechng/lib/vfs"
@@ -212,6 +214,26 @@ func Canon(r string) string {
 	}
 	return rr
 
+}
+
+func Releases(n int) string {
+	place := qregistry.Registry["qtechng-repository-dir"]
+	_, dirs, _ := qfs.FilesDirs(place)
+	versions := make([]string, 0)
+	for _, vi := range dirs {
+		v := path.Base(vi.Name())
+		if v == "0.00" {
+			continue
+		}
+		versions = append(versions, v)
+	}
+	if len(versions) > (n - 1) {
+		versions = versions[:n-1]
+	}
+
+	sort.Slice(versions, func(i, j int) bool { return Lowest(versions[i], versions[j]) == versions[i] })
+	versions = append(versions, "0.00")
+	return strings.Join(versions, " ")
 }
 
 func fs(r string, readonly bool) func(s ...string) qvfs.QFs {

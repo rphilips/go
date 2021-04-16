@@ -356,7 +356,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(buildTime string, goVersion string, buildHost string, payload *qclient.Payload) {
+func Execute(buildTime string, goVersion string, buildHost string, payload *qclient.Payload, args []string) {
 	BuildTime = buildTime
 	BuildHost = buildHost
 	GoVersion = goVersion
@@ -367,7 +367,7 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 	Fmsg = ""
 	err := rootCmd.Execute()
 	stderr := ""
-	if err != nil && len(os.Args) != 1 {
+	if err != nil && len(args) != 1 {
 		stderr = qreport.Report(nil, err, Fjq, Fyaml)
 		if stderr != "" {
 			l := log.New(os.Stderr, "", 0)
@@ -375,7 +375,7 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 		}
 		os.Exit(1)
 	}
-	if Fmsg != "" && !Fsilent {
+	if Fmsg != "" {
 		frune := '{'
 		for _, c := range Fmsg {
 			frune = c
@@ -384,29 +384,31 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 		if Frstripln {
 			Fmsg = strings.TrimRight(Fmsg, "\n\r")
 		}
-		if Fstdout == "" || Ftransported {
-			if frune == '[' || frune == '{' {
-				fmt.Println(Fmsg)
-			} else {
-				fmt.Print(Fmsg)
+		if !Fsilent {
+			if Fstdout == "" || Ftransported {
+				if frune == '[' || frune == '{' {
+					fmt.Println(Fmsg)
+				} else {
+					fmt.Print(Fmsg)
+				}
+				return
 			}
-			return
-		}
-		f, err := os.Create(Fstdout)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
+			f, err := os.Create(Fstdout)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer f.Close()
 
-		w := bufio.NewWriter(f)
-		if frune == '[' || frune == '{' {
-			fmt.Fprintln(w, Fmsg)
-		} else {
-			fmt.Fprint(w, Fmsg)
-		}
-		err = w.Flush()
-		if err != nil {
-			log.Fatal(err)
+			w := bufio.NewWriter(f)
+			if frune == '[' || frune == '{' {
+				fmt.Fprintln(w, Fmsg)
+			} else {
+				fmt.Fprint(w, Fmsg)
+			}
+			err = w.Flush()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 }

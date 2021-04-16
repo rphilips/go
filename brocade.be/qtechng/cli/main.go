@@ -129,5 +129,5 @@ func main() {
 			os.Args = append(os.Args, payload.Args...)
 		}
 	}
-	cmd.Execute(buildTime, goVersion, buildHost, payload)
+	cmd.Execute(buildTime, goVersion, buildHost, payload, os.Args)
 }

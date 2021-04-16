@@ -159,9 +159,9 @@ func versionPopulate(cmd *cobra.Command, args []string) error {
 		d.Dir = dir
 		d.Add(locfils...)
 		args := []string{os.Args[0], "file", "ci", "--cwd=" + dir, "--version=0.00", "--quiet"}
-		os.Args = args
+		//os.Args = args
 		payload := new(qclient.Payload)
-		Execute("", "", "", payload)
+		Execute("", "", "", payload, args)
 	}
 	return nil
 }
