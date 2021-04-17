@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{ .Title }}</title>
+</head>
+<style type="text/css">
+{{ .CSS }}
+</style>
+
+<script>
+{{ .JS }}
+</script>
+
+<body>
+    <form>
+        <div class="qtechng-form-base">
+            <div class="qtechng-form-base-heading">Checkout files from the QTechNG repository</div>
+            <form>
+                <label for="qpattern"><span>Qpatterns <span class="required">*</span></span><input autofocus
+                        placeholder="e.g. /core/python3/*.py" type="text" class="input-field" name="qpath" id="qpattern"
+                        value="" /></label>
+                <label for="version"><span>Version <span class="required">*</span></span><input type="text"
+                        class="input-field" name="version" id="version" value="0.00" /></label>
+                <label><span> </span><input type="submit" value="Submit" onclick="golangfunc()" /></label>
+            </form>
+            <pre id="response"></pre>
+</body>
+
+</html>
