@@ -1,3 +1,15 @@
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: #5897b7; }
+.header {
+    background-color: #046;
+    padding: 20px 30px;
+    color: #fff;
+    font-size: 16px;
+}
+
 .qtechng-form-base{
 	max-width: 500px;
 	padding: 20px 12px 10px 20px;
@@ -15,13 +27,23 @@
 	display: block;
 	margin: 0px 0px 15px 0px;
 }
-.qtechng-form-base label > span{
+.qtechng-form-base label.input-label-primary > span{
 	width: 100px;
 	font-weight: bold;
 	float: left;
 	padding-top: 8px;
 	padding-right: 5px;
 }
+
+.qtechng-form-base label.input-label-secondary > span{
+	width: 100px;
+	font-weight: light;
+	float: left;
+	padding-top: 8px;
+	padding-right: 5px;
+    font-size: smaller;
+}
+
 .qtechng-form-base span.required{
 	color:red;
 }
@@ -29,10 +51,23 @@
 	width: 40px;
 	text-align: center;
 }
-.qtechng-form-base input.input-field, .qtechng-form-base .select-field{
+.qtechng-form-base input.input-field, .qtechng-form-base input.input-field-jsonpath, .qtechng-form-base .select-field{
 	width: 48%;	
 }
+
+.qtechng-form-base input.input-field-version {
+	width: 10%;	
+}
+
+.qtechng-menuitem-link {
+    cursor: pointer;
+    color: #FF8500;
+    font-weight: bold;
+    padding-left: 15px;
+}
 .qtechng-form-base input.input-field, 
+.qtechng-form-base input.input-field-version, 
+.qtechng-form-base input.input-field-jsonpath, 
 .qtechng-form-base .tel-number-field, 
 .qtechng-form-base .textarea-field, 
  .qtechng-form-base .select-field{
@@ -50,6 +85,8 @@
 	outline: none;
 }
 .qtechng-form-base .input-field:focus, 
+.qtechng-form-base .input-field-version:focus, 
+.qtechng-form-base .input-field-jsonpath:focus, 
 .qtechng-form-base .tel-number-field:focus, 
 .qtechng-form-base .textarea-field:focus,  
 .qtechng-form-base .select-field:focus{
@@ -61,6 +98,7 @@
 }
 .qtechng-form-base input[type=submit],
 .qtechng-form-base input[type=button]{
+    cursor: pointer;
 	border: none;
 	padding: 8px 15px 8px 15px;
 	background: #FF8500;
