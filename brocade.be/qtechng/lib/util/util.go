@@ -22,6 +22,7 @@ import (
 	qfnmatch "brocade.be/base/fnmatch"
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
+	guuid "github.com/google/uuid"
 )
 
 // EMatch extende match
@@ -986,4 +987,10 @@ func VCURL(qpath string) string {
 		u = u[1:]
 	}
 	return strings.ReplaceAll(vcurl, "{qpath}", u)
+}
+
+// Generates a UUID v4
+func GenUUID() string {
+	id := guuid.New()
+	return id.String()
 }

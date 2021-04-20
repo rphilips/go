@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>{{ .Head }}</head>
+
+<body>
+    <form class="qtechng-form-base">
+        <div class="qtechng-form-base-heading">Search files in the QTechNG repository</div>
+        <label class="input-label-primary" for="qpattern"><span>Pattern on QPath <span
+                    class="required">*</span></span><input autofocus placeholder="e.g. /collection/*.m" type="text"
+                class="input-field" name="qpattern" id="qpattern" value='{{index .Vars "qpattern"}}' /></label>
+        <label class="input-label-primary" for="version"><span>Version <span class="required">*</span></span><input
+                type="text" class="input-field-version" name="version" id="version"
+                value='{{index .Vars "version"}}' /></label>
+        <label class="input-label-primary" for="needle"><span>Contains <span class="required">*</span></span><input
+                placeholder="e.g. myStringToSearchFor" type="text" class="input-field" name="needle" id="needle"
+                value='{{index .Vars "needle"}}' /></label>
+        <label class="input-label-primary" for="perline0"><span>Per line matching ?</span>
+            <input type='checkbox' name='perline0' id='perline0' {{index .Vars "perlinechecked" }}
+                value='{{index .Vars "perline"}}' onclick='return handleCheck("perline")' />
+            <input type='hidden' name='perline' id='perline' value='{{index .Vars "perline"}}' data-on='1'
+                data-off='0' />
+        </label>
+        <label class="input-label-primary" for="tolower0"><span>Lowercase content ?</span>
+            <input type='checkbox' name='tolower0' id='tolower0' {{index .Vars "tolowerchecked" }}
+                value='{{index .Vars "tolower"}}' onclick='return handleCheck("tolower")' />
+            <input type='hidden' name='tolower' id='tolower' value='{{index .Vars "tolower"}}' data-on='1'
+                data-off='0' />
+        </label>
+        <label class="input-label-primary" for="regexp0"><span style="vertical-align: middle;">Regexp search ?</span>
+            <input type='checkbox' name='regexp0' id='regexp0' {{index .Vars "regexpchecked" }}
+                value='{{index .Vars "regexp"}}' onclick='return handleCheck("regexp")' />
+
+            <input type='hidden' name='regexp' id='regexp' value='{{index .Vars "regexp"}}' data-on='1' data-off='0' />
+        </label>
+        <label class="input-label-primary" for="checkout0"><span>Checkout ?</span>
+            <input type='checkbox' name='checkout0' id='checkout0' {{index .Vars "checkoutchecked" }}
+                value='{{index .Vars "checkout"}}' onclick='return handleCheck("checkout")' />
+            <input type='hidden' name='checkout' id='checkout' value='{{index .Vars "checkout"}}' data-on='1'
+                data-off='0' />
+        </label>
+        <label class="input-label-secondary" for="editlist"><span>Edit list </span><input type="text" name="editlist"
+                id="editlist" value='{{index .Vars "editlist"}}' /></label>
+        <label class="input-label-secondary" for="jsonpath"><span>JSONPath </span><input type="text" name="jsonpath"
+                id="jsonpath" value='{{index .Vars "jsonpath"}}' /></label>
+        <label class="input-label-secondary" for="yaml"><span>YAML ?</span>
+            <input type='checkbox' name='yaml0' id='yaml0' {{index .Vars "yamlchecked" }} value='{{index .Vars "yaml"}}'
+                onclick='return handleCheck("yaml")' />
+            <input type='hidden' name='yaml' id='yaml' value='{{index .Vars "yaml"}}' data-on='1' data-off='0' />
+        </label>
+        <label class="input-label-primary">
+            <span>&#160;</span>
+            <input type="submit" value="Submit" onclick="golangfunc('')" />
+            &#160;
+            <input type="submit" value="Quit" onclick="golangfunc('stop')" />
+        </label>
+    </form>
+    <pre id="yamldisplay"></pre>
+    <pre id="jsondisplay"></pre>
+</body>
+
+</html>

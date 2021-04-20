@@ -10,6 +10,9 @@ var Fauto bool
 // Ftree ? writes according to the hierarchie
 var Ftree bool
 
+// Flist identifier of list of the results, if in auto mode
+var Flist string
+
 var stdoutHidden bool
 var stderrHidden bool
 
@@ -23,6 +26,7 @@ var sourceCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(sourceCmd)
+	sourceCmd.PersistentFlags().StringVar(&Flist, "list", "", "List for convenient editing")
 	sourceCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
 	sourceCmd.PersistentFlags().BoolVar(&Ftree, "tree", false, "Files with hierarchy intact")
 	sourceCmd.PersistentFlags().BoolVar(&Fauto, "auto", false, "Files according to the registry")

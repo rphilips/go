@@ -24,11 +24,12 @@
 	padding-bottom: 3px;
 }
 .qtechng-form-base label{
-	display: block;
+    display: flex;
+    align-items: center;
 	margin: 0px 0px 15px 0px;
 }
 .qtechng-form-base label.input-label-primary > span{
-	width: 100px;
+	width: 150px;
 	font-weight: bold;
 	float: left;
 	padding-top: 8px;
@@ -36,7 +37,7 @@
 }
 
 .qtechng-form-base label.input-label-secondary > span{
-	width: 100px;
+	width: 150px;
 	font-weight: light;
 	float: left;
 	padding-top: 8px;
@@ -114,4 +115,11 @@
 .qtechng-form-base input[type=button]:hover{
 	background: #EA7B00;
 	color: #fff;
+}
+
+input[type=checkbox]{
+    position: relative;
+    vertical-align: middle;
+    bottom: 1px;
+
 }

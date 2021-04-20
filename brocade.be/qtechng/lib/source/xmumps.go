@@ -57,10 +57,10 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	xf.SetEditFile(xfile.String())
 	xf.SetRelease(xfile.Release().String())
 	err = qobject.Loads(xf, content)
-	if err != nil {
-		//fmt.Println("err:", err.Error())
-		return
-	}
+	// if err != nil {
+	// 	fmt.Println("RPh loads err:", err.Error())
+	// 	return
+	// }
 	objectlist := xf.Objects()
 	textmap := make(map[string]string)
 
@@ -77,9 +77,9 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
 	_, err = ResolveText(env, content, "trilm", notreplace, objectmap, textmap, bufmac, "")
-	if err != nil {
-		//fmt.Println("err:", err.Error())
-	}
+	// if err != nil {
+	// 	fmt.Println("RPh resolves err:", err.Error())
+	// }
 	content = bufmac.Bytes()
 
 	lines = bytes.SplitN(content, []byte("\n"), -1)

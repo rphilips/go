@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/benhoyt/goawk v1.6.1
+	github.com/google/uuid v1.2.0
 	github.com/natefinch/atomic v0.0.0-20200526193002-18c0533a5b09
 	github.com/rwtodd/Go.Sed v0.0.0-20190103233418-906bc69c9394
 	github.com/sergi/go-diff v1.1.0

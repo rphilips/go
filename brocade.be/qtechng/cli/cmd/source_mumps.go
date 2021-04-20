@@ -6,6 +6,7 @@ import (
 
 	qclient "brocade.be/qtechng/lib/client"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +44,7 @@ func sourceMumps(cmd *cobra.Command, args []string) error {
 
 func preSourceMumps(cmd *cobra.Command, args []string) {
 	if Fbatchid == "" {
-		Fbatchid = "batchid"
+		Fbatchid = qutil.GenUUID()
 	}
 	if !Ftransported {
 		var err error

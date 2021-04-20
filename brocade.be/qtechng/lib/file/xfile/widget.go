@@ -153,6 +153,7 @@ func (widget *Widget) Resolve() ([]string, error) {
 	if strings.HasPrefix(widget.ID, "format $") {
 		return []string{"-:" + body}, nil
 	}
+
 	if body == "" {
 		return []string{"-:"}, nil
 	}
@@ -227,8 +228,6 @@ func (widget *Widget) Resolve() ([]string, error) {
 			}
 			found = true
 			buffer[i].text = strconv.Itoa(j+1) + x4def.text
-			buffer[j].mode = "-"
-			buffer[j].text = ""
 			break
 		}
 		if !found {
@@ -240,9 +239,18 @@ func (widget *Widget) Resolve() ([]string, error) {
 				Object:  widget.ID,
 				Msg:     []string{"label `" + label + "` not found"},
 			}
+
 			return nil, err
 		}
 	}
+	for i := range buffer {
+		if buffer[i].mode != "L" {
+			continue
+		}
+		buffer[i].mode = "-"
+		buffer[i].text = ""
+	}
+
 	return stringX4(buffer), nil
 }
 
@@ -886,17 +894,18 @@ func (widget *Widget) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	mumps = append(mumps, m)
 
+	parts := strings.SplitN(widget.Type(), " ", 2)
+
 	m = qmumps.M{
 		Subs:   []string{"ZA", "type"},
-		Value:  widget.Type(),
+		Value:  parts[0],
 		Action: "set",
 	}
-
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "id"},
-		Value:  widget.ID,
+		Value:  parts[1],
 		Action: "set",
 	}
 	mumps = append(mumps, m)
