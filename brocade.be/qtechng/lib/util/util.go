@@ -958,6 +958,10 @@ func Ignore(s []byte) []byte {
 
 //FileURL gives the file as URL
 func FileURL(fname string, lineno int) string {
+	if fname == "" {
+		return ""
+	}
+
 	x := ""
 	if lineno > 0 {
 		x = strconv.Itoa(lineno)

@@ -375,7 +375,7 @@ func storeTransport() ([]storer, []error) {
 		islice = append(islice, i)
 		dirs[dir] = islice
 	}
-	if Fclear {
+	if Fclear && !Ftransported {
 		for _, dir := range idirs {
 			qfs.Rmpath((dir))
 		}

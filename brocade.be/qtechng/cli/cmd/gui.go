@@ -40,6 +40,7 @@ type GuiFiller struct {
 	Menu  bool
 	Title string
 	Vars  map[string]string
+	VarsH map[string]bool
 }
 
 var guiFiller GuiFiller
@@ -81,7 +82,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 				Fmenu = "menu"
 			}
 			if prevMenu != Fmenu {
-				guiFiller.Vars = loadVars(Fmenu)
+				loadVars(Fmenu, &guiFiller)
 				t, err := template.ParseFS(guifs, "templates/"+Fmenu+".html")
 				if err != nil {
 					Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
@@ -111,7 +112,8 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							menulistener <- "stop"
 							return
 						}
-						handleSearch(ui)
+
+						handleSearch(ui, &guiFiller)
 						menulistener <- "search"
 					})
 
@@ -133,6 +135,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 					Fmenu = "menu"
 				}
 			} else {
+
 				Fmenu = menuitem
 			}
 		}
@@ -141,8 +144,9 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadVars(menu string) map[string]string {
+func loadVars(menu string, guiFiller *GuiFiller) {
 	vars := make(map[string]string)
+	varsH := make(map[string]bool)
 	fname := path.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
 	data, err := qfs.Fetch(fname)
 	if err == nil {
@@ -152,14 +156,18 @@ func loadVars(menu string) map[string]string {
 		_, ok := vars[k]
 		if !ok {
 			vars[k] = "1"
-			vars[k+"checked"] = "checked"
+		}
+		if vars[k] == "1" {
+			varsH[k] = true
 		}
 	}
-	for _, k := range []string{"tolower", "regexp", "checkout"} {
+	for _, k := range []string{"tolower", "regexp", "checkout", "clear"} {
 		_, ok := vars[k]
 		if !ok {
 			vars[k] = "0"
-			vars[k+"checked"] = ""
+		}
+		if vars[k] == "1" {
+			varsH[k] = true
 		}
 	}
 
@@ -177,69 +185,28 @@ func loadVars(menu string) map[string]string {
 	if !ok {
 		vars["jsonpath"] = "$..qpath"
 	}
+	guiFiller.Vars = vars
+	guiFiller.VarsH = varsH
 
-	return vars
 }
 
-func storeVars(menu string, values map[string]string) {
+func storeVars(menu string, guiFiller GuiFiller) {
 	fname := path.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
-	b, err := json.Marshal(values)
+	b, err := json.Marshal(guiFiller.Vars)
 	if err != nil {
 		return
 	}
 	qfs.Store(fname, b, "")
 }
 
-func handleExample(ui lorca.UI) {
-	qpattern := ui.Eval(`document.getElementById('qpattern').value`)
-	version := ui.Eval(`document.getElementById('version').value`)
-	yaml := ui.Eval(`document.getElementById('yaml').value`)
-	jsonpath := ui.Eval(`document.getElementById('jsonpath').value`)
-	if qpattern.String() != "" && version.String() != "" {
-		qp := qpattern.String()
-		vs := version.String()
-		yp := yaml.String()
-		jp := jsonpath.String()
-		fmt.Println("qp:", qp)
-		fmt.Println("vs:", vs)
-		fmt.Println("yp:", yp)
-		fmt.Println("jp:", jp)
-		argums := []string{
-			"source",
-			"list",
-			"--version=" + vs,
-			"--qpattern=" + qp,
-		}
-		sout, serr, err := qutil.QtechNG(argums, jp, yp == "1")
-		fmt.Println(sout)
-		fmt.Println(serr)
-		if err != nil {
-			serr += "\n\nError:" + err.Error()
-		}
-		bx, _ := json.Marshal(sout)
-		sx := string(bx)
-		st := ""
-		if len(sx) > 2 {
-			st = sx[:2]
-		}
-		k := strings.IndexAny(st, "[{")
-		if k == 1 {
-			ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
-			ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
-		} else {
-			ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
-			ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
-		}
-	}
-}
-
-func handleSearch(ui lorca.UI) {
+func handleSearch(ui lorca.UI, guiFiller *GuiFiller) {
 	f := make(map[string]string)
-	for _, key := range []string{"qpattern", "version", "needle", "perline", "tolower", "regexp", "checkout", "yaml", "jsonpath", "editlist"} {
+	for _, key := range []string{"qpattern", "version", "needle", "perline", "tolower", "regexp", "checkout", "yaml", "jsonpath", "editlist", "clear"} {
 		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
 		f[key] = value
 	}
-	storeVars("search", f)
+	guiFiller.Vars = f
+	storeVars("search", *guiFiller)
 
 	if f["qpattern"] == "" || f["version"] == "" {
 		return
@@ -249,6 +216,9 @@ func handleSearch(ui lorca.UI) {
 	}
 	if f["checkout"] == "1" {
 		argums = append(argums, "co", "--auto")
+		if f["clear"] == "1" {
+			argums = append(argums, "--clear")
+		}
 	} else {
 		argums = append(argums, "list")
 	}
@@ -265,7 +235,10 @@ func handleSearch(ui lorca.UI) {
 	if f["regexp"] == "1" {
 		argums = append(argums, "--regexp")
 	}
+	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
+	ui.Eval(`document.getElementById("busy").style="display:block;")`)
 	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1")
+	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
 	fmt.Println(sout)
 	fmt.Println(serr)
 	if err != nil {

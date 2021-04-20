@@ -47,7 +47,7 @@ func sourceCo(cmd *cobra.Command, args []string) error {
 	if len(errs) == 0 {
 
 		supportdir := qregistry.Registry["qtechng-support-dir"]
-		if Flist != "" && supportdir != "" {
+		if Flist != "" && supportdir != "" && !Ftransported {
 			lst := make([]string, len(result))
 			for i, st := range result {
 				lst[i] = st.QPath
