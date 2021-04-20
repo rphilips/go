@@ -78,7 +78,7 @@ WidgetMode <- ("screen" / "format" / "text") {
     return  string(c.text), nil
 }
 
-WidgetID <- id:([$0-9a-zA-Z][$._a-zA-Z0-9-]*) {
+WidgetID <- id:([@$0-9a-zA-Z][$._a-zA-Z0-9-]*) {
 	return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
 }
 

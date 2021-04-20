@@ -150,7 +150,7 @@ func (widget *Widget) Resolve() ([]string, error) {
 
 	body := widget.Body
 	buffer := make([]X4, 0)
-	if strings.HasPrefix(widget.ID, "format $") {
+	if strings.HasPrefix(widget.ID, "format $") || strings.HasPrefix(widget.ID, "format @") {
 		return []string{"-:" + body}, nil
 	}
 
