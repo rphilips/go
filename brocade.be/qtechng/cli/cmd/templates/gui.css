@@ -124,3 +124,24 @@ input[type=checkbox]{
     bottom: 1px;
 
 }
+input[type=radio]{
+    position: relative;
+    vertical-align: middle;
+    bottom: 1px;
+
+}
+.visible {
+    display:block;
+    border: 2px solid green;
+    padding: .5em;
+}
+
+.invisible {
+    display:none;
+}
+
+.toggle {
+    color: green;
+    cursor: pointer;
+    font-size:larger;
+}

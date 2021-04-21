@@ -27,3 +27,14 @@ function handleCheck(id) {
     h.value = v == v1 ? v0 : v1;
     return true
 }
+
+function toggle(id) {
+    var elm = document.getElementById(id);
+    if (elm.classList.contains("visible")) {
+        elm.classList.remove("visible");
+        elm.classList.add("invisible");
+    } else {
+        elm.classList.remove("invisible");
+        elm.classList.add("visible");
+    }
+}

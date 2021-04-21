@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>{{ .Head }}</head>
+<body>
+
+    <form class="qtechng-form-base">
+        <div class="qtechng-form-base-heading">Properties of local files in the QTechNG repository</div>
+        <label class="input-label-primary" for="fname"><span>Properties </span><pre id="jsondisplay"></pre></label>
+        <label class="input-label-primary" for="fname"><span>File <span
+            class="required">*</span></span><input autofocus type="text"
+        class="input-field" name="fname" id="fname" value='{{index .Vars "fname"}}' /></label>
+
+        <label class="input-label-primary" for="qpath"><span>QPath </span><input type="radio" name="clip" id="clip_qpath" value='qpath' checked /></label>
+        
+        <label class="input-label-primary" for="project"><span>Project </span><input type="radio" name="clip" id="clip_project" value='project' /></label>
+        <label class="input-label-primary" for="qdir"><span>QDir </span><input type="radio" name="clip" id="clip_qdir" value='qdir' /></label>
+        <label class="input-label-primary" for="abspath"><span>AbsPath </span><input type="radio" name="clip" id="clip_abspath" value='abspath' /></label>
+        <label class="input-label-primary" for="dirname"><span>DirName </span><input type="radio" name="clip" id="clip_dirname" value='dirname' /></label>
+        <label class="input-label-primary" for="basename"><span>BaseName </span><input type="radio" name="clip" id="clip_basename" value='basename' /></label>
+        <label class="input-label-primary" for="fileurl"><span>FileURL </span><input type="radio" name="clip" id="clip_fileurl" value='fileurl' /></label>
+        <label class="input-label-primary" for="vcurl"><span>VCURL </span><input type="radio" name="clip" id="clip_vcurl" value='vcurl' /></label>
+        <label class="input-label-primary">
+            <span>&#160;</span>
+            <input type="submit" value="Submit" onclick="golangfunc('')" />
+            &#160;
+            <input type="submit" value="Quit" onclick="golangfunc('stop')" />
+        </label>
+    </form>
+    
+</body>
+
+</html>

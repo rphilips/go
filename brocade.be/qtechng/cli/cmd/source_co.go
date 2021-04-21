@@ -2,13 +2,11 @@ package cmd
 
 import (
 	"log"
-	"path"
 	"strings"
 
-	qfs "brocade.be/base/fs"
-	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +34,7 @@ func init() {
 }
 
 func sourceCo(cmd *cobra.Command, args []string) error {
-	result, errlist := storeTransport()
+	qpaths, result, errlist := storeTransport()
 	errs := make([]error, 0)
 	for _, e := range errlist {
 		if e != nil {
@@ -45,23 +43,10 @@ func sourceCo(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(errs) == 0 {
-
-		supportdir := qregistry.Registry["qtechng-support-dir"]
-		if Flist != "" && supportdir != "" && !Ftransported {
-			lst := make([]string, len(result))
-			for i, st := range result {
-				lst[i] = st.QPath
-			}
-			if len(lst) != 0 {
-				listname := path.Join(supportdir, "data", Flist+".lst")
-				qfs.Mkdir(path.Dir(listname), "process")
-				qfs.Store(listname, strings.Join(lst, "\n"), "process")
-			}
-		}
-
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
-		return nil
+		qutil.EditList(Flist, Ftransported, qpaths)
+		errs = nil
 	}
+
 	Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
 	return nil
 }

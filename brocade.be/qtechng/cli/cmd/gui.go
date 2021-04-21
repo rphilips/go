@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log"
 	"net/url"
@@ -28,7 +27,7 @@ var guiCmd = &cobra.Command{
 	Use:     "gui",
 	Short:   "GUI functions",
 	Long:    `All kinds of GUI functions`,
-	Args:    cobra.NoArgs,
+	Args:    cobra.MinimumNArgs(0),
 	RunE:    guiMenu,
 	Example: "qtechng gui",
 }
@@ -66,7 +65,15 @@ func init() {
 
 func guiMenu(cmd *cobra.Command, args []string) error {
 	standalone := Fmenu != "menu" && Fmenu != ""
-	ui, err := lorca.New("", "", 520, 640)
+	width := 520
+	height := 780
+
+	switch Fmenu {
+	case "property":
+		width = 680
+	}
+
+	ui, err := lorca.New("", "", width, height)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -83,6 +90,23 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 			}
 			if prevMenu != Fmenu {
 				loadVars(Fmenu, &guiFiller)
+				// things todo before menu is loaded
+				switch Fmenu {
+				case "property":
+					if len(args) > 0 {
+						fname := qutil.AbsPath(args[0], Fcwd)
+						guiFiller.Vars["fname"] = fname
+						argums := []string{
+							"file",
+							"list",
+							fname,
+						}
+						out, _, _ := qutil.QtechNG(argums, "$..DATA", false)
+						guiFiller.Vars["properties"] = string(out)
+					}
+
+				}
+
 				t, err := template.ParseFS(guifs, "templates/"+Fmenu+".html")
 				if err != nil {
 					Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
@@ -96,6 +120,15 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 					return
 				}
 				ui.Load("data:text/html," + url.PathEscape(buf.String()))
+				switch Fmenu {
+				case "property":
+					sx := guiFiller.Vars["properties"]
+					if sx != "" {
+						bx, _ := json.Marshal(sx)
+						sx := string(bx)
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+					}
+				}
 
 				switch Fmenu {
 				case "menu":
@@ -112,9 +145,16 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							menulistener <- "stop"
 							return
 						}
-
 						handleSearch(ui, &guiFiller)
-						menulistener <- "search"
+						menulistener <- handleSearch(ui, &guiFiller)
+					})
+				case "property":
+					ui.Bind("golangfunc", func(indicator string) {
+						if indicator == "stop" {
+							menulistener <- "stop"
+							return
+						}
+						menulistener <- handleProperty(ui, &guiFiller)
 					})
 
 				}
@@ -199,7 +239,7 @@ func storeVars(menu string, guiFiller GuiFiller) {
 	qfs.Store(fname, b, "")
 }
 
-func handleSearch(ui lorca.UI, guiFiller *GuiFiller) {
+func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
 	f := make(map[string]string)
 	for _, key := range []string{"qpattern", "version", "needle", "perline", "tolower", "regexp", "checkout", "yaml", "jsonpath", "editlist", "clear"} {
 		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
@@ -209,7 +249,7 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) {
 	storeVars("search", *guiFiller)
 
 	if f["qpattern"] == "" || f["version"] == "" {
-		return
+		return "search"
 	}
 	argums := []string{
 		"source",
@@ -239,8 +279,6 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) {
 	ui.Eval(`document.getElementById("busy").style="display:block;")`)
 	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1")
 	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
-	fmt.Println(sout)
-	fmt.Println(serr)
 	if err != nil {
 		serr += "\n\nError:" + err.Error()
 	}
@@ -258,4 +296,27 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) {
 		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
 		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
 	}
+	return "search"
+}
+
+func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
+	fname := ui.Eval(`document.getElementById('fname').value`).String()
+	clip := ui.Eval(`document.forms[0].clip.value`).String()
+	argums := []string{
+		"file",
+		"tell",
+		fname,
+		"--tell=" + clip,
+	}
+	toclip, _, _ := qutil.QtechNG(argums, "", true)
+
+	if toclip != "" {
+		argums := []string{
+			"clipboard",
+			"set",
+			toclip,
+		}
+		qutil.QtechNG(argums, "", true)
+	}
+	return "stop"
 }

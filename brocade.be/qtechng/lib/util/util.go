@@ -998,3 +998,31 @@ func GenUUID() string {
 	id := guuid.New()
 	return id.String()
 }
+
+func EditList(list string, transported bool, qpaths []string) {
+	if list == "" {
+		return
+	}
+	if transported {
+		return
+	}
+	supportdir := qregistry.Registry["qtechng-support-dir"]
+	if supportdir == "" {
+		return
+	}
+
+	listname := path.Join(supportdir, "data", list+".lst")
+	qfs.Mkdir(path.Dir(listname), "process")
+	qfs.Store(listname, strings.Join(qpaths, "\n"), "process")
+}
+
+func AbsPath(name string, cwd string) string {
+	if filepath.IsAbs(name) {
+		return name
+	}
+	aname, e := qfs.AbsPath(path.Join(cwd, name))
+	if e == nil {
+		return name
+	}
+	return aname
+}

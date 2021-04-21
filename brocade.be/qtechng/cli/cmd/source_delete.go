@@ -28,7 +28,7 @@ func init() {
 }
 
 func sourceDelete(cmd *cobra.Command, args []string) error {
-	result := listTransport(Fcargo)
+	_, result := listTransport(Fcargo)
 	Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	return nil
 }

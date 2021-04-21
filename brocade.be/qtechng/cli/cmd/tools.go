@@ -302,11 +302,13 @@ func delData(ppayload *qclient.Payload, pcargo *qclient.Cargo) (errs error) {
 	return errs
 }
 
-func listTransport(pcargo *qclient.Cargo) []lister {
+func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {
 	result := make([]lister, len(pcargo.Transports))
+	qpaths := make([]string, len(pcargo.Transports))
 	if pcargo != nil && len(pcargo.Transports) != 0 {
 		for i, transport := range Fcargo.Transports {
 			locfil := transport.LocFile
+			qpaths[i] = locfil.QPath
 			result[i] = lister{
 				Release: locfil.Release,
 				QPath:   locfil.QPath,
@@ -320,18 +322,20 @@ func listTransport(pcargo *qclient.Cargo) []lister {
 			}
 		}
 	}
-	return result
+
+	return qpaths, result
 }
 
 func listObjectTransport(pcargo *qclient.Cargo) []byte {
 	return pcargo.Data
 }
 
-func storeTransport() ([]storer, []error) {
+func storeTransport() ([]string, []storer, []error) {
 	result := make([]storer, len(Fcargo.Transports))
+	qpaths := make([]string, len(Fcargo.Transports))
 	errlist := make([]error, 0)
 	if Fcargo == nil || len(Fcargo.Transports) == 0 {
-		return result, errlist
+		return nil, result, errlist
 	}
 	dirs := make(map[string][]int)
 	idirs := make([]string, 0)
@@ -347,9 +351,6 @@ func storeTransport() ([]storer, []error) {
 			Fclear = false
 			Fauto = false
 		}
-	}
-	if !Fauto {
-		Flist = ""
 	}
 
 	for i, transport := range Fcargo.Transports {
@@ -444,6 +445,7 @@ func storeTransport() ([]storer, []error) {
 	for _, locfils := range resultlist {
 		for _, locfil := range locfils.([]qclient.LocalFile) {
 			i++
+			qpaths[i] = locfil.QPath
 			result[i] = storer{
 				Release: locfil.Release,
 				QPath:   locfil.QPath,
@@ -459,7 +461,7 @@ func storeTransport() ([]storer, []error) {
 			}
 		}
 	}
-	return result, errlist
+	return qpaths, result, errlist
 }
 
 func glob(cwd string, args []string, recurse bool, patterns []string, fils bool, dirs bool) (files []string, err error) {

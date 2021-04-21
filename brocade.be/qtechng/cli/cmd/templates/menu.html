@@ -8,28 +8,51 @@
         <div class="qtechng-form-base-heading">Working with local files</div>
         <dl>
             <dt class="qtechng-menuitem-link" onclick="golangfunc('checkin')">Checkin</dt>
-            <dd class="qtechng-menuitem-info">Checkin local files.
-                <p>The specific action is determined by the given arguments:</p>
-                <ul>
-                <li>With no arguments, all files - belonging to QtechNG - in the current working directory and its subdirectories are checked in
-                <li>With arguments, they are considered files or directories. The files - belonging to QtechNG - are checked in. If the argument is a directory, all its files (subdirectories included) are checked in. 
-                </ul>
+            <dd class="qtechng-menuitem-info"><a onclick="toggle('icheckin')" class="toggle">&#x1F6C8;</a> Checkin local
+                files.
+                <div id="icheckin" class="invisible">
+                    <p>The specific action is determined by the given arguments:</p>
+                    <ul>
+                        <li>With no arguments, all files - belonging to QtechNG - in the current working directory and
+                            its subdirectories are checked in</li>
+                        <li>With arguments, they are considered files or directories. The files - belonging to QtechNG -
+                            are checked in. If the argument is a directory, all its files (subdirectories included) are
+                            checked in.</li>
+                    </ul>
+                </div>
+            </dd>
+            <dt class="qtechng-menuitem-link" onclick="golangfunc('property')">Properties</dt>
+            <dd class="qtechng-menuitem-info"><a onclick="toggle('iproperty')" class="toggle">&#x1F6C8;</a> Get the properties of a local QtechNG file.
+                <div id="iproperty" class="invisible">
+                    <p>This menu entry has two functionalities:</p>
+                    <ul>
+                        <li>The properties of the given file are shown</li>
+                        <li>You have the possibility to store certain properties in the clipboard</li>
+                    </ul>
+                    The entry works best with an argument, a filename.
+                </div>
             </dd>
         </dl>
 
         <div class="qtechng-form-base-heading">Working with files in the QtechNG repository</div>
         <dl>
             <dt class="qtechng-menuitem-link" onclick="golangfunc('search')">Search</dt>
-            <dd class="qtechng-menuitem-info">Search for files in the QtechNG repository. 
-                <p>You can modify the search by specifying a few options:</p>
-                <ul>
-                    <li>Use <em>lowercase</em> if you want to transform the text before actual searching</li>
-                    <li><em>regexp</em> allows for very powerful searches but is somewhat more cumbersome</li>
-                    <li><em>per line</em> works line per line. This works best with <em>regexp</em></li>
-                    <li><em>clear</em> empties the resulting local directories on checkout</li>
-                </ul>
-                
-                <p>These files can be checked out as well. You have the option to specify an <em>Edit list</em> for convenient editing.</p></dd>
+            <dd class="qtechng-menuitem-info"><a onclick="toggle('isearch')" class="toggle">&#x1F6C8;</a> Search for
+                files in the QtechNG repository.
+                <div id="isearch" class="invisible">
+                    <p>You can modify the search by specifying a few options:</p>
+                    <ul>
+                        <li>Use <em>lowercase</em> if you want to transform the text before actual matching</li>
+                        <li><em>regexp</em> allows for very powerful searches but is somewhat more cumbersome</li>
+                        <li><em>per line</em> works line per line. This works best together with <em>regexp</em></li>
+                        <li><em>clear</em> empties the resulting local directories on <em>checkout</em></li>
+                    </ul>
+
+
+                    <p>These files can be checked out as well. You have the option to specify an <em>Edit list</em> for
+                        convenient editing.</p>
+                </div>
+            </dd>
         </dl>
         <div class="qtechng-form-base-heading">Maintenance topics</div>
         <label class="input-label-primary">

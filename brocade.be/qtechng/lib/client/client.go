@@ -319,14 +319,12 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 		if file == "" {
 			continue
 		}
-		if done[file] {
+		place := qutil.AbsPath(file, cwd)
+		if done[place] {
 			continue
 		}
-		done[file] = true
-		place := file
-		if !path.IsAbs(file) {
-			place = path.Join(cwd, place)
-		}
+		done[place] = true
+
 		dir := filepath.Dir(place)
 		base := filepath.Base(place)
 		if pdir != dir {

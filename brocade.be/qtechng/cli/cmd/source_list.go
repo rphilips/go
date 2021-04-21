@@ -6,6 +6,7 @@ import (
 
 	qclient "brocade.be/qtechng/lib/client"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +29,8 @@ func init() {
 }
 
 func sourceList(cmd *cobra.Command, args []string) error {
-	result := listTransport(Fcargo)
+	qpaths, result := listTransport(Fcargo)
+	qutil.EditList(Flist, Ftransported, qpaths)
 	Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	return nil
 }
