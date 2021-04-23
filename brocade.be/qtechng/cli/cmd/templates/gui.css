@@ -55,6 +55,7 @@
 }
 .qtechng-form-base input.input-field, .qtechng-form-base input.input-field-jsonpath, .qtechng-form-base .select-field{
 	width: 48%;	
+    
 }
 
 .qtechng-form-base input.input-field-version {
@@ -85,6 +86,8 @@
 	-moz-border-radius: 3px;
 	padding: 7px;
 	outline: none;
+    line-height: 5px;
+    
 }
 .qtechng-form-base .input-field:focus, 
 .qtechng-form-base .input-field-version:focus, 

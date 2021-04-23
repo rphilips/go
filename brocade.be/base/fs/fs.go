@@ -777,6 +777,19 @@ func FilesDirs(dir string) (files []os.FileInfo, dirs []os.FileInfo, err error) 
 	return
 }
 
+//SameFile file1, file2
+func SameFile(file1, file2 string) bool {
+	old, err := os.Stat(file1)
+	if err != nil {
+		return false
+	}
+	new, err := os.Stat(file2)
+	if err != nil {
+		return false
+	}
+	return os.SameFile(old, new)
+}
+
 // Refresh executable
 func RefreshEXE(oldexe string, newexe string) error {
 	old, err := os.Stat(oldexe)

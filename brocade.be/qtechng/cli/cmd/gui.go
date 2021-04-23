@@ -39,6 +39,7 @@ type GuiFiller struct {
 	Menu  bool
 	Title string
 	Vars  map[string]string
+	VarsS map[string]template.HTML
 	VarsH map[string]bool
 }
 
@@ -64,6 +65,9 @@ func init() {
 }
 
 func guiMenu(cmd *cobra.Command, args []string) error {
+	if len(args) == 1 && (args[0] == Fcwd || qfs.SameFile(args[0], Fcwd)) {
+		args = args[1:]
+	}
 	standalone := Fmenu != "menu" && Fmenu != ""
 	width := 520
 	height := 780
@@ -104,6 +108,26 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						out, _, _ := qutil.QtechNG(argums, "$..DATA", false)
 						guiFiller.Vars["properties"] = string(out)
 					}
+				case "new":
+					mydir := Fcwd
+					argums := []string{
+						"dir",
+						"tell",
+						"--cwd=" + mydir,
+					}
+					out, _, _ := qutil.QtechNG(argums, "$..DATA", false)
+					m := make(map[string]string)
+					json.Unmarshal([]byte(out), &m)
+					qdir := m["qdir"]
+					version := m["version"]
+					if version == "" {
+						version = "0.00"
+					}
+					guiFiller.Vars["qdir"] = qdir
+					guiFiller.Vars["version"] = version
+					guiFiller.VarsS = make(map[string]template.HTML)
+					guiFiller.VarsH["nofiles"] = len(args) == 0
+					guiFiller.VarsS["select"] = template.HTML(hintoptions(Fcwd))
 
 				}
 
@@ -155,6 +179,15 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							return
 						}
 						menulistener <- handleProperty(ui, &guiFiller)
+					})
+
+				case "new":
+					ui.Bind("golangfunc", func(indicator string) {
+						if indicator == "stop" {
+							menulistener <- "stop"
+							return
+						}
+						menulistener <- handleNew(ui, &guiFiller, Fcwd, args)
 					})
 
 				}
@@ -239,6 +272,73 @@ func storeVars(menu string, guiFiller GuiFiller) {
 	qfs.Store(fname, b, "")
 }
 
+func handleNew(ui lorca.UI, guiFiller *GuiFiller, cwd string, args []string) string {
+	f := make(map[string]string)
+	keys := []string{"qdir", "version"}
+	if len(args) == 0 {
+		keys = append(keys, "name", "hint")
+	}
+	for _, key := range keys {
+		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
+		f[key] = value
+	}
+	if f["version"] == "" || f["qdir"] == "" {
+		return "stop"
+	}
+	argums := make([]string, 0)
+	if len(args) == 0 {
+		f := make(map[string]string)
+		for _, key := range []string{"name", "qdir", "version", "hint"} {
+			value := ui.Eval(`document.getElementById('` + key + `').value`).String()
+			f[key] = value
+		}
+		if f["name"] == "" || f["version"] == "" || f["qdir"] == "" {
+			return "new"
+		}
+		argums = []string{
+			"file",
+			"new",
+			"--version=" + f["version"],
+			"--qdir=" + f["qdir"],
+			"--create",
+			f["name"],
+			"--cwd=" + cwd,
+		}
+		if f["hint"] != "" {
+			argums = append(argums, "--hint="+f["hint"])
+		}
+	} else {
+		argums = []string{
+			"file",
+			"new",
+			"--version=" + f["version"],
+			"--qdir=" + f["qdir"],
+			"--cwd=" + cwd,
+		}
+		argums = append(argums, args...)
+	}
+
+	sout, _, _ := qutil.QtechNG(argums, "$..DATA", false)
+	bx, _ := json.Marshal(sout)
+	sx := string(bx)
+	st := ""
+	if len(sx) > 2 {
+		st = sx[:2]
+	}
+	k := strings.IndexAny(st, "[{")
+	if k == 1 {
+		ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
+	} else {
+		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
+		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
+	}
+	if len(args) == 0 {
+		return "stop"
+	}
+	return "new"
+}
+
 func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
 	f := make(map[string]string)
 	for _, key := range []string{"qpattern", "version", "needle", "perline", "tolower", "regexp", "checkout", "yaml", "jsonpath", "editlist", "clear"} {
@@ -319,4 +419,42 @@ func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
 		qutil.QtechNG(argums, "", true)
 	}
 	return "stop"
+}
+
+func hintoptions(mydir string) string {
+	supportdir := qregistry.Registry["qtechng-support-dir"]
+	if supportdir == "" {
+		return ""
+	}
+	profiles := path.Join(supportdir, "profiles", "profiles.json")
+	data, err := qfs.Fetch(profiles)
+	if err != nil {
+		return ""
+	}
+	opt := make([]map[string]string, 0)
+	err = json.Unmarshal(data, &opt)
+	if err != nil {
+		return ""
+	}
+	options := make([]string, 0)
+	options = append(options, "<option selected value=''></option>")
+	for _, option := range opt {
+		comment := option["comment"]
+		if comment == "" {
+			continue
+		}
+		hint := option["hint"]
+		if hint == "" {
+			hint = "*"
+		}
+		fname := path.Join(mydir, comment)
+
+		if qfs.IsFile(fname) {
+			continue
+		}
+
+		options = append(options, "<option value='"+hint+"'>"+comment+"</option>")
+	}
+	return strings.Join(options, "\n")
+
 }
