@@ -135,7 +135,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	}
 
 	// releases
-	sout, _, _ := qutil.QtechNG([]string{"system", "info", "--remote"}, "$..releases", false)
+	sout, _, _ := qutil.QtechNG([]string{"system", "info", "--remote"}, "$..releases", false, Fcwd)
 	if sout != "" {
 		x := ""
 		err := json.Unmarshal([]byte(sout), &x)

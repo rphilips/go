@@ -7,7 +7,7 @@ import (
 	qregistry "brocade.be/base/registry"
 )
 
-func QtechNG(args []string, jsonpath string, yaml bool) (string, string, error) {
+func QtechNG(args []string, jsonpath string, yaml bool, cwd string) (string, string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	qexe := qregistry.Registry["qtechng-exe"]
@@ -22,11 +22,10 @@ func QtechNG(args []string, jsonpath string, yaml bool) (string, string, error) 
 	if yaml {
 		argums = append(argums, "--yaml")
 	}
-
 	cmd := exec.Cmd{
 		Path:   pexe,
 		Args:   argums,
-		Dir:    qregistry.Registry["scratch-dir"],
+		Dir:    cwd,
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}

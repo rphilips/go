@@ -105,7 +105,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							"list",
 							fname,
 						}
-						out, _, _ := qutil.QtechNG(argums, "$..DATA", false)
+						out, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
 						guiFiller.Vars["properties"] = string(out)
 					}
 				case "new":
@@ -115,7 +115,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						"tell",
 						"--cwd=" + mydir,
 					}
-					out, _, _ := qutil.QtechNG(argums, "$..DATA", false)
+					out, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
 					m := make(map[string]string)
 					json.Unmarshal([]byte(out), &m)
 					qdir := m["qdir"]
@@ -318,7 +318,7 @@ func handleNew(ui lorca.UI, guiFiller *GuiFiller, cwd string, args []string) str
 		argums = append(argums, args...)
 	}
 
-	sout, _, _ := qutil.QtechNG(argums, "$..DATA", false)
+	sout, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
 	bx, _ := json.Marshal(sout)
 	sx := string(bx)
 	st := ""
@@ -377,7 +377,7 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
 	}
 	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
 	ui.Eval(`document.getElementById("busy").style="display:block;")`)
-	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1")
+	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1", Fcwd)
 	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
 	if err != nil {
 		serr += "\n\nError:" + err.Error()
@@ -408,7 +408,7 @@ func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
 		fname,
 		"--tell=" + clip,
 	}
-	toclip, _, _ := qutil.QtechNG(argums, "", true)
+	toclip, _, _ := qutil.QtechNG(argums, "", true, Fcwd)
 
 	if toclip != "" {
 		argums := []string{
@@ -416,7 +416,7 @@ func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
 			"set",
 			toclip,
 		}
-		qutil.QtechNG(argums, "", true)
+		qutil.QtechNG(argums, "", true, Fcwd)
 	}
 	return "stop"
 }

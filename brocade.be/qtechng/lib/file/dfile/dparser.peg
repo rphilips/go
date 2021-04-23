@@ -460,7 +460,7 @@ GTripel <- first:GOperand1 WS+ op:GOperator WS+ second:GOperand2 {
 }
 
 
-GOperand1 <- ("$" [a-z0-9]+ / "%project" / "%qrelpath" / "%qpath" / "%qdir" / "%ext" / "%basename" / "%version" / "%mostype" / "%mclib" / "%systemname" / "%os" / "%systemgroup") {
+GOperand1 <- ("$" [A-Za-z0-9]+ / "%project" / "%qrelpath" / "%qpath" / "%qdir" / "%ext" / "%basename" / "%version" / "%mostype" / "%mclib" / "%systemname" / "%os" / "%systemgroup") {
     return string(c.text), nil
 }
 

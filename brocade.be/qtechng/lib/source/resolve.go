@@ -2,6 +2,8 @@ package source
 
 import (
 	"bytes"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -34,6 +36,22 @@ func (source *Source) Env() map[string]string {
 		env["%project"] = p
 		env["%qrelpath"] = strings.TrimPrefix(qpath, p+"/")
 	}
+	brocenv := os.Getenv("BROCADE_GUARDVAR")
+	if brocenv != "" {
+		m := make(map[string]string)
+		json.Unmarshal([]byte(brocenv), &m)
+		for k := range m {
+			if k == "" {
+				continue
+			}
+			k = strings.ToUpper(k)
+			if !strings.HasPrefix(k, "$") {
+				k = "$" + k
+			}
+			env[k] = m[k]
+		}
+	}
+
 	return env
 }
 
