@@ -218,7 +218,7 @@ func (source *Source) Waste() (err error) {
 		objfile.SetEditFile(source.String())
 		objfile.SetRelease(r)
 
-		err = qobject.Loads(objfile, content)
+		err = qobject.Loads(objfile, content, true)
 		if err != nil {
 			e := &qerror.QError{
 				Ref:     []string{"source.waste.load.object"},
@@ -418,7 +418,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 	}
 	objfile.SetEditFile(source.String())
 	objfile.SetRelease(version.String())
-	err = qobject.Loads(objfile, after)
+	err = qobject.Loads(objfile, after, true)
 	if err != nil {
 		e := &qerror.QError{
 			Ref:     []string{"source.store.load.object"},
@@ -762,7 +762,7 @@ func TestForWasteList(version string, paths []string) (err error) {
 			if err != nil {
 				return deps, err
 			}
-			err = qobject.Loads(objfile, blob)
+			err = qobject.Loads(objfile, blob, true)
 			if err != nil {
 				return deps, err
 			}

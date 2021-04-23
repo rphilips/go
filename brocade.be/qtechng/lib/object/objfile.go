@@ -18,7 +18,7 @@ type OFile interface {
 	SetRelease(release string)
 	EditFile() string
 	SetEditFile(editfile string)
-	Parse(blob []byte) (string, []Object, error)
+	Parse(blob []byte, decomment bool) (string, []Object, error)
 	SetComment(string)
 	Comment() string
 	Objects() []Object
@@ -27,7 +27,7 @@ type OFile interface {
 }
 
 // Loads an objectfile
-func Loads(ofile OFile, blob []byte) (err error) {
+func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 	fname := ofile.EditFile()
 	if blob == nil {
 		blob, err = os.ReadFile(fname)
@@ -43,7 +43,7 @@ func Loads(ofile OFile, blob []byte) (err error) {
 		}
 	}
 	blob = qutil.About(blob)
-	preamble, objects, e := ofile.Parse(blob)
+	preamble, objects, e := ofile.Parse(blob, decomment)
 	if e != nil {
 		msg := qutil.ExtractMsg(e.Error(), fname)
 		lineno, line := qutil.ExtractLineno(msg, blob)
@@ -129,7 +129,7 @@ func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 		return
 	}
 
-	ep := Loads(ofile, body)
+	ep := Loads(ofile, body, true)
 
 	if ep != nil {
 		err := &qerror.QError{
@@ -208,7 +208,7 @@ func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 		tocheck[id] = obj
 	}
 
-	_, obs, ep := ofile.Parse(current)
+	_, obs, ep := ofile.Parse(current, true)
 
 	if ep == nil {
 		for _, obj := range obs {

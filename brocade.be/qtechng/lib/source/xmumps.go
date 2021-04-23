@@ -56,7 +56,7 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	xf := new(qofile.XFile)
 	xf.SetEditFile(xfile.String())
 	xf.SetRelease(xfile.Release().String())
-	err = qobject.Loads(xf, content)
+	err = qobject.Loads(xf, content, true)
 	// if err != nil {
 	// 	fmt.Println("RPh loads err:", err.Error())
 	// 	return
@@ -96,7 +96,7 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 		buffer.WriteRune('\n')
 	}
 	content = buffer.Bytes()
-	err = qobject.Loads(xf, content)
+	err = qobject.Loads(xf, content, false)
 	if err != nil {
 		return
 	}

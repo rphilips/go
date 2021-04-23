@@ -64,7 +64,7 @@ loi c:
 	bfile := new(BFile)
 	bfile.SetRelease("1.11")
 	bfile.SetEditFile("hello/world")
-	err := qobject.Loads(bfile, data)
+	err := qobject.Loads(bfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -168,7 +168,7 @@ mprocess %Search^pcasnoup:
 	bfile := new(BFile)
 	bfile.SetRelease("1.11")
 	bfile.SetEditFile("hello/world")
-	err := qobject.Loads(bfile, data)
+	err := qobject.Loads(bfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return

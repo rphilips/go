@@ -65,11 +65,13 @@ func (xf *XFile) String() string {
 }
 
 // Parse parst een []byte
-func (xf *XFile) Parse(blob []byte) (preamble string, objs []qobject.Object, err error) {
+func (xf *XFile) Parse(blob []byte, decomment bool) (preamble string, objs []qobject.Object, err error) {
 	fname := xf.EditFile()
-	x, err := Parse(fname, blob)
-	if err != nil {
-		return
+	var x interface{}
+	if decomment {
+		x, err = Parse(fname, qutil.Decomment(blob).Bytes())
+	} else {
+		x, err = Parse(fname, blob)
 	}
 	y := x.(XFile)
 	preamble = y.Preamble
@@ -180,7 +182,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	objfile := new(XFile)
 	objfile.SetEditFile(fname)
-	err := qobject.Loads(objfile, blob)
+	err := qobject.Loads(objfile, blob, true)
 	if err != nil {
 		output.Write(blob)
 		return nil

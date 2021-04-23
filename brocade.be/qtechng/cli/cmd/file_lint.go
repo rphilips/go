@@ -151,7 +151,7 @@ func fileLint(cmd *cobra.Command, args []string) error {
 		}
 		if objfile != nil {
 			objfile.SetEditFile(refname)
-			err = qobject.Loads(objfile, blob)
+			err = qobject.Loads(objfile, blob, true)
 			if err != nil {
 				return false, err
 			}

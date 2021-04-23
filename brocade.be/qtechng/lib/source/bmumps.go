@@ -32,17 +32,20 @@ func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) {
 	bf := new(qofile.BFile)
 	bf.SetEditFile(bfile.String())
 	bf.SetRelease(bfile.Release().String())
-	err = qobject.Loads(bf, content)
+	err = qobject.Loads(bf, content, true)
+
 	objectlist := bf.Objects()
 	textmap := make(map[string]string)
 	env := bfile.Env()
+
 	notreplace := bfile.NotReplace()
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
 	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, textmap, bufmac, "")
+
 	content = bufmac.Bytes()
 
-	err = qobject.Loads(bf, content)
+	err = qobject.Loads(bf, content, false)
 	if err != nil {
 		return
 	}

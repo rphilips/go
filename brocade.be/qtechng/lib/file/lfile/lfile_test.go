@@ -22,7 +22,7 @@ func TestParse01(t *testing.T) {
 PAS d'une notice d'autorité»⟧`)
 
 	lfile := new(LFile)
-	err := qobject.Loads(lfile, data)
+	err := qobject.Loads(lfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 	}
@@ -258,7 +258,7 @@ func TestSort01(t *testing.T) {
 	   N: ned3`)
 
 	lfile := new(LFile)
-	qobject.Loads(lfile, data)
+	qobject.Loads(lfile, data, true)
 	lfile.Sort()
 	lgcodes := lfile.Lgcodes
 

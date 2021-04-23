@@ -58,7 +58,7 @@ func (df *IFile) String() string {
 }
 
 // Parse parst een []byte
-func (df *IFile) Parse(blob []byte) (preamble string, objs []qobject.Object, err error) {
+func (df *IFile) Parse(blob []byte, decomment bool) (preamble string, objs []qobject.Object, err error) {
 	fname := df.EditFile()
 
 	x, err := Parse(fname, blob)
@@ -135,7 +135,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	objfile := new(IFile)
 	objfile.SetEditFile(fname)
-	err := qobject.Loads(objfile, blob)
+	err := qobject.Loads(objfile, blob, true)
 	if err != nil {
 		output.Write(blob)
 		return nil

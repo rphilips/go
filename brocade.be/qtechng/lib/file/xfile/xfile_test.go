@@ -46,7 +46,7 @@ format      $$b    :
 	xfile := new(XFile)
 	xfile.SetRelease("1.11")
 	xfile.SetEditFile("hello/world")
-	err := qobject.Loads(xfile, data)
+	err := qobject.Loads(xfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return

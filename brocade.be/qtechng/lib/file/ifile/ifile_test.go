@@ -29,7 +29,7 @@ func TestParse01(t *testing.T) {
 		Hallo4`)
 
 	ifile := new(IFile)
-	err := qobject.Loads(ifile, data)
+	err := qobject.Loads(ifile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 	}
@@ -153,7 +153,7 @@ func TestParse05(t *testing.T) {
 `)
 	//
 	ifile := new(IFile)
-	err := qobject.Loads(ifile, data)
+	err := qobject.Loads(ifile, data, true)
 	if err != nil {
 		e := err.(*qerror.QError)
 		if e.Ref[0] != "ifile.loads" {

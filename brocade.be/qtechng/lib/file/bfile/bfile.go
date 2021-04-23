@@ -59,9 +59,14 @@ func (bf *BFile) String() string {
 }
 
 // Parse parst een []byte
-func (bf *BFile) Parse(blob []byte) (preamble string, objs []qobject.Object, err error) {
+func (bf *BFile) Parse(blob []byte, decomment bool) (preamble string, objs []qobject.Object, err error) {
 	fname := bf.EditFile()
-	x, err := Parse(fname, qutil.Decomment(blob).Bytes())
+	var x interface{}
+	if decomment {
+		x, err = Parse(fname, qutil.Decomment(blob).Bytes())
+	} else {
+		x, err = Parse(fname, blob)
+	}
 	if err != nil {
 		return
 	}
@@ -174,7 +179,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	objfile := new(BFile)
 	objfile.SetEditFile(fname)
-	err := qobject.Loads(objfile, blob)
+	err := qobject.Loads(objfile, blob, true)
 	if err != nil {
 		output.Write(blob)
 		return nil

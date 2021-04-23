@@ -48,7 +48,7 @@ func (lfile *Source) LFileToMumps(batchid string, buf *bytes.Buffer) {
 	objfile := new(qofile.LFile)
 	objfile.SetEditFile(lfile.String())
 	objfile.SetRelease(lfile.Release().String())
-	err = qobject.Loads(objfile, content)
+	err = qobject.Loads(objfile, content, true)
 	if err != nil {
 		return
 	}

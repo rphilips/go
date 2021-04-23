@@ -59,7 +59,7 @@ func (lf *LFile) String() string {
 }
 
 // Parse parst een []byte
-func (lf *LFile) Parse(blob []byte) (preamble string, objs []qobject.Object, err error) {
+func (lf *LFile) Parse(blob []byte, decomment bool) (preamble string, objs []qobject.Object, err error) {
 	fname := lf.EditFile()
 	x, err := Parse(fname, blob)
 	if err != nil {
@@ -193,7 +193,7 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	objfile := new(LFile)
 	objfile.SetEditFile(fname)
-	err := qobject.Loads(objfile, blob)
+	err := qobject.Loads(objfile, blob, true)
 	if err != nil {
 		output.Write(blob)
 		return nil

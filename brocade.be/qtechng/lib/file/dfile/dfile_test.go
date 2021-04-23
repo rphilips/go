@@ -35,7 +35,7 @@ macro getCatGenStatus($data, *$cloi=(A+B")")):
 	dfile := new(DFile)
 	dfile.SetRelease("1.11")
 	dfile.SetEditFile("hello/world")
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -181,7 +181,7 @@ macro getCatGenStatus($data, *$cloi=(A+B")")):
 	dfile := new(DFile)
 	dfile.SetRelease("1.11")
 	dfile.SetEditFile("hello/world")
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -223,7 +223,7 @@ macro getCatGenStatus(    ):
 
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 	}
@@ -257,7 +257,7 @@ macro getCatGenStatus:
 
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 	}
@@ -302,7 +302,7 @@ macro getCatGenStatus(   $data , $b          ,    *$c):
 	`)
 
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -378,7 +378,7 @@ func TestParam04(t *testing.T) {
 
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -450,7 +450,7 @@ func TestParam05(t *testing.T) {
 
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -500,7 +500,7 @@ func TestParam06(t *testing.T) {
 
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -548,7 +548,7 @@ func TestParam07(t *testing.T) {
 	«d %GetSs^gbcat(.$data, $cloi)» if «$cloi isInstanceOf "numlit"»
 	«d %GetSs^gbcat(.$data, 1+$cloi)»`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -597,7 +597,7 @@ func TestParam08(t *testing.T) {
 	«d %GetSs^gbcat(.$data, 1+$cloi)»
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 		return
@@ -640,7 +640,7 @@ $cloi, $eloi
 
 	`)
 	dfile := new(DFile)
-	err := qobject.Loads(dfile, data)
+	err := qobject.Loads(dfile, data, true)
 	if err != nil {
 		t.Errorf("Error: %s", err)
 	}
