@@ -206,6 +206,15 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						handleSearch(ui, &guiFiller)
 						menulistener <- handleSearch(ui, &guiFiller)
 					})
+				case "checkout":
+					ui.Bind("golangfunc", func(indicator string) {
+						if indicator == "stop" {
+							menulistener <- "stop"
+							return
+						}
+						handleSearch(ui, &guiFiller)
+						menulistener <- handleCheckout(ui, &guiFiller, args)
+					})
 				case "property":
 					ui.Bind("golangfunc", func(indicator string) {
 						if indicator == "stop" {
@@ -445,6 +454,66 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
 		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
 	}
 	return "search"
+}
+
+func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
+	f := make(map[string]string)
+	for _, key := range []string{"qpattern", "version", "mode", "yaml", "jsonpath", "editlist", "clear"} {
+		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
+		f[key] = value
+	}
+	guiFiller.Vars = f
+	storeVars("checkout", *guiFiller)
+
+	if f["qpattern"] == "" || f["version"] == "" {
+		return "search"
+	}
+	argums := []string{
+		"source",
+	}
+	if f["checkout"] == "1" {
+		argums = append(argums, "co", "--auto")
+		if f["clear"] == "1" {
+			argums = append(argums, "--clear")
+		}
+	} else {
+		argums = append(argums, "list")
+	}
+	argums = append(argums, "--version="+f["version"])
+	argums = append(argums, "--qpattern="+f["qpattern"])
+	argums = append(argums, "--needle="+f["needle"])
+	argums = append(argums, "--list="+f["editlist"])
+	if f["perline"] == "1" {
+		argums = append(argums, "--perline")
+	}
+	if f["tolower"] == "1" {
+		argums = append(argums, "--tolower")
+	}
+	if f["regexp"] == "1" {
+		argums = append(argums, "--regexp")
+	}
+	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
+	ui.Eval(`document.getElementById("busy").style="display:block;")`)
+	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1", Fcwd)
+	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
+	if err != nil {
+		serr += "\n\nError:" + err.Error()
+	}
+	bx, _ := json.Marshal(sout)
+	sx := string(bx)
+	st := ""
+	if len(sx) > 2 {
+		st = sx[:2]
+	}
+	k := strings.IndexAny(st, "[{")
+	if k == 1 {
+		ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
+	} else {
+		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
+		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
+	}
+	return "checkout"
 }
 
 func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
