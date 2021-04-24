@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"path"
 	"path/filepath"
 	"sort"
@@ -16,6 +15,7 @@ import (
 	qproject "brocade.be/qtechng/lib/project"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var versionPopulateCmd = &cobra.Command{
@@ -158,10 +158,7 @@ func versionPopulate(cmd *cobra.Command, args []string) error {
 		dir := filepath.Dir(files[0])
 		d.Dir = dir
 		d.Add(locfils...)
-		args := []string{os.Args[0], "file", "ci", "--cwd=" + dir, "--version=0.00", "--quiet"}
-		//os.Args = args
-		payload := new(qclient.Payload)
-		Execute("", "", "", payload, args)
+		qutil.QtechNG([]string{"file", "ci", "--version=0.00", "--quiet"}, "", false, dir)
 	}
 	return nil
 }

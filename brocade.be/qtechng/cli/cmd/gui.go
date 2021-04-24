@@ -96,6 +96,23 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 				loadVars(Fmenu, &guiFiller)
 				// things todo before menu is loaded
 				switch Fmenu {
+				case "checkin":
+					sout := handleCheckin(Fcwd, args)
+					bx, _ := json.Marshal(sout)
+					sx := string(bx)
+					st := ""
+					if len(sx) > 2 {
+						st = sx[:2]
+					}
+					k := strings.IndexAny(st, "[{")
+					if k == 1 {
+						guiFiller.Vars["jsondisplay"] = sx
+						guiFiller.Vars["yamldisplay"] = ""
+					} else {
+						guiFiller.Vars["jsondisplay"] = ""
+						guiFiller.Vars["yamldisplay"] = sx
+					}
+
 				case "property":
 					if len(args) > 0 {
 						fname := qutil.AbsPath(args[0], Fcwd)
@@ -152,15 +169,32 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						sx := string(bx)
 						ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
 					}
+				case "checkin":
+					sx := guiFiller.Vars["jsondisplay"]
+					if sx != "" {
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
+					}
+					sx = guiFiller.Vars["yamldisplay"]
+					if sx != "" {
+						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
+					}
 				}
 
 				switch Fmenu {
+
 				case "menu":
 					ui.Bind("golangfunc", func(indicator string) {
 						menuitem = indicator
 						if menuitem != "" {
 							menulistener <- menuitem
 						}
+					})
+
+				case "checkin":
+					ui.Bind("golangfunc", func(indicator string) {
+						menulistener <- "stop"
 					})
 
 				case "search":
@@ -270,6 +304,20 @@ func storeVars(menu string, guiFiller GuiFiller) {
 		return
 	}
 	qfs.Store(fname, b, "")
+}
+
+func handleCheckin(cwd string, args []string) string {
+	argums := []string{
+		"file",
+		"ci",
+		"--cwd=" + cwd,
+		"--recurse",
+	}
+	if len(args) != 0 {
+		argums = append(argums, args...)
+	}
+	sout, _, _ := qutil.QtechNG(argums, "$..file", true, cwd)
+	return sout
 }
 
 func handleNew(ui lorca.UI, guiFiller *GuiFiller, cwd string, args []string) string {
