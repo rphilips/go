@@ -64,6 +64,12 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 	tw := tar.NewWriter(ftar)
 
 	for _, qpath := range qpaths {
+		x, _ := fs.RealPath(qpath)
+		fi, err := os.Stat(x)
+		if err != nil {
+			errlist = append(errlist, err)
+			continue
+		}
 		source, err := qsource.Source{}.New(r, qpath, true)
 		if err != nil {
 			errlist = append(errlist, err)
@@ -88,13 +94,21 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 			"BROCADE.ft": meta.Ft,
 		}
 
-		hdr := &tar.Header{
-			Name:       qpath[1:],
-			Mode:       0660,
-			Size:       int64(len(content)),
-			Format:     tar.FormatPAX,
-			PAXRecords: pax,
+		hdr, err := tar.FileInfoHeader(fi, "")
+		if err != nil {
+			e := &qerror.QError{
+				Ref:     []string{"version.backup.fiheader"},
+				Version: r,
+				File:    qpath,
+				Msg:     []string{err.Error()},
+			}
+			err = qerror.QErrorTune(err, e)
+			errlist = append(errlist, err)
+			continue
 		}
+		hdr.Name = qpath[1:]
+		hdr.Format = tar.FormatPAX
+		hdr.PAXRecords = pax
 		if err := tw.WriteHeader(hdr); err != nil {
 			e := &qerror.QError{
 				Ref:     []string{"version.backup.header"},
@@ -121,5 +135,12 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 	tw.Flush()
 	tw.Close()
 
+	msg := make(map[string]string)
+	msg["status"] = "Backup FAILED"
+	if len(errlist) == 0 {
+		errlist = nil
+		msg["status"] = "Backup SUCCESS to `" + tarfile + "`"
+	}
+	Fmsg = qreport.Report(msg, errlist, Fjq, Fyaml)
 	return nil
 }
