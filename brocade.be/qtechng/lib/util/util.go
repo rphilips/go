@@ -1021,7 +1021,7 @@ func AbsPath(name string, cwd string) string {
 		return name
 	}
 	aname, e := qfs.AbsPath(path.Join(cwd, name))
-	if e == nil {
+	if e != nil {
 		return name
 	}
 	return aname

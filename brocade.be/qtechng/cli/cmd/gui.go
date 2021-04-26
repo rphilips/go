@@ -312,7 +312,7 @@ func storeVars(menu string, guiFiller GuiFiller) {
 	if err != nil {
 		return
 	}
-	qfs.Store(fname, b, "")
+	qfs.Store(fname, b, "qtech")
 }
 
 func handleCheckin(cwd string, args []string) string {

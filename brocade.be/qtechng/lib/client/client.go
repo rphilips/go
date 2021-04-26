@@ -180,7 +180,7 @@ func (dir *Dir) Load() {
 	}
 	if change {
 		qjson := path.Join(dir.Dir, ".qtechng")
-		qfs.Store(qjson, files, "")
+		qfs.Store(qjson, files, "qtech")
 	}
 	dir.Files = files
 }
@@ -219,7 +219,7 @@ func (dir *Dir) Add(locfils ...LocalFile) {
 	}
 	if ok {
 		qjson := path.Join(dir.Dir, ".qtechng")
-		qfs.Store(qjson, dir.Files, "")
+		qfs.Store(qjson, dir.Files, "qtech")
 		dir.Files = nil
 		dir.Load()
 	}
@@ -247,7 +247,7 @@ func (dir *Dir) Del(locfils ...LocalFile) {
 	if changed {
 		qjson := path.Join(dir.Dir, ".qtechng")
 		dir.Files = nil
-		qfs.Store(qjson, dir, "")
+		qfs.Store(qjson, dir, "qtech")
 		dir.Load()
 	}
 }

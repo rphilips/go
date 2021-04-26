@@ -419,7 +419,7 @@ func Store(object Object) (changed bool, err error) {
 	h := qutil.Digest([]byte(name))
 	dirname := "/" + h[0:2] + "/" + h[2:]
 	fs.MkdirAll(dirname, 0770)
-	changed, before, actual, err := fs.Store(dirname+"/obj.json", object, "")
+	changed, before, actual, err := fs.Store(dirname+"/obj.json", object, "qtech")
 
 	if err != nil {
 		e := &qerror.QError{
@@ -494,7 +494,7 @@ func Link(r string, name string, object interface{}) error {
 	digest = qutil.Digest([]byte(obj))
 	fname := "/" + mode + "/" + digest[:2] + "/" + digest[2:] + dir2
 	data["object"] = obj
-	fs.Store(fname, data, "")
+	fs.Store(fname, data, "qtech")
 	return nil
 }
 

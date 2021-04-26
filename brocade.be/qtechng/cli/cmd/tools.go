@@ -399,7 +399,7 @@ func storeTransport() ([]string, []storer, []error) {
 			t := Fcargo.Transports[i]
 			place := t.LocFile.Place
 			body := t.Body
-			e := qfs.Store(place, body, "")
+			e := qfs.Store(place, body, "qtech")
 
 			if e != nil {
 				err := &qerror.QError{

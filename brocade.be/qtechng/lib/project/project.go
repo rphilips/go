@@ -184,7 +184,7 @@ func (project Project) Init(meta qmeta.Meta) (err error) {
 	data := `{
 	"$schema": "https://dev.anet.be/brocade/schema/qtechng.schema.json"
 }`
-	fs.Store(fname, data, "")
+	fs.Store(fname, data, "qtech")
 
 	pmet, _ := qmeta.Meta{}.New(sversion, sproject+fname)
 	pmet.Update(meta)
@@ -209,7 +209,7 @@ func (project Project) Store(fname string, data interface{}) (changed bool, err 
 	if !strings.HasPrefix(fname, "/") {
 		fname = "/" + fname
 	}
-	changed, _, _, e := fs.Store(fname, data, "")
+	changed, _, _, e := fs.Store(fname, data, "qtech")
 
 	if e != nil {
 		err = &qerror.QError{
@@ -619,7 +619,7 @@ func ValidProjectString(p string) bool {
 		if ch > 122 {
 			return false
 		}
-		if strings.Trim(part, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_1234567890") != "" {
+		if strings.Trim(part, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.1234567890") != "" {
 			return false
 		}
 	}
@@ -690,7 +690,6 @@ func GetProject(v string, s string, ronly bool) (project *Project) {
 			}
 		}
 		if exists, _ := fs.Exists(cfg); exists {
-
 			proj, _ := Project{}.New(v, start, ronly)
 			config, err := proj.LoadConfig()
 			if err != nil {

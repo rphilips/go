@@ -46,7 +46,7 @@ func stdinLint(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer qfs.Rmpath(tmpfile)
-	qfs.Store(tmpfile+ext, data, "")
+	qfs.Store(tmpfile+ext, data, "qtech")
 	args[0] = tmpfile + ext
 	return fileLint(cmd, args)
 }

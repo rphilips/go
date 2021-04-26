@@ -42,6 +42,7 @@ var Fhint string
 
 func init() {
 	fileNewCmd.Flags().StringVar(&Fqdir, "qdir", "", "Directory the file belongs to in repository")
+	fileNewCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
 	fileNewCmd.Flags().StringVar(&Fhint, "hint", "", "Hint for new files")
 	fileNewCmd.Flags().BoolVar(&Fcreate, "create", false, "Create a new file")
 	fileCmd.AddCommand(fileNewCmd)
@@ -50,6 +51,7 @@ func init() {
 func fileNew(cmd *cobra.Command, args []string) error {
 
 	if Fcreate {
+		Frecurse = false
 		for _, fname := range args {
 			if !path.IsAbs(fname) {
 				fname = path.Join(Fcwd, fname)
@@ -134,45 +136,57 @@ func fileNew(cmd *cobra.Command, args []string) error {
 	}
 	result := make([]adder, 0)
 	errorlist := make([]error, 0)
+	argums := make([]string, 0)
+	if Frecurse {
+		if len(args) == 0 {
+			args = append(args, Fcwd)
+		}
+	}
 	for _, arg := range args {
-		if done[arg] {
+		arg = qutil.AbsPath(arg, Fcwd)
+		if !qfs.IsDir(arg) {
+			argums = append(argums, arg)
 			continue
 		}
-		done[arg] = true
-		place := arg
-		if !path.IsAbs(place) {
-			place = path.Join(Fcwd, place)
-		}
-
-		if qfs.IsDir(place) {
+		if !Frecurse {
 			err := &qerror.QError{
 				Ref:  []string{"file.add.dir"},
 				Type: "Error",
-				Msg:  []string{"Cannot add a directory: `" + place + "`"},
+				Msg:  []string{"Cannot add a directory: `" + arg + "`"},
 			}
 			errorlist = append(errorlist, err)
 			continue
 		}
-		dir := filepath.Dir(place)
+		a, _ := qfs.Find(arg, nil, true, true, false)
+		for _, p := range a {
+			argums = append(argums, qutil.AbsPath(p, arg))
+		}
+	}
 
+	for _, arg := range argums {
+		if done[arg] {
+			continue
+		}
+		done[arg] = true
+
+		dir := filepath.Dir(arg)
 		if !direxists[dir] {
 			direxists[dir] = true
-			qfs.Mkdir(dir, "process")
+			qfs.Mkdir(dir, "qtech")
 		}
-		if !qfs.IsFile(place) {
-			e := qfs.Store(place, "", "")
+		if !qfs.IsFile(arg) {
+			e := qfs.Store(arg, "", "qtech")
 			if e != nil {
 				err := &qerror.QError{
 					Ref:  []string{"file.add.create"},
 					Type: "Error",
-					Msg:  []string{"Cannot create file: `" + place + "`"},
+					Msg:  []string{"Cannot create file: `" + arg + "`"},
 				}
 				errorlist = append(errorlist, err)
 				continue
 			}
 		}
-
-		rel, _ := filepath.Rel(Fcwd, place)
+		rel, _ := filepath.Rel(Fcwd, arg)
 		rel = filepath.ToSlash(rel)
 		if strings.HasPrefix(rel, "./") {
 			if rel == "./" {
@@ -181,9 +195,17 @@ func fileNew(cmd *cobra.Command, args []string) error {
 				rel = rel[2:]
 			}
 		}
-
 		rel = strings.Trim(rel, "/")
-
+		fmt.Println("rel:", rel)
+		if strings.HasPrefix(rel, "..") {
+			err := &qerror.QError{
+				Ref:  []string{"file.add.noqdir"},
+				Type: "Error",
+				Msg:  []string{"Cannot determine path: `" + arg + "`"},
+			}
+			errorlist = append(errorlist, err)
+			continue
+		}
 		d := new(qclient.Dir)
 		d.Dir = dir
 		locfil := qclient.LocalFile{
@@ -191,8 +213,10 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			QPath:   Fqdir + "/" + rel,
 		}
 		d.Add(locfil)
-		result = append(result, adder{arg, Fversion, Fqdir + "/" + rel, place})
+		result = append(result, adder{arg, Fversion, Fqdir + "/" + rel, arg})
+
 	}
+
 	if len(errorlist) == 0 {
 		Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
 	} else {

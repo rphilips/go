@@ -91,6 +91,7 @@ type Property struct {
 //    - uid (*user.User)
 //    - gid / access for a pathmode according to the registry
 func Properties(pathmode string) (prop Property, err error) {
+
 	mode := pathmode
 	switch {
 	case strings.HasSuffix(pathmode, "dir"):
@@ -108,8 +109,13 @@ func Properties(pathmode string) (prop Property, err error) {
 		suid = parts[0]
 		sgid = parts[1]
 	} else {
-		err = ErrNotPathMode
-		return
+		if len(mode) != 9 {
+			err = ErrNotPathMode
+			return
+		}
+		perm = calcPerm(mode)
+		return Property{nil, nil, perm}, nil
+
 	}
 	switch pathmode {
 	case "webdir":
@@ -154,6 +160,18 @@ func Properties(pathmode string) (prop Property, err error) {
 	return Property{uid, gid, perm}, err
 }
 
+func calcPerm(nine string) os.FileMode {
+	var perm os.FileMode = 0
+	for _, c := range nine {
+		perm *= 2
+		if c == '-' {
+			continue
+		}
+		perm++
+	}
+	return perm
+}
+
 // SetPathMode assigns the ownership and access modes to a path
 func SetPathmode(pth string, pathmode string) (err error) {
 	if pathmode == "" {
@@ -161,9 +179,11 @@ func SetPathmode(pth string, pathmode string) (err error) {
 	}
 	p, err := Properties(pathmode)
 	if err == nil && runtime.GOOS != "windows" {
-		gi, _ := strconv.Atoi(p.GID.Gid)
-		ui, _ := strconv.Atoi(p.UID.Uid)
-		_ = os.Chown(pth, ui, gi)
+		if p.GID != nil && p.UID != nil {
+			gi, _ := strconv.Atoi(p.GID.Gid)
+			ui, _ := strconv.Atoi(p.UID.Uid)
+			_ = os.Chown(pth, ui, gi)
+		}
 		_ = os.Chmod(pth, p.PERM.Perm())
 	}
 	return err
