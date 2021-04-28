@@ -2,7 +2,6 @@ package client
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 
 	qfnmatch "brocade.be/base/fnmatch"
@@ -45,8 +44,8 @@ func Pack(cwd string, files []string, release string, qpattern string, force boo
 		}
 		done[file] = true
 		place := file
-		if !path.IsAbs(file) {
-			place = path.Join(cwd, place)
+		if !filepath.IsAbs(file) {
+			place = filepath.Join(cwd, place)
 		}
 		dir := filepath.Dir(place)
 		d := new(Dir)

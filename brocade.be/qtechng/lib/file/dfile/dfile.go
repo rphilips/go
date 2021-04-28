@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	qerror "brocade.be/qtechng/lib/error"
@@ -78,8 +78,8 @@ func (df *DFile) Parse(blob []byte, decomment bool) (preamble string, objs []qob
 	}
 	if len(pardoc) == 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') {
 		pardoc["_"] = ""
-		x := path.Join(strings.SplitN(qregistry.Registry["qtechng-support-project"], "/", -1)[1:]...)
-		name := path.Join(qregistry.Registry["qtechng-work-dir"], x, "pardoc.json")
+		x := filepath.Join(strings.SplitN(qregistry.Registry["qtechng-support-project"], "/", -1)[1:]...)
+		name := filepath.Join(qregistry.Registry["qtechng-work-dir"], x, "pardoc.json")
 		data, e := os.ReadFile(name)
 		if e == nil {
 			json.Unmarshal(data, &pardoc)
@@ -252,8 +252,8 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	}
 
 	if len(pardoc) != 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') {
-		x := path.Join(strings.SplitN(qregistry.Registry["qtechng-support-project"], "/", -1)[1:]...)
-		name := path.Join(qregistry.Registry["qtechng-work-dir"], x, "pardoc.json")
+		x := filepath.Join(strings.SplitN(qregistry.Registry["qtechng-support-project"], "/", -1)[1:]...)
+		name := filepath.Join(qregistry.Registry["qtechng-work-dir"], x, "pardoc.json")
 		data, e := os.ReadFile(name)
 		if e == nil {
 			json.Unmarshal(data, &pardoc)

@@ -18,9 +18,7 @@ func NMap(n int, parmax int, fn func(m int) (r interface{}, err error)) (resultl
 	resultlist = make([]interface{}, n)
 	errorlist = make([]error, n)
 	if n == 1 {
-		r, err := fn(0)
-		resultlist[0] = r
-		errorlist[0] = err
+		resultlist[0], errorlist[0] = fn(0)
 		return
 	}
 	if parmax < 1 {

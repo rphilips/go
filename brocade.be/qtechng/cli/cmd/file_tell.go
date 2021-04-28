@@ -70,8 +70,8 @@ func fileTell(cmd *cobra.Command, args []string) error {
 
 	fname, _ := qfs.AbsPath(locfil.Place)
 	relpath, _ := filepath.Rel(Fcwd, fname)
-	dirname := path.Dir(fname)
-	basename := path.Base(fname)
+	dirname := filepath.Dir(fname)
+	basename := filepath.Base(fname)
 	result := make(map[string]string)
 	result["ext"] = path.Ext(args[0])
 	result["basename"] = basename

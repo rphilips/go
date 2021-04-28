@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -40,7 +39,7 @@ func (fs QFs) RemoveAll(fname string) error {
 	}
 	rp, err := fs.RealPath(fname)
 	dirname := filepath.Dir(rp)
-	parent := path.Dir(dirname)
+	parent := filepath.Dir(dirname)
 	if parent == dirname || parent == "/" || parent == "." {
 		return errors.New("Cannot delete a root")
 	}
@@ -55,7 +54,7 @@ func (fs QFs) Waste(fname string) (change bool, err error) {
 	if fs.ReadOnly {
 		return false, errors.New("Filesystem is readonly")
 	}
-	dir := path.Dir(fname)
+	dir := filepath.Dir(fname)
 
 	e := fs.Remove(fname)
 
@@ -75,7 +74,7 @@ func (fs QFs) Waste(fname string) (change bool, err error) {
 		if len(files) != 0 || erro != nil {
 			break
 		}
-		parent := path.Dir(dir)
+		parent := filepath.Dir(dir)
 		e := fs.Remove(dir)
 		if e != nil {
 			break
@@ -259,7 +258,7 @@ func (fs QFs) Glob(dir string, patterns []string, matchonlybasename bool) (match
 	for _, fname := range all {
 		name := fname
 		if matchonlybasename {
-			name = path.Base(fname)
+			name = filepath.Base(fname)
 		}
 		for _, pattern := range patterns {
 			if qfnmatch.Match(pattern, name) {

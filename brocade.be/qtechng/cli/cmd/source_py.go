@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -90,7 +89,7 @@ func sourcePy(cmd *cobra.Command, args []string) error {
 
 	parts := strings.SplitN(pyscript, "/", -1)
 	parts[0] = tmpdir
-	script := path.Join(parts...)
+	script := filepath.Join(parts...)
 	args[0] = script
 	return filePy(cmd, args)
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -49,7 +48,7 @@ func dirTell(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		dirname := args[0]
 		if !filepath.IsAbs(dirname) {
-			dirname = path.Join(Fcwd, dirname)
+			dirname = filepath.Join(Fcwd, dirname)
 		}
 	}
 	dir := new(qclient.Dir)

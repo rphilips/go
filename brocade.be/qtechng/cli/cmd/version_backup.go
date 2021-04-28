@@ -15,7 +15,7 @@ import (
 )
 
 var versionBackupCmd = &cobra.Command{
-	Use:   "Backup version",
+	Use:   "backup version",
 	Short: "Backup of version",
 	Long: `Backup is in tar (PAX) format. Meta data is attached as well
 	The result is always brocade-version.tar in the current directory.

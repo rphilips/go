@@ -10,6 +10,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var versionSetCmd = &cobra.Command{
@@ -47,7 +48,7 @@ func versionSet(cmd *cobra.Command, args []string) error {
 	br := qregistry.Registry["brocade-release"]
 	br = strings.TrimRight(br, " -_betaBETA")
 
-	lowest := qserver.Lowest(version, br)
+	lowest := qutil.LowestVersion(version, br)
 	if lowest == version {
 		err := &qerror.QError{
 			Ref: []string{"set.version.lowest"},

@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"time"
@@ -156,7 +155,7 @@ func (dir *Dir) Load() {
 	if len(dir.Files) != 0 {
 		return
 	}
-	qjson := path.Join(dir.Dir, ".qtechng")
+	qjson := filepath.Join(dir.Dir, ".qtechng")
 	blob, err := os.ReadFile(qjson)
 	if err != nil {
 		dir.Files = nil
@@ -179,7 +178,7 @@ func (dir *Dir) Load() {
 		change = true
 	}
 	if change {
-		qjson := path.Join(dir.Dir, ".qtechng")
+		qjson := filepath.Join(dir.Dir, ".qtechng")
 		qfs.Store(qjson, files, "qtech")
 	}
 	dir.Files = files
@@ -211,14 +210,14 @@ func (dir *Dir) Add(locfils ...LocalFile) {
 		if base == "" || base == ".qtechng" {
 			continue
 		}
-		if !qfs.IsFile(path.Join(dir.Dir, base)) {
+		if !qfs.IsFile(filepath.Join(dir.Dir, base)) {
 			continue
 		}
 		dir.Files[base] = locfil
 		ok = true
 	}
 	if ok {
-		qjson := path.Join(dir.Dir, ".qtechng")
+		qjson := filepath.Join(dir.Dir, ".qtechng")
 		qfs.Store(qjson, dir.Files, "qtech")
 		dir.Files = nil
 		dir.Load()
@@ -245,7 +244,7 @@ func (dir *Dir) Del(locfils ...LocalFile) {
 		}
 	}
 	if changed {
-		qjson := path.Join(dir.Dir, ".qtechng")
+		qjson := filepath.Join(dir.Dir, ".qtechng")
 		dir.Files = nil
 		qfs.Store(qjson, dir, "qtech")
 		dir.Load()
@@ -294,6 +293,7 @@ func (dir *Dir) Repository() map[string]map[string][]LocalFile {
 // Find searches/reduces an argument list
 func Find(cwd string, files []string, release string, recurse bool, qpattern []string, onlychanged bool) (result []*LocalFile, err error) {
 	find := false
+
 	if len(files) == 0 {
 		find = true
 		files, err = qfs.Find(cwd, nil, recurse, true, false)
@@ -306,6 +306,24 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 			return nil, err
 		}
 	}
+	argums := make([]string, 0)
+
+	for _, f := range files {
+		f := qutil.AbsPath(f, cwd)
+		if !qfs.IsDir(f) {
+			argums = append(argums, f)
+			continue
+		}
+		if !recurse {
+			continue
+		}
+		a, _ := qfs.Find(f, nil, true, true, false)
+		for _, p := range a {
+			argums = append(argums, qutil.AbsPath(p, f))
+		}
+	}
+	files = argums
+
 	done := make(map[string]bool)
 	qpaths := make(map[string]string)
 
@@ -334,6 +352,9 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 		}
 		plocfil := d.Get(base)
 		if plocfil == nil {
+			if base == ".qtechng" {
+				continue
+			}
 			if onlychanged {
 				continue
 			}

@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,8 +20,8 @@ type Profile struct {
 }
 
 func FileCreate(fname string, hint string) error {
-	profiledir := path.Join(qregistry.Registry["qtechng-support-dir"], "profiles")
-	profilefile := path.Join(profiledir, "profiles.json")
+	profiledir := filepath.Join(qregistry.Registry["qtechng-support-dir"], "profiles")
+	profilefile := filepath.Join(profiledir, "profiles.json")
 
 	blob, err := qfs.Fetch(profilefile)
 	if err != nil {
@@ -33,7 +34,7 @@ func FileCreate(fname string, hint string) error {
 		return err
 	}
 
-	basename := path.Base(fname)
+	basename := filepath.Base(fname)
 	model := ""
 
 	for _, tripel := range profiles {
@@ -54,7 +55,7 @@ func FileCreate(fname string, hint string) error {
 		return err
 	}
 
-	blob, err = qfs.Fetch(path.Join(qregistry.Registry["qtechng-support-dir"], "profiles", model))
+	blob, err = qfs.Fetch(filepath.Join(qregistry.Registry["qtechng-support-dir"], "profiles", model))
 
 	if err != nil {
 		return err

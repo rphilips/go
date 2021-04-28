@@ -3,7 +3,7 @@ package source
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -595,7 +595,7 @@ func TestSourceObj01(t *testing.T) {
 	release, _ := makeRelease(r, proj)
 	r = release.String()
 
-	testfile := path.Join(qregistry.Registry["qtechng-test-dir"], "cat.d")
+	testfile := filepath.Join(qregistry.Registry["qtechng-test-dir"], "cat.d")
 	data, _ := os.ReadFile(testfile)
 
 	p := proj + "/acat.d"

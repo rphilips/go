@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -67,7 +66,7 @@ func versionPopulate(cmd *cobra.Command, args []string) error {
 	for _, arg := range argums {
 		dirname := filepath.Dir(arg)
 		for _, p := range []string{".qtech", ".qtechng", ".marked"} {
-			qfs.Rmpath(path.Join(dirname, p))
+			qfs.Rmpath(filepath.Join(dirname, p))
 		}
 		rel, _ := filepath.Rel(Fcwd, dirname)
 		rel = filepath.Clean(rel)

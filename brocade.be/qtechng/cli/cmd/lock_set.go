@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -64,8 +64,8 @@ func checkLock(lock string, until string) (locker string) {
 		h = h.Add(time.Second * time.Duration(ioffset))
 		until = h.Format(time.RFC3339)
 	}
-	locker = path.Join(lockdir, "brocade_"+lock)
-	untilfile := path.Join(locker, "until")
+	locker = filepath.Join(lockdir, "brocade_"+lock)
+	untilfile := filepath.Join(locker, "until")
 	h := time.Now()
 	now := h.Format(time.RFC3339)
 	b, err := os.ReadFile(untilfile)

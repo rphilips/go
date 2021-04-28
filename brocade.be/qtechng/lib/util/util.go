@@ -10,9 +10,9 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -633,7 +633,7 @@ func GetPy(pyscript string) string {
 		return ""
 	}
 	if !filepath.IsAbs(pyscript) {
-		pyscript, _ = qfs.AbsPath(path.Join(cwd, pyscript))
+		pyscript, _ = qfs.AbsPath(filepath.Join(cwd, pyscript))
 	}
 	reader, err := os.Open(pyscript)
 	if err != nil {
@@ -672,8 +672,8 @@ func GetPy(pyscript string) string {
 			return ""
 		}
 		subs = subs[:len(subs)-1]
-		fname := path.Join(subs...)
-		fname = path.Join(fname, "brocade.json")
+		fname := filepath.Join(subs...)
+		fname = filepath.Join(fname, "brocade.json")
 		blob, e := qfs.Fetch("brocade.json")
 		if e != nil {
 			continue
@@ -962,6 +962,11 @@ func FileURL(fname string, lineno int) string {
 		return ""
 	}
 
+	fname, _ = filepath.Abs(fname)
+	fname = filepath.ToSlash(fname)
+	if runtime.GOOS == "windows" {
+		fname = "/" + fname
+	}
 	x := ""
 	if lineno > 0 {
 		x = strconv.Itoa(lineno)
@@ -1011,8 +1016,8 @@ func EditList(list string, transported bool, qpaths []string) {
 		return
 	}
 
-	listname := path.Join(supportdir, "data", list+".lst")
-	qfs.Mkdir(path.Dir(listname), "process")
+	listname := filepath.Join(supportdir, "data", list+".lst")
+	qfs.Mkdir(filepath.Dir(listname), "process")
 	qfs.Store(listname, strings.Join(qpaths, "\n"), "process")
 }
 
@@ -1020,9 +1025,22 @@ func AbsPath(name string, cwd string) string {
 	if filepath.IsAbs(name) {
 		return name
 	}
-	aname, e := qfs.AbsPath(path.Join(cwd, name))
+	aname, e := qfs.AbsPath(filepath.Join(cwd, name))
 	if e != nil {
 		return name
 	}
 	return aname
+}
+
+// LowestVersion returns lowest release
+func LowestVersion(r1 string, r2 string) string {
+	if r1 == r2 {
+		return r1
+	}
+	s1, _ := strconv.ParseFloat(r1, 64)
+	s2, _ := strconv.ParseFloat(r2, 64)
+	if s1 < s2 {
+		return r1
+	}
+	return r2
 }

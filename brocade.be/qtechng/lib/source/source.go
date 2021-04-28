@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -553,7 +552,7 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 	projects := make([]string, 0)
 	prev := ""
 	for i, config := range configs {
-		current := qutil.Canon(path.Dir(config))
+		current := qutil.Canon(filepath.Dir(config))
 		if i != 0 && strings.HasPrefix(current, prev+"/") {
 			continue
 		}
@@ -569,7 +568,7 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 	// create sources
 
 	fdata := func(p string) ([]byte, error) {
-		fname := path.Join(basedir, filepath.FromSlash(p[1:]))
+		fname := filepath.Join(basedir, filepath.FromSlash(p[1:]))
 		blob, err := os.ReadFile(fname)
 		if err != nil {
 			blob = nil

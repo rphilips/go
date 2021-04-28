@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -119,7 +119,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 
 		src := files[n]
 		// make a copy of the file
-		basename := path.Base(src)
+		basename := filepath.Base(src)
 		tmpfile, err := qfs.TempFile("", "fs-rstrip."+basename+".")
 		if err != nil {
 			return false, err

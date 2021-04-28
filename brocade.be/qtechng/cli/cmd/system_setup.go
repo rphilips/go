@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 
@@ -22,7 +21,7 @@ var systemSetupCmd = &cobra.Command{
 	Long: `Setup the registry on your workstation.
 
 The only argument is your user identification on dev.anet.be`,
-	Args:    cobra.MinimumNArgs(1),
+	Args:    cobra.MinimumNArgs(0),
 	Example: "  qtechng system setup rphilips\n  qtechng system setup rphilips /home/rphilips/.ssh/id_rsa",
 	RunE:    systemSetup,
 	Annotations: map[string]string{
@@ -42,13 +41,18 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	}
 
 	xuser := qregistry.Registry["qtechng-user"]
-	user := args[0]
-	if user == "" || (xuser != "" && xuser != user) {
-		log.Fatalf("Identification given (`%s`) does not match existing value(`%s`)", user, xuser)
+	user := ""
+	if len(args) != 0 {
+		user = args[0]
+	}
+	if user == "" {
+		user = xuser
 	}
 
 	qregistry.SetRegistry("qtechng-type", "W")
-	qregistry.SetRegistry("qtechng-user", user)
+	if user != "" {
+		qregistry.SetRegistry("qtechng-user", user)
+	}
 	qregistry.SetRegistry("qtechng-test", "test-entry")
 	qregistry.SetRegistry("qtechng-max-parallel", "4")
 	qregistry.SetRegistry("os", runtime.GOOS)
@@ -79,7 +83,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	if qregistry.Registry["scratch-dir"] == "" || !qfs.IsDir(qregistry.Registry["scratch-dir"]) {
 		scratch := os.TempDir()
 		if scratch == "" || !qfs.IsDir(scratch) {
-			scratch := path.Join(homedir, "brocade", "tmp")
+			scratch := filepath.Join(homedir, "brocade", "tmp")
 			os.MkdirAll(scratch, 0700)
 		}
 		qregistry.SetRegistry("scratch-dir", scratch)
@@ -88,7 +92,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// several
 	qregistry.InitRegistry("qtechng-server", "dev.anet.be:22")
 	if qregistry.Registry["qtechng-support-dir"] == "" {
-		support := path.Join(homedir, "brocade", "support")
+		support := filepath.Join(homedir, "brocade", "support")
 		os.MkdirAll(support, 0700)
 		qregistry.SetRegistry("qtechng-support-dir", support)
 	}
@@ -97,7 +101,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	qregistry.InitRegistry("qtechng-version", "0.00")
 
 	if qregistry.Registry["qtechng-work-dir"] == "" {
-		work := path.Join(homedir, "brocade", "source", "data")
+		work := filepath.Join(homedir, "brocade", "source", "data")
 		os.MkdirAll(work, 0700)
 		qregistry.SetRegistry("qtechng-work-dir", work)
 	}

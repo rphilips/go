@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>{{ .Head }}</head>
+
+<body>
+
+    <form class="qtechng-form-base">
+        <div class="qtechng-form-base-heading">Difference between versions</div>
+        <input id="name" type="hidden" value='{{index .Vars "name"}}' />
+        <label class="input-label-primary" for="qdir"><span>QPath </span><input id="qpath" type="hidden" value='{{index .Vars "qpath"}}' /><code>{{index .Vars "qpath"}}</code></label>
+        <label class="input-label-primary" for="version"><span>Version </span><input id="version" type="hidden" value='{{index .Vars "version"}}' /><code>{{index .Vars "version"}}</code></label>
+        <label class="input-label-primary" for="cversion"><span>Compare with </span><select id="cversion" name="cversion" class="select-field">
+            {{.VarsS.select}}
+        </select> 
+        </label>
+        <label class="input-label-primary">
+            <span>&#160;</span>
+            <input type="submit" value="Submit" onclick="golangfunc('')" />
+            &#160;
+            <input type="submit" value="Quit" onclick="golangfunc('stop')" />
+        </label>
+    </form>
+</body>
+
+</html>

@@ -18,7 +18,6 @@ var fileTouchCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(0),
 	Example: `  qtechng file touch application/bcawedit.m install.py cwd=../catalografie`,
 	RunE:    fileTouch,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
@@ -33,6 +32,7 @@ func init() {
 }
 
 func fileTouch(cmd *cobra.Command, args []string) error {
+
 	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
 
 	h := time.Now().Local()

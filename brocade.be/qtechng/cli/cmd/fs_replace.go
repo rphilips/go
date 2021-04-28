@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -173,7 +173,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 		}
 		in.Close()
 		// make a copy of the file
-		basename := path.Base(src)
+		basename := filepath.Base(src)
 		tmpfile, err := qfs.TempFile("", "fs-replace."+basename+".")
 		if err != nil {
 			return false, err

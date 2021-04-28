@@ -11,6 +11,7 @@ import (
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
 	qsync "brocade.be/qtechng/lib/sync"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 // Fnextversion indicates the next version
@@ -61,7 +62,7 @@ func versionClose(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	lowest := qserver.Lowest(nextversion, br)
+	lowest := qutil.LowestVersion(nextversion, br)
 	if lowest == nextversion {
 		err = &qerror.QError{
 			Ref: []string{"close.version.lowest"},

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -43,7 +43,7 @@ func lockDelete(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	locker := path.Join(lockdir, "brocade_"+lock)
+	locker := filepath.Join(lockdir, "brocade_"+lock)
 	rand.Seed(time.Now().UnixNano())
 	rnd := strconv.FormatInt(rand.Int63n(100000000), 10)
 	tempdir := locker + "." + rnd

@@ -191,10 +191,16 @@ func (brob *Brob) Format() string {
 	lines = append(lines, brob.ID+":")
 	for _, field := range brob.Body {
 		value := qutil.Embrace(field.value)
-		lines = append(lines, "    $"+field.key+": "+value)
+		if value != "" {
+			value = " " + value
+		}
+		lines = append(lines, "    $"+field.key+":"+value)
 		for _, duo := range field.attribs {
 			value := qutil.Embrace(duo.value)
-			lines = append(lines, "        $$"+duo.key+": "+value)
+			if value != "" {
+				value = " " + value
+			}
+			lines = append(lines, "        $$"+duo.key+":"+value)
 		}
 	}
 	return strings.Join(lines, "\n")

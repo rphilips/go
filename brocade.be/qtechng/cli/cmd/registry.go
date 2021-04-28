@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -52,7 +51,7 @@ func testexe(value string) string {
 	if runtime.GOOS == "windows" && !strings.HasSuffix(value, ".exe") {
 		return "should end on `.exe`"
 	}
-	basename := path.Base(value)
+	basename := filepath.Base(value)
 	if value != basename {
 		return "give only the basename"
 	}
@@ -73,9 +72,9 @@ func isdir(value string) string {
 
 func dirname(dir string) string {
 	dir = filepath.FromSlash(dir)
-	if !path.IsAbs(dir) {
+	if !filepath.IsAbs(dir) {
 		home, _ := os.UserHomeDir()
-		dir = path.Join(home, dir)
+		dir = filepath.Join(home, dir)
 	}
 	return dir
 }

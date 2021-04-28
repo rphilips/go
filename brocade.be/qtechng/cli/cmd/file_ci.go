@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -70,7 +70,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 	for _, tr := range Fcargo.Transports {
 		locfil := tr.LocFile
 		place := locfil.Place
-		dir := path.Dir(place)
+		dir := filepath.Dir(place)
 		_, ok := dirs[dir]
 		if !ok {
 			dirs[dir] = make([]*qclient.LocalFile, 0)

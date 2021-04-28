@@ -7,7 +7,8 @@ import (
 	"html/template"
 	"log"
 	"net/url"
-	"path"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	qfs "brocade.be/base/fs"
@@ -75,6 +76,15 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 	switch Fmenu {
 	case "property":
 		width = 680
+	case "diff":
+		if len(args) == 0 {
+			return nil
+		}
+		myfile := qutil.AbsPath(args[0], Fcwd)
+		if !qfs.IsFile(myfile) {
+			return nil
+		}
+		args = []string{myfile}
 	}
 
 	ui, err := lorca.New("", "", width, height)
@@ -96,6 +106,22 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 				loadVars(Fmenu, &guiFiller)
 				// things todo before menu is loaded
 				switch Fmenu {
+				case "touch":
+					sout := handleTouch(Fcwd, args)
+					bx, _ := json.Marshal(sout)
+					sx := string(bx)
+					st := ""
+					if len(sx) > 2 {
+						st = sx[:2]
+					}
+					k := strings.IndexAny(st, "[{")
+					if k == 1 {
+						guiFiller.Vars["jsondisplay"] = sx
+						guiFiller.Vars["yamldisplay"] = ""
+					} else {
+						guiFiller.Vars["jsondisplay"] = ""
+						guiFiller.Vars["yamldisplay"] = sx
+					}
 				case "checkin":
 					sout := handleCheckin(Fcwd, args)
 					bx, _ := json.Marshal(sout)
@@ -145,7 +171,28 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 					guiFiller.VarsS = make(map[string]template.HTML)
 					guiFiller.VarsH["nofiles"] = len(args) == 0
 					guiFiller.VarsS["select"] = template.HTML(hintoptions(Fcwd))
-
+				case "diff":
+					mydir := Fcwd
+					myfile := args[0]
+					argums := []string{
+						"file",
+						"tell",
+						myfile,
+						"--cwd=" + mydir,
+					}
+					out, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
+					m := make(map[string]string)
+					json.Unmarshal([]byte(out), &m)
+					qpath := m["qpath"]
+					version := m["version"]
+					if version == "" {
+						version = "0.00"
+					}
+					guiFiller.Vars["qpath"] = qpath
+					guiFiller.Vars["version"] = version
+					guiFiller.Vars["name"] = myfile
+					guiFiller.VarsS = make(map[string]template.HTML)
+					guiFiller.VarsS["select"] = template.HTML(diffoptions(qpath, version))
 				}
 
 				t, err := template.ParseFS(guifs, "templates/"+Fmenu+".html")
@@ -180,6 +227,17 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
 						ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
 					}
+				case "touch":
+					sx := guiFiller.Vars["jsondisplay"]
+					if sx != "" {
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
+					}
+					sx = guiFiller.Vars["yamldisplay"]
+					if sx != "" {
+						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
+					}
 				}
 
 				switch Fmenu {
@@ -193,6 +251,11 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 					})
 
 				case "checkin":
+					ui.Bind("golangfunc", func(indicator string) {
+						menulistener <- "stop"
+					})
+
+				case "touch":
 					ui.Bind("golangfunc", func(indicator string) {
 						menulistener <- "stop"
 					})
@@ -233,6 +296,15 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						menulistener <- handleNew(ui, &guiFiller, Fcwd, args)
 					})
 
+				case "diff":
+					ui.Bind("golangfunc", func(indicator string) {
+						if indicator == "stop" {
+							menulistener <- "stop"
+							return
+						}
+						menulistener <- handleDiff(ui, &guiFiller, Fcwd)
+					})
+
 				}
 			}
 			prevMenu = Fmenu
@@ -263,7 +335,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 func loadVars(menu string, guiFiller *GuiFiller) {
 	vars := make(map[string]string)
 	varsH := make(map[string]bool)
-	fname := path.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
+	fname := filepath.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
 	data, err := qfs.Fetch(fname)
 	if err == nil {
 		json.Unmarshal(data, &vars)
@@ -307,7 +379,7 @@ func loadVars(menu string, guiFiller *GuiFiller) {
 }
 
 func storeVars(menu string, guiFiller GuiFiller) {
-	fname := path.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
+	fname := filepath.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
 	b, err := json.Marshal(guiFiller.Vars)
 	if err != nil {
 		return
@@ -319,6 +391,20 @@ func handleCheckin(cwd string, args []string) string {
 	argums := []string{
 		"file",
 		"ci",
+		"--cwd=" + cwd,
+		"--recurse",
+	}
+	if len(args) != 0 {
+		argums = append(argums, args...)
+	}
+	sout, _, _ := qutil.QtechNG(argums, "$..file", true, cwd)
+	return sout
+}
+
+func handleTouch(cwd string, args []string) string {
+	argums := []string{
+		"file",
+		"touch",
 		"--cwd=" + cwd,
 		"--recurse",
 	}
@@ -538,12 +624,80 @@ func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
 	return "stop"
 }
 
+func handleDiff(ui lorca.UI, guiFiller *GuiFiller, cwd string) string {
+
+	diff := qregistry.Registry["qtechng-diff-exe"]
+
+	if diff == "" {
+		return "stop"
+	}
+
+	cversion := ui.Eval(`document.getElementById('cversion').value`).String()
+	file := ui.Eval(`document.getElementById('name').value`).String()
+	qpath := ui.Eval(`document.getElementById('qpath').value`).String()
+	version := ui.Eval(`document.getElementById('version').value`).String()
+
+	targetdir := filepath.Dir(file)
+	source := file
+	target := file
+	if version == cversion {
+		source = file + ".ori"
+		target = file
+		qfs.CopyFile(target, source, "qtech", false)
+	} else {
+		source = file
+		targetdir = filepath.Join(filepath.Dir(source), cversion)
+		target = filepath.Join(targetdir, filepath.Base(file))
+	}
+	args := []string{
+		"source",
+		"co",
+		qpath,
+		"--version=" + cversion,
+	}
+
+	qutil.QtechNG(args, "", false, targetdir)
+	if !qfs.IsFile(source) {
+		return "stop"
+	}
+	if !qfs.IsFile(target) {
+		return "stop"
+	}
+	exe := make([]string, 0)
+
+	json.Unmarshal([]byte(diff), &exe)
+
+	if len(exe) < 2 {
+		return "stop"
+	}
+
+	pexe, _ := exec.LookPath(exe[0])
+	argums := make([]string, 0)
+	for _, arg := range exe {
+		arg = strings.ReplaceAll(arg, "{source}", source)
+		arg = strings.ReplaceAll(arg, "{target}", target)
+		argums = append(argums, arg)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Cmd{
+		Path:   pexe,
+		Args:   argums,
+		Dir:    targetdir,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	cmd.Run()
+	return "stop"
+}
+
 func hintoptions(mydir string) string {
 	supportdir := qregistry.Registry["qtechng-support-dir"]
 	if supportdir == "" {
 		return ""
 	}
-	profiles := path.Join(supportdir, "profiles", "profiles.json")
+	profiles := filepath.Join(supportdir, "profiles", "profiles.json")
 	data, err := qfs.Fetch(profiles)
 	if err != nil {
 		return ""
@@ -564,7 +718,7 @@ func hintoptions(mydir string) string {
 		if hint == "" {
 			hint = "*"
 		}
-		fname := path.Join(mydir, comment)
+		fname := filepath.Join(mydir, comment)
 
 		if qfs.IsFile(fname) {
 			continue
@@ -574,4 +728,26 @@ func hintoptions(mydir string) string {
 	}
 	return strings.Join(options, "\n")
 
+}
+
+func diffoptions(myfile string, version string) string {
+	prevs := qregistry.Registry["qtechng-releases"]
+	prevs = strings.ReplaceAll(prevs, ",", " ")
+	prevs = strings.ReplaceAll(prevs, ";", " ")
+	prevs = strings.ReplaceAll(prevs, "\t", " ")
+	options := make([]string, 0)
+	for _, v := range strings.SplitN(prevs, " ", -1) {
+		if v == "" {
+			continue
+		}
+		if v == version {
+			break
+		}
+		options = append(options, "<option value='"+v+"'>"+v+"</option>")
+	}
+	options = append(options, "<option selected value='"+version+"'>Current in repository</option>")
+	for i, j := 0, len(options)-1; i < j; i, j = i+1, j-1 {
+		options[i], options[j] = options[j], options[i]
+	}
+	return strings.Join(options, "\n")
 }

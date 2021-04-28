@@ -367,7 +367,7 @@ func storeTransport() ([]string, []storer, []error) {
 		}
 		locfil.Place = place
 		Fcargo.Transports[i].LocFile = locfil
-		dir := path.Dir(place)
+		dir := filepath.Dir(place)
 		islice, ok := dirs[dir]
 		if !ok {
 			islice = make([]int, 0)
@@ -386,11 +386,15 @@ func storeTransport() ([]string, []storer, []error) {
 		errlist := make([]error, 0)
 		dir := idirs[n]
 		islice := dirs[dir]
-		qfs.Mkdir(dir, "process")
+		e := qfs.Mkdir(dir, "process")
 		if !qfs.IsDir(dir) {
+			extra := ""
+			if e != nil {
+				extra = ": " + e.Error()
+			}
 			err := qerror.QError{
 				Ref: []string{"co.dir"},
-				Msg: []string{"Cannot create `" + dir + "`"},
+				Msg: []string{"Cannot create `" + dir + "`" + extra},
 			}
 			return nil, &err
 		}
@@ -406,7 +410,7 @@ func storeTransport() ([]string, []storer, []error) {
 					Ref:  []string{"co.store"},
 					Type: "Error",
 					File: place,
-					Msg:  []string{"Cannot store file: `" + place + "`"},
+					Msg:  []string{"Cannot store file: `" + place + "`" + ":" + e.Error()},
 				}
 				errlist = append(errlist, err)
 				continue
@@ -443,6 +447,9 @@ func storeTransport() ([]string, []storer, []error) {
 
 	i := -1
 	for _, locfils := range resultlist {
+		if locfils == nil {
+			continue
+		}
 		for _, locfil := range locfils.([]qclient.LocalFile) {
 			i++
 			qpaths[i] = locfil.QPath

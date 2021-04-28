@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -73,8 +72,8 @@ func fileLint(cmd *cobra.Command, args []string) error {
 				files[i] = fname
 
 			} else {
-				files[i] = path.Join(Fcwd, fname)
-				files[i] = path.Join(Fcwd, fname)
+				files[i] = filepath.Join(Fcwd, fname)
+				files[i] = filepath.Join(Fcwd, fname)
 			}
 		}
 	}
@@ -119,7 +118,7 @@ func fileLint(cmd *cobra.Command, args []string) error {
 			about := qutil.About(blob)
 			aboutline := qutil.AboutLine(about)
 			if ext == ".m" && len(aboutline) < 2 {
-				basename := path.Base(refname)
+				basename := filepath.Base(refname)
 				if strings.HasPrefix(basename, "z") || strings.HasPrefix(basename, "w") {
 					aboutline = "xx"
 				}

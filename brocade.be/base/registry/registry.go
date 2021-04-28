@@ -18,12 +18,23 @@ func init() {
 	if registryFile == "" {
 		log.Fatal("BROCADE_REGISTRY environment variable is not defined")
 	}
-	b, err := os.ReadFile(registryFile)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)\n", registryFile), err)
+	info, err := os.Stat(registryFile)
+	if err == nil && info.IsDir() {
+		log.Fatal("BROCADE_REGISTRY points to a directory. It should be a file.")
+	}
+	b := make([]byte, 0)
+	if !os.IsNotExist(err) {
+		b, err = os.ReadFile(registryFile)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)\n", registryFile), err)
+		}
 	}
 	if len(b) == 0 {
 		b = []byte("{}")
+		err = fatomic.WriteFile(registryFile, bytes.NewReader(b))
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Cannot initialise file '%s' (BROCADE_REGISTRY environment variable)\n", registryFile), err)
+		}
 	}
 	err = json.Unmarshal(b, &Registry)
 	if err != nil {

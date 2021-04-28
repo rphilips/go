@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"os/user"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -91,7 +90,9 @@ type Property struct {
 //    - uid (*user.User)
 //    - gid / access for a pathmode according to the registry
 func Properties(pathmode string) (prop Property, err error) {
-
+	if runtime.GOOS == "windows" {
+		return prop, nil
+	}
 	mode := pathmode
 	switch {
 	case strings.HasSuffix(pathmode, "dir"):
@@ -174,11 +175,14 @@ func calcPerm(nine string) os.FileMode {
 
 // SetPathMode assigns the ownership and access modes to a path
 func SetPathmode(pth string, pathmode string) (err error) {
+	if runtime.GOOS == "windows" {
+		return nil
+	}
 	if pathmode == "" {
 		return ErrNotPathMode
 	}
 	p, err := Properties(pathmode)
-	if err == nil && runtime.GOOS != "windows" {
+	if err == nil {
 		if p.GID != nil && p.UID != nil {
 			gi, _ := strconv.Atoi(p.GID.Gid)
 			ui, _ := strconv.Atoi(p.UID.Uid)
@@ -258,11 +262,14 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	if !strings.HasSuffix(pathmode, "dir") {
 		pathmode = pathmode + "dir"
 	}
-	perm, err := Properties(pathmode)
-	if err != nil {
-		return
+	prm := fs.FileMode(0770)
+	if runtime.GOOS != "windows" {
+		perm, e := Properties(pathmode)
+		if e != nil {
+			return e
+		}
+		prm = perm.PERM
 	}
-	prm := perm.PERM
 	err = os.Mkdir(dirname, prm)
 	if err == nil {
 		return SetPathmode(dirname, pathmode)
@@ -270,7 +277,7 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	if os.IsExist(err) {
 		return nil
 	}
-	parent := path.Dir(dirname)
+	parent := filepath.Dir(dirname)
 	if parent == "" || dirname == parent {
 		return err
 	}
@@ -283,7 +290,7 @@ func Mkdir(dirname string, pathmode string) (err error) {
 func Rmpath(dirname string) (err error) {
 	dirname, err = AbsPath(dirname)
 	if err == nil {
-		parent := path.Dir(dirname)
+		parent := filepath.Dir(dirname)
 		if parent == dirname {
 			err = errors.New("Cannot delete a root")
 		} else {
@@ -673,7 +680,7 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 		isdir := info.IsDir()
 		matched := len(patterns) == 0
 		for _, pattern := range patterns {
-			matched, err = path.Match(pattern, n)
+			matched, err = filepath.Match(pattern, n)
 			if err != nil {
 				return m, err
 			}
@@ -683,7 +690,7 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 		}
 		if matched {
 			if (files && !isdir) || (dirs && isdir) {
-				m = append(m, path.Join(root, dir, n))
+				m = append(m, filepath.Join(root, dir, n))
 			}
 		}
 		if isdir && recurse {
@@ -701,7 +708,7 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 }
 
 // hasMeta reports whether path contains any of the magic characters
-// recognized by path.Match.
+// recognized by filepath.Match.
 func hasMeta(path string) bool {
 	for i := 0; i < len(path); i++ {
 		c := path[i]
@@ -718,7 +725,7 @@ func hasMeta(path string) bool {
 func Find(root string, patterns []string, recurse bool, files bool, dirs bool) (matches []string, err error) {
 	fsys := os.DirFS(root)
 	for _, pattern := range patterns {
-		if _, err := path.Match(pattern, ""); err != nil {
+		if _, err := filepath.Match(pattern, ""); err != nil {
 			return nil, err
 		}
 	}

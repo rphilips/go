@@ -3,11 +3,9 @@ package server
 import (
 	"log"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +15,7 @@ import (
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
+	qutil "brocade.be/qtechng/lib/util"
 	qvfs "brocade.be/qtechng/lib/vfs"
 )
 
@@ -62,19 +61,6 @@ func (Release) New(r string, readonly bool) (release *Release, err error) {
 		Msg:     []string{"Cannot create a release"},
 	}
 	return
-}
-
-// Lowest returns lowest release
-func Lowest(r1 string, r2 string) string {
-	if r1 == r2 {
-		return r1
-	}
-	s1, _ := strconv.ParseFloat(r1, 64)
-	s2, _ := strconv.ParseFloat(r2, 64)
-	if s1 < s2 {
-		return r1
-	}
-	return r2
 }
 
 // String of a release: release fulfills the Stringer interface
@@ -221,7 +207,7 @@ func Releases(n int) string {
 	_, dirs, _ := qfs.FilesDirs(place)
 	versions := make([]string, 0)
 	for _, vi := range dirs {
-		v := path.Base(vi.Name())
+		v := filepath.Base(vi.Name())
 		if v == "0.00" {
 			continue
 		}
@@ -231,7 +217,7 @@ func Releases(n int) string {
 		versions = versions[:n-1]
 	}
 
-	sort.Slice(versions, func(i, j int) bool { return Lowest(versions[i], versions[j]) == versions[i] })
+	sort.Slice(versions, func(i, j int) bool { return qutil.LowestVersion(versions[i], versions[j]) == versions[i] })
 	versions = append(versions, "0.00")
 	return strings.Join(versions, " ")
 }
@@ -241,7 +227,7 @@ func fs(r string, readonly bool) func(s ...string) qvfs.QFs {
 	if place == "" {
 		log.Fatal("Registry value `qtechng-repository-dir` should not be empty")
 	}
-	place = path.Join(place, r)
+	place = filepath.Join(place, r)
 	fsys := afero.NewOsFs()
 	if readonly {
 		fsys = afero.NewReadOnlyFs(fsys)
@@ -249,9 +235,9 @@ func fs(r string, readonly bool) func(s ...string) qvfs.QFs {
 	g := func(s ...string) qvfs.QFs {
 		p := place
 		if len(s) != 0 {
-			p = path.Join(place, path.Join(s...))
+			p = filepath.Join(place, filepath.Join(s...))
 		} else {
-			p = path.Join(place, "source", "data")
+			p = filepath.Join(place, "source", "data")
 		}
 		return qvfs.QFs{
 			Afero:    afero.Afero{Fs: afero.NewBasePathFs(fsys, p)},

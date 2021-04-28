@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -53,8 +52,8 @@ func fileNew(cmd *cobra.Command, args []string) error {
 	if Fcreate {
 		Frecurse = false
 		for _, fname := range args {
-			if !path.IsAbs(fname) {
-				fname = path.Join(Fcwd, fname)
+			if !filepath.IsAbs(fname) {
+				fname = filepath.Join(Fcwd, fname)
 			}
 			if qfs.IsFile(fname) {
 				err := &qerror.QError{
@@ -74,7 +73,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 				return nil
 			}
-			dirname := path.Dir(fname)
+			dirname := filepath.Dir(fname)
 			if !qfs.IsDir(dirname) {
 				err := &qerror.QError{
 					Ref:  []string{"file.create.notdir"},

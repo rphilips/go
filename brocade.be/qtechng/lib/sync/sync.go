@@ -10,6 +10,7 @@ import (
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qserver "brocade.be/qtechng/lib/server"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 // Sync synchronises files from one version to the other
@@ -104,7 +105,7 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		return
 	}
 
-	lowest := qserver.Lowest(current, vtarget)
+	lowest := qutil.LowestVersion(current, vtarget)
 	if current != lowest {
 		err = &qerror.QError{
 			Ref: []string{"sync.version.production.lowest"},

@@ -168,7 +168,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 		ps := proj.String()
 		parts := strings.SplitN(ps, "/", -1)
 		parts[0] = tmpdir
-		basedir := path.Join(parts...)
+		basedir := filepath.Join(parts...)
 		qpaths := proj.QPaths(nil, true)
 		for _, qp := range qpaths {
 			_, ok := qtos[qp]
@@ -210,8 +210,8 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 			continue
 		}
 		parts[0] = tmpdir
-		subdir := path.Join(parts[:len(parts)-1]...)
-		where[qp] = path.Join(subdir, parts[len(parts)-1])
+		subdir := filepath.Join(parts[:len(parts)-1]...)
+		where[qp] = filepath.Join(subdir, parts[len(parts)-1])
 		_, ok := done[subdir]
 		if ok {
 			continue
@@ -331,7 +331,7 @@ func installMsources(batchid string, files []string, qsources map[string]*Source
 		qps.MFileToMumps(batchid, buf)
 		if roudir != "" {
 			_, b := qutil.QPartition(qp)
-			target := path.Join(roudir, b)
+			target := filepath.Join(roudir, b)
 			qfs.Store(target, buf, "process")
 		}
 		return buf, nil

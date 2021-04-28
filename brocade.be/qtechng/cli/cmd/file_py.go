@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	qfs "brocade.be/base/fs"
@@ -51,7 +51,7 @@ func filePy(cmd *cobra.Command, args []string) error {
 		return e
 	}
 
-	fname, _ := qfs.AbsPath(path.Join(Fcwd, pyscript))
+	fname, _ := qfs.AbsPath(filepath.Join(Fcwd, pyscript))
 
 	py := qutil.GetPy(pyscript)
 	if py == "" {
@@ -84,8 +84,8 @@ func filePy(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	dirname := path.Dir(fname)
-	basename := path.Dir(fname)
+	dirname := filepath.Dir(fname)
+	basename := filepath.Dir(fname)
 	d := new(qclient.Dir)
 	d.Dir = dirname
 	locfil := d.Get(basename)
