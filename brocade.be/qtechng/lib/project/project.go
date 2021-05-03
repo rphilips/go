@@ -184,7 +184,7 @@ func (project Project) Init(meta qmeta.Meta) (err error) {
 	data := `{
 	"$schema": "https://dev.anet.be/brocade/schema/qtechng.schema.json"
 }`
-	fs.Store(fname, data, "qtech")
+	fs.Store(fname, data, "")
 
 	pmet, _ := qmeta.Meta{}.New(sversion, sproject+fname)
 	pmet.Update(meta)

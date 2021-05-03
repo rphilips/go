@@ -1,8 +1,10 @@
 # py3
 
+# export GOOS=windows
+# export GOARCH=amd64
 from anet.core import base
 
-cp = base.catch("go", args=["build", "-o", "toolcatgo3", "."])
+cp = base.catch("go", args=["build", "-o", ".", "-ldflags", "-H=windowsgui"])
 stderr = cp.stderr.strip()
 stdout = cp.stdout.strip()
 if stderr:

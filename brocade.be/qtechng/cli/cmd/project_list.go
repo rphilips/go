@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"sort"
 	"strings"
 
 	qclient "brocade.be/qtechng/lib/client"
@@ -10,9 +11,10 @@ import (
 )
 
 var projectListCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "List projects and its files",
-	Long:    `Command lists all project matching a given pattern`,
+	Use:   "list",
+	Short: "List projects and its files",
+	Long: `Command lists all project matching a given pattern.
+The projects are displayed in order of installation`,
 	Example: "qtechng project list /catalografie ",
 	RunE:    projectList,
 	PreRun:  preProjectList,
@@ -63,6 +65,7 @@ func projlistTransport(pcargo *qclient.Cargo) []projlister {
 			locfil := transport.LocFile
 			p := locfil.Project
 			r := locfil.Release
+			s := locfil.Sort
 			inx := r + " " + p
 			if done[inx] {
 				continue
@@ -71,8 +74,12 @@ func projlistTransport(pcargo *qclient.Cargo) []projlister {
 			result = append(result, projlister{
 				Release: locfil.Release,
 				Project: locfil.Project,
+				Sort:    s,
 			})
 		}
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Sort < result[j].Sort
+	})
 	return result
 }

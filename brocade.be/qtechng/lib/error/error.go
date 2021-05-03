@@ -36,7 +36,7 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 	if len(qerr.Ref) == 0 {
 		m["ref"] = "unknown"
 	} else {
-		m["ref"] = strings.Join(qerr.Ref, " > ")
+		m["ref"] = strings.Join(qerr.Ref, " ; ")
 	}
 	if qerr.Version != "" {
 		m["version"] = qerr.Version
@@ -67,7 +67,7 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 		m["object"] = qerr.Object
 	}
 	if len(qerr.Msg) != 0 {
-		m["message"] = strings.Join(qerr.Msg, "\n")
+		m["message"] = strings.Join(qerr.Msg, " ; ")
 	}
 
 	return json.MarshalIndent(m, "", "    ")

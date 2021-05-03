@@ -494,7 +494,7 @@ func Link(r string, name string, object interface{}) error {
 	digest = qutil.Digest([]byte(obj))
 	fname := "/" + mode + "/" + digest[:2] + "/" + digest[2:] + dir2
 	data["object"] = obj
-	fs.Store(fname, data, "qtech")
+	fs.Store(fname, data, "")
 	return nil
 }
 

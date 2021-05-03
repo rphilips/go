@@ -75,7 +75,7 @@ func (meta Meta) Store(r string, s string) (pmeta *Meta, err error) {
 	digest := qutil.Digest([]byte(s))
 	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
 	meta.Source = s
-	changed, _, _, err := fs.Store(place, meta, "qtech")
+	changed, _, _, err := fs.Store(place, meta, "")
 	if err != nil {
 		e := &qerror.QError{
 			Ref:     []string{"meta.store"},

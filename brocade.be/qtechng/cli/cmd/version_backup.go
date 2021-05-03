@@ -3,6 +3,8 @@ package cmd
 import (
 	"archive/tar"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -35,7 +37,10 @@ func init() {
 }
 
 func versionBackup(cmd *cobra.Command, args []string) error {
-
+	h := time.Now()
+	t := h.Format(time.RFC3339)[:19]
+	t = strings.ReplaceAll(t, ":", "")
+	t = strings.ReplaceAll(t, "-", "")
 	r := qserver.Canon(args[0])
 	release, _ := qserver.Release{}.New(r, true)
 	ok, _ := release.Exists("/source/data")
@@ -53,7 +58,7 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 
 	// tar
 	errlist := make([]error, 0)
-	tarfile := qutil.AbsPath("brocade-"+r+".tar", Fcwd)
+	tarfile := qutil.AbsPath("brocade-"+r+"-"+t+".tar", Fcwd)
 	ftar, err := os.Create(tarfile)
 
 	if err != nil {

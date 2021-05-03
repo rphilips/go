@@ -31,6 +31,7 @@ type LocalFile struct {
 	Ct      string `json:"ct"`
 	Mt      string `json:"mt"`
 	Place   string `json:"-"`
+	Sort    string `json:"sort"`
 }
 
 // Transport of files to B
@@ -161,7 +162,7 @@ func (dir *Dir) Load() {
 		dir.Files = nil
 		return
 	}
-	fis, _, err := qfs.FilesDirs(dir.Dir)
+	fis, _, _ := qfs.FilesDirs(dir.Dir)
 	isfis := make(map[string]bool)
 	for _, fi := range fis {
 		isfis[fi.Name()] = true

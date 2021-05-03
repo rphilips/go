@@ -38,6 +38,7 @@ type lister struct {
 type projlister struct {
 	Release string `json:"version"`
 	Project string `json:"project"`
+	Sort    string `json:"sort"`
 }
 type storer struct {
 	Release string `json:"version"`
@@ -180,6 +181,8 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 	buffer := new(bytes.Buffer)
 	transports := make([]qclient.Transport, len(paths))
 
+	sorts := make(map[string]string)
+
 	for i, qpath := range paths {
 		locfile := qclient.LocalFile{}
 		pmeta, err := qmeta.Meta{}.New(query.Release, qpath)
@@ -196,6 +199,11 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		locfile.Mu = pmeta.Mu
 		locfile.Ct = pmeta.Ct
 		locfile.Mt = pmeta.Mt
+		proj := locfile.Project
+		if sorts[proj] == "" {
+			sorts[proj] = psource.Project().Orden()
+		}
+		locfile.Sort = sorts[proj]
 		transports[i].LocFile = locfile
 		if withcontent && bodies[i] != nil {
 			transports[i].Body = bodies[i]

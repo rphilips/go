@@ -18,7 +18,6 @@ import (
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
-	qserver "brocade.be/qtechng/lib/server"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
@@ -480,7 +479,6 @@ func fillVersion() {
 		}
 	}
 	Fversion = qregistry.Registry["qtechng-version"]
-	Fversion = qserver.Canon(Fversion)
 
 	return
 }

@@ -52,7 +52,7 @@ func StoreUnique(version *qserver.Release, name string) {
 	fs := version.FS("/unique")
 	fname := "/" + digest[:2] + "/" + digest[2:] + "/" + ndigest
 	m := map[string]string{"path": name}
-	fs.Store(fname, m, "qtech")
+	fs.Store(fname, m, "")
 }
 
 // UnlinkUnique stores a reference to the basename

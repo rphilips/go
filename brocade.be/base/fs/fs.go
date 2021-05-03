@@ -19,6 +19,7 @@ import (
 	"time"
 
 	qpattern "brocade.be/base/pattern"
+	"brocade.be/base/registry"
 	qregistry "brocade.be/base/registry"
 
 	fatomic "github.com/natefinch/atomic"
@@ -90,7 +91,7 @@ type Property struct {
 //    - uid (*user.User)
 //    - gid / access for a pathmode according to the registry
 func Properties(pathmode string) (prop Property, err error) {
-	if runtime.GOOS == "windows" {
+	if registry.Registry["qtechng-type"] == "W" {
 		return prop, nil
 	}
 	mode := pathmode
@@ -175,7 +176,7 @@ func calcPerm(nine string) os.FileMode {
 
 // SetPathMode assigns the ownership and access modes to a path
 func SetPathmode(pth string, pathmode string) (err error) {
-	if runtime.GOOS == "windows" {
+	if registry.Registry["qtechng-type"] == "W" {
 		return nil
 	}
 	if pathmode == "" {
@@ -227,6 +228,9 @@ func Store(fname string, data interface{}, pathmode string) (err error) {
 	if !strings.HasSuffix(pathmode, "file") {
 		pathmode = pathmode + "file"
 	}
+	if qregistry.Registry["qtechng-type"] == "W" {
+		return nil
+	}
 	return SetPathmode(fname, pathmode)
 }
 
@@ -263,7 +267,7 @@ func Mkdir(dirname string, pathmode string) (err error) {
 		pathmode = pathmode + "dir"
 	}
 	prm := fs.FileMode(0770)
-	if runtime.GOOS != "windows" {
+	if qregistry.Registry["qtechng-type"] != "W" {
 		perm, e := Properties(pathmode)
 		if e != nil {
 			return e
@@ -272,6 +276,9 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	}
 	err = os.Mkdir(dirname, prm)
 	if err == nil {
+		if qregistry.Registry["qtechng-type"] == "W" {
+			return nil
+		}
 		return SetPathmode(dirname, pathmode)
 	}
 	if os.IsExist(err) {
@@ -283,6 +290,9 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	}
 	Mkdir(parent, pathmode)
 	os.Mkdir(dirname, prm)
+	if qregistry.Registry["qtechng-type"] == "W" {
+		return nil
+	}
 	return SetPathmode(dirname, pathmode)
 }
 
@@ -432,9 +442,10 @@ func TempFile(dir, prefix string) (name string, err error) {
 	}
 	defer f.Close()
 	name = f.Name()
-	if err != nil {
-		err = SetPathmode(name, "tempfile")
+	if registry.Registry["qtechng-type"] == "W" {
+		return name, nil
 	}
+	err = SetPathmode(name, "tempfile")
 	return
 }
 

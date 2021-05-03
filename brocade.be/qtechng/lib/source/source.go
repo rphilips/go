@@ -355,7 +355,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 	}
 
 	fs := version.FS()
-	changed, before, after, e := fs.Store(source.String(), data, meta.Digest)
+	changed, before, after, e := fs.Store(source.String(), data, "")
 	if e != nil {
 		err = &qerror.QError{
 			Ref:     []string{"source.store.forbidden"},
