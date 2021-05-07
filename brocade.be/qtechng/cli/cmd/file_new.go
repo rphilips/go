@@ -52,9 +52,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 	if Fcreate {
 		Frecurse = false
 		for _, fname := range args {
-			if !filepath.IsAbs(fname) {
-				fname = filepath.Join(Fcwd, fname)
-			}
+			fname := qutil.AbsPath(fname, Fcwd)
 			if qfs.IsFile(fname) {
 				err := &qerror.QError{
 					Ref:  []string{"file.create.isfile"},

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"net/url"
 	"os"
 	"os/user"
@@ -239,7 +240,7 @@ var Fetch = os.ReadFile
 
 // Append write bytes to a file. File has to exist
 func Append(fname string, tail []byte) (err error) {
-	f, err := os.OpenFile(fname, os.O_APPEND|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(fname, os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {
 		return
 	}
@@ -571,7 +572,7 @@ func CopyMeta(src string, dst string, keepmtime bool) (err error) {
 		}
 	}
 	fms := si.Mode().Perm()
-	fmd := si.Mode().Perm()
+	fmd := di.Mode().Perm()
 
 	if fms == fmd {
 		return nil
@@ -841,18 +842,48 @@ func RefreshEXE(oldexe string, newexe string) error {
 	if os.SameFile(old, new) {
 		return nil
 	}
+
+	source, err := os.Open(newexe)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
 	shadow := oldexe + ".bak"
 	os.Remove(shadow)
 	err = os.Rename(oldexe, shadow)
 	if err != nil {
 		return err
 	}
-	err = CopyFile(newexe, oldexe, "", true)
+
+	destination, err := os.Create(oldexe)
 	if err != nil {
 		return err
 	}
-	err = CopyMeta(shadow, oldexe, false)
+	defer destination.Close()
+	_, err = io.Copy(destination, source)
+
+	if err != nil {
+		return err
+	}
+
+	CopyMeta(shadow, oldexe, false)
 
 	return err
 
+}
+
+func GetURL(url string, fname string, pathmode string) error {
+	out, err := os.Create(fname)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, err = io.Copy(out, resp.Body)
+	return err
 }

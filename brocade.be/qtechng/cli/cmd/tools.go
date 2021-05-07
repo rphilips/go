@@ -482,9 +482,7 @@ func storeTransport() ([]string, []storer, []error) {
 func glob(cwd string, args []string, recurse bool, patterns []string, fils bool, dirs bool) (files []string, err error) {
 
 	for _, arg := range args {
-		if !filepath.IsAbs(arg) {
-			arg = filepath.Join(cwd, arg)
-		}
+		arg = qutil.AbsPath(arg, cwd)
 		if qfs.IsDir(arg) {
 			paths, err := qfs.Find(arg, patterns, recurse, fils, dirs)
 			if err != nil {

@@ -198,10 +198,11 @@ func (dir *Dir) Get(base string) *LocalFile {
 // Add a newcomer to the directory
 func (dir *Dir) Add(locfils ...LocalFile) {
 	dir.Load()
+	ok := false
 	if dir.Files == nil {
 		dir.Files = make(map[string]LocalFile)
+		ok = true
 	}
-	ok := false
 	for _, locfil := range locfils {
 		qpath := locfil.QPath
 		if qpath == "" || dir.Dir == "" || locfil.Release == "" {
@@ -238,7 +239,10 @@ func (dir *Dir) Del(locfils ...LocalFile) {
 		if base == "" {
 			continue
 		}
-		x := dir.Files[base]
+		x, ok := dir.Files[base]
+		if !ok {
+			continue
+		}
 		if x.QPath == qpath {
 			delete(dir.Files, base)
 			changed = true
@@ -246,8 +250,8 @@ func (dir *Dir) Del(locfils ...LocalFile) {
 	}
 	if changed {
 		qjson := filepath.Join(dir.Dir, ".qtechng")
-		dir.Files = nil
 		qfs.Store(qjson, dir, "qtech")
+		dir.Files = nil
 		dir.Load()
 	}
 }
@@ -316,6 +320,9 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 			continue
 		}
 		if !recurse {
+			continue
+		}
+		if find {
 			continue
 		}
 		a, _ := qfs.Find(f, nil, true, true, false)
@@ -408,10 +415,9 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 				continue
 			}
 		}
+
 		plocfil.Place = place
-
 		qpath := plocfil.QPath
-
 		ofile, qok := qpaths[qpath]
 
 		if qok {

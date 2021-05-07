@@ -3,8 +3,8 @@ package cmd
 import (
 	"io"
 	"os"
-	"path/filepath"
 
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -26,10 +26,7 @@ func init() {
 }
 
 func fsStore(cmd *cobra.Command, args []string) error {
-	result := args[0]
-	if !filepath.IsAbs(result) {
-		result = filepath.Join(Fcwd, result)
-	}
+	result := qutil.AbsPath(args[0], Fcwd)
 
 	mode := os.O_WRONLY | os.O_CREATE
 	if Fappend {

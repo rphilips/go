@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"os"
 	"path/filepath"
 	"time"
 
-	qfs "brocade.be/base/fs"
 	qclient "brocade.be/qtechng/lib/client"
 	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
@@ -47,7 +47,6 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 	}
 
 	result := make([]adder, 0)
-	tail := make([]byte, 0)
 
 	errslice := make([]error, 0)
 	if errlist != nil {
@@ -56,7 +55,8 @@ func fileTouch(cmd *cobra.Command, args []string) error {
 
 	for _, file := range plocfils {
 		place := file.Place
-		et := qfs.Append(place, tail)
+		currentTime := time.Now().Local()
+		et := os.Chtimes(place, currentTime, currentTime)
 		if et == nil {
 			rel, _ := filepath.Rel(Fcwd, place)
 			result = append(result, adder{rel, file.Release, file.QPath, place, qutil.FileURL(place, -1), t})

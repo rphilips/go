@@ -46,10 +46,7 @@ func init() {
 func dirTell(cmd *cobra.Command, args []string) error {
 	dirname := Fcwd
 	if len(args) != 0 {
-		dirname := args[0]
-		if !filepath.IsAbs(dirname) {
-			dirname = filepath.Join(Fcwd, dirname)
-		}
+		dirname = qutil.AbsPath(args[0], Fcwd)
 	}
 	dir := new(qclient.Dir)
 	dir.Dir = dirname

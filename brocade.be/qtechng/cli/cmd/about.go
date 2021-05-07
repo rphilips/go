@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/hex"
 	"os"
+	"os/user"
 
 	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
@@ -35,6 +36,11 @@ func about(cmd *cobra.Command, args []string) error {
 	host, e := os.Hostname()
 	if e == nil {
 		msg["!!uname"] = host
+	}
+	user, err := user.Current()
+	if err == nil {
+		msg["!!user.name"] = user.Name
+		msg["!!user.username"] = user.Username
 	}
 	if len(args) != 0 {
 		for _, arg := range args {

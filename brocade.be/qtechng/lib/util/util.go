@@ -632,9 +632,7 @@ func GetPy(pyscript string) string {
 	if e != nil {
 		return ""
 	}
-	if !filepath.IsAbs(pyscript) {
-		pyscript, _ = qfs.AbsPath(filepath.Join(cwd, pyscript))
-	}
+	pyscript = AbsPath(pyscript, cwd)
 	reader, err := os.Open(pyscript)
 	if err != nil {
 		return ""

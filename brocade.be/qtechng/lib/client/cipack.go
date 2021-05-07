@@ -7,6 +7,7 @@ import (
 	qfnmatch "brocade.be/base/fnmatch"
 	qfs "brocade.be/base/fs"
 	qerror "brocade.be/qtechng/lib/error"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 // CiPack basic dta structure to send out over the wire
@@ -43,10 +44,7 @@ func Pack(cwd string, files []string, release string, qpattern string, force boo
 			continue
 		}
 		done[file] = true
-		place := file
-		if !filepath.IsAbs(file) {
-			place = filepath.Join(cwd, place)
-		}
+		place := qutil.AbsPath(file, cwd)
 		dir := filepath.Dir(place)
 		d := new(Dir)
 		d.Dir = dir
