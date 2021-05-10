@@ -21,14 +21,14 @@ var dirTellCmd = &cobra.Command{
 	Use:   "tell",
 	Short: "Gives information about the directory",
 	Long:  `Gives information about the directory`,
-	Example: `  qtechng file tell bcawedit.m --cwd=../catalografie --ext
-	  qtechng dir tell bcawedit.m --cwd=../catalografie --tell=dirname
-	  qtechng dir tell bcawedit.m --cwd=../catalografie --tell=project
-	  qtechng dir tell bcawedit.m --cwd=../catalografie --tell=qdir
-	  qtechng dir tell bcawedit.m --cwd=../catalografie --tell=version
-	  qtechng dir tell bcawedit.m --cwd=../catalografie --tell=abspath
-	  qtechng dir tell bcawedit.m --cwd=../catalografie --tell=relpath
-	  qtechng dir tell bcawedit.m --cwd=../catalografie
+	Example: `  qtechng file tell /home/rphilips/catalografie --cwd=../catalografie --ext
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=dirname
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=project
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=qdir
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=version
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=abspath
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=relpath
+	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie
 	`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: dirTell,
@@ -44,42 +44,38 @@ func init() {
 }
 
 func dirTell(cmd *cobra.Command, args []string) error {
+	result := make(map[string]string)
+	result["version"] = ""
+	result["qdir"] = ""
+
 	dirname := Fcwd
 	if len(args) != 0 {
 		dirname = qutil.AbsPath(args[0], Fcwd)
 	}
 	dir := new(qclient.Dir)
 	dir.Dir = dirname
-	dir.Load()
-	result := make(map[string]string)
-	releases := make(map[string]bool)
-	qdirs := make(map[string]bool)
-
-	release := ""
-	qdir := ""
-	for _, locfil := range dir.Files {
-		r := locfil.Release
-		if r == "" {
-			continue
+	m := dir.Repository()
+	if m != nil {
+		if len(m) == 1 {
+			for r := range m {
+				result["version"] = r
+				break
+			}
 		}
-		release = r
-		qpath := locfil.QPath
-		if qpath == "" {
-			continue
+		qdirs := make(map[string]bool)
+		for r := range m {
+			for s := range m[r] {
+				if s != "" {
+					qdirs[s] = true
+				}
+			}
 		}
-		releases[r] = true
-		q, _ := qutil.QPartition(qpath)
-		qdirs[q] = true
-		qdir = q
-	}
-
-	result["version"] = ""
-	result["qdir"] = ""
-	if len(releases) == 1 {
-		result["version"] = release
-	}
-	if len(qdirs) == 1 {
-		result["qdir"] = qdir
+		if len(qdirs) == 1 {
+			for s := range qdirs {
+				result["qdir"] = s
+				break
+			}
+		}
 	}
 	workdir := qregistry.Registry["qtechng-work-dir"]
 	subdir := ""
@@ -90,9 +86,7 @@ func dirTell(cmd *cobra.Command, args []string) error {
 		relpath, _ := filepath.Rel(workdir, dirname)
 		if !strings.HasPrefix(relpath, "..") {
 			subdir = filepath.ToSlash(relpath)
-			if strings.HasPrefix(subdir, "./") {
-				subdir = subdir[2:]
-			}
+			subdir = strings.TrimPrefix(subdir, "./")
 			if subdir == "." {
 				subdir = ""
 			}
@@ -100,8 +94,9 @@ func dirTell(cmd *cobra.Command, args []string) error {
 			first := ""
 			last := ""
 			parts := strings.SplitN(subdir, "/", -1)
+			re := regexp.MustCompile(`^[0-9]+\.[0-9][0-9]$`)
 			for _, part := range parts {
-				ok, _ := regexp.MatchString(`^[0-9][0-9]?\.[0-9][0-9]$`, part)
+				ok := re.MatchString(part)
 				if !ok {
 					continue
 				}

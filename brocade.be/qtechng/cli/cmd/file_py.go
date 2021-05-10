@@ -22,7 +22,7 @@ var filePyCmd = &cobra.Command{
 	Use:     "py",
 	Short:   "Executes a python script in the local filesystem",
 	Long:    `Executes the python script in the local filesystem.`,
-	Example: "qtechng file py /core/qtech/local.py",
+	Example: "qtechng file py /home/rphilips/core/qtech/local.py",
 	Args:    cobra.MinimumNArgs(1),
 	RunE:    filePy,
 	Annotations: map[string]string{
