@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -41,7 +42,7 @@ func (Release) New(r string, readonly bool) (release *Release, err error) {
 	if rel != nil {
 		return rel.(*Release), nil
 	}
-	if ok, _ := regexp.MatchString(`^[0-9][0-9]?\.[0-9][0-9]$`, r); !ok {
+	if ok, _ := regexp.MatchString(`^[0-9]+\.[0-9][0-9]$`, r); !ok {
 		err = &qerror.QError{
 			Ref:     []string{"release.new"},
 			Version: r,
@@ -84,7 +85,7 @@ func (release Release) ReadOnly() bool {
 func (release Release) Exists(p ...string) (bool, error) {
 	x := "/source/data"
 	if len(p) != 0 {
-		x = filepath.Join(p...)
+		x = path.Join(p...)
 	}
 	exists, err := release.FS("/").Exists(x)
 	return exists, err
@@ -233,7 +234,7 @@ func fs(r string, readonly bool) func(s ...string) qvfs.QFs {
 		fsys = afero.NewReadOnlyFs(fsys)
 	}
 	g := func(s ...string) qvfs.QFs {
-		p := place
+		p := ""
 		if len(s) != 0 {
 			p = filepath.Join(place, filepath.Join(s...))
 		} else {

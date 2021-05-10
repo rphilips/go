@@ -2,7 +2,6 @@ package ifile
 
 import (
 	"encoding/json"
-	"strings"
 
 	qerror "brocade.be/qtechng/lib/error"
 	qutil "brocade.be/qtechng/lib/util"
@@ -119,16 +118,8 @@ func (include *Include) Format() string {
 
 	// header
 	header := "include " + include.ID + ":"
-
-	content := include.Content
-	a := "«"
-	b := "»"
-	if strings.ContainsAny(content, a+b) {
-		a = "⟦"
-		b = "⟧"
-	}
-	result := []string{header, a + content + b}
-	return strings.Join(result, "\n")
+	content := qutil.Embrace(include.Content)
+	return header + "\n" + content
 }
 
 // Replacer berekent de tekst die moet worden gebruikt bij de include

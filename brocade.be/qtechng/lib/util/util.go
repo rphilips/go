@@ -910,15 +910,19 @@ func Embrace(s string) string {
 	if s == "" {
 		return ""
 	}
+	delim := strings.Contains(s, "\n")
+	if !delim {
+		delim = strings.Contains(s, "//")
+	}
+
 	rs := []rune(s)
-	delim := false
-	if unicode.IsSpace(rs[0]) {
+	if !delim && unicode.IsSpace(rs[0]) {
 		delim = true
 	}
 	if !delim && len(rs) > 1 && unicode.IsSpace(rs[len(rs)-1]) {
 		delim = true
 	}
-	k := strings.IndexAny(s, "«»⟦⟧\n")
+	k := strings.IndexAny(s, "«»⟦⟧")
 	if k < 0 {
 		if !delim {
 			return s

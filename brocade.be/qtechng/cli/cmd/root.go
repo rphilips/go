@@ -279,7 +279,10 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 	errRoot = nameCmd(cmd)
 
 	// User
-	FUID = checkUID(FUID)
+	if FUID == "" {
+		FUID = checkUID(FUID)
+
+	}
 
 	// conditions
 
@@ -513,10 +516,8 @@ func fillQdir() {
 	if Fversion != "" {
 		qr, ok := qdirs[Fversion]
 		if ok && len(qr) == 1 {
-			for _, r := range qr {
-				Fqdir = r
-				return
-			}
+			Fqdir = qr[0]
+			return
 		}
 	}
 

@@ -15,13 +15,15 @@ import (
 
 var fileNewCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Adds files to QtechNG",
-	Long:  `Command adds a new/existing file to QtechNG. Version and project is necessary`,
+	Short: "Adds/Creates files to/for QtechNG",
+	Long:  `Command adds an existing/new file to QtechNG. Version and project information is necessary`,
 	Args:  cobra.MinimumNArgs(0),
-	Example: `qtechng file new application/bcawedit.m install.py --version=5.10 --qdir=/catalografie
-qtechng file new application/bcawedit.m install.py cwd=../catalografie
-qtechng file new bcawedit.m install.py cwd=../application
-qtechng file new bcawedit.m install.py
+	Example: `
+qtech file new --qdir=/collection/application
+qtechng file new application/bcoledit.m --version=5.10 --qdir=/collection
+qtechng file new application/bcoledit.m  cwd=../catalografie
+qtechng file new bcawedit.m  cwd=application
+qtechng file new bcawedit.m
 	`,
 	RunE:   fileNew,
 	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },

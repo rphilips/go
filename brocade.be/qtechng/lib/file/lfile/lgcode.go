@@ -471,32 +471,25 @@ func (lgcode *Lgcode) Format() string {
 
 	// header
 	lines := []string{"lgcode " + lgcode.ID + ":"}
-	sep1 := "«"
-	sep2 := "»"
-	x := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U
-	if strings.ContainsAny(x, "«»") {
-		sep1 = "⟦"
-		sep2 = "⟧"
-	}
 	ok := false
 	if lgcode.N != "" {
-		lines = append(lines, "    N: "+sep1+lgcode.N+sep2)
+		lines = append(lines, "    N: "+qutil.Embrace(lgcode.N))
 		ok = true
 	}
 	if lgcode.E != "" {
-		lines = append(lines, "    E: "+sep1+lgcode.E+sep2)
+		lines = append(lines, "    E: "+qutil.Embrace(lgcode.E))
 		ok = true
 	}
 	if lgcode.F != "" {
-		lines = append(lines, "    F: "+sep1+lgcode.F+sep2)
+		lines = append(lines, "    F: "+qutil.Embrace(lgcode.F))
 		ok = true
 	}
 	if lgcode.D != "" {
-		lines = append(lines, "    D: "+sep1+lgcode.D+sep2)
+		lines = append(lines, "    D: "+qutil.Embrace(lgcode.D))
 		ok = true
 	}
 	if lgcode.U != "" {
-		lines = append(lines, "    U: "+sep1+lgcode.U+sep2)
+		lines = append(lines, "    U: "+qutil.Embrace(lgcode.U))
 		ok = true
 	}
 	if lgcode.Alias != "" {
@@ -504,7 +497,7 @@ func (lgcode *Lgcode) Format() string {
 		ok = true
 	}
 	if !ok {
-		lines = append(lines, "    N: "+sep1+lgcode.N+sep2)
+		lines = append(lines, "    N: "+qutil.Embrace(lgcode.N))
 		ok = true
 	}
 	if lgcode.Nature != "" {

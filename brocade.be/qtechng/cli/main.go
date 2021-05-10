@@ -52,10 +52,10 @@ func main() {
 				fname := os.Args[3]
 				var err error
 				file, err = os.Open(fname)
-				defer file.Close()
 				if err != nil {
 					break
 				}
+				defer file.Close()
 			}
 
 			reader := bufio.NewReader(file)

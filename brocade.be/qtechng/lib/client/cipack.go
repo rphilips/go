@@ -10,7 +10,7 @@ import (
 	qutil "brocade.be/qtechng/lib/util"
 )
 
-// CiPack basic dta structure to send out over the wire
+// CiPack basic data structure for a file to send out over the wire
 type CiPack struct {
 	Release string
 	QPath   string

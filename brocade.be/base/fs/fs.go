@@ -92,7 +92,7 @@ type Property struct {
 //    - uid (*user.User)
 //    - gid / access for a pathmode according to the registry
 func Properties(pathmode string) (prop Property, err error) {
-	if registry.Registry["qtechng-type"] == "W" {
+	if !QSetPathMode() {
 		return prop, nil
 	}
 	mode := pathmode
@@ -158,8 +158,13 @@ func Properties(pathmode string) (prop Property, err error) {
 		return
 	}
 	uid, err := user.Lookup(suid)
+	if err != nil {
+		return
+	}
 	gid, err := user.LookupGroup(sgid)
-
+	if err != nil {
+		return
+	}
 	return Property{uid, gid, perm}, err
 }
 
@@ -177,7 +182,7 @@ func calcPerm(nine string) os.FileMode {
 
 // SetPathMode assigns the ownership and access modes to a path
 func SetPathmode(pth string, pathmode string) (err error) {
-	if registry.Registry["qtechng-type"] == "W" {
+	if !QSetPathMode() {
 		return nil
 	}
 	if pathmode == "" {
@@ -193,6 +198,16 @@ func SetPathmode(pth string, pathmode string) (err error) {
 		_ = os.Chmod(pth, p.PERM.Perm())
 	}
 	return err
+}
+
+func QSetPathMode() bool {
+	if runtime.GOOS == "windows" {
+		return false
+	}
+	if registry.Registry["qtechng-type"] == "W" {
+		return false
+	}
+	return true
 }
 
 // Store writes a file contents atomically
@@ -223,14 +238,14 @@ func Store(fname string, data interface{}, pathmode string) (err error) {
 	if err != nil {
 		return
 	}
+	if !QSetPathMode() {
+		return nil
+	}
 	if pathmode == "" {
 		return nil
 	}
 	if !strings.HasSuffix(pathmode, "file") {
 		pathmode = pathmode + "file"
-	}
-	if qregistry.Registry["qtechng-type"] == "W" {
-		return nil
 	}
 	return SetPathmode(fname, pathmode)
 }
@@ -268,7 +283,7 @@ func Mkdir(dirname string, pathmode string) (err error) {
 		pathmode = pathmode + "dir"
 	}
 	prm := fs.FileMode(0770)
-	if qregistry.Registry["qtechng-type"] != "W" {
+	if QSetPathMode() {
 		perm, e := Properties(pathmode)
 		if e != nil {
 			return e
@@ -277,7 +292,7 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	}
 	err = os.Mkdir(dirname, prm)
 	if err == nil {
-		if qregistry.Registry["qtechng-type"] == "W" {
+		if !QSetPathMode() {
 			return nil
 		}
 		return SetPathmode(dirname, pathmode)
@@ -291,7 +306,7 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	}
 	Mkdir(parent, pathmode)
 	os.Mkdir(dirname, prm)
-	if qregistry.Registry["qtechng-type"] == "W" {
+	if !QSetPathMode() {
 		return nil
 	}
 	return SetPathmode(dirname, pathmode)
@@ -443,7 +458,7 @@ func TempFile(dir, prefix string) (name string, err error) {
 	}
 	defer f.Close()
 	name = f.Name()
-	if registry.Registry["qtechng-type"] == "W" {
+	if !QSetPathMode() {
 		return name, nil
 	}
 	err = SetPathmode(name, "tempfile")

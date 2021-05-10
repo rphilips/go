@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +23,9 @@ import (
 
 func init() {
 	fileCmd.AddCommand(fileFormatCmd)
+	fileFormatCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
 	fileFormatCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces file")
+	fileFormatCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 
 }
 
@@ -50,13 +52,17 @@ With only one argument and no '--inplace' flag, the result is written on stdout.
 }
 
 func fileFormat(cmd *cobra.Command, args []string) error {
+	if len(Fqpattern) == 0 {
+		Fqpattern = []string{"*.[dlixmb]"}
+	}
+
 	files := args
 	if len(args) == 0 && strings.ContainsRune(QtechType, 'W') {
 		start := "."
 		if Fcwd != "" {
 			start = Fcwd
 		}
-		files, _ = qfs.Find(start, []string{"*.[dlixmb]"}, Frecurse, true, false)
+		files, _ = qfs.Find(start, Fqpattern, Frecurse, true, false)
 	}
 
 	format := func(n int) (result interface{}, err error) {
@@ -87,7 +93,7 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 			return false, err
 		}
 		if Finplace && err == nil {
-			qfs.Store(fname, buffer, "process")
+			qfs.Store(fname, buffer, "qtech")
 		}
 		if !Finplace && err == nil && n == 0 {
 			if Fstdout == "" || Ftransported {
@@ -99,12 +105,7 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 				return false, err
 			}
 			defer f.Close()
-			w := bufio.NewWriter(f)
-			fmt.Fprint(w, buffer.String())
-			err = w.Flush()
-			if err != nil {
-				return false, err
-			}
+			io.Copy(buffer, f)
 		}
 		return err == nil, err
 	}
