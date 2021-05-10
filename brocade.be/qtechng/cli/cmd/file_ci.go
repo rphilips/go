@@ -133,7 +133,10 @@ func preCi(cmd *cobra.Command, args []string) {
 	}
 
 	if !strings.ContainsRune(QtechType, 'B') {
-		whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
+		whowhere := qregistry.Registry["qtechng-server"]
+		if !strings.Contains(whowhere, "@") {
+			whowhere = FUID + "@" + whowhere
+		}
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
 		if err != nil {
 			log.Fatal("cmd/file_ci/preCi/1:\n", err)
@@ -143,8 +146,6 @@ func preCi(cmd *cobra.Command, args []string) {
 		}
 		Fcargo = qclient.ReceiveCargo(catchOut)
 	}
-
-	return
 }
 
 func getPayload(args []string, uid string, cwd string, version string, recurse bool, patterns []string) (payload *qclient.Payload, errlist []error) {
