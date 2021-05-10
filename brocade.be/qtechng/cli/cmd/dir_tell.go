@@ -21,14 +21,11 @@ var dirTellCmd = &cobra.Command{
 	Use:   "tell",
 	Short: "Gives information about the directory",
 	Long:  `Gives information about the directory`,
-	Example: `  qtechng file tell /home/rphilips/catalografie --cwd=../catalografie --ext
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=dirname
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=project
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=qdir
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=version
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=abspath
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie --tell=relpath
-	  qtechng dir tell /home/rphilips/catalografie --cwd=../catalografie
+	Example: `  qtechng file tell application --cwd=../collections --ext
+	  qtechng dir tell application --cwd=../collections --tell=dirname
+	  qtechng dir tell application --cwd=../collections --tell=qdir
+	  qtechng dir tell application --cwd=../collections --tell=version
+	  qtechng dir tell application --cwd=../collections
 	`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: dirTell,
@@ -39,7 +36,7 @@ var dirTellCmd = &cobra.Command{
 }
 
 func init() {
-	dirTellCmd.Flags().StringVar(&Ftell, "tell", "", "version/qdir")
+	dirTellCmd.Flags().StringVar(&Ftell, "tell", "", "version/qdir/dirname")
 	dirCmd.AddCommand(dirTellCmd)
 }
 
@@ -47,11 +44,13 @@ func dirTell(cmd *cobra.Command, args []string) error {
 	result := make(map[string]string)
 	result["version"] = ""
 	result["qdir"] = ""
+	result["dirname"] = ""
 
 	dirname := Fcwd
 	if len(args) != 0 {
 		dirname = qutil.AbsPath(args[0], Fcwd)
 	}
+	result["dirname"] = dirname
 	dir := new(qclient.Dir)
 	dir.Dir = dirname
 	m := dir.Repository()

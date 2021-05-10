@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -97,6 +98,30 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	fsed := func(reader io.Reader, writer io.Writer) error {
+		if reader == nil {
+			reader = os.Stdin
+		}
+		if writer == nil {
+			writer = os.Stdout
+		}
+		_, err := io.Copy(writer, engine.Wrap(reader))
+		return err
+	}
+
+	if len(args) == 2 && args[1] == "-" {
+
+		if Fstdout != "" {
+			f, err := os.Create(Fstdout)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer f.Close()
+			return fsed(nil, f)
+		}
+		return fsed(nil, nil)
+	}
+
 	files := make([]string, 0)
 	files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
 
@@ -122,7 +147,11 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return false, err
 		}
+		defer in.Close()
 		tmpfile, err := qfs.TempFile("", ".sed")
+		if err != nil {
+			return false, err
+		}
 		defer qfs.Rmpath(tmpfile)
 
 		f, err := os.Create(tmpfile)
@@ -130,25 +159,18 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return false, err
 		}
-
-		input := bufio.NewReader(in)
-		defer in.Close()
-
-		_, err = io.Copy(f, engine.Wrap(input))
-
+		defer f.Close()
+		err = fsed(in, f)
+		f.Close()
+		in.Close()
 		if err != nil {
 			return false, err
 		}
-
-		in.Close()
-		f.Close()
-
 		qfs.CopyMeta(src, tmpfile, false)
 		err = qfs.CopyFile(tmpfile, src, "=", false)
 		if err != nil {
 			return false, err
 		}
-		qfs.Rmpath(tmpfile)
 		return true, nil
 	}
 

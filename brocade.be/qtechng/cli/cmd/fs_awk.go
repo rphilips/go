@@ -3,6 +3,8 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -91,8 +93,28 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 
 	program := args[0]
 
+	fawk := func(reader io.Reader, writer io.Writer) error {
+		return qawk.Exec(program, " ", reader, writer)
+	}
+
+	if len(args) == 2 && args[1] == "-" {
+
+		if Fstdout != "" {
+			f, err := os.Create(Fstdout)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer f.Close()
+			return fawk(nil, f)
+		}
+		return fawk(nil, nil)
+	}
+
 	files := make([]string, 0)
-	files, err := glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
+	var err error = nil
+	if len(args) != 2 || args[1] != "-" {
+		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
+	}
 
 	if len(files) == 0 {
 		if err != nil {
@@ -116,7 +138,11 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return false, err
 		}
+		defer in.Close()
 		tmpfile, err := qfs.TempFile("", ".awk")
+		if err != nil {
+			return false, err
+		}
 		defer qfs.Rmpath(tmpfile)
 
 		f, err := os.Create(tmpfile)
@@ -124,25 +150,18 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return false, err
 		}
-
-		input := bufio.NewReader(in)
-		defer in.Close()
-
-		err = qawk.Exec(program, " ", input, f)
-
+		defer f.Close()
+		err = fawk(in, f)
+		f.Close()
+		in.Close()
 		if err != nil {
 			return false, err
 		}
-
-		in.Close()
-		f.Close()
-
 		qfs.CopyMeta(src, tmpfile, false)
 		err = qfs.CopyFile(tmpfile, src, "=", false)
 		if err != nil {
 			return false, err
 		}
-		qfs.Rmpath(tmpfile)
 		return true, nil
 	}
 
