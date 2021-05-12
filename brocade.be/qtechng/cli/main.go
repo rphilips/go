@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -64,12 +65,8 @@ func main() {
 				if err != nil && err != io.EOF {
 					break
 				}
-				if strings.HasSuffix(a, "\n") {
-					a = strings.TrimSuffix(a, "\n")
-				}
-				if strings.HasSuffix(a, "\r") {
-					a = strings.TrimSuffix(a, "\r")
-				}
+				a = strings.TrimSuffix(a, "\n")
+				a = strings.TrimSuffix(a, "\r")
 				if a != "" {
 					args = append(args, a)
 				}
@@ -78,11 +75,24 @@ func main() {
 					break
 				}
 			}
-		case "json":
+		case "json", "url":
+
 			if len(os.Args) == 3 {
 				break
 			}
 			jarg := os.Args[3]
+			if mode == "url" {
+				resp, err := http.Get(jarg)
+				if err != nil {
+					break
+				}
+				defer resp.Body.Close()
+				buf, err := io.ReadAll(resp.Body)
+				if err != nil {
+					break
+				}
+				jarg = strings.TrimSpace(string(buf))
+			}
 			if !strings.HasPrefix(jarg, "[") {
 				break
 			}

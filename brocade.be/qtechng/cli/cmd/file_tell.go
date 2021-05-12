@@ -67,6 +67,9 @@ func fileTell(cmd *cobra.Command, args []string) error {
 	}
 
 	locfil := plocfils[0]
+	if locfil == nil {
+		return nil
+	}
 
 	fname, _ := qfs.AbsPath(locfil.Place)
 	relpath, _ := filepath.Rel(Fcwd, fname)
@@ -91,14 +94,12 @@ func fileTell(cmd *cobra.Command, args []string) error {
 		result["python"] = pyexe
 	}
 
-	if locfil != nil {
-		result["version"] = locfil.Release
-		result["project"] = locfil.Project
-		result["qpath"] = locfil.QPath
-		result["vcurl"] = qutil.VCURL(locfil.QPath)
-		qdir, _ := qutil.QPartition(locfil.QPath)
-		result["qdir"] = qdir
-	}
+	result["version"] = locfil.Release
+	result["project"] = locfil.Project
+	result["qpath"] = locfil.QPath
+	result["vcurl"] = qutil.VCURL(locfil.QPath)
+	qdir, _ := qutil.QPartition(locfil.QPath)
+	result["qdir"] = qdir
 
 	tell, ok := result[Ftell]
 

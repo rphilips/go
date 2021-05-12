@@ -249,7 +249,6 @@ func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, batchid str
 	b, _ := json.Marshal(pubermap)
 	buffer := bytes.NewBuffer(b)
 	pcargo.Data = buffer.Bytes()
-	return
 }
 
 func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
@@ -311,9 +310,12 @@ func delData(ppayload *qclient.Payload, pcargo *qclient.Cargo) (errs error) {
 }
 
 func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {
+	if pcargo == nil {
+		return nil, nil
+	}
 	result := make([]lister, len(pcargo.Transports))
 	qpaths := make([]string, len(pcargo.Transports))
-	if pcargo != nil && len(pcargo.Transports) != 0 {
+	if len(pcargo.Transports) != 0 {
 		for i, transport := range Fcargo.Transports {
 			locfil := transport.LocFile
 			qpaths[i] = locfil.QPath

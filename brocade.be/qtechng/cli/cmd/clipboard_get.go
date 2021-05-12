@@ -26,7 +26,7 @@ func init() {
 }
 
 func clipboardGet(cmd *cobra.Command, args []string) error {
-	clip, err := qclip.ReadAll()
+	clip, _ := qclip.ReadAll()
 	if Fstdout == "" || Ftransported {
 		fmt.Print(clip)
 		return nil

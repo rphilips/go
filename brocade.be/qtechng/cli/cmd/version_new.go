@@ -48,7 +48,7 @@ func versionNew(cmd *cobra.Command, args []string) error {
 	if ok {
 		Fmsg = fmt.Sprintf("Version `%s` is created", release.String())
 	} else {
-		err = fmt.Errorf("Version `%s` is NOT created", release.String())
+		err = fmt.Errorf("version `%s` is NOT created", release.String())
 	}
 	Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 	return nil

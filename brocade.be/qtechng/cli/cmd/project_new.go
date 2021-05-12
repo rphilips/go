@@ -52,12 +52,7 @@ func projectNew(cmd *cobra.Command, args []string) error {
 			rel, _ := filepath.Rel(Fcwd, dirname)
 			rel = filepath.Clean(rel)
 			rel = filepath.ToSlash(rel)
-			if strings.HasPrefix(rel, "./") {
-				rel = rel[2:]
-			}
-			if strings.HasPrefix(rel, "/") {
-				rel = rel[1:]
-			}
+			rel = strings.TrimPrefix(rel, "./")
 			rel = strings.TrimRight(rel, "/")
 			rel = strings.TrimLeft(rel, "/")
 			args = append(args, Ftreeprefix+rel)

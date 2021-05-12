@@ -14,8 +14,8 @@ var projectCoCmd = &cobra.Command{
 	Long:    `Command to retrieve files in a project from the QtechNG repository`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source co /catalografie/application`,
-	RunE:    sourceCo,
-	PreRun:  preSourceCo,
+	RunE:    projectCo,
+	PreRun:  preProjectCo,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",

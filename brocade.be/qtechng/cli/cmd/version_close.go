@@ -39,7 +39,7 @@ func init() {
 func versionClose(cmd *cobra.Command, args []string) error {
 	nextversion := Fnextversion
 	if nextversion == "" || nextversion == "0.00" {
-		err := fmt.Errorf("Next version `%s` is invalid", nextversion)
+		err := fmt.Errorf("next version `%s` is invalid", nextversion)
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
@@ -51,7 +51,7 @@ func versionClose(cmd *cobra.Command, args []string) error {
 	nextversion = qserver.Canon(nextversion)
 
 	if br == nextversion {
-		err := fmt.Errorf("Version `%s` is already closed", br)
+		err := fmt.Errorf("version `%s` is already closed", br)
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}

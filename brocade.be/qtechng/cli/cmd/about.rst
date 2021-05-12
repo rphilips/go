@@ -41,17 +41,36 @@ Voorbeelden
 .. code-block:: json
 
     {
-        "host": "rphilips-XPS-17-9700",
-        "time": "2021-02-10T16:46:33+01:00",
-        "ERROR": null,
-        "RESULT": {
+        "ABOUT": {
+            "args": [
+                "qtechng",
+                "about"
+            ],
+            "host": "rphilips-XPS-17-9700",
+            "time": "2021-05-12T10:53:47+02:00"
+        },
+        "DATA": {
             "!!uname": "rphilips-XPS-17-9700",
+            "!!user.name": "Richard Philips",
+            "!!user.username": "rphilips",
             "!BuildHost": "rphilips-XPS-17-9700",
-            "!BuildTime": "2021.02.10-16:39:12",
-            "!BuildWith": "go1.16rc1"
-        }
+            "!BuildTime": "2021.05.10-15:19:42",
+            "!BuildWith": "go1.16.4"
+        },
+        "ERRORS": null
     }
 
 
+:samp:`qtechng about --jsonpath='$..DATA'`
 
+.. code:block:: json
+
+    {
+        "!!uname": "rphilips-XPS-17-9700",
+        "!!user.name": "Richard Philips",
+        "!!user.username": "rphilips",
+        "!BuildHost": "rphilips-XPS-17-9700",
+        "!BuildTime": "2021.05.10-15:19:42",
+        "!BuildWith": "go1.16.4"
+    }
 

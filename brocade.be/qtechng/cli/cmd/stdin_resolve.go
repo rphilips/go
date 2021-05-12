@@ -183,9 +183,6 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 				os.Stderr.WriteString(e.Error())
 				os.Stderr.WriteString("\n\n")
 			}
-			if err == io.EOF {
-				break
-			}
 		default:
 			parts := strings.SplitN(a, delim, -1)
 			for len(parts) < csource {
@@ -217,9 +214,6 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 				os.Stderr.WriteString("\n===\n")
 				os.Stderr.WriteString(e.Error())
 				os.Stderr.WriteString("\n\n")
-			}
-			if err == io.EOF {
-				break
 			}
 		}
 		if err == io.EOF {
@@ -258,7 +252,7 @@ func resolve(s string, qpath string) (result string, err error) {
 	bufmac := new(bytes.Buffer)
 	objectmap := make(map[string]qobject.Object)
 	_, err = qsource.ResolveText(env, body, Frilm, notreplace, objectmap, nil, bufmac, "")
-	result = string(bufmac.Bytes())
+	result = bufmac.String()
 	return
 }
 

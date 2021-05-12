@@ -34,13 +34,13 @@ func versionSet(cmd *cobra.Command, args []string) error {
 	version = qserver.Canon(version)
 
 	if strings.Contains(QtechType, "B") {
-		err := fmt.Errorf("On a development server, this command cannot be used")
+		err := fmt.Errorf("on a development server, this command cannot be used")
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
 
 	if version == "0.00" || version == "" {
-		err := fmt.Errorf("Version `0.00` cannot be set")
+		err := fmt.Errorf("version `0.00` cannot be set")
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}
@@ -66,7 +66,7 @@ func versionSet(cmd *cobra.Command, args []string) error {
 
 	ok, _ := release.Exists("")
 	if !ok {
-		err = fmt.Errorf("Version `%s` does NOT exist", release.String())
+		err = fmt.Errorf("version `%s` does NOT exist", release.String())
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}

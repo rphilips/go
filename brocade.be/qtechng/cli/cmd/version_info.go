@@ -47,7 +47,7 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 
 	ok, _ := release.Exists("")
 	if !ok {
-		err = fmt.Errorf("Version `%s` does NOT exist", release.String())
+		err = fmt.Errorf("version `%s` does NOT exist", release.String())
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
 		return nil
 	}

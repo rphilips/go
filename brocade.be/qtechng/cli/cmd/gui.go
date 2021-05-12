@@ -428,7 +428,7 @@ func handleNew(ui lorca.UI, guiFiller *GuiFiller, cwd string, args []string) str
 	if f["version"] == "" || f["qdir"] == "" {
 		return "stop"
 	}
-	argums := make([]string, 0)
+	var argums []string
 	if len(args) == 0 {
 		f := make(map[string]string)
 		for _, key := range []string{"name", "qdir", "version", "hint"} {

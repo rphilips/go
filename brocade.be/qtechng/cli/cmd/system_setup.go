@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -39,7 +40,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 
 	qt := qregistry.Registry["qtechng-type"]
 	if qt != "" && qt != "W" {
-		Fmsg = qreport.Report("", fmt.Errorf("Works only on workstations", args[0]), Fjq, Fyaml)
+		Fmsg = qreport.Report("", errors.New("works only on workstations"), Fjq, Fyaml)
 		return nil
 	}
 

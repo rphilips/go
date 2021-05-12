@@ -58,11 +58,14 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
+	plocfils, err := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
 	direxists := make(map[string][]qclient.LocalFile)
 
 	result := make([]deleter, 0)
 	errorlist := make([]error, 0)
+	if err != nil {
+		errorlist = append(errorlist, err)
+	}
 	for _, plocfil := range plocfils {
 		place := plocfil.Place
 		if done[place] {
@@ -104,6 +107,6 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			})
 		}
 	}
-	Fmsg = qreport.Report(result, errlist, Fjq, Fyaml)
+	Fmsg = qreport.Report(result, errorlist, Fjq, Fyaml)
 	return nil
 }

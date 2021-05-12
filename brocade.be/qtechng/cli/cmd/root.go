@@ -39,8 +39,6 @@ var OQtechType = QtechType
 
 var errRoot = ""
 
-var cfgFile string
-
 // Fcwd Current working directory
 var Fcwd string // current working directory
 
@@ -103,7 +101,6 @@ var Fqpattern []string
 
 // Fforce overrules normal behaviour
 var Fforce bool // force ?
-var finfo bool  // Fakes command and lists all arguments
 
 // Feditor editor used in development
 var Feditor string // editor used in development
@@ -295,7 +292,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 	if Fremote && cmd.Annotations["remote-allowed"] != "yes" && cmd.Annotations["always-remote"] != "yes" && (!strings.ContainsRune(QtechType, 'W') || cmd.Annotations["always-remote-onW"] != "yes") {
 		err = &qerror.QError{
 			Ref: []string{errRoot + "remote"},
-			Msg: []string{fmt.Sprintf("Command is not allowed on remote server")},
+			Msg: []string{"Command is not allowed on remote server"},
 		}
 	}
 
@@ -316,7 +313,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	withforce, _ := cmd.Annotations["with-force"]
+	withforce := cmd.Annotations["with-force"]
 	if withforce == "yes" && !Fforce {
 		err = &qerror.QError{
 			Ref: []string{errRoot + "force"},
@@ -325,7 +322,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	// root
-	withroot, _ := cmd.Annotations["with-root"]
+	withroot := cmd.Annotations["with-root"]
 	yes := withroot == "yes" || withroot == "*"
 	if !yes && withroot != "" {
 		for _, char := range QtechType {
@@ -482,8 +479,6 @@ func fillVersion() {
 		}
 	}
 	Fversion = qregistry.Registry["qtechng-version"]
-
-	return
 }
 
 func fillQdir() {
