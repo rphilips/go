@@ -70,18 +70,21 @@ func fsCat(cmd *cobra.Command, args []string) error {
 			Fpattern = append(Fpattern, text)
 		}
 	}
+	var files []string
+	var err error
 
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false)
-
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+	if len(args) != 1 || args[0] != "-" {
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false)
+		if len(files) == 0 {
+			if err != nil {
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+				return nil
+			}
+			msg := make(map[string][]string)
+			msg["copied"] = files
+			Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
 			return nil
 		}
-		msg := make(map[string][]string)
-		msg["copied"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
-		return nil
 	}
 	output := os.Stdout
 	if Fstdout != "" {
@@ -99,6 +102,9 @@ func fsCat(cmd *cobra.Command, args []string) error {
 		}
 		io.Copy(output, f)
 		f.Close()
+	}
+	if len(args) == 1 || args[0] == "-" {
+		io.Copy(output, os.Stdin)
 	}
 	return nil
 }
