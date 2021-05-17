@@ -170,14 +170,25 @@ func Properties(pathmode string) (prop Property, err error) {
 
 func calcPerm(nine string) os.FileMode {
 	var perm os.FileMode = 0
-	for _, c := range nine {
+	var plus os.FileMode = 0
+	for i, c := range nine {
 		perm *= 2
+		if c == 's' && i == 2 {
+			plus += 04000
+		}
+		if c == 's' && i == 5 {
+			plus += 02000
+		}
+		if c == 't' && i == 8 {
+			plus += 01000
+		}
+
 		if c == '-' {
 			continue
 		}
 		perm++
 	}
-	return perm
+	return perm + plus
 }
 
 // SetPathMode assigns the ownership and access modes to a path

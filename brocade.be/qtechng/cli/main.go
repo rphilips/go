@@ -15,7 +15,7 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"io"
 	"log"
@@ -37,85 +37,105 @@ var buildHost string
 func main() {
 	var payload *qclient.Payload
 	if len(os.Args) > 2 && os.Args[1] == "arg" {
-		ok := false
+		data := make([]byte, 0)
 		mode := os.Args[2]
-		args := make([]string, 0)
+		var err error
 		switch mode {
-		case "file", "stdin":
-			if mode == "file" && len(os.Args) == 3 {
+		case "stdin":
+			data, err = io.ReadAll(os.Stdin)
+			if err != nil {
+				data = nil
 				break
 			}
-			file := os.Stdin
-			if mode == "file" {
-				if len(os.Args) == 3 {
-					break
-				}
-				fname := os.Args[3]
-				var err error
-				file, err = os.Open(fname)
-				if err != nil {
-					break
-				}
-				defer file.Close()
-			}
-
-			reader := bufio.NewReader(file)
-			for {
-				a, err := reader.ReadString('\n')
-				if err != nil && err != io.EOF {
-					break
-				}
-				a = strings.TrimSuffix(a, "\n")
-				a = strings.TrimSuffix(a, "\r")
-				if a != "" {
-					args = append(args, a)
-				}
-				if err != nil {
-					ok = true
-					break
-				}
-			}
-		case "json", "url":
-
+		case "file":
 			if len(os.Args) == 3 {
+				data = nil
+				break
+			}
+			fname := os.Args[3]
+			var err error
+			file, err := os.Open(fname)
+			if err != nil {
+				data = nil
+				break
+			}
+			defer file.Close()
+			data, err = io.ReadAll(os.Stdin)
+			if err != nil {
+				data = nil
+				break
+			}
+		case "json":
+			if len(os.Args) == 3 {
+				data = nil
+				break
+			}
+			data = []byte(os.Args[3])
+
+		case "url":
+			if len(os.Args) == 3 {
+				data = nil
 				break
 			}
 			jarg := os.Args[3]
-			if mode == "url" {
-				resp, err := http.Get(jarg)
-				if err != nil {
-					break
-				}
-				defer resp.Body.Close()
-				buf, err := io.ReadAll(resp.Body)
-				if err != nil {
-					break
-				}
-				jarg = strings.TrimSpace(string(buf))
-			}
-			if !strings.HasPrefix(jarg, "[") {
-				break
-			}
-			err := json.Unmarshal([]byte(jarg), &args)
+			resp, err := http.Get(jarg)
 			if err != nil {
 				break
 			}
-			ok = true
+			defer resp.Body.Close()
+			data, err = io.ReadAll(resp.Body)
+			if err != nil {
+				data = nil
+				break
+			}
+		case "ssh":
+			if len(os.Args) == 3 {
+				data = nil
+				break
+			}
+			data, _ = cmd.ReadSSHAll(os.Args[3])
 		}
-		if ok {
-			length := len(os.Args)
-			k := 0
-			for i, a := range args {
-				k = i + 1
-				if k < length {
-					os.Args[i+1] = a
+
+		args := make([]string, 0)
+		args = append(args, os.Args[0])
+		if data != nil {
+			data = bytes.TrimSpace(data)
+			sdata := string(data)
+			if !strings.HasPrefix(sdata, "[") {
+				lines := strings.SplitN(sdata, "\n", -1)
+				ok := false
+				for _, line := range lines {
+					line = strings.TrimSpace(line)
+					if line == "" {
+						continue
+					}
+					if !ok && line != "qtechng" {
+						args = nil
+						break
+					}
+					if !ok {
+						ok = true
+						continue
+					}
+					args = append(args, line)
+				}
+			} else {
+				argums := make([]string, 0)
+				err := json.Unmarshal(data, &argums)
+				if err != nil {
+					args = nil
 				} else {
-					os.Args = append(os.Args, a)
+					if len(argums) == 0 || argums[0] != "qtechng" {
+						args = nil
+					} else {
+						args = append(args, argums[1:]...)
+					}
 				}
 			}
-			if k+1 < length {
-				os.Args = os.Args[:k+1]
-			}
+
+		}
+		if args != nil {
+			os.Args = args
 		}
 	}
 	if len(os.Args) == 1 {

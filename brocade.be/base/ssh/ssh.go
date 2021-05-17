@@ -37,24 +37,20 @@ func SSHcmd(payload Payload, whowhere string) (catchOut *bytes.Buffer, catchErr 
 	payload.SetOrigin("")
 	user, host := parseRemote(whowhere, payload.GetUID())
 	if user == "" || host == "" {
-		err = fmt.Errorf("No host and/or user specified")
+		err = fmt.Errorf("no host and/or user specified")
 		return
 	}
 	cop, _, _ := qagent.New()
 	if cop == nil {
 		if runtime.GOOS == "windows" {
-			err = fmt.Errorf("Cannot find SSH agent. On windows, work with PuTTY and Pageant")
+			err = fmt.Errorf("cannot find SSH agent. On windows, work with PuTTY and Pageant")
 			return
 		}
-		err = fmt.Errorf("Cannot find SSH agent")
+		err = fmt.Errorf("cannot find SSH agent")
 		return
 	}
 
 	auth := ssh.PublicKeysCallback(cop.Signers)
-	if auth == nil {
-		err = fmt.Errorf("Cannot find a pair of keys")
-		return
-	}
 
 	sshConfig := &ssh.ClientConfig{
 		User:            user,

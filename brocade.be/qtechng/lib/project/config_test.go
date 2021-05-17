@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -10,7 +9,7 @@ func TestConfig01(t *testing.T) {
 	valid := IsValidConfig(blob)
 
 	if !valid {
-		t.Errorf(fmt.Sprintf("Is Valid"))
+		t.Errorf("Is Valid")
 		return
 	}
 
@@ -18,7 +17,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if !valid {
-		t.Errorf(fmt.Sprintf("Is Valid"))
+		t.Errorf("Is Valid")
 		return
 	}
 
@@ -26,7 +25,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if valid {
-		t.Errorf(fmt.Sprintf("Is Not Valid"))
+		t.Errorf("Is Not Valid")
 		return
 	}
 
@@ -34,7 +33,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if valid {
-		t.Errorf(fmt.Sprintf("Is Not Valid"))
+		t.Errorf("Is Not Valid")
 		return
 	}
 
@@ -42,7 +41,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if !valid {
-		t.Errorf(fmt.Sprintf("Is Valid"))
+		t.Errorf("Is Valid")
 		return
 	}
 
@@ -50,7 +49,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if valid {
-		t.Errorf(fmt.Sprintf("Is Not Valid"))
+		t.Errorf("Is Not Valid")
 		return
 	}
 
@@ -58,7 +57,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if !valid {
-		t.Errorf(fmt.Sprintf("Is Valid"))
+		t.Errorf("Is Valid")
 		return
 	}
 
@@ -66,7 +65,7 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if valid {
-		t.Errorf(fmt.Sprintf("Is Not Valid"))
+		t.Errorf("Is Not Valid")
 		return
 	}
 
@@ -74,9 +73,8 @@ func TestConfig01(t *testing.T) {
 	valid = IsValidConfig(blob)
 
 	if valid {
-		t.Errorf(fmt.Sprintf("Is Not Valid"))
+		t.Errorf("Is Not Valid")
 		return
 	}
 
-	return
 }

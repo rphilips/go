@@ -7,23 +7,39 @@ Synopsis
 
 :dfn:`qtechng arg` biedt alternatieve manieren om :command:`qtechng` op te starten.
 
-Er zijn 4 extra manieren:
+Er zijn 5 extra manieren:
 
 :command:`qtechng arg file`
     Er is dan een extra argument dat de naam van een leesbare file bevat.
-    De argumenten zijn dan de lijnen van dit bestand. Deze lijnen worden rechts gestript van `NEWLINE` en `RETURN`.
-    Enkel indien de lijn verschillend is van leeg wordt deze als argument opgenomen.
+    Dit bestand staat op de lokale machine.
 
 :command:`qtechng arg json`
     Er is dan een extra argument dat een JSON array bevat.
-    De argumenten zijn dan de elementen van de array
 
 :command:`qtechng arg stdin`
-    De argumenten worden dan lijn per lijn gelezen van `STDIN`
+    De inhoud van STDIN bevat dan de echte argumenten
 
 :command:`qtechng arg url`
-    Het extra argument is dan een `URL` die wijst naar een `JSON` array.
-    De argumenten zijn dan de elementen van de array
+    Het extra argument is dan een `URL`. De inhoud van het request bevat dan de argumenten.
+
+:command:`qtechng arg ssh`
+    Het extra argument is dan een bestand op de ontwikkelserver.
+
+
+In alle gevallen worden de echte argumenten afgeleid uit het resultaat.
+Hoe dan ook dit resultaat wordt links en rechts ontdaan van whitespace.
+
+Dit resultaat kan 2 verschillende naturen hebben:
+
+Begint dit resultaat met een `[` dan wordt dit resultaat geinterpreteerd als een JSON-array. 
+Het eerste element moet steeds de vaste string `qtechng` zijn.
+
+Begint dit resultaat *niet* met een `[`, dan is elke lijn de basis van een argument. 
+Elke lijn wordt links en rechts ontdaan van whitespace en enkel indien de lijn verschillend van leeg is,
+wordt de lijn toegevoegd aan het lijstje met argumenten.
+
+.. note:: `vlaggen` zijn gewone argumenten.
+
 
 
 Voorbeelden
@@ -34,6 +50,7 @@ Voorbeelden
 .. code-block:: shell
 
     cat > args.txt
+    qtechng
     about
     --remote
 
@@ -68,6 +85,7 @@ Voorbeelden
 .. code-block:: shell
 
     cat > args.txt
+    qtechng
     about
     --remote
 
@@ -101,7 +119,7 @@ Voorbeelden
 
 .. code-block:: shell
 
-    qtechng arg json '["about", "--remote"]'
+    qtechng arg json '["qtechng", "about", "--remote"]'
 
 .. code-block:: json
 
@@ -157,3 +175,35 @@ Voorbeelden
         },
         "ERRORS": null
     }
+
+
+:samp:`qtechng arg ssh`
+
+.. code-block:: shell
+
+    qtechng arg ssh /library/tmp/run.txt
+
+.. code-block:: json
+
+    {
+        "ABOUT": {
+            "args": [
+                "qtechng",
+                "--transported",
+                "about",
+                "--remote"
+            ],
+            "host": "presto.uantwerpen.be",
+            "time": "2021-05-12T11:39:44+02:00"
+        },
+        "DATA": {
+            "!!uname": "presto.uantwerpen.be",
+            "!!user.name": "ansible-rphilips",
+            "!!user.username": "rphilips",
+            "!BuildHost": "rphilips-XPS-17-9700",
+            "!BuildTime": "2021.05.10-15:19:42",
+            "!BuildWith": "go1.16.4"
+        },
+        "ERRORS": null
+    }
+

@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -189,7 +190,7 @@ func (project Project) Init(meta qmeta.Meta) (err error) {
 	pmet, _ := qmeta.Meta{}.New(sversion, sproject+fname)
 	pmet.Update(meta)
 
-	_, err = pmet.Store(sversion, sproject+fname)
+	pmet.Store(sversion, sproject+fname)
 
 	return nil
 }
@@ -209,7 +210,7 @@ func (project Project) Store(fname string, data interface{}) (changed bool, err 
 	if !strings.HasPrefix(fname, "/") {
 		fname = "/" + fname
 	}
-	changed, _, _, e := fs.Store(fname, data, "qtech")
+	_, _, _, e := fs.Store(fname, data, "qtech")
 
 	if e != nil {
 		err = &qerror.QError{
@@ -279,7 +280,7 @@ func (project Project) Unlink() (err error) {
 }
 
 // IsInstallable vist uit of een project installeerbaar is.
-func (project *Project) IsInstallable() error {
+func (project *Project) IsInstallable() *qerror.QError {
 	if project.installable {
 		return nil
 	}
@@ -294,6 +295,12 @@ func (project *Project) IsInstallable() error {
 	}
 
 	if project.reason != "" {
+		err.Msg = []string{project.reason}
+		return err
+	}
+
+	if !project.Release().IsInstallable() {
+		project.reason = fmt.Sprintf("`%s` is not installable", v)
 		err.Msg = []string{project.reason}
 		return err
 	}
@@ -432,10 +439,7 @@ func (project Project) IsConfig(s string) bool {
 		return false
 	}
 	relpath := s[len(project.String())+1:]
-	if relpath == "brocade.json" {
-		return true
-	}
-	return false
+	return relpath == "brocade.json"
 }
 
 // QPaths finds all paths in project (complete paths)
@@ -516,12 +520,12 @@ func InitList(version string, projects []string, fmeta func(string) qmeta.Meta) 
 }
 
 // Info verzamelt informatie over projecten
-func Info(version string, patterns []string) (result map[string]map[string][]string, err error) {
+func Info(version string, patterns []string) (result map[string]map[string]map[string]string, err error) {
 	projs, err := List(version, patterns)
 	if err != nil {
 		return
 	}
-	result = make(map[string]map[string][]string)
+	result = make(map[string]map[string]map[string]string)
 	for _, proj := range projs {
 		parents := make([]string, 0)
 		seq, _ := Sequence(version, proj, false)
@@ -533,17 +537,35 @@ func Info(version string, patterns []string) (result map[string]map[string][]str
 
 		pattern := proj + "/*"
 		children, _ := List(version, []string{pattern})
-		result[proj] = make(map[string][]string)
-		if len(children) == 0 {
-			result[proj]["children"] = nil
-		} else {
-			result[proj]["children"] = children
+		result[proj] = make(map[string]map[string]string)
+		mchild := make(map[string]string)
+		for _, child := range children {
+			mchild[child] = ""
 		}
-		if len(parents) == 0 {
-			result[proj]["parents"] = nil
-		} else {
-			result[proj]["parents"] = parents
+		result[proj]["children"] = mchild
+		mparent := make(map[string]string)
+		for _, parent := range parents {
+			mparent[parent] = ""
 		}
+		result[proj]["parents"] = mparent
+		p, _ := Project{}.New(version, proj, true)
+		cfg, err := p.LoadConfig()
+		if err == nil {
+			j, _ := json.Marshal(cfg)
+			m := make(map[string]string)
+			json.Unmarshal(j, &m)
+			e := p.IsInstallable()
+			m["installable"] = "ok"
+			if e != nil {
+				m["installable"] = e.Msg[0]
+			}
+			result[proj]["properties"] = m
+		} else {
+			m := make(map[string]string)
+			m["error"] = err.Error()
+			result[proj]["properties"] = m
+		}
+
 	}
 	return
 }

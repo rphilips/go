@@ -44,7 +44,6 @@ func TestProject01(t *testing.T) {
 		return
 	}
 
-	return
 }
 
 func TestCore01(t *testing.T) {
@@ -77,7 +76,6 @@ func TestCore01(t *testing.T) {
 		return
 	}
 
-	return
 }
 
 func TestCore02(t *testing.T) {
@@ -124,8 +122,6 @@ func TestCore02(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Project should not be core: %s", project.String()))
 		return
 	}
-
-	return
 }
 
 func TestSeq01(t *testing.T) {
@@ -174,7 +170,6 @@ func TestSeq01(t *testing.T) {
 		return
 	}
 
-	return
 }
 
 func makeRelease() (release *qserver.Release) {

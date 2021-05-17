@@ -167,3 +167,24 @@ func TestFind(t *testing.T) {
 	}
 
 }
+
+func TestCalcPerm(t *testing.T) {
+	type tst struct {
+		readable string
+		number   os.FileMode
+	}
+	tests := []tst{
+		{readable: "rwxrwxrwx", number: 0777},
+		{readable: "rwsrwxrwx", number: 04777},
+	}
+
+	for _, test := range tests {
+		expected := test.number
+		calc := calcPerm(test.readable)
+		if expected == calc {
+			continue
+		}
+		t.Errorf("\nFail:\n%s\n%s\n%s\n\n", test.readable, expected, calc)
+	}
+
+}

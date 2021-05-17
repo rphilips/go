@@ -117,5 +117,4 @@ func (project Project) UpdateConfig(config Config) {
 		pid = r + " " + p + " R"
 	}
 	configCache.LoadOrStore(pid, config)
-	return
 }

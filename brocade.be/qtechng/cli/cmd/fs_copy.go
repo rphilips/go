@@ -19,7 +19,7 @@ import (
 var fsCopyCmd = &cobra.Command{
 	Use:   "copy",
 	Short: "copys files",
-	Long: `First argument is part of the absolute filepath that has to be copiedd 
+	Long: `First argument is part of the absolute filepath that has to be copied
 Second argument is the replacement of that part
 The other arguments are filenames or directory names. 
 If the argument is a directory name, all files in that directory are handled.

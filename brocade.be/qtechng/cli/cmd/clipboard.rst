@@ -42,7 +42,7 @@ Voorbeelden
 Synopsis
 ~~~~~~~~~
 
-:dfn:`qtechng clipboard set arg*` zet de inhoud van het *clipboard*
+:dfn:`qtechng clipboard set` zet de inhoud van het *clipboard*
 Zonder argumenten wordt de lege string in het clipboard geplaatst.
 Anders wordt het eerste argument in het clipboard geplaatst.
 
