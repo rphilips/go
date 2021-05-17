@@ -210,7 +210,7 @@ func (project Project) Store(fname string, data interface{}) (changed bool, err 
 	if !strings.HasPrefix(fname, "/") {
 		fname = "/" + fname
 	}
-	_, _, _, e := fs.Store(fname, data, "qtech")
+	_, _, _, e := fs.Store(fname, data, "")
 
 	if e != nil {
 		err = &qerror.QError{
