@@ -54,7 +54,7 @@ func Install(batchid string, sources []*Source, rsync bool) (err error) {
 			e := &qerror.QError{
 				Ref:     []string{"source.install.version"},
 				Version: r,
-				File:    qp,
+				QPath:   qp,
 				Msg:     []string{"Wrong version"},
 			}
 			errs = append(errs, e)

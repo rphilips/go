@@ -18,7 +18,7 @@ func Waste(object qobject.Object) (changed bool, err error) {
 	if r == "" {
 		err := &qerror.QError{
 			Ref:    []string{"object.waste.version1"},
-			File:   object.EditFile(),
+			QPath:  object.EditFile(),
 			Lineno: 1,
 			Object: object.String(),
 			Type:   "Error",
@@ -32,7 +32,7 @@ func Waste(object qobject.Object) (changed bool, err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.waste.version2"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -49,7 +49,7 @@ func Waste(object qobject.Object) (changed bool, err error) {
 		e := &qerror.QError{
 			Ref:     []string{"object.waste.deps"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -64,7 +64,7 @@ func Waste(object qobject.Object) (changed bool, err error) {
 		e := &qerror.QError{
 			Ref:     []string{"object.waste.file"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -98,7 +98,7 @@ func WasteObjList(objectlist []qobject.Object) (changedlist []bool, errorlist []
 			e := &qerror.QError{
 				Ref:     []string{"objectlist.waste.file"},
 				Version: object.Release(),
-				File:    object.EditFile(),
+				QPath:   object.EditFile(),
 				Lineno:  1,
 				Object:  object.String(),
 				Type:    "Error",

@@ -109,7 +109,9 @@ func fileCi(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	Fmsg = qreport.Report(result, Fcargo.Error, Fjq, Fyaml)
+	if Fmsg == "" {
+		Fmsg = qreport.Report(result, Fcargo.Error, Fjq, Fyaml)
+	}
 	return nil
 }
 

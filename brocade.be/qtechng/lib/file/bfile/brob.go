@@ -152,7 +152,7 @@ func (brob *Brob) Loads(blob []byte) error {
 		msg := qutil.ExtractMsg(ep.Error(), fname)
 		err := &qerror.QError{
 			Ref:    []string{"brob.parse"},
-			File:   fname,
+			QPath:  fname,
 			Lineno: 1,
 			Type:   "Error",
 			Msg:    []string{msg},

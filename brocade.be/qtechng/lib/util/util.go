@@ -970,7 +970,7 @@ func FileURL(fname string, lineno int) string {
 		fname = "/" + fname
 	}
 	x := ""
-	if lineno > 0 {
+	if lineno > 1 {
 		x = strconv.Itoa(lineno)
 	}
 	u := &url.URL{

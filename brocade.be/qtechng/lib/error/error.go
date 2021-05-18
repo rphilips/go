@@ -13,6 +13,7 @@ type QError struct {
 	Ref     []string `json:"ref"`
 	Version string   `json:"version"`
 	Project string   `json:"project"`
+	QPath   string   `json:"qpath"`
 	File    string   `json:"file"`
 	Url     string   `json:"fileurl"`
 	Lineno  int      `json:"lineno"`
@@ -43,6 +44,9 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 	}
 	if qerr.Project != "" {
 		m["project"] = qerr.Project
+	}
+	if qerr.QPath != "" {
+		m["qpath"] = qerr.QPath
 	}
 	if qerr.File != "" {
 		m["file"] = qerr.File

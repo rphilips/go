@@ -104,7 +104,7 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 			e := &qerror.QError{
 				Ref:     []string{"version.backup.fiheader"},
 				Version: r,
-				File:    qpath,
+				QPath:   qpath,
 				Msg:     []string{err.Error()},
 			}
 			err = qerror.QErrorTune(err, e)
@@ -118,7 +118,7 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 			e := &qerror.QError{
 				Ref:     []string{"version.backup.header"},
 				Version: r,
-				File:    qpath,
+				QPath:   qpath,
 				Msg:     []string{err.Error()},
 			}
 			err = qerror.QErrorTune(err, e)
@@ -129,7 +129,7 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 			e := &qerror.QError{
 				Ref:     []string{"version.backup.body"},
 				Version: r,
-				File:    qpath,
+				QPath:   qpath,
 				Msg:     []string{err.Error()},
 			}
 			err = qerror.QErrorTune(err, e)

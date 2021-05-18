@@ -43,17 +43,17 @@ func sourcePy(cmd *cobra.Command, args []string) error {
 	pyscript := args[0]
 	if !strings.HasSuffix(pyscript, ".py") {
 		e := &qerror.QError{
-			Ref:  []string{errRoot + "py"},
-			File: pyscript,
-			Msg:  []string{"Script should end with `.py`"},
+			Ref:   []string{errRoot + "py"},
+			QPath: pyscript,
+			Msg:   []string{"Script should end with `.py`"},
 		}
 		return e
 	}
 	if !strings.HasPrefix(pyscript, "/") {
 		e := &qerror.QError{
-			Ref:  []string{errRoot + "py"},
-			File: pyscript,
-			Msg:  []string{"Script should start with `/`"},
+			Ref:   []string{errRoot + "py"},
+			QPath: pyscript,
+			Msg:   []string{"Script should start with `/`"},
 		}
 		return e
 	}

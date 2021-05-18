@@ -236,7 +236,7 @@ func Fetch(object Object) (err error) {
 	if r == "" {
 		err := &qerror.QError{
 			Ref:    []string{"object.fetch.version.unspecified"},
-			File:   object.EditFile(),
+			QPath:  object.EditFile(),
 			Lineno: 1,
 			Object: object.String(),
 			Type:   "Error",
@@ -250,7 +250,7 @@ func Fetch(object Object) (err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.fetch.version"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -265,7 +265,7 @@ func Fetch(object Object) (err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.fetch.name"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -283,7 +283,7 @@ func Fetch(object Object) (err error) {
 		e := &qerror.QError{
 			Ref:     []string{"object.fetch.file"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -308,7 +308,7 @@ func Fetch(object Object) (err error) {
 		e := &qerror.QError{
 			Ref:     []string{"object.fetch.unmarshal"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  object.String(),
 			Type:    "Error",
@@ -346,7 +346,7 @@ func StoreList(objectlist []Object) (changedmap map[string]bool, errorlist []err
 			e := &qerror.QError{
 				Ref:     []string{"objectlist.store.file"},
 				Version: object.Release(),
-				File:    object.EditFile(),
+				QPath:   object.EditFile(),
 				Lineno:  1,
 				Object:  object.String(),
 				Type:    "Error",
@@ -368,7 +368,7 @@ func Store(object Object) (changed bool, err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.store.name"},
 			Version: r,
-			File:    object.EditFile(),
+			QPath:   object.EditFile(),
 			Lineno:  1,
 			Object:  name,
 			Type:    "Error",
@@ -382,7 +382,7 @@ func Store(object Object) (changed bool, err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.store.editfile"},
 			Version: r,
-			File:    editfile,
+			QPath:   editfile,
 			Lineno:  1,
 			Object:  name,
 			Type:    "Error",
@@ -394,7 +394,7 @@ func Store(object Object) (changed bool, err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.store.version1"},
 			Version: r,
-			File:    editfile,
+			QPath:   editfile,
 			Lineno:  1,
 			Object:  name,
 			Type:    "Error",
@@ -407,7 +407,7 @@ func Store(object Object) (changed bool, err error) {
 		err := &qerror.QError{
 			Ref:     []string{"object.store.version2"},
 			Version: r,
-			File:    editfile,
+			QPath:   editfile,
 			Lineno:  1,
 			Object:  name,
 			Type:    "Error",
@@ -425,7 +425,7 @@ func Store(object Object) (changed bool, err error) {
 		e := &qerror.QError{
 			Ref:     []string{"object.store.file"},
 			Version: r,
-			File:    editfile,
+			QPath:   editfile,
 			Lineno:  1,
 			Object:  name,
 			Type:    "Error",
@@ -473,7 +473,7 @@ func Link(r string, name string, object interface{}) error {
 		err := &qerror.QError{
 			Ref:     []string{"object.link.version"},
 			Version: r,
-			File:    name,
+			QPath:   name,
 			Lineno:  1,
 			Object:  obj,
 			Type:    "Error",
@@ -568,7 +568,7 @@ func UnLink(r string, name string, object interface{}) error {
 		err := &qerror.QError{
 			Ref:     []string{"object.unlink.object"},
 			Version: r,
-			File:    name,
+			QPath:   name,
 			Lineno:  1,
 			Object:  obj,
 			Type:    "Error",
@@ -581,7 +581,7 @@ func UnLink(r string, name string, object interface{}) error {
 		err := &qerror.QError{
 			Ref:     []string{"object.unlink.version"},
 			Version: r,
-			File:    name,
+			QPath:   name,
 			Lineno:  1,
 			Object:  obj,
 			Type:    "Error",

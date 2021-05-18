@@ -3,8 +3,10 @@ package dfile
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	qerror "brocade.be/qtechng/lib/error"
@@ -92,6 +94,7 @@ func (df *DFile) Parse(blob []byte, decomment bool) (preamble string, objs []qob
 
 	objs = make([]qobject.Object, len(y.Macros))
 	release := df.Release()
+	errlist := make([]error, 0)
 	for k, macro := range y.Macros {
 		for i, param := range macro.Params {
 			doc := strings.TrimSpace(param.Doc)
@@ -104,11 +107,26 @@ func (df *DFile) Parse(blob []byte, decomment bool) (preamble string, objs []qob
 			}
 			sdoc := cmt[pid]
 			param.Doc = sdoc
+			if sdoc == "" {
+				lineno, _ := strconv.Atoi(macro.Line)
+				e := &qerror.QError{
+					Ref:    []string{"dfile.doc.empty"},
+					File:   fname,
+					Lineno: lineno,
+					Object: macro.String(),
+					Type:   "Error",
+					Msg:    []string{fmt.Sprintf("`%s` is not documented", pid)},
+				}
+				errlist = append(errlist, e)
+			}
 			macro.Params[i] = param
 		}
 		macro.SetRelease(release)
 		macro.SetEditFile(fname)
 		objs[k] = macro
+	}
+	if len(errlist) != 0 {
+		err = errlist[0]
 	}
 	return
 }

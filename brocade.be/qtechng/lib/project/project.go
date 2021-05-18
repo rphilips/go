@@ -217,7 +217,7 @@ func (project Project) Store(fname string, data interface{}) (changed bool, err 
 			Ref:     []string{"project.store"},
 			Version: project.Release().String(),
 			Project: project.String(),
-			File:    fname,
+			QPath:   fname,
 			Msg:     []string{"Error on write: `" + e.Error() + "`"},
 		}
 		return false, err
@@ -236,7 +236,7 @@ func (project Project) Fetch(fname string) (blob []byte, err error) {
 			Ref:     []string{"project.fetch"},
 			Version: project.Release().String(),
 			Project: project.String(),
-			File:    fname,
+			QPath:   fname,
 			Msg:     []string{"Error on read: `" + e.Error() + "`"},
 		}
 		return blob, err
@@ -265,7 +265,7 @@ func (project Project) Unlink() (err error) {
 			Ref:     []string{"project.unlink.config"},
 			Version: r,
 			Project: p,
-			File:    "brocade.json",
+			QPath:   p + "/brocade.json",
 			Msg:     []string{"Cannot remove `brocade.json`: " + e.Error()},
 		}
 		return err
