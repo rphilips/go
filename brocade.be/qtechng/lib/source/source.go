@@ -42,7 +42,7 @@ func (Source) New(r string, s string, readonly bool) (source *Source, err error)
 		e := &qerror.QError{
 			Ref:     []string{"source.new"},
 			Version: r,
-			File:    s,
+			QPath:   s,
 			Msg:     []string{"Cannot instantiate version"},
 		}
 		err = qerror.QErrorTune(err, e)
@@ -62,7 +62,7 @@ func (Source) New(r string, s string, readonly bool) (source *Source, err error)
 		err = &qerror.QError{
 			Ref:     []string{"source.new.noproject"},
 			Version: r,
-			File:    s,
+			QPath:   s,
 			Msg:     []string{"Cannot identify project"},
 		}
 		return
@@ -76,7 +76,7 @@ func (Source) New(r string, s string, readonly bool) (source *Source, err error)
 	err = &qerror.QError{
 		Ref:     []string{"source.new.cache"},
 		Version: r,
-		File:    s,
+		QPath:   s,
 		Msg:     []string{"Cannot create a source"},
 	}
 	return
@@ -137,7 +137,7 @@ func (source *Source) Fetch() (content []byte, err error) {
 			err = &qerror.QError{
 				Ref:     []string{"source.fetch"},
 				Version: version.String(),
-				File:    source.String(),
+				QPath:   source.String(),
 				Msg:     []string{"Cannot retrieve data: " + e.Error()},
 			}
 			return nil, err
@@ -181,7 +181,7 @@ func (source *Source) Waste() (err error) {
 		e := &qerror.QError{
 			Ref:     []string{"source.waste"},
 			Version: r,
-			File:    source.String(),
+			QPath:   source.String(),
 			Msg:     []string{"Cannot remove file"},
 		}
 		err = qerror.QErrorTune(err, e)
@@ -197,7 +197,7 @@ func (source *Source) Waste() (err error) {
 			err = &qerror.QError{
 				Ref:     []string{"source.waste.config"},
 				Version: r,
-				File:    s,
+				QPath:   s,
 				Msg:     []string{"Cannot remove configuration file: there are other files or directories"},
 			}
 			return
@@ -222,7 +222,7 @@ func (source *Source) Waste() (err error) {
 			e := &qerror.QError{
 				Ref:     []string{"source.waste.load.object"},
 				Version: r,
-				File:    source.String(),
+				QPath:   source.String(),
 				Msg:     []string{"Cannot load objects"},
 			}
 			err = qerror.QErrorTune(err, e)
@@ -239,7 +239,7 @@ func (source *Source) Waste() (err error) {
 				err = &qerror.QError{
 					Ref:     []string{"source.waste.dependent"},
 					Version: r,
-					File:    s,
+					QPath:   s,
 					Msg:     []string{"Dependent on `" + obj + "`: `" + strings.Join(dps, ", ") + "`"},
 				}
 				return err
@@ -283,7 +283,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 			err = &qerror.QError{
 				Ref:     []string{"source.store.config.bytes"},
 				Version: version.String(),
-				File:    source.String(),
+				QPath:   source.String(),
 				Msg:     []string{"Cannot transform to bytes: `" + e.Error() + "`"},
 			}
 			return nmeta, false, chobjs, err
@@ -292,7 +292,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 			err = &qerror.QError{
 				Ref:     []string{"source.store.config.invalid"},
 				Version: version.String(),
-				File:    source.String(),
+				QPath:   source.String(),
 				Msg:     []string{"Not a valid configuration file"},
 			}
 			return nmeta, false, chobjs, err
@@ -334,7 +334,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 		err = &qerror.QError{
 			Ref:     []string{"source.store.notunique"},
 			Version: version.String(),
-			File:    source.String(),
+			QPath:   source.String(),
 			Msg:     []string{"Is not unique"},
 		}
 		return nmeta, false, chobjs, err
@@ -347,7 +347,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 		e := &qerror.QError{
 			Ref:     []string{"source.store.meta.new"},
 			Version: version.String(),
-			File:    source.String(),
+			QPath:   source.String(),
 			Msg:     []string{"Cannot create meta object"},
 		}
 		err = qerror.QErrorTune(err, e)
@@ -360,7 +360,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 		err = &qerror.QError{
 			Ref:     []string{"source.store.forbidden"},
 			Version: version.String(),
-			File:    source.String(),
+			QPath:   source.String(),
 			Msg:     []string{"Cannot store on disk: " + e.Error()},
 		}
 		return
@@ -392,7 +392,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 		e := &qerror.QError{
 			Ref:     []string{"source.store.meta.store"},
 			Version: version.String(),
-			File:    source.String(),
+			QPath:   source.String(),
 			Msg:     []string{"Cannot store meta object"},
 		}
 		err = qerror.QErrorTune(err, e)
@@ -422,7 +422,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 		e := &qerror.QError{
 			Ref:     []string{"source.store.load.object"},
 			Version: version.String(),
-			File:    source.String(),
+			QPath:   source.String(),
 			Msg:     []string{"Cannot load objects"},
 		}
 		err = qerror.QErrorTune(err, e)
@@ -523,7 +523,7 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 			return &qerror.QError{
 				Ref:     []string{"source.storetree.filewalk"},
 				Version: version,
-				File:    fname,
+				QPath:   fname,
 				Msg:     []string{err.Error()},
 			}
 		}
@@ -951,7 +951,7 @@ func FetchList(version string, paths []string) (bodies [][]byte, metas []*qmeta.
 			err := &qerror.QError{
 				Ref:     []string{"source.fetchlist.path.nosource"},
 				Version: release.String(),
-				File:    p,
+				QPath:   p,
 				Msg:     []string{"Path `" + p + "` does not exists"},
 			}
 			return nil, err
@@ -961,7 +961,7 @@ func FetchList(version string, paths []string) (bodies [][]byte, metas []*qmeta.
 			err := &qerror.QError{
 				Ref:     []string{"source.fetchlist.path.noread"},
 				Version: release.String(),
-				File:    p,
+				QPath:   p,
 				Msg:     []string{"Path `" + p + "` unreadable"},
 			}
 			return nil, err
@@ -972,7 +972,7 @@ func FetchList(version string, paths []string) (bodies [][]byte, metas []*qmeta.
 			err := &qerror.QError{
 				Ref:     []string{"source.fetchlist.path.nometa"},
 				Version: release.String(),
-				File:    p,
+				QPath:   p,
 				Msg:     []string{"Math of path `" + p + "` not retrievable"},
 			}
 			return nil, err
