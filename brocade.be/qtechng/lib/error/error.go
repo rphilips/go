@@ -122,6 +122,14 @@ func FillQError(qerr *QError) (err *QError) {
 }
 
 func QErrorTune(e error, additional *QError) *QError {
+	if e == nil {
+		return additional
+	}
+	switch v := e.(type) {
+	case QError:
+		e = &v
+	}
+
 	switch v := e.(type) {
 	case *QError:
 		if v.Version == "" {
@@ -132,6 +140,12 @@ func QErrorTune(e error, additional *QError) *QError {
 		}
 		if v.File == "" {
 			v.File = additional.File
+		}
+		if additional.QPath != "" && v.QPath == "" {
+			v.QPath = additional.QPath
+		}
+		if v.QPath != "" && v.File == v.QPath {
+			v.File = ""
 		}
 		if len(additional.Ref) > 0 {
 			v.Ref = append(additional.Ref, v.Ref...)
@@ -231,4 +245,46 @@ func FlattenErrors(err interface{}) []error {
 		return nil
 	}
 	return errs2
+}
+
+func ErrorMsg(e error) []string {
+
+	if e == nil {
+		return nil
+	}
+	switch v := e.(type) {
+	case QError:
+		e = &v
+	}
+
+	switch v := e.(type) {
+	case *QError:
+		if len(v.Msg) == 0 {
+			return nil
+		}
+		return v.Msg
+	default:
+		return []string{e.Error()}
+	}
+}
+
+func ExtractEMsg(e error, fname string, blob []byte) (msg []string, lineno int) {
+	msg = make([]string, 0)
+	if e == nil {
+		return
+	}
+	switch v := e.(type) {
+	case *QError:
+		lineno = v.Lineno
+		msg = v.Msg
+	case QError:
+		lineno = v.Lineno
+		msg = v.Msg
+	default:
+		m := qutil.ExtractMsg(e.Error(), fname)
+		no, line := qutil.ExtractLineno(m, blob)
+		lineno = no
+		msg = []string{m + " :: " + line}
+	}
+	return
 }

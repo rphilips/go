@@ -37,7 +37,7 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 				File:   fname,
 				Lineno: 1,
 				Type:   "Error",
-				Msg:    []string{err.Error()},
+				Msg:    qerror.ErrorMsg(err),
 			}
 			return e
 		}
@@ -45,15 +45,14 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 	blob = qutil.About(blob)
 	preamble, objects, e := ofile.Parse(blob, decomment)
 	if e != nil {
-		msg := qutil.ExtractMsg(e.Error(), fname)
-		lineno, line := qutil.ExtractLineno(msg, blob)
+		msg, lineno := qerror.ExtractEMsg(e, fname, blob)
 
 		err := &qerror.QError{
 			Ref:    []string{"objfile.loads.parse"},
 			File:   fname,
 			Lineno: lineno,
 			Type:   "Error",
-			Msg:    []string{msg + " :: " + line},
+			Msg:    msg,
 		}
 		return err
 	}

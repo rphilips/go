@@ -644,9 +644,6 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 			return nil, e
 		}
 		nmeta, _, _, y := source.Store(met, blob)
-		if y != nil {
-			nmeta = nil
-		}
 
 		return nmeta, y
 	}
@@ -657,7 +654,11 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 		resultlist, errorlist := qparallel.NMap(len(configs), 1, fn)
 		for i, r := range resultlist {
 			p := configs[i]
-			results[p] = r.(*qmeta.Meta)
+			if errorlist[i] != nil {
+				results[p] = nil
+			} else {
+				results[p] = r.(*qmeta.Meta)
+			}
 		}
 
 		errslice := make([]error, 0)
