@@ -1,18 +1,14 @@
 package cmd
 
 import (
-	"archive/tar"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	qerror "brocade.be/qtechng/lib/error"
-	qmeta "brocade.be/qtechng/lib/meta"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
-	qsource "brocade.be/qtechng/lib/source"
 	qutil "brocade.be/qtechng/lib/util"
 )
 
@@ -47,105 +43,21 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 	if !ok {
 		err := &qerror.QError{
 			Ref: []string{"backup.notexist"},
-			Msg: []string{"Vversion does not exist."},
+			Msg: []string{"version does not exist."},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
 		return nil
 	}
 
-	fs := release.FS()
-	qpaths := fs.Glob("/", nil, false)
-
-	// tar
-	errlist := make([]error, 0)
 	tarfile := qutil.AbsPath("brocade-"+r+"-"+t+".tar", Fcwd)
-	ftar, err := os.Create(tarfile)
-
-	if err != nil {
-		return err
-	}
-	defer ftar.Close()
-
-	tw := tar.NewWriter(ftar)
-
-	for _, qpath := range qpaths {
-		x, _ := fs.RealPath(qpath)
-		fi, err := os.Stat(x)
-		if err != nil {
-			errlist = append(errlist, err)
-			continue
-		}
-		source, err := qsource.Source{}.New(r, qpath, true)
-		if err != nil {
-			errlist = append(errlist, err)
-			continue
-		}
-		content, err := source.Fetch()
-		if err != nil {
-			errlist = append(errlist, err)
-			continue
-		}
-		meta, err := qmeta.Meta{}.New(r, qpath)
-		if err != nil {
-			errlist = append(errlist, err)
-			continue
-		}
-		pax := map[string]string{
-			"BROCADE.cu": meta.Cu,
-			"BROCADE.mu": meta.Mu,
-			"BROCADE.ct": meta.Ct,
-			"BROCADE.mt": meta.Mt,
-			"BROCADE.it": meta.It,
-			"BROCADE.ft": meta.Ft,
-		}
-
-		hdr, err := tar.FileInfoHeader(fi, "")
-		if err != nil {
-			e := &qerror.QError{
-				Ref:     []string{"version.backup.fiheader"},
-				Version: r,
-				QPath:   qpath,
-				Msg:     []string{err.Error()},
-			}
-			err = qerror.QErrorTune(err, e)
-			errlist = append(errlist, err)
-			continue
-		}
-		hdr.Name = qpath[1:]
-		hdr.Format = tar.FormatPAX
-		hdr.PAXRecords = pax
-		if err := tw.WriteHeader(hdr); err != nil {
-			e := &qerror.QError{
-				Ref:     []string{"version.backup.header"},
-				Version: r,
-				QPath:   qpath,
-				Msg:     []string{err.Error()},
-			}
-			err = qerror.QErrorTune(err, e)
-			errlist = append(errlist, err)
-			continue
-		}
-		if _, err := tw.Write(content); err != nil {
-			e := &qerror.QError{
-				Ref:     []string{"version.backup.body"},
-				Version: r,
-				QPath:   qpath,
-				Msg:     []string{err.Error()},
-			}
-			err = qerror.QErrorTune(err, e)
-			errlist = append(errlist, err)
-			continue
-		}
-	}
-	tw.Flush()
-	tw.Close()
+	err := release.Backup(tarfile)
 
 	msg := make(map[string]string)
 	msg["status"] = "Backup FAILED"
-	if len(errlist) == 0 {
-		errlist = nil
+	if err == nil {
 		msg["status"] = "Backup SUCCESS to `" + tarfile + "`"
+		msg["backupfile"] = tarfile
 	}
-	Fmsg = qreport.Report(msg, errlist, Fjq, Fyaml)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml)
 	return nil
 }

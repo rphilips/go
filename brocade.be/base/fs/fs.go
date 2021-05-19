@@ -323,13 +323,37 @@ func Mkdir(dirname string, pathmode string) (err error) {
 	return SetPathmode(dirname, pathmode)
 }
 
+// MkdirAll makes a directory and sets the access
+func MkdirAll(dirname string, pathmode string) (err error) {
+	dirs := make([]string, 0)
+	for {
+		if Exists(dirname) {
+			break
+		}
+		dirs = append(dirs, dirname)
+		parent := filepath.Dir(dirname)
+		if parent == "" || parent == dirname {
+			break
+		}
+		dirname = parent
+	}
+	if len(dirname) == 0 {
+		return Mkdir(dirname, pathmode)
+	}
+	for i := len(dirs) - 1; i > -1; i-- {
+		dirname = dirs[i]
+		Mkdir(dirname, pathmode)
+	}
+	return nil
+}
+
 // Rmpath removes a file or a dirctory tree except root
 func Rmpath(dirname string) (err error) {
 	dirname, err = AbsPath(dirname)
 	if err == nil {
 		parent := filepath.Dir(dirname)
 		if parent == dirname {
-			err = errors.New("Cannot delete a root")
+			err = errors.New("cannot delete a root")
 		} else {
 			err = os.RemoveAll(dirname)
 		}

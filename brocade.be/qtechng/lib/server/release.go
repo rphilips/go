@@ -1,7 +1,11 @@
 package server
 
 import (
+	"archive/tar"
+	"fmt"
+	"io"
 	"log"
+	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -175,6 +179,155 @@ func (release Release) IsInstallable() bool {
 	}
 	r := Canon(qregistry.Registry["brocade-release"])
 	return release.String() == r
+}
+
+// Backup makes a backup of the sources and the meta information
+func (release Release) Backup(tarfile string) error {
+	ftar, err := os.Create(tarfile)
+
+	if err != nil {
+		return err
+	}
+	defer ftar.Close()
+	errs := make([]error, 0)
+
+	tw := tar.NewWriter(ftar)
+	defer tw.Close()
+
+	fs := release.FS("/")
+	for _, dir := range []string{"/source/data", "/meta"} {
+		source, err := fs.RealPath(dir)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		info, err := os.Stat(source)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		var baseDir string
+		if info.IsDir() {
+			baseDir = dir[1:]
+		}
+		err = filepath.Walk(source,
+			func(p string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				header, err := tar.FileInfoHeader(info, info.Name())
+				if err != nil {
+					return err
+				}
+
+				if baseDir != "" {
+					header.Name = filepath.Join(baseDir, filepath.ToSlash(strings.TrimPrefix(p, source)))
+				}
+
+				if err := tw.WriteHeader(header); err != nil {
+					return err
+				}
+
+				if info.IsDir() {
+					return nil
+				}
+
+				file, err := os.Open(p)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+				_, err = io.Copy(tw, file)
+				return err
+			})
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+	}
+	tw.Flush()
+	tw.Close()
+	ftar.Close()
+	if len(errs) == 0 {
+		return nil
+	}
+	return qerror.ErrorSlice(errs)
+}
+
+// Restore restores a backup and the meta information
+func (release Release) Restore(tarfile string, init bool) (previous string, err error) {
+
+	reader, err := os.Open(tarfile)
+	if err != nil {
+		return "", err
+	}
+	defer reader.Close()
+
+	// create backup
+	previous, err = qfs.TempFile("", "backup-previous-"+release.String()+"-")
+	if err == nil {
+		previous += ".tar"
+		err = release.Backup(previous)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	// initialises if necessary
+	fs := release.FS("/")
+	if init {
+		fs := release.FS("/")
+		for _, dir := range []string{"/source/data", "/meta"} {
+			source, _ := fs.RealPath(dir)
+			qfs.Rmpath(source)
+			if qfs.Exists(source) {
+				return previous, fmt.Errorf("cannot remove `%s`", source)
+			}
+			qfs.Mkdir(source, "qtech")
+			if !qfs.IsDir(source) {
+				return previous, fmt.Errorf("cannot create directory `%s`", source)
+			}
+		}
+	}
+
+	// restore files
+
+	tarReader := tar.NewReader(reader)
+	target, _ := fs.RealPath("/")
+	if !qfs.IsDir(target) {
+		return previous, fmt.Errorf("cannot write to directory `%s`", target)
+	}
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return previous, fmt.Errorf("cannot read tarfile `%s`", tarfile)
+		}
+
+		path := filepath.Join(target, header.Name)
+		info := header.FileInfo()
+		if info.IsDir() {
+			if err = qfs.MkdirAll(path, "qtech"); err != nil {
+				return previous, fmt.Errorf("cannot make directory `%s`", path)
+			}
+			continue
+		}
+
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return previous, fmt.Errorf("cannot make file `%s` with mode `%s` (error `%s`)", path, info.Mode(), err)
+		}
+		defer file.Close()
+		_, err = io.Copy(file, tarReader)
+		if err != nil {
+			return previous, fmt.Errorf("cannot write to file `%s` with mode `%s`", path, info.Mode())
+		}
+		file.Close()
+	}
+	return previous, nil
+
 }
 
 ////////////////////////////// Help functions ///////////////
