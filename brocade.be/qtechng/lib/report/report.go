@@ -23,7 +23,7 @@ type report struct {
 	Errors []error     `json:"ERRORS" yaml:"ERRORS"`
 }
 
-func Report(r interface{}, e interface{}, jsonpath string, yaml bool) string {
+func Report(r interface{}, e interface{}, jsonpath string, yaml bool, unquote bool) string {
 
 	show := report{}
 
@@ -71,7 +71,15 @@ func Report(r interface{}, e interface{}, jsonpath string, yaml bool) string {
 		err := json.Unmarshal([]byte(s), &x)
 		if err == nil {
 			b, _ := json.MarshalIndent(x, "", "    ")
-			return string(b)
+			s = string(b)
+		}
+		if unquote && strings.HasPrefix(s, `"`) {
+			z := ""
+			err := json.Unmarshal([]byte(s), &z)
+			if err != nil {
+				z = s
+			}
+			return z
 		}
 		return s
 	}

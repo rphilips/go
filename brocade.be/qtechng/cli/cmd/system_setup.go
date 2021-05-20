@@ -40,7 +40,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 
 	qt := qregistry.Registry["qtechng-type"]
 	if qt != "" && qt != "W" {
-		Fmsg = qreport.Report("", errors.New("works only on workstations"), Fjq, Fyaml)
+		Fmsg = qreport.Report("", errors.New("works only on workstations"), Fjq, Fyaml, Funquote)
 		return nil
 	}
 
@@ -48,7 +48,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 		if runtime.GOOS == "windows" {
 			fname := qutil.AbsPath(args[0], Fcwd)
 			if !qfs.IsFile(fname) {
-				Fmsg = qreport.Report("", fmt.Errorf("`%s` is not the name of a file", fname), Fjq, Fyaml)
+				Fmsg = qreport.Report("", fmt.Errorf("`%s` is not the name of a file", fname), Fjq, Fyaml, Funquote)
 				return nil
 			}
 			qregistry.SetRegistry("ssh-default-privatekey", fname)
@@ -92,13 +92,13 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// get 'about'
 	soutr, serrr, err := qutil.QtechNG([]string{"about", "--remote"}, "$..DATA", false, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	mr := make(map[string]string)
 	err = json.Unmarshal([]byte(soutr), &mr)
 	if err != nil {
-		Fmsg = qreport.Report(soutr, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(soutr, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	username := mr["!!user.username"]
@@ -158,13 +158,13 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// QtechNG
 	soutl, serrl, err := qutil.QtechNG([]string{"about"}, "$..DATA", false, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	ml := make(map[string]string)
 	err = json.Unmarshal([]byte(soutl), &ml)
 	if err != nil {
-		Fmsg = qreport.Report(soutl, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(soutl, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	// releases

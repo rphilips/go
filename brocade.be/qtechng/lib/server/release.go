@@ -264,11 +264,13 @@ func (release Release) Restore(tarfile string, init bool) (previous string, err 
 	defer reader.Close()
 
 	// create backup
-	previous, err = qfs.TempFile("", "backup-previous-"+release.String()+"-")
-	if err == nil {
-		previous += ".tar"
-		err = release.Backup(previous)
-	}
+	h := time.Now()
+	t := h.Format(time.RFC3339)[:19]
+	t = strings.ReplaceAll(t, ":", "")
+	t = strings.ReplaceAll(t, "-", "")
+	r := release.String()
+	previous = filepath.Join(filepath.Dir(tarfile), "previous-brocade-"+r+"-"+t+".tar")
+	err = release.Backup(previous)
 	if err != nil {
 		return "", err
 	}

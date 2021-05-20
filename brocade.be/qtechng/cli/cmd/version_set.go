@@ -35,13 +35,13 @@ func versionSet(cmd *cobra.Command, args []string) error {
 
 	if strings.Contains(QtechType, "B") {
 		err := fmt.Errorf("on a development server, this command cannot be used")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 
 	if version == "0.00" || version == "" {
 		err := fmt.Errorf("version `0.00` cannot be set")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 
@@ -54,31 +54,31 @@ func versionSet(cmd *cobra.Command, args []string) error {
 			Ref: []string{"set.version.lowest"},
 			Msg: []string{"The version of the new release `" + version + "` should be higher than `" + br + "`"},
 		}
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 
 	release, err := qserver.Release{}.New(version, true)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("version `%s` does NOT exist", release.String())
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 
 	err = qregistry.SetRegistry("brocade-release", version)
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	err = qregistry.SetRegistry("brocade-release-say", version)
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	return nil

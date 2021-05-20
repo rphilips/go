@@ -15,11 +15,8 @@ import (
 var versionBackupCmd = &cobra.Command{
 	Use:   "backup version",
 	Short: "Backup of version",
-	Long: `Backup is in tar (PAX) format. Meta data is attached as well
-	The result is always brocade-version.tar in the current directory.
-
-This file is usable with tar but it contains the QtechNG meta data in 
-PAX extended header records	with the namespace BROCADE`,
+	Long: `Backup is in tar format: it stores the content of *meta* en *source/data*
+	The result is always brocade-{version}-{timestamp}.tar in the current directory.`,
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version backup 0.00",
 	RunE:    versionBackup,
@@ -45,7 +42,7 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 			Ref: []string{"backup.notexist"},
 			Msg: []string{"version does not exist."},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 
@@ -58,6 +55,6 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 		msg["status"] = "Backup SUCCESS to `" + tarfile + "`"
 		msg["backupfile"] = tarfile
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml)
-	return nil
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote)
+	return err
 }

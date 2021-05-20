@@ -29,7 +29,7 @@ func init() {
 
 func sourceDelete(cmd *cobra.Command, args []string) error {
 	_, result := listTransport(Fcargo)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote)
 	return nil
 }
 
@@ -55,7 +55,7 @@ func preSourceDelete(cmd *cobra.Command, args []string) {
 				log.Fatal("cmd/source_delete/2:\n", err)
 			}
 		} else {
-			Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml)
+			Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote)
 		}
 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 	}

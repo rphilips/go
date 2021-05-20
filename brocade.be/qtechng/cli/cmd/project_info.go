@@ -29,10 +29,10 @@ func init() {
 func projectInfo(cmd *cobra.Command, args []string) error {
 	result, errs := qproject.Info(Fversion, args)
 	if errs != nil {
-		Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
+		Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote)
 		return nil
 	}
-	Fmsg = qreport.Report(result, errs, Fjq, Fyaml)
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote)
 	return nil
 
 }

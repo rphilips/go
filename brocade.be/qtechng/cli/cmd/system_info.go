@@ -62,6 +62,6 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
 	return nil
 }

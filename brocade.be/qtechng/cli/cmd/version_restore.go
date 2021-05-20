@@ -9,10 +9,10 @@ import (
 )
 
 var versionRestoreCmd = &cobra.Command{
-	Use:   "restore file",
+	Use:   "restore backup",
 	Short: "restore version from backup",
-	Long: `Backup is in tar (PAX) format. Meta data is attached as well
-	`,
+	Long: `Backup restores the content of *meta* en *source/data* of a specific version.
+The last argument should be a tar file buit with th ebeackup command`,
 	Args:    cobra.ExactArgs(2),
 	Example: "qtechng version 0.00 backup.tar",
 	RunE:    versionRestore,
@@ -25,7 +25,7 @@ var Finit bool
 
 func init() {
 	versionCmd.AddCommand(versionRestoreCmd)
-	versionRestoreCmd.Flags().BoolVar(&Finit, "init", false, "Initialises source/meta in version")
+	versionRestoreCmd.Flags().BoolVar(&Finit, "init", false, "Initialises source/data and meta in version")
 }
 
 func versionRestore(cmd *cobra.Command, args []string) error {
@@ -37,19 +37,21 @@ func versionRestore(cmd *cobra.Command, args []string) error {
 			Ref: []string{"restore.notexist"},
 			Msg: []string{"version does not exist."},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	previous, err := release.Restore(args[1], Finit)
 	msg := make(map[string]string)
 	msg["status"] = "Backup Restore FAILED"
+	msg["previous"] = ""
 
 	if err == nil {
 		msg["status"] = "Backup Restore SUCCESS"
 	}
 	if previous != "" {
 		msg["status"] += " (backup of previous situation: `" + previous + "`)"
+		msg["previous"] = previous
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote)
 	return nil
 }

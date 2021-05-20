@@ -158,6 +158,9 @@ var Ffiletype string
 // Finstallref reference to the installation
 var Finstallref string
 
+// Funquote unquutes JSON
+var Funquote bool
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:           "qtechng",
@@ -178,6 +181,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&FUID, "uid", "", "User ID")
 	rootCmd.PersistentFlags().StringVar(&Fstdout, "stdout", "", "Filename containing the result")
 	rootCmd.PersistentFlags().BoolVar(&Ftransported, "transported", false, "Indicate if command is transported")
+	rootCmd.PersistentFlags().BoolVar(&Funquote, "unquote", false, "Removes JSON escapes in a string")
 	rootCmd.PersistentFlags().MarkHidden("transported")
 	rootCmd.PersistentFlags().MarkHidden("uid")
 
@@ -367,7 +371,7 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 	err := rootCmd.Execute()
 	stderr := ""
 	if err != nil && len(args) != 1 {
-		stderr = qreport.Report(nil, err, Fjq, Fyaml)
+		stderr = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		if stderr != "" {
 			l := log.New(os.Stderr, "", 0)
 			l.Println(stderr)

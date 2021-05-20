@@ -45,7 +45,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 				Ref: []string{"copy.target.exists"},
 				Msg: []string{"Target version exists. Use force!"},
 			}
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 			return nil
 		}
 	}
@@ -53,7 +53,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 	changed, deleted, err := qsync.Sync(rsource, rtarget, Fforce)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
 	msg := make(map[string][]string)
@@ -65,6 +65,6 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 		sort.Strings(deleted)
 		msg["deleted"] = deleted
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
 	return nil
 }
