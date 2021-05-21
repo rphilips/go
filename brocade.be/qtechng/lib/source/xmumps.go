@@ -16,14 +16,13 @@ func WidgetsListToMumps(batchid string, widgets []*qofile.Widget, buf *bytes.Buf
 		mumps := pwidget.Mumps(batchid)
 		qmumps.Println(buf, mumps)
 	}
-	return
 }
 
 // XFileToMumps schrijft een M file naar een buffer
-func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
+func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) error {
 	content, err := xfile.Fetch()
 	if err != nil {
-		return
+		return err
 	}
 	content = qutil.Decomment(content).Bytes()
 	bufnoc := new(bytes.Buffer)
@@ -57,6 +56,9 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	xf.SetEditFile(xfile.String())
 	xf.SetRelease(xfile.Release().String())
 	err = qobject.Loads(xf, content, true)
+	if err != nil {
+		return err
+	}
 	// if err != nil {
 	// 	fmt.Println("RPh loads err:", err.Error())
 	// 	return
@@ -77,9 +79,9 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
 	_, err = ResolveText(env, content, "trilm", notreplace, objectmap, textmap, bufmac, "")
-	// if err != nil {
-	// 	fmt.Println("RPh resolves err:", err.Error())
-	// }
+	if err != nil {
+		return err
+	}
 	content = bufmac.Bytes()
 
 	lines = bytes.SplitN(content, []byte("\n"), -1)
@@ -98,7 +100,7 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 	content = buffer.Bytes()
 	err = qobject.Loads(xf, content, false)
 	if err != nil {
-		return
+		return err
 	}
 	objectlist = xf.Objects()
 	widgets := make([]*qofile.Widget, 0)
@@ -110,14 +112,7 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) {
 		widgets = append(widgets, obj.(*qofile.Widget))
 	}
 	WidgetsListToMumps(batchid, widgets, buf)
-	return
-}
-
-func xsplit(lines [][]byte) map[string][]byte {
-	objs := make(map[string][]byte)
-	//name := ""
-
-	return objs
+	return nil
 }
 
 func xdecomment(line []byte) ([]byte, []byte) {
@@ -159,8 +154,4 @@ func xdecomment(line []byte) ([]byte, []byte) {
 
 	x, y := xdecomment(line[f+1:])
 	return append(line[:f+1], x...), y
-}
-
-func xtransform(line []byte) []byte {
-	return line
 }

@@ -582,6 +582,11 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 
 }
 
+type storeeffect struct {
+	pmeta  *qmeta.Meta
+	chobjs map[string]bool
+}
+
 // StoreList creates a list of projects.
 func StoreList(batchid string, version string, paths []string, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
 	if batchid == "" {
@@ -615,6 +620,7 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 		return results, err
 	}
 	results = make(map[string]*qmeta.Meta)
+	oresults := make(map[string]map[string]bool)
 
 	// Handle configuration files first
 
@@ -643,9 +649,9 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 		if e != nil {
 			return nil, e
 		}
-		nmeta, _, _, y := source.Store(met, blob)
+		nmeta, _, chobjs, y := source.Store(met, blob)
 
-		return nmeta, y
+		return storeeffect{nmeta, chobjs}, y
 	}
 
 	if len(configs) > 0 {
@@ -656,8 +662,10 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 			p := configs[i]
 			if errorlist[i] != nil {
 				results[p] = nil
+				oresults[p] = nil
 			} else {
-				results[p] = r.(*qmeta.Meta)
+				results[p] = r.(storeeffect).pmeta
+				oresults[p] = r.(storeeffect).chobjs
 			}
 		}
 
@@ -688,7 +696,8 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 			continue
 		}
 		p := notconfigs[i]
-		results[p] = r.(*qmeta.Meta)
+		results[p] = r.(storeeffect).pmeta
+		oresults[p] = r.(storeeffect).chobjs
 	}
 
 	errslice := make([]error, 0)
@@ -711,9 +720,39 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 		return
 	}
 
-	sources := make([]*Source, len(results))
-	i := 0
+	sourcesfound := make(map[string]bool)
 	for qp := range results {
+		sourcesfound[qp] = true
+	}
+	objs := make([]string, 0)
+	objsfound := make(map[string]bool)
+	for qp := range oresults {
+		chobjs := oresults[qp]
+		for ob := range chobjs {
+			if objsfound[ob] {
+				continue
+			}
+			objs = append(objs, ob)
+			objsfound[ob] = true
+		}
+	}
+	mqpaths, err := qobject.GetDependenciesDeep(release, objs...)
+	if err != nil {
+		errs = err
+	}
+
+	for _, qpaths := range mqpaths {
+		for _, qp := range qpaths {
+			if !strings.HasPrefix(qp, "/") {
+				continue
+			}
+			sourcesfound[qp] = true
+		}
+	}
+
+	sources := make([]*Source, len(sourcesfound))
+	i := 0
+	for qp := range sourcesfound {
 		source, _ := Source{}.New(version, qp, true)
 		sources[i] = source
 		i++
@@ -888,8 +927,7 @@ func WasteList(version string, paths []string) (errs error) {
 
 	_, errorlist1 := qparallel.NMap(len(notconfigs), -1, fn1)
 
-	for _, p := range cjsons {
-		source, _ := Source{}.New(version, p, false)
+	for _, source := range configs {
 		source.Waste()
 	}
 

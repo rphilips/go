@@ -38,10 +38,7 @@ func IsUnique(version *qserver.Release, name string) bool {
 	}
 	found := filepath.Base(names[0])
 	ndigest := qutil.Digest([]byte(name))
-	if found == ndigest {
-		return true
-	}
-	return false
+	return found == ndigest
 }
 
 // StoreUnique stores a reference to the basename

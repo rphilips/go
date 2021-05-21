@@ -31,7 +31,7 @@ func TestSource01(t *testing.T) {
 	_, err := Source{}.New(r, p, false)
 
 	if err == nil {
-		t.Errorf(fmt.Sprintf("No Project\n"))
+		t.Errorf("No Project\n")
 		return
 	}
 	ref := err.(*qerror.QError).Ref
@@ -41,18 +41,17 @@ func TestSource01(t *testing.T) {
 	}
 
 	proj = "/a/b/c"
-	release, _ = makeRelease(r, proj)
+	_, _ = makeRelease(r, proj)
 
 	source, err := Source{}.New(r, p, false)
 	if err != nil {
-		t.Errorf(fmt.Sprintf("Source should be created\n"))
+		t.Errorf("Source should be created\n")
 		return
 	}
 	if source.String() != p {
 		t.Errorf(fmt.Sprintf("Source should be:\n" + p))
 		return
 	}
-	return
 }
 
 func TestSource02(t *testing.T) {
@@ -135,7 +134,7 @@ func TestSource03(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	met2, err := qmeta.Meta{}.New(r, p)
+	met2, _ := qmeta.Meta{}.New(r, p)
 	if met2.Cu != "nu" || met2.Mt == met2.Ct || met2.Mt == met0.Mt {
 		t.Errorf("met2 %p %v", met2, met2)
 		t.Errorf("met1 %p %v", met1, met1)

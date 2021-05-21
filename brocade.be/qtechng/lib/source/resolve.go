@@ -365,6 +365,9 @@ func m4ResolveText(env map[string]string, macro string, extra string, what strin
 	obj := macro
 	object := objectmap[obj].(*qofile.Macro)
 	args, rest, err := object.Args(extra)
+	if err != nil {
+		return err
+	}
 
 	envex := make(map[string]string)
 

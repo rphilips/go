@@ -50,7 +50,7 @@ func (source Source) Natures() map[string]bool {
 	ext := filepath.Ext(s)
 	if ext != "." && strings.HasPrefix(ext, ".") {
 		ext = ext[1:]
-		if strings.Index("bdilmx", ext) != -1 {
+		if strings.Contains("bdilmx", ext) {
 			notbrocade := config.NotBrocade
 			if len(notbrocade) != 0 {
 				for _, nb := range notbrocade {
@@ -62,11 +62,11 @@ func (source Source) Natures() map[string]bool {
 			}
 			natures[ext+"file"] = true
 			natures["auto"] = true
-			if strings.IndexAny(ext, "blxm") != -1 {
+			if strings.ContainsAny(ext, "blxm") {
 				natures["mumps"] = true
 			}
 		}
-		if strings.Index("dil", ext) != -1 {
+		if strings.Contains("dil", ext) {
 			natures["objectfile"] = true
 		}
 	}

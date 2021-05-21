@@ -17,15 +17,14 @@ func BrobsListToMumps(batchid string, brobs []*qbfile.Brob, buf *bytes.Buffer) {
 		qmumps.Println(buf, mumps)
 
 	}
-	return
 }
 
 // BFileToMumps bereidt een verzameling van Brobs
-func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) {
+func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) error {
 
 	content, err := bfile.Fetch()
 	if err != nil {
-		return
+		return err
 	}
 	content = qutil.Decomment(content).Bytes()
 	content = qutil.About(content)
@@ -33,6 +32,9 @@ func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) {
 	bf.SetEditFile(bfile.String())
 	bf.SetRelease(bfile.Release().String())
 	err = qobject.Loads(bf, content, true)
+	if err != nil {
+		return err
+	}
 
 	objectlist := bf.Objects()
 	textmap := make(map[string]string)
@@ -42,18 +44,20 @@ func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) {
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
 	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, textmap, bufmac, "")
+	if err != nil {
+		return err
+	}
 
 	content = bufmac.Bytes()
 
 	err = qobject.Loads(bf, content, false)
 	if err != nil {
-		return
+		return err
 	}
-	objectlist = bf.Objects()
 	brobs := make([]*qbfile.Brob, len(objectlist))
 	for i, obj := range objectlist {
 		brobs[i] = obj.(*qbfile.Brob)
 	}
 	BrobsListToMumps(batchid, brobs, buf)
-	return
+	return err
 }

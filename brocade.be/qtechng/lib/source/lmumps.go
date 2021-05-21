@@ -26,7 +26,6 @@ func LgcodesSetToMumps(batchid string, r string, lgcodes map[string]bool, buf *b
 		qmumps.Println(buf, mumps)
 
 	}
-	return
 }
 
 // LgcodesListToMumps bereidt een verzameling van Lgcodes
@@ -36,7 +35,6 @@ func LgcodesListToMumps(batchid string, lgcodes []*qofile.Lgcode, buf *bytes.Buf
 		qmumps.Println(buf, mumps)
 
 	}
-	return
 }
 
 // LFileToMumps bereidt een verzameling van Lgcodes
@@ -58,7 +56,6 @@ func (lfile *Source) LFileToMumps(batchid string, buf *bytes.Buffer) {
 		lgcodes[i] = obj.(*qofile.Lgcode)
 	}
 	LgcodesListToMumps(batchid, lgcodes, buf)
-	return
 }
 
 // Mend ends a batch write to M

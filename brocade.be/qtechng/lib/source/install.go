@@ -2,6 +2,7 @@ package source
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path"
 	"path/filepath"
@@ -190,11 +191,12 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 		errz := projcopy(proj, qpaths, qtos, tmpdir)
 		if len(errz) != 0 {
 			errs = append(errs, errz...)
+			continue
 		}
 
-		errz = installInstallsource(basedir, batchid, inso)
-		if errs != nil {
-			errs = append(errs, errz...)
+		err := installInstallsource(basedir, batchid, inso)
+		if err != nil {
+			errs = append(errs, err)
 		}
 
 	}
@@ -250,7 +252,7 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 	return errorlist
 }
 
-func installInstallsource(tdir string, batchid string, inso *Source) (errs []error) {
+func installInstallsource(tdir string, batchid string, inso *Source) (err error) {
 	finso := inso.Path()
 	py := qutil.GetPy(finso)
 
@@ -263,7 +265,10 @@ func installInstallsource(tdir string, batchid string, inso *Source) (errs []err
 	_, serr := qpython.Run(finso, py == "py3", nil, extra, tdir)
 	serr = strings.TrimSpace(serr)
 	serr = string(qutil.Ignore([]byte(serr)))
-	return
+	if serr == "" {
+		return nil
+	}
+	return errors.New(serr)
 }
 
 func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
@@ -276,13 +281,13 @@ func installReleasefiles(batchid string, projs []*qproject.Project, qsources map
 		}
 		err := installReleasesource(batchid, reso)
 		if err != nil {
-			errs = append(errs, err...)
+			errs = append(errs, err)
 		}
 	}
 	return
 }
 
-func installReleasesource(batchid string, reso *Source) (errs []error) {
+func installReleasesource(batchid string, reso *Source) (err error) {
 	freso := reso.Path()
 	py := qutil.GetPy(freso)
 	tdir := qregistry.Registry["scratch-dir"]
@@ -296,7 +301,10 @@ func installReleasesource(batchid string, reso *Source) (errs []error) {
 	_, serr := qpython.Run(freso, py == "py3", nil, extra, tdir)
 	serr = strings.TrimSpace(serr)
 	serr = string(qutil.Ignore([]byte(serr)))
-	return
+	if serr == "" {
+		return nil
+	}
+	return errors.New(serr)
 }
 
 func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {

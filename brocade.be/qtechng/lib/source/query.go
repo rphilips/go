@@ -327,10 +327,7 @@ func (query *Query) Harmonise() {
 	if query.Mumps {
 		f := func(source *Source) bool {
 			natures := source.Natures()
-			if natures["mumps"] {
-				return true
-			}
-			return false
+			return natures["mumps"]
 		}
 		pipe = append(pipe, f)
 	}
@@ -388,10 +385,7 @@ func (query *Query) Harmonise() {
 			if errs != nil || err != nil {
 				return true
 			}
-			if bytes.Compare(blob, blobs) == 0 {
-				return false
-			}
-			return true
+			return bytes.Equal(blob, blobs)
 		}
 		pipe = append(pipe, f)
 	}
@@ -513,7 +507,6 @@ func (query *Query) Harmonise() {
 	}
 
 	query.pipe = pipe
-	return
 }
 
 // Test source against a query
