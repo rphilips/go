@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -52,19 +50,16 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	msg := make(map[string]string)
+	msg := make(map[string]interface{})
 	fs := release.FS()
 	msg["basedir"] = release.Root()
-	msg["sources"], _ = fs.RealPath("/")
+	msg["sourcedir"], _ = fs.RealPath("/")
 	msg["version"] = release.String()
 
-	if strings.Contains(QtechType, "B") {
-		if filepath.Base(msg["basedir"]) == "0.00" {
-			msg["~status"] = "ACTIVE"
-		} else {
-			msg["~status"] = "CLOSED"
-		}
-	}
+	msg["objects"] = release.ObjectCount()
+	msg["projects"] = release.ProjectCount()
+	msg["sources"] = release.SourceCount()
+
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
 	return nil
 }

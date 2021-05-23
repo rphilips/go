@@ -13,14 +13,14 @@ var versionNewCmd = &cobra.Command{
 	Use:     "new",
 	Short:   "Creates a new version",
 	Long:    `Command creates a new version on the development server`,
-	Args:    cobra.ExactArgs(1),
-	Example: "qtechng version new 5.10",
+	Args:    cobra.NoArgs,
+	Example: "qtechng version new",
 	RunE:    versionNew,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"always-remote":  "yes",
-		"with-qtechtype": "BW",
+		"with-qtechtype": "B",
 	},
 }
 
@@ -30,7 +30,7 @@ func init() {
 
 func versionNew(cmd *cobra.Command, args []string) error {
 
-	r := args[0]
+	r := "0.00"
 
 	release, err := qserver.Release{}.New(r, false)
 	if err != nil {

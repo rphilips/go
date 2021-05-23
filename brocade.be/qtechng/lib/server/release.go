@@ -332,6 +332,43 @@ func (release Release) Restore(tarfile string, init bool) (previous string, err 
 
 }
 
+func (release Release) ObjectCount() map[string]int {
+	stat := make(map[string]int)
+	fs := release.FS("/")
+	for _, ty := range []string{"i4", "l4", "m4", "r4"} {
+		dir, _ := fs.RealPath("/object/" + ty)
+		all, _ := qfs.Find(dir, []string{"obj.json"}, true, true, false)
+		stat[ty] = len(all)
+	}
+	return stat
+
+}
+
+func (release Release) ProjectCount() map[string]int {
+	stat := make(map[string]int)
+	fs := release.FS("/")
+	for _, ty := range []string{"/source/data"} {
+		dir, _ := fs.RealPath(ty)
+		all, _ := qfs.Find(dir, []string{"brocade.json"}, true, true, false)
+		stat[ty] = len(all)
+	}
+	return stat
+}
+
+func (release Release) SourceCount() map[string]int {
+	stat := make(map[string]int)
+	fs := release.FS("/")
+	for _, ty := range []string{"/source/data"} {
+		dir, _ := fs.RealPath(ty)
+		all, _ := qfs.Find(dir, nil, true, true, false)
+		for _, s := range all {
+			ext := filepath.Ext(s)
+			stat[ext]++
+		}
+	}
+	return stat
+}
+
 ////////////////////////////// Help functions ///////////////
 
 // Canon maakt een officiele string van de versie

@@ -47,8 +47,8 @@ func versionDelete(cmd *cobra.Command, args []string) error {
 	br := qregistry.Registry["brocade-release"]
 	br = strings.TrimRight(br, " -_betaBETA")
 
-	if strings.Contains(QtechType, "B") && br == version {
-		err := fmt.Errorf("Current version `" + br + "` cannot be deleted")
+	if br == version {
+		err := fmt.Errorf("Current version `" + br + "` cannot be deleted unless with force.")
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
