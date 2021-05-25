@@ -271,7 +271,7 @@ func (source *Source) Waste() (err error) {
 }
 
 // Store stores content
-func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Meta, changed bool, chobjs map[string]bool, err error) {
+func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmeta *qmeta.Meta, changed bool, chobjs map[string]bool, err error) {
 	version := source.Release()
 	// hebben we te maken met een configuratiefile ?
 	s := source.String()
@@ -355,15 +355,25 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 	}
 
 	fs := version.FS()
-	changed, before, after, e := fs.Store(source.String(), data, meta.Digest)
-	if e != nil {
-		err = &qerror.QError{
-			Ref:     []string{"source.store.forbidden"},
-			Version: version.String(),
-			QPath:   source.String(),
-			Msg:     []string{"Cannot store on disk: " + e.Error()},
+	var after []byte
+	var before []byte
+	changed = false
+	if !reset {
+		var e error
+		changed, before, after, e = fs.Store(source.String(), data, meta.Digest)
+		if e != nil {
+			err = &qerror.QError{
+				Ref:     []string{"source.store.forbidden"},
+				Version: version.String(),
+				QPath:   source.String(),
+				Msg:     []string{"Cannot store on disk: " + e.Error()},
+			}
+			return
 		}
-		return
+	} else {
+		after = before
+		before = []byte{}
+		changed = true
 	}
 
 	if !changed {
@@ -385,18 +395,20 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 	if meta.Mt == "" {
 		meta.Mt = t
 	}
-	nmeta.Update(meta)
-	nmeta, err = nmeta.Store(version.String(), source.String())
-	nmeta.Digest = digest
-	if err != nil {
-		e := &qerror.QError{
-			Ref:     []string{"source.store.meta.store"},
-			Version: version.String(),
-			QPath:   source.String(),
-			Msg:     []string{"Cannot store meta object"},
+	if !reset {
+		nmeta.Update(meta)
+		nmeta, err = nmeta.Store(version.String(), source.String())
+		nmeta.Digest = digest
+		if err != nil {
+			e := &qerror.QError{
+				Ref:     []string{"source.store.meta.store"},
+				Version: version.String(),
+				QPath:   source.String(),
+				Msg:     []string{"Cannot store meta object"},
+			}
+			err = qerror.QErrorTune(err, e)
+			return
 		}
-		err = qerror.QErrorTune(err, e)
-		return
 	}
 
 	if !natures["objectfile"] {
@@ -576,7 +588,7 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 		return blob, nil
 	}
 
-	results, errs = StoreList(batchid, version, sources, fmeta, fdata)
+	results, errs = StoreList(batchid, version, sources, false, fmeta, fdata)
 
 	return
 
@@ -588,7 +600,7 @@ type storeeffect struct {
 }
 
 // StoreList creates a list of projects.
-func StoreList(batchid string, version string, paths []string, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
+func StoreList(batchid string, version string, paths []string, reset bool, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
 	if batchid == "" {
 		batchid = "install"
 	}
@@ -644,12 +656,16 @@ func StoreList(batchid string, version string, paths []string, fmeta func(string
 		if err != nil {
 			return nil, err
 		}
-		met := fmeta(p)
+		var met qmeta.Meta
 		blob, e := fdata(p)
+
 		if e != nil {
 			return nil, e
 		}
-		nmeta, _, chobjs, y := source.Store(met, blob)
+		if !reset {
+			met = fmeta(p)
+		}
+		nmeta, _, chobjs, y := source.Store(met, blob, reset)
 
 		return storeeffect{nmeta, chobjs}, y
 	}

@@ -66,7 +66,7 @@ func TestSource02(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	_, _, _, err = source.Store(qmeta.Meta{}, "Hello World")
+	_, _, _, err = source.Store(qmeta.Meta{}, "Hello World", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -103,7 +103,7 @@ func TestSource03(t *testing.T) {
 	}
 
 	mt := qmeta.Meta{Cu: "nu"}
-	_, _, _, err = source.Store(mt, "Hello World")
+	_, _, _, err = source.Store(mt, "Hello World", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -129,7 +129,7 @@ func TestSource03(t *testing.T) {
 
 	time.Sleep(1000 * time.Millisecond)
 
-	met3, _, _, err := source.Store(mt, "Hello World2")
+	met3, _, _, err := source.Store(mt, "Hello World2", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -172,13 +172,13 @@ func TestSource04(t *testing.T) {
 		return
 	}
 
-	_, _, _, err = source1.Store(qmeta.Meta{}, "Hello World1")
+	_, _, _, err = source1.Store(qmeta.Meta{}, "Hello World1", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
 	}
 
-	_, _, _, err = source2.Store(qmeta.Meta{}, "Hello World2")
+	_, _, _, err = source2.Store(qmeta.Meta{}, "Hello World2", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -186,7 +186,7 @@ func TestSource04(t *testing.T) {
 
 	qregistry.Registry["qtechng-unique-ext"] = ".ext1"
 
-	_, _, _, err = source2.Store(qmeta.Meta{}, "Hello World2")
+	_, _, _, err = source2.Store(qmeta.Meta{}, "Hello World2", false)
 	if err == nil {
 		t.Errorf("Should check on uniqueness")
 		return
@@ -209,13 +209,13 @@ func TestSource05(t *testing.T) {
 		return
 	}
 
-	_, _, _, err = source1.Store(qmeta.Meta{}, "Hello World3")
+	_, _, _, err = source1.Store(qmeta.Meta{}, "Hello World3", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
 	}
 
-	_, _, _, err = source1.Store(qmeta.Meta{}, "Hello World2")
+	_, _, _, err = source1.Store(qmeta.Meta{}, "Hello World2", false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -233,7 +233,7 @@ func TestSource06(t *testing.T) {
 	blob := []byte(`{"core": 1}`)
 
 	source, _ := Source{}.New(r, bjson, false)
-	_, _, _, err := source.Store(qmeta.Meta{}, blob)
+	_, _, _, err := source.Store(qmeta.Meta{}, blob, false)
 
 	if err == nil {
 		t.Errorf("Should show an error: %v", source.project.IsConfig(source.String()))
@@ -243,7 +243,7 @@ func TestSource06(t *testing.T) {
 	blob = []byte(`{"core": true}`)
 
 	source, _ = Source{}.New(r, bjson, false)
-	_, _, _, err = source.Store(qmeta.Meta{}, blob)
+	_, _, _, err = source.Store(qmeta.Meta{}, blob, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
@@ -307,7 +307,7 @@ func TestSourceList01(t *testing.T) {
 		return []byte(data + " " + obj + " " + p), nil
 	}
 
-	results, es := StoreList("install", r, paths, fmeta, fdata)
+	results, es := StoreList("install", r, paths, false, fmeta, fdata)
 	if es != nil {
 		t.Errorf(es.Error())
 		return
@@ -375,7 +375,7 @@ func TestSourceObject01(t *testing.T) {
 			return []byte(data3), nil
 		}
 	}
-	_, es := StoreList("install", r, []string{f1, f2, f3}, fmeta, fdata)
+	_, es := StoreList("install", r, []string{f1, f2, f3}, false, fmeta, fdata)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -395,7 +395,7 @@ func TestSourceObject01(t *testing.T) {
 	}
 
 	data1 = "1 m4_B"
-	_, es = StoreList("install", r, []string{f1}, fmeta, fdata)
+	_, es = StoreList("install", r, []string{f1}, false, fmeta, fdata)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -487,7 +487,7 @@ func TestSourceObject02(t *testing.T) {
 			return []byte(data3), nil
 		}
 	}
-	_, es := StoreList("install", r, []string{f1, f2, f3}, fmeta, fdata)
+	_, es := StoreList("install", r, []string{f1, f2, f3}, false, fmeta, fdata)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -507,7 +507,7 @@ func TestSourceObject02(t *testing.T) {
 	}
 
 	data1 = "1 m4_B"
-	_, es = StoreList("install", r, []string{f1}, fmeta, fdata)
+	_, es = StoreList("install", r, []string{f1}, false, fmeta, fdata)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -603,7 +603,7 @@ func TestSourceObj01(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	_, _, _, err = source.Store(qmeta.Meta{}, data)
+	_, _, _, err = source.Store(qmeta.Meta{}, data, false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -626,7 +626,7 @@ func TestSourceObj02(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	_, _, _, err = source.Store(qmeta.Meta{}, data)
+	_, _, _, err = source.Store(qmeta.Meta{}, data, false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -644,7 +644,7 @@ func TestSourceObj02(t *testing.T) {
 
 	data = dfile2()
 
-	_, _, _, err = source.Store(qmeta.Meta{}, data)
+	_, _, _, err = source.Store(qmeta.Meta{}, data, false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -666,7 +666,7 @@ func TestSourceObj02(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	_, _, _, err = tsource.Store(qmeta.Meta{}, dfile3())
+	_, _, _, err = tsource.Store(qmeta.Meta{}, dfile3(), false)
 	if err != nil {
 		t.Errorf(err.Error())
 		return

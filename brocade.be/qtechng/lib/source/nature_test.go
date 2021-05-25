@@ -127,7 +127,7 @@ func TestNature03(t *testing.T) {
 	cfg := `{"notbrocade":["macro.d"]}`
 
 	scfg, _ := Source{}.New(r, "/a/b/c/brocade.json", false)
-	scfg.Store(qmeta.Meta{}, cfg)
+	scfg.Store(qmeta.Meta{}, cfg, false)
 	source, err := Source{}.New(r, p, false)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -156,7 +156,7 @@ func TestNature04(t *testing.T) {
 	cfg := `{"notconfig":["d/brocade.json"], "binary":["d/brocade.json"]}`
 
 	scfg, _ := Source{}.New(r, "/a/b/c/brocade.json", false)
-	scfg.Store(qmeta.Meta{}, cfg)
+	scfg.Store(qmeta.Meta{}, cfg, false)
 	source, err := Source{}.New(r, p, false)
 	if err != nil {
 		t.Errorf(err.Error())

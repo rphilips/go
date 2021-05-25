@@ -542,7 +542,7 @@ func makeqRelease(r string) (release *qserver.Release, project *qproject.Project
 			meta.Mt = "2019-1" + strconv.Itoa(i) + "-18T13:00:00"
 			meta.Cu = "mjeuris"
 			meta.Mu = "rphilips"
-			_, _, _, err = source.Store(meta, "Hello World "+fname+"\nBye Moon")
+			_, _, _, err = source.Store(meta, "Hello World "+fname+"\nBye Moon", false)
 			if err != nil {
 				fmt.Println("err:", err.Error())
 			}
