@@ -415,11 +415,7 @@ func Store(object Object) (changed bool, err error) {
 		}
 		return false, qerror.QErrorTune(e, err)
 	}
-	fs := rel.FS("object", object.Type())
-	h := qutil.Digest([]byte(name))
-	dirname := "/" + h[0:2] + "/" + h[2:]
-	fs.MkdirAll(dirname, 0770)
-	changed, before, actual, err := fs.Store(dirname+"/obj.json", object, "")
+	changed, before, actual, err := rel.ObjectStore(name, object)
 
 	if err != nil {
 		e := &qerror.QError{

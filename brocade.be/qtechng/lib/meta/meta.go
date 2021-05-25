@@ -45,9 +45,7 @@ func (Meta) New(r string, s string) (meta *Meta, err error) {
 		return met.(*Meta), nil
 	}
 
-	fs := version.FS("/meta")
-	digest := qutil.Digest([]byte(s))
-	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
+	fs, place := version.MetaPlace(s)
 	blob, e := fs.ReadFile(place)
 	meta = new(Meta)
 	if e == nil {
@@ -71,9 +69,7 @@ func (meta Meta) Store(r string, s string) (pmeta *Meta, err error) {
 		}
 		return pmeta, e
 	}
-	fs := version.FS("/meta")
-	digest := qutil.Digest([]byte(s))
-	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
+	fs, place := version.MetaPlace(s)
 	meta.Source = s
 	changed, _, _, err := fs.Store(place, meta, "")
 	if err != nil {
@@ -89,7 +85,7 @@ func (meta Meta) Store(r string, s string) (pmeta *Meta, err error) {
 		return pmeta, nil
 	}
 	pid := r + " " + s
-	digest = meta.Digest
+	digest := meta.Digest
 	meta.Digest = ""
 	metaCache.Store(pid, &meta)
 	meta.Digest = digest
@@ -110,9 +106,7 @@ func Unlink(r string, s string) (err error) {
 		}
 		return e
 	}
-	fs := version.FS("/meta")
-	digest := qutil.Digest([]byte(s))
-	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
+	fs, place := version.MetaPlace(s)
 	changed, err := fs.Waste(place)
 	if err != nil {
 		e := &qerror.QError{

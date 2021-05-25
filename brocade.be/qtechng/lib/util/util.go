@@ -351,9 +351,11 @@ func MakeBytes(data interface{}) (b []byte, err error) {
 	case io.Reader:
 		b, err = io.ReadAll(v)
 		return
-	default:
+	case json.Marshaler:
 		b, err := json.MarshalIndent(data, "", "    ")
 		return b, err
+	default:
+		return nil, fmt.Errorf("cannot transform to bytes")
 	}
 }
 

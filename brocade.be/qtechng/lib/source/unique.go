@@ -42,22 +42,11 @@ func IsUnique(version *qserver.Release, name string) bool {
 }
 
 // StoreUnique stores a reference to the basename
-func StoreUnique(version *qserver.Release, name string) {
-	base := filepath.Base(name)
-	digest := qutil.Digest([]byte(base))
-	ndigest := qutil.Digest([]byte(name))
-	fs := version.FS("/unique")
-	fname := "/" + digest[:2] + "/" + digest[2:] + "/" + ndigest
-	m := map[string]string{"path": name}
-	fs.Store(fname, m, "")
+func StoreUnique(version *qserver.Release, qpath string) {
+	version.UniqueStore(qpath)
 }
 
 // UnlinkUnique stores a reference to the basename
-func UnlinkUnique(version *qserver.Release, name string) {
-	base := filepath.Base(name)
-	digest := qutil.Digest([]byte(base))
-	ndigest := qutil.Digest([]byte(name))
-	fs := version.FS("/unique")
-	fname := "/" + digest[:2] + "/" + digest[2:] + "/" + ndigest
-	fs.Waste(fname)
+func UnlinkUnique(version *qserver.Release, qpath string) {
+	version.UniqueUnlink(qpath)
 }

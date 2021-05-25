@@ -2,6 +2,7 @@ package server
 
 import (
 	"archive/tar"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -127,7 +128,7 @@ func (release Release) Init() (err error) {
 		return err
 	}
 	fs := release.FS("/")
-	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4", "/admin"} {
+	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4", "/object/r4", "/admin"} {
 		fs.MkdirAll(dir, 0o770)
 	}
 
@@ -367,6 +368,74 @@ func (release Release) SourceCount() map[string]int {
 		}
 	}
 	return stat
+}
+
+func (release *Release) ObjectPlace(objname string) (*qvfs.QFs, string) {
+	ty := strings.SplitN(objname, "_", 2)[0]
+	if strings.HasPrefix(objname, "l4") && strings.Count(objname, "_") == 2 {
+		parts := strings.SplitN(objname, "_", 3)
+		objname = "l4_" + parts[2]
+	}
+	fs := release.FS("object", ty)
+	h := qutil.Digest([]byte(objname))
+	dirname := "/" + h[0:2] + "/" + h[2:]
+	return &fs, dirname + "/obj.json"
+}
+
+func (release *Release) ObjectStore(objname string, obj json.Marshaler) (changed bool, before []byte, after []byte, err error) {
+	fs, place := release.ObjectPlace(objname)
+	return fs.Store(place, obj, "")
+}
+
+func (release *Release) UniquePlace(qpath string) (*qvfs.QFs, string) {
+	_, base := qutil.QPartition(qpath)
+	digest := qutil.Digest([]byte(base))
+	ndigest := qutil.Digest([]byte(qpath))
+	fs := release.FS("/unique")
+	fname := "/" + digest[:2] + "/" + digest[2:] + "/" + ndigest
+	return &fs, fname
+}
+
+func (release *Release) UniqueStore(qpath string) {
+	fs, place := release.UniquePlace(qpath)
+	m := map[string]string{"path": qpath}
+	fs.Store(place, m, "")
+}
+
+func (release *Release) UniqueUnlink(qpath string) {
+	fs, place := release.UniquePlace(qpath)
+	fs.Waste(place)
+}
+
+func (release *Release) MetaPlace(qpath string) (*qvfs.QFs, string) {
+	fs := release.FS("/meta")
+	digest := qutil.Digest([]byte(qpath))
+	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
+	return &fs, place
+}
+
+func (release Release) Rebuild() error {
+	fs := release.FS("/")
+	for _, ty := range []string{"/unique", "/object/m4", "/object/l4", "/object/i4", "/object/r4"} {
+		dir, _ := fs.RealPath(ty)
+		qfs.Rmpath(dir)
+		fs.MkdirAll(ty, 0o770)
+	}
+	dir, _ := fs.RealPath("/source/data")
+	files, _ := qfs.Find(dir, nil, true, true, false)
+	qpaths := make([]string, len(files))
+	for i, file := range files {
+		qpath, _ := filepath.Rel(dir, file)
+		qpath = filepath.ToSlash(qpath)
+		qpath = strings.Trim(qpath, "/")
+		qpath = "/" + qpath
+		qpaths[i] = qpath
+	}
+	// store unicity
+	for _, qpath := range qpaths {
+		release.UniqueStore(qpath)
+	}
+	return nil
 }
 
 ////////////////////////////// Help functions ///////////////
