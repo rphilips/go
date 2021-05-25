@@ -42,11 +42,11 @@ func IsUnique(version *qserver.Release, name string) bool {
 }
 
 // StoreUnique stores a reference to the basename
-func StoreUnique(version *qserver.Release, qpath string) {
+func UniqueStore(version *qserver.Release, qpath string) {
 	version.UniqueStore(qpath)
 }
 
 // UnlinkUnique stores a reference to the basename
-func UnlinkUnique(version *qserver.Release, qpath string) {
+func UniqueUnlink(version *qserver.Release, qpath string) {
 	version.UniqueUnlink(qpath)
 }

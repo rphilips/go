@@ -260,7 +260,7 @@ func (source *Source) Waste() (err error) {
 	fs.Waste(s)
 
 	// Unlink 'unique'
-	UnlinkUnique(version, s)
+	UniqueUnlink(version, s)
 
 	// Cache
 	pid := r + " " + s
@@ -372,7 +372,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}) (nmeta *qmeta.Met
 	source.blob = after
 	// unique
 
-	StoreUnique(version, s)
+	UniqueStore(version, s)
 
 	if !natures["objectfile"] {
 		source.StoreObjects(before, after)
