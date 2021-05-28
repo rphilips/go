@@ -15,7 +15,7 @@ var sourceRebuildCmd = &cobra.Command{
 	Short:   "Rebuilds sources in the repository",
 	Long:    `Rebuilds sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source rebuild --pattern=/application/*.m --version=0.00`,
+	Example: `qtechng source rebuild --qpattern=/application/*.m --version=0.00`,
 	RunE:    sourceRebuild,
 	PreRun:  preSourceRebuild,
 	Annotations: map[string]string{

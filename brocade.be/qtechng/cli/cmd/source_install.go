@@ -15,7 +15,7 @@ var sourceInstallCmd = &cobra.Command{
 	Short:   "Installs sources in the repository",
 	Long:    `Installs sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source install --pattern=/application/*.m`,
+	Example: `qtechng source install --qpattern=/application/*.m`,
 	RunE:    sourceInstall,
 	PreRun:  preSourceInstall,
 	Annotations: map[string]string{

@@ -119,7 +119,11 @@ func dirTell(cmd *cobra.Command, args []string) error {
 	}
 
 	if result["version"] == "" && result["qdir"] != "" && !strings.Contains(QtechType, "P") {
-		result["version"] = "0.00"
+		result["version"] = qregistry.Registry["qtechng-version"]
+	}
+
+	if result["version"] == "" && result["qdir"] != "" && strings.Contains(QtechType, "P") {
+		result["version"] = qregistry.Registry["brocade-release"]
 	}
 
 	tell, ok := result[Ftell]

@@ -16,7 +16,7 @@ var sourceResolveCmd = &cobra.Command{
 	Short:   "Resolves a sourcefile",
 	Long:    `Resolves the i4/r4/m4/l4 constructions in sources`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source resolves --pattern=/catalografie/application/bcawedit.m`,
+	Example: `qtechng source resolves --qpattern=/catalografie/application/bcawedit.m`,
 	RunE:    sourceResolve,
 	PreRun:  preSourceResolve,
 	Annotations: map[string]string{

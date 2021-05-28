@@ -14,7 +14,7 @@ var sourceDeleteCmd = &cobra.Command{
 	Short:   "Deletes sources in the repository",
 	Long:    `Deletes sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source delete --pattern=/application/*.m`,
+	Example: `qtechng source delete --qpattern=/application/*.m`,
 	RunE:    sourceDelete,
 	PreRun:  preSourceDelete,
 	Annotations: map[string]string{
