@@ -25,11 +25,12 @@ var projectInstallCmd = &cobra.Command{
 	PreRun:  preProjectInstall,
 	Annotations: map[string]string{
 		"with-qtechtype": "BP",
+		"fill-version":   "yes",
 	},
 }
 
 func init() {
-	projectInstallCmd.PersistentFlags().StringVar(&Finstallref, "installref", "", "Reference to the installation")
+	projectInstallCmd.PersistentFlags().StringVar(&Frefname, "refname", "", "Reference to the installation")
 	projectCmd.AddCommand(projectInstallCmd)
 }
 
@@ -43,8 +44,8 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
-	if Finstallref == "" {
-		Finstallref = "install-" + current
+	if Frefname == "" {
+		Frefname = "install-" + current
 	}
 
 	if !strings.Contains(QtechType, "B") {
@@ -64,7 +65,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Finstallref, sources, false)
+	err := qsource.Install(Frefname, sources, false)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)

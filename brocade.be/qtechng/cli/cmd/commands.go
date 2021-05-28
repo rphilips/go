@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"strings"
-	"unicode/utf8"
+	qreport "brocade.be/qtechng/lib/report"
 
 	"github.com/spf13/cobra"
 )
@@ -22,16 +20,13 @@ func init() {
 }
 
 func commands(cmd *cobra.Command, args []string) error {
-	fmt.Println("Available Commands:")
+	msg := map[string]map[string]string{}
 	for _, command := range rootCmd.Commands() {
-		use := command.Use
-		pad := strings.Repeat(" ", 50-utf8.RuneCountInString(use))
-		fmt.Println("  " + use + pad + command.Short)
+		msg[command.Use] = map[string]string{}
 		for _, subCommand := range command.Commands() {
-			subUse := subCommand.Use
-			subPad := strings.Repeat(" ", 50-utf8.RuneCountInString(subUse))
-			fmt.Println("    " + subUse + subPad + subCommand.Short)
+			msg[command.Use][subCommand.Use] = subCommand.Short
 		}
 	}
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, false)
 	return nil
 }

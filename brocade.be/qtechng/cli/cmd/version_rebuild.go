@@ -6,6 +6,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
+	qsource "brocade.be/qtechng/lib/source"
 )
 
 var versionRebuildCmd = &cobra.Command{
@@ -38,7 +39,10 @@ func versionRebuild(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	err = release.Rebuild()
+	release.ReInit()
+	qpaths := release.QPaths()
+
+	err = qsource.Rebuild("rebuildversion", release.String(), qpaths)
 	msg := make(map[string]string)
 	msg["status"] = "Rebuild FAILED"
 	msg["previous"] = ""

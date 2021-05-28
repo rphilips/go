@@ -30,7 +30,7 @@ The registry value should be set with an appropriate value.`,
 }
 
 func init() {
-	versionInstallCmd.PersistentFlags().StringVar(&Finstallref, "installref", "", "Reference to the installation")
+	versionInstallCmd.PersistentFlags().StringVar(&Frefname, "refname", "", "Reference to the installation")
 	versionCmd.AddCommand(versionInstallCmd)
 }
 
@@ -45,8 +45,8 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
 		return nil
 	}
-	if Finstallref == "" {
-		Finstallref = "install-" + current
+	if Frefname == "" {
+		Frefname = "install-" + current
 	}
 
 	if !strings.Contains(QtechType, "B") {
@@ -60,7 +60,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Finstallref, sources, false)
+	err := qsource.Install(Frefname, sources, false)
 
 	if err != nil {
 		if err != nil {

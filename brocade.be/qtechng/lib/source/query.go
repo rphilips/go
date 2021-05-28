@@ -136,7 +136,6 @@ func (query *Query) Harmonise() {
 
 	release, err := qserver.Release{}.New(query.Release, true)
 	if err == nil {
-		patterns := query.Patterns
 		oks := make([]string, 0)
 		fs := release.FS()
 		for _, pattern := range patterns {

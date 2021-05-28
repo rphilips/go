@@ -2,6 +2,7 @@ package server
 
 import (
 	"archive/tar"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -301,6 +302,8 @@ func (release Release) Restore(tarfile string, init bool) (previous string, err 
 		return previous, fmt.Errorf("cannot write to directory `%s`", target)
 	}
 
+	dirs := make(map[string]bool)
+
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -308,19 +311,63 @@ func (release Release) Restore(tarfile string, init bool) (previous string, err 
 		} else if err != nil {
 			return previous, fmt.Errorf("cannot read tarfile `%s`", tarfile)
 		}
-
-		path := filepath.Join(target, header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
-			if err = qfs.MkdirAll(path, "qtech"); err != nil {
-				return previous, fmt.Errorf("cannot make directory `%s`", path)
+			continue
+		}
+		fname := header.Name
+		ismeta := false
+		var fs *qvfs.QFs
+		path := ""
+		var body []byte
+		if strings.HasPrefix(fname, "meta") {
+			ismeta = true
+			buffer := bytes.NewBuffer([]byte{})
+			_, err := io.Copy(buffer, tarReader)
+			if err != nil {
+				return previous, fmt.Errorf("cannot read file `%s`", fname)
+			}
+			m := make(map[string]string)
+			body = buffer.Bytes()
+			err = json.Unmarshal(body, &m)
+			if err != nil {
+				return previous, fmt.Errorf("file `%s` is not a meta file", fname)
+			}
+			source := m["source"]
+			if source == "" {
+				return previous, fmt.Errorf("file `%s` is not a suitable meta file: missing source", fname)
+			}
+			fs, path = release.MetaPlace(source)
+		}
+		if path == "" {
+			fname = filepath.ToSlash(fname)
+			if strings.HasPrefix(fname, "source/") {
+				fname = strings.SplitN(fname, "source/", 2)[1]
+			}
+			if strings.HasPrefix(fname, "data/") {
+				fname = strings.SplitN(fname, "data/", 2)[1]
+			}
+			fname = "/" + strings.Trim(fname, "/")
+			fs, path = release.SourcePlace(fname)
+		}
+		rpath, _ := fs.RealPath(path)
+		rdir := filepath.Dir(rpath)
+		if !dirs[rdir] {
+			if err = qfs.MkdirAll(rdir, "qtech"); err != nil {
+				return previous, fmt.Errorf("cannot make directory `%s`", rdir)
+			}
+			dirs[rdir] = true
+		}
+		if ismeta {
+			err := qfs.Store(rpath, body, "qtech")
+			if err != nil {
+				return previous, fmt.Errorf("cannot store to `%s`", rpath)
 			}
 			continue
 		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		file, err := os.OpenFile(rpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return previous, fmt.Errorf("cannot make file `%s` with mode `%s` (error `%s`)", path, info.Mode(), err)
+			return previous, fmt.Errorf("cannot make file `%s` with mode `%s` (error `%s`)", rpath, info.Mode(), err)
 		}
 		defer file.Close()
 		_, err = io.Copy(file, tarReader)
@@ -370,6 +417,11 @@ func (release Release) SourceCount() map[string]int {
 	return stat
 }
 
+func (release *Release) SourcePlace(qpath string) (*qvfs.QFs, string) {
+	fs := release.FS()
+	return &fs, qpath
+}
+
 func (release *Release) ObjectPlace(objname string) (*qvfs.QFs, string) {
 	ty := strings.SplitN(objname, "_", 2)[0]
 	if strings.HasPrefix(objname, "l4") && strings.Count(objname, "_") == 2 {
@@ -396,10 +448,11 @@ func (release *Release) UniquePlace(qpath string) (*qvfs.QFs, string) {
 	return &fs, fname
 }
 
-func (release *Release) UniqueStore(qpath string) {
+func (release *Release) UniqueStore(qpath string) error {
 	fs, place := release.UniquePlace(qpath)
 	m := map[string]string{"path": qpath}
-	fs.Store(place, m, "")
+	_, _, _, err := fs.Store(place, m, "")
+	return err
 }
 
 func (release *Release) UniqueUnlink(qpath string) {
@@ -414,14 +467,19 @@ func (release *Release) MetaPlace(qpath string) (*qvfs.QFs, string) {
 	return &fs, place
 }
 
-func (release Release) Rebuild() error {
+func (release Release) ReInit() error {
 	fs := release.FS("/")
 	for _, ty := range []string{"/unique", "/object/m4", "/object/l4", "/object/i4", "/object/r4"} {
 		dir, _ := fs.RealPath(ty)
 		qfs.Rmpath(dir)
 		fs.MkdirAll(ty, 0o770)
 	}
-	dir, _ := fs.RealPath("/source/data")
+	return nil
+}
+
+func (release Release) QPaths() []string {
+	fs := release.FS()
+	dir, _ := fs.RealPath("/")
 	files, _ := qfs.Find(dir, nil, true, true, false)
 	qpaths := make([]string, len(files))
 	for i, file := range files {
@@ -431,11 +489,7 @@ func (release Release) Rebuild() error {
 		qpath = "/" + qpath
 		qpaths[i] = qpath
 	}
-	// store unicity
-	for _, qpath := range qpaths {
-		release.UniqueStore(qpath)
-	}
-	return nil
+	return qpaths
 }
 
 ////////////////////////////// Help functions ///////////////

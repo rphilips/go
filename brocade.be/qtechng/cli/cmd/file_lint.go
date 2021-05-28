@@ -35,7 +35,6 @@ qtechng file lint /stdlib/strings/mymfile.d --version=5.10`,
 }
 
 // Frefname is a reference name
-var Frefname string
 
 func init() {
 	fileLintCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")

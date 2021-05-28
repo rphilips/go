@@ -371,7 +371,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 			return
 		}
 	} else {
-		after = before
+		after = data.([]byte)
 		before = []byte{}
 		changed = true
 	}

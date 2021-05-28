@@ -99,6 +99,7 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 		Contains:       Fneedle,
 		Mumps:          mumps,
 	}
+
 	Fpayload = &qclient.Payload{
 		ID:     "Once",
 		UID:    FUID,
@@ -258,6 +259,37 @@ func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 		batchid = "install"
 	}
 	errs := qsource.Install(batchid, psources, true)
+	switch err := errs.(type) {
+	case qerror.ErrorSlice:
+		if len(err) == 0 {
+			pcargo.Error = nil
+		} else {
+			pcargo.Error = err
+		}
+	default:
+		if err == nil {
+			pcargo.Error = nil
+		} else {
+			pcargo.Error = err
+		}
+	}
+}
+
+func rebuildData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
+	query := ppayload.Query.Copy()
+	psources := query.Run()
+	if len(psources) == 0 {
+		return
+	}
+	version := psources[0].Release().String()
+	if batchid == "" {
+		batchid = "rebuild"
+	}
+	qpaths := make([]string, len(psources))
+	for i, psource := range psources {
+		qpaths[i] = psource.String()
+	}
+	errs := qsource.Rebuild(batchid, version, qpaths)
 	switch err := errs.(type) {
 	case qerror.ErrorSlice:
 		if len(err) == 0 {

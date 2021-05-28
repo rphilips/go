@@ -155,8 +155,8 @@ var Fstdout string
 //Ffiletype extension of the file
 var Ffiletype string
 
-// Finstallref reference to the installation
-var Finstallref string
+// Frefname reference to the installation
+var Frefname string
 
 // Funquote unquutes JSON
 var Funquote bool
@@ -479,10 +479,12 @@ func fillVersion() {
 	if len(files) == 1 {
 		for r := range files {
 			Fversion = r
-			return
+			break
 		}
 	}
-	Fversion = qregistry.Registry["qtechng-version"]
+	if Fversion == "" {
+		Fversion = qregistry.Registry["qtechng-version"]
+	}
 }
 
 func fillQdir() {

@@ -15,12 +15,13 @@ var sourceListCmd = &cobra.Command{
 	Short:   "Lists sources in the repository",
 	Long:    `Lists sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source list --pattern=/application/*.m`,
+	Example: `qtechng source list --qpattern=/application/*.m`,
 	RunE:    sourceList,
 	PreRun:  preSourceList,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
+		"fill-version":   "yes",
 	},
 }
 

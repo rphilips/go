@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -40,13 +39,13 @@ func SSHcmd(payload Payload, whowhere string) (catchOut *bytes.Buffer, catchErr 
 		err = fmt.Errorf("no host and/or user specified")
 		return
 	}
-	cop, _, _ := qagent.New()
-	if cop == nil {
+	cop, _, err := qagent.New()
+	if err != nil {
 		if runtime.GOOS == "windows" {
-			err = fmt.Errorf("cannot find SSH agent. On windows, work with PuTTY and Pageant")
+			err = fmt.Errorf("cannot find SSH agent. On windows, work with PuTTY and Pageant: `%s`", err)
 			return
 		}
-		err = fmt.Errorf("cannot find SSH agent")
+		err = fmt.Errorf("cannot find SSH agent `%s`", err)
 		return
 	}
 
@@ -61,7 +60,7 @@ func SSHcmd(payload Payload, whowhere string) (catchOut *bytes.Buffer, catchErr 
 	conn, e := ssh.Dial("tcp", host, sshConfig)
 
 	if e != nil {
-		err = fmt.Errorf("failed to dial `%s`:\n%s", host, e)
+		err = fmt.Errorf("failed to dial `%s@%s`:\n%s", user, host, e)
 		return
 	}
 	defer conn.Close()
@@ -69,7 +68,7 @@ func SSHcmd(payload Payload, whowhere string) (catchOut *bytes.Buffer, catchErr 
 	session, e := conn.NewSession()
 
 	if e != nil {
-		err = fmt.Errorf("failed to create session on `%s`:\n%s", host, e)
+		err = fmt.Errorf("failed to create session on `%s@%s`:\n%s", user, host, e)
 		return
 	}
 	defer session.Close()
@@ -134,20 +133,4 @@ func parseRemote(remote string, uid string) (user string, host string) {
 		host = qregistry.Registry["ssh-default-host"]
 	}
 	return
-}
-
-func publicKeyFile(file string) ssh.AuthMethod {
-	if file == "" {
-		file = qregistry.Registry["ssh-default-privatekey"]
-	}
-	buffer, err := os.ReadFile(file)
-	if err != nil {
-		return nil
-	}
-
-	key, err := ssh.ParsePrivateKey(buffer)
-	if err != nil {
-		return nil
-	}
-	return ssh.PublicKeys(key)
 }

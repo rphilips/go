@@ -20,6 +20,7 @@ var sourceDeleteCmd = &cobra.Command{
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
+		"fill-version":   "yes",
 	},
 }
 

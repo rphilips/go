@@ -5,10 +5,12 @@ go 1.16
 require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/benhoyt/goawk v1.6.1
+	github.com/davidmz/go-pageant v1.0.1 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/natefinch/atomic v0.0.0-20200526193002-18c0533a5b09
 	github.com/rwtodd/Go.Sed v0.0.0-20190103233418-906bc69c9394
 	github.com/sergi/go-diff v1.1.0
+	github.com/sfreiberg/simplessh v0.0.0-20180301191542-495cbb862a9c
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spyzhov/ajson v0.4.2

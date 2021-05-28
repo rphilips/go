@@ -24,7 +24,7 @@ var systemSetupCmd = &cobra.Command{
 	Long:  `Setup the registry on your workstation`,
 	Args:  cobra.MaximumNArgs(1),
 	Example: `  qtechng system setup
-    qtechng system setup C:\Users\rphilips\rphilips.ppk
+    qtechng system setup rphilips
 `,
 	RunE: systemSetup,
 	Annotations: map[string]string{
@@ -45,14 +45,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 1 {
-		if runtime.GOOS == "windows" {
-			fname := qutil.AbsPath(args[0], Fcwd)
-			if !qfs.IsFile(fname) {
-				Fmsg = qreport.Report("", fmt.Errorf("`%s` is not the name of a file", fname), Fjq, Fyaml, Funquote)
-				return nil
-			}
-			qregistry.SetRegistry("ssh-default-privatekey", fname)
-		}
+		qregistry.SetRegistry("qtechng-user", args[0])
 	}
 
 	// base
