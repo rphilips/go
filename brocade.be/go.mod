@@ -3,20 +3,18 @@ module brocade.be
 go 1.16
 
 require (
-	github.com/atotto/clipboard v0.1.2
-	github.com/benhoyt/goawk v1.6.1
-	github.com/davidmz/go-pageant v1.0.1 // indirect
+	github.com/atotto/clipboard v0.1.4
+	github.com/benhoyt/goawk v1.7.0
 	github.com/google/uuid v1.2.0
 	github.com/natefinch/atomic v0.0.0-20200526193002-18c0533a5b09
 	github.com/rwtodd/Go.Sed v0.0.0-20190103233418-906bc69c9394
-	github.com/sergi/go-diff v1.1.0
-	github.com/sfreiberg/simplessh v0.0.0-20180301191542-495cbb862a9c
-	github.com/spf13/afero v1.5.1
-	github.com/spf13/cobra v1.1.1
+	github.com/sergi/go-diff v1.2.0
+	github.com/spf13/afero v1.6.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spyzhov/ajson v0.4.2
 	github.com/xanzy/ssh-agent v0.3.0
-	github.com/zserge/lorca v0.1.9
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	gopkg.in/yaml.v2 v2.2.8
+	github.com/zserge/lorca v0.1.10
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	gopkg.in/yaml.v2 v2.4.0
 
 )
