@@ -108,7 +108,7 @@ var Feditor string // editor used in development
 var Fmsg string // result as a string
 
 // Fjq JSONPath
-var Fjq string
+var Fjq []string
 
 // Fyaml YAML
 var Fyaml bool
@@ -188,7 +188,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&Fcwd, "cwd", "", "Working directory")
 	rootCmd.PersistentFlags().BoolVar(&Funhex, "unhex", false, "Unhexify the arguments starting with `.`")
 	rootCmd.PersistentFlags().StringVar(&Feditor, "editor", "", "editor name")
-	rootCmd.PersistentFlags().StringVar(&Fjq, "jsonpath", "", "JSONpath")
+	rootCmd.PersistentFlags().StringSliceVar(&Fjq, "jsonpath", []string{}, "JSONpath")
 	rootCmd.PersistentFlags().BoolVar(&Fyaml, "yaml", false, "Convert to YAML")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")
 	rootCmd.PersistentFlags().StringSliceVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
@@ -247,12 +247,12 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	// Jq
-	if Fjq != "" && !Ftransported {
+	if len(Fjq) != 0 && !Ftransported {
 		_, err = qutil.Transform(nil, Fjq, false)
 		if err != nil {
 			err = &qerror.QError{
 				Ref: []string{errRoot + "jsonpath"},
-				Msg: []string{fmt.Sprintf("JSONpath `" + Fjq + "` error: " + err.Error())},
+				Msg: []string{fmt.Sprintf("JSONpath error: " + err.Error())},
 			}
 			return
 		}

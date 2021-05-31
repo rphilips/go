@@ -23,12 +23,8 @@ func init() {
 }
 
 func stdinJsonpath(cmd *cobra.Command, args []string) (err error) {
-	jsonpath := ""
-	if len(args) != 0 {
-		jsonpath = args[0]
-	}
 	data, err := io.ReadAll(os.Stdin)
-	output, err := qutil.Transform(data, jsonpath, Fyaml)
+	output, err := qutil.Transform(data, args, Fyaml)
 	if err != nil {
 		return err
 	}

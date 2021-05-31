@@ -49,27 +49,30 @@ func Yaml(in interface{}) ([]byte, error) {
 	return qyaml.Marshal(in)
 }
 
-func Transform(input []byte, jsonpath string, yaml bool) (output string, err error) {
-	if jsonpath == "" && !yaml {
+func Transform(input []byte, jsonpath []string, yaml bool) (output string, err error) {
+	if len(jsonpath) == 0 && !yaml {
 		return string(input), nil
 	}
-	if jsonpath != "" {
-		_, err = ajson.ParseJSONPath(jsonpath)
+	output = string(input)
+	for _, jp := range jsonpath {
+		if jp == "" {
+			continue
+		}
+		_, err = ajson.ParseJSONPath(jp)
 		if err != nil {
 			output = string(input)
 			return
 		}
 		if input == nil {
-			return
+			return "", nil
 		}
-		result, err := ajson.JSONPath(input, jsonpath)
+		result, err := ajson.JSONPath([]byte(output), jp)
 		if err != nil {
 			return string(input), err
 		}
 		output = fmt.Sprint(result)
-	} else {
-		output = string(input)
 	}
+
 	if yaml {
 		var x interface{}
 		json.Unmarshal([]byte(output), &x)

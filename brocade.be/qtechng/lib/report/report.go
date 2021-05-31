@@ -23,7 +23,7 @@ type report struct {
 	Errors []error     `json:"ERRORS" yaml:"ERRORS"`
 }
 
-func Report(r interface{}, e interface{}, jsonpath string, yaml bool, unquote bool) string {
+func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool) string {
 
 	show := report{}
 
@@ -35,11 +35,17 @@ func Report(r interface{}, e interface{}, jsonpath string, yaml bool, unquote bo
 		Time: time.Now().Format(time.RFC3339),
 		Args: os.Args,
 	}
-	if jsonpath != "" {
-		err := qutil.ParsePath(jsonpath)
-		if err != nil {
-			h.Jerror = err.Error()
-			jsonpath = ""
+	if len(jsonpath) != 0 {
+		for _, jp := range jsonpath {
+			if jp != "" {
+				err := qutil.ParsePath(jp)
+				if err != nil {
+					h.Jerror = err.Error()
+
+					jsonpath = nil
+					break
+				}
+			}
 		}
 	}
 
@@ -61,8 +67,13 @@ func Report(r interface{}, e interface{}, jsonpath string, yaml bool, unquote bo
 	s := string(b)
 
 	// Apply jsonpath
-	if jsonpath != "" {
-		s, _ = qutil.JSONpath(b, jsonpath)
+	if len(jsonpath) != 0 {
+		for _, jp := range jsonpath {
+			if jp == "" {
+				continue
+			}
+			s, _ = qutil.JSONpath([]byte(s), jp)
+		}
 	}
 	s = strings.TrimSpace(s)
 
