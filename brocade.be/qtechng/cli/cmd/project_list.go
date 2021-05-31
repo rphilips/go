@@ -39,7 +39,7 @@ func preProjectList(cmd *cobra.Command, args []string) {
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		addData(Fpayload, Fcargo, false, "")
+		addData(Fpayload, Fcargo, false, false, "")
 	}
 
 	if Ftransported {

@@ -55,7 +55,7 @@ func preSourceMumps(cmd *cobra.Command, args []string) {
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		addData(Fpayload, Fcargo, true, "m:"+Fbatchid)
+		addData(Fpayload, Fcargo, true, false, "m:"+Fbatchid)
 
 	}
 

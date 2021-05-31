@@ -38,6 +38,7 @@ type LocalFile struct {
 type Transport struct {
 	LocFile LocalFile
 	Body    []byte
+	Info    []byte
 }
 
 type Cargo struct {

@@ -2,6 +2,7 @@ package python
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -13,8 +14,9 @@ import (
 //    If the script does not exist: returns false
 //    If the script has syntax errors: returns false
 //    If the script has no syntax errors: returns true
-func Compile(scriptpy string, py3 bool) bool {
+func Compile(scriptpy string, py3 bool) error {
 	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 	tdir := registry.Registry["scratch-dir"]
 	pyexe := GetPython(py3)
 	argums := []string{
@@ -28,12 +30,16 @@ func Compile(scriptpy string, py3 bool) bool {
 		Args:   argums,
 		Dir:    tdir,
 		Stdout: &stdout,
+		Stderr: &stderr,
 	}
 
 	cmd.Run()
 
 	sout := stdout.String()
-	return strings.Index(sout, "<compile ok>") != -1
+	if strings.Contains(sout, "<compile ok>") {
+		return nil
+	}
+	return fmt.Errorf("compile `%s` with `%s`:\n%s", scriptpy, pyexe, stderr.String())
 }
 
 // Run a python script with arguments in a directory

@@ -36,6 +36,17 @@ func (source Source) Natures() map[string]bool {
 		source.natures = natures
 		return source.natures
 	}
+
+	nolint := config.NoLint
+	if len(nolint) != 0 {
+		for _, nl := range nolint {
+			if qfnmatch.Match(nl, srel) {
+				natures["nolint"] = true
+			}
+		}
+
+	}
+
 	binaries := config.Binary
 	if len(binaries) != 0 {
 		for _, binary := range binaries {
@@ -47,6 +58,7 @@ func (source Source) Natures() map[string]bool {
 			}
 		}
 	}
+
 	ext := filepath.Ext(s)
 	if ext != "." && strings.HasPrefix(ext, ".") {
 		ext = ext[1:]
@@ -70,6 +82,7 @@ func (source Source) Natures() map[string]bool {
 			natures["objectfile"] = true
 		}
 	}
+
 	source.natures = natures
 	return source.natures
 }

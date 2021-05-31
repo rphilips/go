@@ -35,6 +35,19 @@ type lister struct {
 	Mt      string `json:"mt"`
 }
 
+type linter struct {
+	Release string `json:"version"`
+	QPath   string `json:"qpath"`
+	Project string `json:"project"`
+	Path    string `json:"file"`
+	URL     string `json:"fileurl"`
+	Cu      string `json:"cu"`
+	Mu      string `json:"mu"`
+	Ct      string `json:"ct"`
+	Mt      string `json:"mt"`
+	Info    string `json:"info"`
+}
+
 type projlister struct {
 	Release string `json:"version"`
 	Project string `json:"project"`
@@ -167,7 +180,7 @@ func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 	return
 }
 
-func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
+func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, withlint bool, batchid string) {
 	query := ppayload.Query.Copy()
 	psources := query.Run()
 	paths := make([]string, len(psources))
@@ -175,9 +188,13 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		paths[i] = ps.String()
 	}
 	bodies := make([][]byte, 0)
+	infos := make([][]byte, 0)
 	var errs error
 	if withcontent {
 		bodies, _, errs = qsource.FetchList(query.Release, paths)
+	}
+	if withlint {
+		infos, _, errs = qsource.LintList(query.Release, paths, strings.HasPrefix(batchid, "w:"))
 	}
 	buffer := new(bytes.Buffer)
 	transports := make([]qclient.Transport, len(paths))
@@ -209,6 +226,9 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		if withcontent && bodies[i] != nil {
 			transports[i].Body = bodies[i]
 		}
+		if withlint && infos[i] != nil {
+			transports[i].Info = infos[i]
+		}
 		if batchid != "" && strings.HasPrefix(batchid, "m:") {
 			psource.ToMumps(batchid[2:], buffer)
 			if !strings.HasSuffix(psource.String(), ".m") {
@@ -226,7 +246,7 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		pcargo.Data = buffer.Bytes()
 	}
 	pcargo.Transports = transports
-	if withcontent {
+	if withcontent || withlint {
 		switch err := errs.(type) {
 		case qerror.ErrorSlice:
 			if len(err) == 0 {
@@ -365,6 +385,36 @@ func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {
 		}
 	}
 
+	return qpaths, result
+}
+
+func lintTransport(pcargo *qclient.Cargo) ([]string, []linter) {
+	if pcargo == nil {
+		return nil, nil
+	}
+	result := make([]linter, len(pcargo.Transports))
+	qpaths := make([]string, 0)
+	if len(pcargo.Transports) != 0 {
+		for i, transport := range Fcargo.Transports {
+			locfil := transport.LocFile
+
+			result[i] = linter{
+				Release: locfil.Release,
+				QPath:   locfil.QPath,
+				Project: locfil.Project,
+				Path:    locfil.Place,
+				URL:     qutil.FileURL(locfil.Place, -1),
+				Cu:      locfil.Cu,
+				Mu:      locfil.Mu,
+				Ct:      locfil.Ct,
+				Mt:      locfil.Mt,
+				Info:    string(transport.Info),
+			}
+			if info := strings.ToUpper(result[i].Info); info != "NOLINT" && info != "OK" && info != "" {
+				qpaths = append(qpaths, locfil.QPath)
+			}
+		}
+	}
 	return qpaths, result
 }
 

@@ -49,7 +49,7 @@ func preSourceResolve(cmd *cobra.Command, args []string) {
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		addData(Fpayload, Fcargo, true, "r:"+Frilm)
+		addData(Fpayload, Fcargo, true, false, "r:"+Frilm)
 
 	}
 

@@ -3,7 +3,6 @@ package bfile
 import (
 	"bytes"
 	"os"
-	"strings"
 
 	qerror "brocade.be/qtechng/lib/error"
 	qobject "brocade.be/qtechng/lib/object"
@@ -117,46 +116,7 @@ func (bf *BFile) SetObjects(objects []qobject.Object) {
 
 // Sort interface method
 func (bf *BFile) Sort() {
-	objs := bf.Brobs
-	brobs := make([]*Brob, 0)
-	found := make(map[string]bool)
-	for i, obj := range objs {
-		name := obj.Name()
-		if found[name] {
-			continue
-		}
-		if len(name) < 4 {
-			brobs = append(brobs, obj)
-			found[name] = true
-			continue
-		}
-		k := strings.IndexAny(name, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-		prefix := ""
-		if k != -1 {
-			prefix = name[:k]
-		}
-		if prefix != "is" && prefix != "get" && prefix != "gen" && prefix != "set" && prefix != "del" && prefix != "upd" {
-			brobs = append(brobs, obj)
-			found[name] = true
-			continue
-		}
-		needle := name[k:]
-		for _, prefix := range []string{"is", "get", "gen", "set", "upd", "del"} {
-			search := prefix + needle
-			if found[search] {
-				continue
-			}
-			for _, oj := range objs[i:] {
-				name := oj.Name()
-				if name != search {
-					continue
-				}
-				brobs = append(brobs, oj)
-				found[name] = true
-			}
-		}
-	}
-	bf.Brobs = brobs
+
 }
 
 // Format formats a B file

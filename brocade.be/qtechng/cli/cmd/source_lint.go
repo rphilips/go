@@ -10,14 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var sourceListCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "Lists sources in the repository",
-	Long:    `Lists sources in the repository according to patterns, nature and contents`,
+var sourceLintCmd = &cobra.Command{
+	Use:     "lint",
+	Short:   "Lints sources in the repository",
+	Long:    `Lints sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source list --qpattern=/application/*.m`,
-	RunE:    sourceList,
-	PreRun:  preSourceList,
+	Example: `qtechng source lint --qpattern=/application/*.m`,
+	RunE:    sourceLint,
+	PreRun:  preSourceLint,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
@@ -25,34 +25,44 @@ var sourceListCmd = &cobra.Command{
 	},
 }
 
+var Fwarnings bool
+
 func init() {
-	sourceCmd.AddCommand(sourceListCmd)
+	sourceCmd.AddCommand(sourceLintCmd)
+	sourceLintCmd.Flags().BoolVar(&Fwarnings, "warnings", false, "Include warnings")
 }
 
-func sourceList(cmd *cobra.Command, args []string) error {
-	qpaths, result := listTransport(Fcargo)
+func sourceLint(cmd *cobra.Command, args []string) error {
+	qpaths, result := lintTransport(Fcargo)
 	qutil.EditList(Flist, Ftransported, qpaths)
 	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote)
 	return nil
 }
 
-func preSourceList(cmd *cobra.Command, args []string) {
+func preSourceLint(cmd *cobra.Command, args []string) {
 	if !Ftransported {
 		var err error
 		Fcargo, err = fetchData(args, Ffilesinproject, nil, false)
 		if err != nil {
-			log.Fatal("cmd/source_list/1:\n", err)
+			log.Fatal("cmd/source_lint/1:\n", err)
 		}
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		addData(Fpayload, Fcargo, false, false, "")
+		if Fbatchid == "" {
+			Fbatchid = "lint"
+		}
+		if Fwarnings {
+			Fbatchid = "w:" + Fbatchid
+		}
+
+		addData(Fpayload, Fcargo, false, true, Fbatchid)
 	}
 
 	if Ftransported {
 		err := qclient.SendCargo(Fcargo)
 		if err != nil {
-			log.Fatal("cmd/source_list/2:\n", err)
+			log.Fatal("cmd/source_lint/2:\n", err)
 		}
 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 	}

@@ -1028,7 +1028,7 @@ func FetchList(version string, paths []string) (bodies [][]byte, metas []*qmeta.
 				Ref:     []string{"source.fetchlist.path.nometa"},
 				Version: release.String(),
 				QPath:   p,
-				Msg:     []string{"Math of path `" + p + "` not retrievable"},
+				Msg:     []string{"Path `" + p + "` not retrievable"},
 			}
 			return nil, err
 		}
