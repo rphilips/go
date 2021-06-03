@@ -25,10 +25,11 @@ type Config struct {
 	NotConfig          []string            `json:"notconfig"`
 	Binary             []string            `json:"binary"`
 	ObjectsNotReplaced map[string][]string `json:"objectsnotreplaced"`
-	ObjectsNotChecked  []string            `json:"objectsnotchecked"`
-	EmptyDirs          []string            `json:"emptydirs"`
 	NotUnique          []string            `json:"notunique"`
 	NoLint             []string            `json:"nolint"`
+	Comment            string              `json:"comment"`
+	Id                 string              `json:"$id"`
+	Schema             string              `json:"$schema"`
 }
 
 // IsValidConfig checks if a blob is a validd configuaration
@@ -42,23 +43,22 @@ func IsValidConfig(blob []byte) bool {
 		"$id":                true,
 		"$schema":            true,
 		"binary":             true,
+		"comment":            true,
 		"core":               true,
 		"groups":             true,
 		"mumps":              true,
 		"names":              true,
+		"nolint":             true,
 		"notbrocade":         true,
 		"notconfig":          true,
+		"notunique":          true,
 		"objectsnotreplaced": true,
-		"objectsnotchecked":  true,
 		"passive":            true,
 		"priority":           true,
 		"py3":                true,
 		"roles":              true,
 		"versionlower":       true,
 		"versionupper":       true,
-		"emptydirs":          true,
-		"notunique":          true,
-		"nolint":             true,
 	}
 	m := make(map[string]interface{})
 	json.Unmarshal(blob, &m)

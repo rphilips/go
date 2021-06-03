@@ -33,8 +33,14 @@ func init() {
 }
 
 func sourceLint(cmd *cobra.Command, args []string) error {
-	qpaths, result := lintTransport(Fcargo)
-	qutil.EditList(Flist, Ftransported, qpaths)
+	_, result := lintTransport(Fcargo)
+	qps := make([]string, 0)
+	for _, r := range result {
+		if r.Info != "OK" {
+			qps = append(qps, r.QPath)
+		}
+	}
+	qutil.EditList(Flist, Ftransported, qps)
 	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote)
 	return nil
 }
