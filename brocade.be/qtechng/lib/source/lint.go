@@ -21,6 +21,7 @@ import (
 	qproject "brocade.be/qtechng/lib/project"
 	qserver "brocade.be/qtechng/lib/server"
 	qutil "brocade.be/qtechng/lib/util"
+	qyaml "gopkg.in/yaml.v2"
 )
 
 // FetchList gets a number of paths
@@ -190,6 +191,8 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 	switch ext {
 	case ".php", ".phtml":
 		return source.LintPHP(buffer, warnings)
+	case ".yaml", ".yml":
+		return source.LintYAML(buffer, warnings)
 	case ".json":
 		return source.LintJSON(buffer, warnings)
 	case ".xml":
@@ -291,6 +294,21 @@ func (source *Source) LintXML(buffer *bytes.Buffer, warnings bool) (info string,
 		}
 		if err != nil {
 			return fmt.Sprintf("Not valid XML in `%s`: %s", source.String(), err.Error()), nil
+		}
+	}
+}
+
+// YAML
+
+func (source *Source) LintYAML(buffer *bytes.Buffer, warnings bool) (info string, err error) {
+	decoder := qyaml.NewDecoder(buffer)
+	for {
+		err := decoder.Decode(new(interface{}))
+		if err != nil && err == io.EOF {
+			return "OK", nil
+		}
+		if err != nil {
+			return fmt.Sprintf("Not valid YAML in `%s`: %s", source.String(), err.Error()), nil
 		}
 	}
 }
