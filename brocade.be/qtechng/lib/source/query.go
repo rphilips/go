@@ -3,7 +3,6 @@ package source
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -698,7 +697,6 @@ func (query *Query) Run() []*Source {
 // RunObject search for sources fitting the query
 func (query *Query) RunObject() map[string]*qobject.Uber {
 	query.Harmonise()
-	fmt.Println("RPh: query2", query)
 	if len(query.Objects) == 0 {
 		return nil
 	}
@@ -707,7 +705,6 @@ func (query *Query) RunObject() map[string]*qobject.Uber {
 		return nil
 	}
 	objmap := qobject.InfoObjectList(r.String(), query.Objects)
-	fmt.Println("RPh: objmap", objmap)
 	length := len(objmap)
 	if length == 0 {
 		return nil
