@@ -3,7 +3,9 @@ package source
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"io"
 	"path"
 	"path/filepath"
 	"strings"
@@ -190,6 +192,8 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 		return source.LintPHP(buffer, warnings)
 	case ".json":
 		return source.LintJSON(buffer, warnings)
+	case ".xml":
+		return source.LintXML(buffer, warnings)
 	case ".py":
 		return source.LintPy(buffer, warnings)
 	case ".x":
@@ -274,6 +278,21 @@ func (source *Source) LintJSON(buffer *bytes.Buffer, warnings bool) (info string
 	}
 
 	return fmt.Sprintf("Not valid JSON in `%s`: %s", source.String(), e.Error()), nil
+}
+
+// xml
+
+func (source *Source) LintXML(buffer *bytes.Buffer, warnings bool) (info string, err error) {
+	decoder := xml.NewDecoder(buffer)
+	for {
+		err := decoder.Decode(new(interface{}))
+		if err != nil && err == io.EOF {
+			return "OK", nil
+		}
+		if err != nil {
+			return fmt.Sprintf("Not valid XML in `%s`: %s", source.String(), err.Error()), nil
+		}
+	}
 }
 
 // Parse BFile
