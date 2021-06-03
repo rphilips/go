@@ -188,6 +188,8 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 	switch ext {
 	case ".php", ".phtml":
 		return source.LintPHP(buffer, warnings)
+	case ".json":
+		return source.LintJSON(buffer, warnings)
 	case ".py":
 		return source.LintPy(buffer, warnings)
 	case ".x":
@@ -250,7 +252,7 @@ func (source *Source) LintBrocadeJson(buffer *bytes.Buffer, warnings bool) (info
 	config := new(qproject.Config)
 	e := json.Unmarshal(body, config)
 	if e != nil {
-		info = fmt.Sprintf("Not valid JSON in `%s`: %s %s", source.String(), e.Error(), string(body))
+		info = fmt.Sprintf("Not valid JSON in `%s`: %s", source.String(), e.Error())
 		return info, nil
 	}
 	if !qproject.IsValidConfig(body) {
@@ -258,6 +260,20 @@ func (source *Source) LintBrocadeJson(buffer *bytes.Buffer, warnings bool) (info
 		return info, nil
 	}
 	return "OK", nil
+}
+
+// json
+
+func (source *Source) LintJSON(buffer *bytes.Buffer, warnings bool) (info string, err error) {
+	body := buffer.Bytes()
+	var js json.RawMessage
+	e := json.Unmarshal(body, &js)
+
+	if e == nil {
+		return "OK", nil
+	}
+
+	return fmt.Sprintf("Not valid JSON in `%s`: %s", source.String(), e.Error()), nil
 }
 
 // Parse BFile
