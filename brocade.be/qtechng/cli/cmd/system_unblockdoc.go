@@ -30,6 +30,6 @@ func systemUnblockdoc(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		msg = ""
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fsilent)
 	return nil
 }

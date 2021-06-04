@@ -46,7 +46,7 @@ func lockRun(cmd *cobra.Command, args []string) {
 
 	locker := checkLock(lock, until)
 	if locker == "" {
-		Fmsg = qreport.Report(nil, fmt.Errorf("cannot obtain lock `%s`", lock), Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, fmt.Errorf("cannot obtain lock `%s`", lock), Fjq, Fyaml, Funquote, Fsilent)
 		return
 	}
 
@@ -79,7 +79,7 @@ func lockRun(cmd *cobra.Command, args []string) {
 				os.Exit(status.ExitStatus())
 			}
 		}
-		Fmsg = qreport.Report(nil, fmt.Errorf("unable to run command succesfully"), Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, fmt.Errorf("unable to run command succesfully"), Fjq, Fyaml, Funquote, Fsilent)
 		return
 	}
 }

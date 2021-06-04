@@ -1,18 +1,16 @@
 package source
 
 import (
+	"path"
 	"path/filepath"
 
 	qserver "brocade.be/qtechng/lib/server"
-	qutil "brocade.be/qtechng/lib/util"
 )
 
 // IsUnique returns true if only one or zero such a basname exists
 func IsUnique(version *qserver.Release, name string) bool {
-	base := filepath.Base(name)
-	digest := qutil.Digest([]byte(base))
-	fs := version.FS("/unique")
-	dir := "/" + digest[:2] + "/" + digest[2:]
+	fs, fname := version.UniquePlace(name)
+	dir := path.Dir(fname)
 	exists, _ := fs.Exists(dir)
 	if !exists {
 		return true
@@ -37,8 +35,7 @@ func IsUnique(version *qserver.Release, name string) bool {
 		return false
 	}
 	found := filepath.Base(names[0])
-	ndigest := qutil.Digest([]byte(name))
-	return found == ndigest
+	return found == path.Base(fname)
 }
 
 // StoreUnique stores a reference to the basename

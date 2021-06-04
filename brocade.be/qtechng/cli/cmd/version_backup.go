@@ -42,7 +42,7 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 			Ref: []string{"backup.notexist"},
 			Msg: []string{"version does not exist."},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 
@@ -55,6 +55,6 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 		msg["status"] = "Backup SUCCESS to `" + tarfile + "`"
 		msg["backupfile"] = tarfile
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fsilent)
 	return err
 }

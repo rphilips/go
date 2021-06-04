@@ -39,14 +39,14 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(r, true)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("version `%s` does NOT exist", release.String())
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 
@@ -60,6 +60,6 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 	msg["projects"] = release.ProjectCount()
 	msg["sources"] = release.SourceCount()
 
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
 	return nil
 }

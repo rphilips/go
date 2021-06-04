@@ -135,6 +135,9 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 		return "NOLINT", nil
 	}
 	body, err := source.Fetch()
+	if err != nil {
+		return "", err
+	}
 
 	if natures["text"] {
 		_, _, e := qutil.NoUTF8(bytes.NewReader(body))
@@ -151,41 +154,40 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 
 	switch {
 	case strings.HasSuffix(source.String(), "/brocade.json"):
-		body, err := source.Fetch()
-		if err != nil {
-			return "", err
-		}
 		buffer.Write(body)
 		return source.LintBrocadeJson(buffer, warnings)
 	case natures["lfile"]:
-		err = source.Resolve("r", nil, nil, buffer)
+		err = source.Resolve("r", nil, nil, buffer, true)
 		if err != nil {
 			return "", err
 		}
 		return source.LintL(buffer, warnings)
 	case natures["dfile"]:
-		err = source.Resolve("rl", nil, nil, buffer)
+		err = source.Resolve("rl", nil, nil, buffer, true)
 		if err != nil {
 			return "", err
 		}
 		return source.LintD(buffer, warnings)
 	case natures["ifile"]:
-		err = source.Resolve("rlm", nil, nil, buffer)
+		err = source.Resolve("rlm", nil, nil, buffer, true)
 		if err != nil {
 			return "", err
 		}
 		return source.LintI(buffer, warnings)
 	case natures["bfile"]:
-		err = source.Resolve("rilm", nil, nil, buffer)
+		err = source.Resolve("rilm", nil, nil, buffer, true)
 		if err != nil {
 			return "", err
 		}
 		return source.LintB(buffer, warnings)
 	}
-
-	err = source.Resolve("rilm", nil, nil, buffer)
+	if natures["mfile"] {
+		err = source.Resolve("rilm", nil, nil, buffer, true)
+	} else {
+		err = source.Resolve("rilm", nil, nil, buffer, false)
+	}
 	if err != nil {
-		return "", err
+		return err.Error(), nil
 	}
 	ext := path.Ext(source.String())
 	switch ext {
@@ -205,7 +207,7 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 		return source.LintM(buffer, warnings)
 	}
 
-	return "", nil
+	return "OK", nil
 
 }
 
@@ -223,7 +225,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool) (info string, 
 	e := qpython.Compile(tmppy, py == "py3")
 	info = "OK"
 	if e != nil {
-		info = e.Error()
+		info = e.Error() + " [" + py + "]"
 	}
 	if info == "OK" {
 		qfs.Rmpath(tmppy)
@@ -413,9 +415,9 @@ func (source *Source) LintL(buffer *bytes.Buffer, warnings bool) (info string, e
 
 // Parse MFile
 func (source *Source) LintM(buffer *bytes.Buffer, warnings bool) (info string, err error) {
-	preamble := ""
+	preamble := "About"
 	info = "OK"
-	if info == "" && !strings.Contains(preamble, "About") {
+	if info == "OK" && !strings.Contains(preamble, "About") {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
 	}
 	return
@@ -442,24 +444,24 @@ func (source *Source) LintX(buffer *bytes.Buffer, warnings bool) (info string, e
 
 func handleObjects(objs []qobject.Object) string {
 	if len(objs) == 0 {
-		return ""
+		return "OK"
 	}
 	m := make(map[string]bool)
 	version := ""
 	for _, obj := range objs {
+		if version == "" {
+			version = obj.Release()
+		}
 		name := obj.String()
 		if m[name] {
 			return fmt.Sprintf("Object `%s` occurs more than one in `%s`", name, obj.EditFile())
 		}
 		err := obj.Lint()
 		if err != nil && len(err) > 0 {
-			return fmt.Sprintf("Object `%s` occurs more than one in `%s`", name, err[0].Error())
-		}
-		if version == "" {
-			version = obj.Release()
+			return fmt.Sprintf("Object `%s` has syntax error: `%s`", name, err[0].Error())
 		}
 	}
-	if version != "" {
+	if version == "" {
 		return "No legal version found"
 	}
 
@@ -483,6 +485,9 @@ func handleObjects(objs []qobject.Object) string {
 		}
 		infos = append(infos, s)
 	}
-
-	return strings.Join(infos, "; ")
+	info := strings.Join(infos, "; ")
+	if info == "" {
+		info = "OK"
+	}
+	return info
 }

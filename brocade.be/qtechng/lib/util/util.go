@@ -643,45 +643,32 @@ func GetPy(pyscript string) string {
 	read := bufio.NewReader(reader)
 	first, _ := read.ReadString('\n')
 	reader.Close()
-	pyfound := ""
-	k := strings.Index(first, "#")
-	if k != -1 {
-		first := first[k:]
-		k = strings.Index(first, "py2")
-		if k == -1 {
-			k = strings.Index(first, "python2")
-		}
-		if k != -1 {
-			pyfound = "py2"
-		}
-		if k == -1 {
-			k = strings.Index(first, "python3")
-			if k == -1 {
-				k = strings.Index(first, "py3")
-			}
-			if k != -1 {
-				pyfound = "py3"
+	if strings.Contains(first, "#") {
+		for _, p := range []string{"py3", "py2", "python2", "python3"} {
+			if strings.Contains(first, p) {
+				if strings.ContainsRune(p, '3') {
+					return "py3"
+				}
+				return "py2"
 			}
 		}
 	}
-	if pyfound != "" {
-		return pyfound
-	}
-	subs := strings.SplitN(filepath.ToSlash(pyscript), "/", -1)
+	dirname := pyscript
 	for {
-		if len(subs) == 0 {
-			return ""
+		dirname := filepath.Dir(dirname)
+		if dirname == "" || filepath.Dir(dirname) == dirname {
+			return "py2"
 		}
-		subs = subs[:len(subs)-1]
-		fname := filepath.Join(subs...)
-		fname = filepath.Join(fname, "brocade.json")
-		blob, e := qfs.Fetch("brocade.json")
+		fname := filepath.Join(dirname, "brocade.json")
+		blob, e := qfs.Fetch(fname)
 		if e != nil {
+			fmt.Println(fname, e.Error())
 			continue
 		}
 		cfg := make(map[string]interface{})
 		e = json.Unmarshal(blob, &cfg)
 		if e != nil {
+			fmt.Println(fname, e.Error())
 			continue
 		}
 		v, ok := cfg["py3"]

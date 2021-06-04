@@ -30,7 +30,7 @@ func argJSON(cmd *cobra.Command, args []string) error {
 			Msg:  []string{"Argument is empty"},
 		}
 		return err
-		//Fmsg = qreport.Report(nil, errorlist, Fjq, Fyaml, Funquote)
+		//Fmsg = qreport.Report(nil, errorlist, Fjq, Fyaml, Funquote, Fsilent)
 	}
 
 	argums := make([]string, 0)

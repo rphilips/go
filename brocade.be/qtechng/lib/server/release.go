@@ -426,12 +426,26 @@ func (release *Release) ObjectPlace(objname string) (*qvfs.QFs, string) {
 	ty := strings.SplitN(objname, "_", 2)[0]
 	if strings.HasPrefix(objname, "l4") && strings.Count(objname, "_") == 2 {
 		parts := strings.SplitN(objname, "_", 3)
-		objname = "l4_" + parts[2]
+		remove := parts[1]
+		if strings.IndexAny(remove, "NEDFU") == 0 {
+			remove = remove[1:]
+			if remove == "" || remove == "php" || remove == "py" || remove == "js" {
+				parts := strings.SplitN(objname, "_", 3)
+				objname = "l4_" + parts[2]
+			}
+		}
 	}
 	fs := release.FS("object", ty)
 	h := qutil.Digest([]byte(objname))
 	dirname := "/" + h[0:2] + "/" + h[2:]
 	return &fs, dirname + "/obj.json"
+}
+
+func (release *Release) ObjectDepPlace(objname string, fname string) (*qvfs.QFs, string) {
+	fs, place := release.ObjectPlace(objname)
+	digest := qutil.Digest([]byte(fname))
+	place = strings.TrimSuffix(place, "obj.json") + digest[:2] + "/" + digest[2:] + ".dep"
+	return fs, place
 }
 
 func (release *Release) ObjectStore(objname string, obj json.Marshaler) (changed bool, before []byte, after []byte, err error) {

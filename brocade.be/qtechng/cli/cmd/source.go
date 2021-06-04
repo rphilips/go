@@ -26,7 +26,7 @@ var sourceCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(sourceCmd)
-	sourceCmd.PersistentFlags().StringVar(&Flist, "list", "", "List for convenient editing")
+	sourceCmd.PersistentFlags().StringVar(&Flist, "list", "", "Lists for convenient editing")
 	sourceCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
 	sourceCmd.PersistentFlags().BoolVar(&Ftree, "tree", false, "Files with hierarchy intact")
 	sourceCmd.PersistentFlags().BoolVar(&Fauto, "auto", false, "Files according to the registry")

@@ -118,12 +118,12 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["awk"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 
@@ -187,9 +187,9 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	msg := make(map[string][]string)
 	msg["awk"] = changed
 	if len(errs) == 0 {
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
 	} else {
-		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fsilent)
 	}
 	return nil
 }

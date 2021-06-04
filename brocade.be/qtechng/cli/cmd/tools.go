@@ -236,7 +236,7 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 			}
 		}
 		if batchid != "" && strings.HasPrefix(batchid, "r:") {
-			err := psource.Resolve(batchid, nil, nil, buffer)
+			err := psource.Resolve(batchid, nil, nil, buffer, false)
 			pcargo.Error = err
 		}
 

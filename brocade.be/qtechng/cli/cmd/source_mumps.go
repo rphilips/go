@@ -35,7 +35,7 @@ func init() {
 
 func sourceMumps(cmd *cobra.Command, args []string) error {
 	if Fcargo.Error != nil {
-		Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 	Fmsg = string(Fcargo.Data)

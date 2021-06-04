@@ -23,8 +23,10 @@ type report struct {
 	Errors []error     `json:"ERRORS" yaml:"ERRORS"`
 }
 
-func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool) string {
-
+func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, silent bool) string {
+	if silent {
+		return ""
+	}
 	show := report{}
 
 	// header

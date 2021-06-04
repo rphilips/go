@@ -400,7 +400,7 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 			break
 		}
 		if i >= len(macro.Params) {
-			msg = "Too many arguments"
+			msg = "Too many arguments in " + macro.String()
 			break
 		}
 		k := strings.Index(arg, "=")
@@ -413,7 +413,7 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 			_, isarg = args[prefix]
 			if isarg {
 				if done[prefix] {
-					msg = "Parameter `" + prefix + "` occurs twice"
+					msg = "Parameter `" + prefix + "` occurs twice in " + macro.String()
 					break
 				}
 				done[prefix] = true
@@ -422,12 +422,12 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 			}
 		}
 		if macro.Params[i].Named {
-			msg = "Parameter `" + macro.Params[i].ID + "` should be named"
+			msg = "Parameter `" + macro.Params[i].ID + "` should be named in " + macro.String()
 			break
 		}
 		z := macro.Params[i].ID
 		if done[z] {
-			msg = "Parameter `" + z + "` occurs twice"
+			msg = "Parameter `" + z + "` occurs twice in " + macro.String()
 			break
 		}
 		done[z] = true
@@ -448,6 +448,7 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 			Ref:    []string{"parse.args.parse"},
 			File:   macro.EditFile(),
 			Lineno: -1,
+			Object: macro.String(),
 			Type:   "Error",
 			Msg:    []string{msg},
 		}

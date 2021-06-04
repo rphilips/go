@@ -231,7 +231,6 @@ func FetchList(objectlist []Object) (objectmap map[string]Object) {
 // Fetch vul een object
 func Fetch(object Object) (err error) {
 	r := object.Release()
-	ty := object.Type()
 
 	if r == "" {
 		err := &qerror.QError{
@@ -274,10 +273,7 @@ func Fetch(object Object) (err error) {
 		return err
 	}
 
-	fs := rel.FS("object", ty)
-	h := qutil.Digest([]byte(object.String()))
-	dirname := "/" + h[0:2] + "/" + h[2:]
-	fname := dirname + "/obj.json"
+	fs, fname := rel.ObjectPlace(object.String())
 	content, erro := fs.ReadFile(fname)
 	if erro != nil {
 		e := &qerror.QError{
@@ -478,17 +474,7 @@ func Link(r string, name string, object interface{}) error {
 		return qerror.QErrorTune(e, err)
 	}
 	data := map[string]string{"source": name}
-	fs := version.FS("/object")
-	digest := qutil.Digest([]byte(name))
-	dir2 := "/" + digest[:2] + "/" + digest[2:] + ".dep"
-	if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
-		parts := strings.SplitN(obj, "_", 3)
-		obj = "l4_" + parts[2]
-	}
-	parts := strings.SplitN(obj, "_", 2)
-	mode := parts[0]
-	digest = qutil.Digest([]byte(obj))
-	fname := "/" + mode + "/" + digest[:2] + "/" + digest[2:] + dir2
+	fs, fname := version.ObjectDepPlace(obj, name)
 	data["object"] = obj
 	fs.Store(fname, data, "")
 	return nil
@@ -585,16 +571,7 @@ func UnLink(r string, name string, object interface{}) error {
 		}
 		return qerror.QErrorTune(e, err)
 	}
-	mode := obj[:2]
-	fs := version.FS("object", mode)
-	digest := qutil.Digest([]byte(name))
-	dir2 := "/" + digest[:2] + "/" + digest[2:] + ".dep"
-	if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
-		parts := strings.SplitN(obj, "_", 3)
-		obj = "l4_" + parts[2]
-	}
-	digest = qutil.Digest([]byte(obj))
-	fname := "/" + digest[:2] + "/" + digest[2:] + dir2
+	fs, fname := version.ObjectDepPlace(obj, name)
 	fs.Waste(fname)
 	return nil
 }
@@ -693,17 +670,10 @@ func GetDependenciesDeep(version *qserver.Release, objs ...string) (result map[s
 
 // GetDependencies retrieves a map pointin for each object the things dependent on that object
 func GetDependencies(version *qserver.Release, objs ...string) (result map[string][]string) {
-	fs := version.FS("/object")
 	fn := func(n int) (interface{}, error) {
 		obj := objs[n]
-		if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
-			parts := strings.SplitN(obj, "_", 3)
-			obj = "l4_" + parts[2]
-		}
-		parts := strings.SplitN(obj, "_", 2)
-		mode := parts[0]
-		digest := qutil.Digest([]byte(obj))
-		startdir := "/" + mode + "/" + digest[:2] + "/" + digest[2:]
+		fs, fname := version.ObjectPlace(obj)
+		startdir := strings.TrimSuffix(fname, "/obj.json")
 		matches := fs.Glob(startdir, []string{"*.dep"}, true)
 		dep := make(map[string]string)
 		dono := make([]string, 0)

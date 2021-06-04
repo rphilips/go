@@ -42,7 +42,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 			Ref: []string{"install.version"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 	if Frefname == "" {
@@ -64,7 +64,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	if err != nil {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
 			return nil
 		}
 	}
@@ -77,6 +77,6 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 		sort.Strings(qpaths)
 		msg["installed"] = qpaths
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
 	return nil
 }

@@ -9,7 +9,6 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qobject "brocade.be/qtechng/lib/object"
 	qserver "brocade.be/qtechng/lib/server"
-	qutil "brocade.be/qtechng/lib/util"
 )
 
 // Waste vernietig een object
@@ -40,9 +39,6 @@ func Waste(object qobject.Object) (changed bool, err error) {
 		}
 		return false, qerror.QErrorTune(e, err)
 	}
-	fs := rel.FS("object", object.Type())
-	h := qutil.Digest([]byte(object.String()))
-	dirname := "/" + h[0:2] + "/" + h[2:]
 
 	rest := Deleteable(object)[object.String()]
 	if rest != nil {
@@ -58,7 +54,8 @@ func Waste(object qobject.Object) (changed bool, err error) {
 		return false, e
 	}
 
-	changed, err = fs.Waste(dirname + "/obj.json")
+	fs, fname := rel.ObjectPlace(object.String())
+	changed, err = fs.Waste(fname)
 
 	if err != nil && !os.IsNotExist(err) {
 		e := &qerror.QError{

@@ -37,7 +37,7 @@ func versionRestore(cmd *cobra.Command, args []string) error {
 			Ref: []string{"restore.notexist"},
 			Msg: []string{"version does not exist."},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
 		return nil
 	}
 	previous, err := release.Restore(args[1], Finit)
@@ -52,6 +52,6 @@ func versionRestore(cmd *cobra.Command, args []string) error {
 		msg["status"] += " (backup of previous situation: `" + previous + "`)"
 		msg["previous"] = previous
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fsilent)
 	return nil
 }

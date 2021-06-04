@@ -27,6 +27,6 @@ func commands(cmd *cobra.Command, args []string) error {
 			msg[command.Use][subCommand.Use] = subCommand.Short
 		}
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, false)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
 	return nil
 }
