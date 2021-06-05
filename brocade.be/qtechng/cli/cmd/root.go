@@ -482,8 +482,13 @@ func fillVersion() {
 			break
 		}
 	}
-	if Fversion == "" {
+	switch {
+	case strings.ContainsRune(QtechType, 'P'):
+		Fversion = qregistry.Registry["brocade-release"]
+	case strings.ContainsRune(QtechType, 'W'):
 		Fversion = qregistry.Registry["qtechng-version"]
+	default:
+		Fversion = "0.00"
 	}
 }
 
