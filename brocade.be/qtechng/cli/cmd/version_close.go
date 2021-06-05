@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +22,7 @@ var versionCloseCmd = &cobra.Command{
 	Use:     "close",
 	Short:   "Closes a release",
 	Long:    `A release is closed and the repository is copied to the appropriate number`,
-	Args:    cobra.NoArgs,
+	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version close --nextversion=5.30",
 	RunE:    versionClose,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
@@ -37,6 +38,11 @@ func init() {
 }
 
 func versionClose(cmd *cobra.Command, args []string) error {
+	if args[0] != "0.00" {
+		err := errors.New("only version `0.00` can be closed")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		return nil
+	}
 	nextversion := Fnextversion
 	if nextversion == "" || nextversion == "0.00" {
 		err := fmt.Errorf("next version `%s` is invalid", nextversion)

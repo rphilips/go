@@ -13,7 +13,7 @@ var versionInfoCmd = &cobra.Command{
 	Use:     "info",
 	Short:   "Information about a version",
 	Long:    `Command provides information about a version`,
-	Args:    cobra.MaximumNArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version info 5.10",
 	RunE:    versionInfo,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
