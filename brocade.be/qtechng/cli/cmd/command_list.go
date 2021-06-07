@@ -1,30 +1,33 @@
 package cmd
 
 import (
+	"strings"
+
 	qreport "brocade.be/qtechng/lib/report"
 
 	"github.com/spf13/cobra"
 )
 
-var commandsCmd = &cobra.Command{
-	Use:   "commands",
+var commandListCmd = &cobra.Command{
+	Use:   "list",
 	Short: "Available commands",
 	Long: `
 Displays a list of all available qtechng commands`,
-	Example: "  qtechng commands",
-	RunE:    commands}
+	Example: "  qtechng command list",
+	RunE:    commandList}
 
 func init() {
 
-	rootCmd.AddCommand(commandsCmd)
+	commandCmd.AddCommand(commandListCmd)
 }
 
-func commands(cmd *cobra.Command, args []string) error {
+func commandList(cmd *cobra.Command, args []string) error {
 	msg := map[string]map[string]string{}
 	for _, command := range rootCmd.Commands() {
 		msg[command.Use] = map[string]string{}
 		for _, subCommand := range command.Commands() {
-			msg[command.Use][subCommand.Use] = subCommand.Short
+			parts := strings.SplitN(subCommand.Use, " ", 2)
+			msg[command.Use][parts[0]] = subCommand.Short
 		}
 	}
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)

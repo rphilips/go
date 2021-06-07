@@ -46,6 +46,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 1 {
 		qregistry.SetRegistry("qtechng-user", args[0])
+		qregistry.SetRegistry("ssh-default-user", args[0])
 	}
 
 	// base

@@ -86,13 +86,23 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 			b, _ := json.MarshalIndent(x, "", "    ")
 			s = string(b)
 		}
-		if unquote && strings.HasPrefix(s, `"`) {
-			z := ""
-			err := json.Unmarshal([]byte(s), &z)
-			if err != nil {
-				z = s
+		if unquote {
+			switch {
+			case strings.HasPrefix(s, `"`):
+				z := ""
+				err := json.Unmarshal([]byte(s), &z)
+				if err != nil {
+					z = s
+				}
+				return z
+			case strings.HasPrefix(s, `[`):
+				z := make([]string, 0)
+				err := json.Unmarshal([]byte(s), &z)
+				if err != nil {
+					return s
+				}
+				return strings.Join(z, " ")
 			}
-			return z
 		}
 		return s
 	}
