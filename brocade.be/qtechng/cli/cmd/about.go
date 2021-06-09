@@ -21,6 +21,7 @@ If arguments are given, they are shown in 'hexified' format.`,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
+		"complete":       "end",
 	},
 }
 
@@ -47,6 +48,6 @@ func about(cmd *cobra.Command, args []string) error {
 			msg["hexified "+arg] = hex.EncodeToString([]byte(arg))
 		}
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	return nil
 }

@@ -41,7 +41,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 			Ref: []string{"copy.bp"},
 			Msg: []string{"No copy necessary: server is both production and development"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -51,7 +51,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 			Ref: []string{"copy.production"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -60,7 +60,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 			Ref: []string{"copy.open"},
 			Msg: []string{"Cannot copy version `0.00`"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -71,7 +71,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 			Ref: []string{"copy.current"},
 			Msg: []string{"Cannot copy the current release: use `qtechng system sync`"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -81,7 +81,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 			Ref: []string{"copy.version.production.lowest"},
 			Msg: []string{"The version should be higher than the current version"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 
 	}
@@ -89,7 +89,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 	changed, deleted, err := qsync.Sync(version, version, false)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	msg := make(map[string][]string)
@@ -101,6 +101,6 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 		sort.Strings(deleted)
 		msg["deleted"] = deleted
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fsilent)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	return nil
 }

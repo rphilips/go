@@ -26,21 +26,19 @@ import (
 // - a project is installed
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
-func Install(batchid string, sources []*Source, rsync bool) (err error) {
+func Install(batchid string, sources []*Source) (err error) {
 	if len(sources) == 0 {
 		return nil
 	}
+	qtechType := qregistry.Registry["qtechng-type"]
 	sr := sources[0].Release().String()
-	r := qserver.Canon(qregistry.Registry["brocade-release"])
-	if sr != r && sr != "" && sr != "0.00" {
+
+	if strings.ContainsRune(qtechType, 'B') && sr != "0.00" {
 		return nil
 	}
-	// synchronises if necessary
-	if rsync {
-		_, _, err = RSync(sr)
-		if err != nil {
-			return err
-		}
+	r := qserver.Canon(qregistry.Registry["brocade-release"])
+	if strings.ContainsRune(qtechType, 'P') && sr != r {
+		return nil
 	}
 
 	errs := make([]error, 0)
@@ -94,16 +92,10 @@ func Install(batchid string, sources []*Source, rsync bool) (err error) {
 
 	projs := make([]*qproject.Project, 0)
 	for _, p := range mproj {
-		e := p.IsInstallable()
-		if e != nil {
-			errs = append(errs, e)
-			continue
-		}
 		projs = append(projs, p)
 	}
-	if len(projs) == 0 {
-		return
-	}
+
+	// sort project in sequence of installation
 
 	projs = qproject.Sort(projs)
 

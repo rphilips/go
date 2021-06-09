@@ -278,7 +278,7 @@ func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 	if batchid == "" {
 		batchid = "install"
 	}
-	errs := qsource.Install(batchid, psources, true)
+	errs := qsource.Install(batchid, psources)
 	switch err := errs.(type) {
 	case qerror.ErrorSlice:
 		if len(err) == 0 {

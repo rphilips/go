@@ -41,7 +41,7 @@ func sourceLint(cmd *cobra.Command, args []string) error {
 		}
 	}
 	qutil.EditList(Flist, Ftransported, qps)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fsilent)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	return nil
 }
 

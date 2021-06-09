@@ -34,13 +34,13 @@ func versionNew(cmd *cobra.Command, args []string) error {
 
 	release, err := qserver.Release{}.New(r, false)
 	if err != nil {
-		Fmsg = qreport.Report(nil, nil, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
 	err = release.Init()
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -50,6 +50,6 @@ func versionNew(cmd *cobra.Command, args []string) error {
 	} else {
 		err = fmt.Errorf("version `%s` is NOT created", release.String())
 	}
-	Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+	Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	return nil
 }

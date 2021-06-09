@@ -1036,3 +1036,18 @@ func LowestVersion(r1 string, r2 string) string {
 	}
 	return r2
 }
+
+// Joiner returns joiner delimiter
+
+func Joiner(joiner string) string {
+	parts := strings.SplitN(joiner, ",", -1)
+	delim := ""
+	for _, part := range parts {
+		i, e := strconv.ParseInt(part, 10, 32)
+		if e != nil {
+			return joiner
+		}
+		delim += string(rune(i))
+	}
+	return delim
+}

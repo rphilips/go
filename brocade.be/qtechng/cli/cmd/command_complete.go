@@ -3,7 +3,9 @@ package cmd
 import (
 	"strings"
 
+	qregistry "brocade.be/base/registry"
 	qreport "brocade.be/qtechng/lib/report"
+	qserver "brocade.be/qtechng/lib/server"
 
 	"github.com/spf13/cobra"
 )
@@ -38,9 +40,8 @@ func commandComplete(cmd *cobra.Command, args []string) error {
 		}
 		argums = append(argums, arg)
 	}
-
+	result := make([]string, 0)
 	if len(argums) == 0 {
-		result := make([]string, 0)
 		for _, cmd := range rootCmd.Commands() {
 			if checkQtCmd(cmd, QtechType) {
 				parts := strings.SplitN(cmd.Use, " ", 2)
@@ -48,35 +49,101 @@ func commandComplete(cmd *cobra.Command, args []string) error {
 			}
 
 		}
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		return nil
+	}
+
+	verb := argums[0]
+	cmd = searchCmd(verb, rootCmd.Commands())
+	if cmd == nil {
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		return nil
+	}
+	cmds := cmd.Commands()
+	if !checkQtCmd(cmd, QtechType) {
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		return nil
+	}
+	if len(cmds) == 0 {
+		result = getComplete(cmd, argums[1:], QtechType)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	if len(argums) == 1 {
-		result := make([]string, 0)
-		verb := argums[0]
-		for _, cmd := range rootCmd.Commands() {
-			parts := strings.SplitN(cmd.Use, " ", 2)
-			if parts[0] != verb {
-				continue
+		for _, cm := range cmds {
+			if checkQtCmd(cm, QtechType) {
+				parts := strings.SplitN(cm.Use, " ", 2)
+				result = append(result, parts[0])
 			}
-			if !checkQtCmd(cmd, QtechType) {
-				Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fsilent)
-				return nil
-			}
-			scmd := cmd.Commands()
-			if len(scmd) == 0 {
-				Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fsilent)
-				return nil
-			}
-			for _, cm := range scmd {
-				if checkQtCmd(cm, QtechType) {
-					parts := strings.SplitN(cm.Use, " ", 2)
-					result = append(result, parts[0])
+		}
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		return nil
+	}
+	cmd = searchCmd(argums[1], cmds)
+	result = getComplete(cmd, argums[2:], QtechType)
+
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+	return nil
+
+}
+
+func getComplete(cmd *cobra.Command, used []string, qt string) []string {
+	result := make([]string, 0)
+	qtcomplete := cmd.Annotations["complete"]
+	if qtcomplete == "" {
+		return result
+	}
+	switch qtcomplete {
+	case "version":
+		if strings.Contains(qt, "P") {
+			return []string{qregistry.Registry["brocade-release"]}
+		}
+		if strings.Contains(qt, "B") {
+			v := qserver.Releases(0)
+			vs := strings.SplitN(v, " ", -1)
+			for _, v := range vs {
+				ok := false
+				for _, v2 := range used {
+					if v2 == v {
+						ok = true
+						break
+					}
+				}
+				if !ok {
+					result = append(result, v)
 				}
 			}
-			Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fsilent)
-			return nil
+			return result
 		}
+		if strings.Contains(qt, "W") {
+			v := qregistry.Registry["qtechng-releases"]
+			vs := strings.SplitN(v, " ", -1)
+			for _, v := range vs {
+				ok := false
+				for _, v2 := range used {
+					if v2 == v {
+						ok = true
+						break
+					}
+				}
+				if !ok {
+					result = append(result, v)
+				}
+			}
+			return result
+		}
+	}
+
+	return result
+}
+
+func searchCmd(name string, cmds []*cobra.Command) *cobra.Command {
+	for _, cmd := range cmds {
+		parts := strings.SplitN(cmd.Use, " ", 2)
+		if parts[0] != name {
+			continue
+		}
+		return cmd
 	}
 	return nil
 }

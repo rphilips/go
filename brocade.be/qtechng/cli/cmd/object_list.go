@@ -32,7 +32,7 @@ func objectList(cmd *cobra.Command, args []string) error {
 	result := listObjectTransport(Fcargo)
 	v := make(map[string]interface{})
 	json.Unmarshal(result, &v)
-	Fmsg = qreport.Report(v, nil, Fjq, Fyaml, Funquote, Fsilent)
+	Fmsg = qreport.Report(v, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	return nil
 }
 

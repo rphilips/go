@@ -32,7 +32,7 @@ func init() {
 func versionDelete(cmd *cobra.Command, args []string) error {
 	if !Fforce && strings.Contains(QtechType, "B") {
 		err := fmt.Errorf("on a development server, this command can only be used with `force`")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	version := args[0]
@@ -40,7 +40,7 @@ func versionDelete(cmd *cobra.Command, args []string) error {
 
 	if version == "0.00" || version == "" {
 		err := fmt.Errorf("version `0.00` cannot be deleted")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -49,25 +49,25 @@ func versionDelete(cmd *cobra.Command, args []string) error {
 
 	if br == version {
 		err := fmt.Errorf("Current version `" + br + "` cannot be deleted unless with force.")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
 	release, err := qserver.Release{}.New(version, true)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("version `%s` does NOT exist", release.String())
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	err = qfs.Rmpath(release.Root())
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	return nil

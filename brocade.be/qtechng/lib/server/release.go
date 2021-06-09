@@ -543,7 +543,7 @@ func Releases(n int) string {
 		}
 		versions = append(versions, v)
 	}
-	if len(versions) > (n - 1) {
+	if n > 0 && len(versions) > (n-1) {
 		versions = versions[:n-1]
 	}
 

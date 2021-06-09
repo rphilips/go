@@ -48,6 +48,9 @@ var Fenv []string
 // FUID userid
 var FUID string
 
+// Fjoiner joins lists
+var Fjoiner string
+
 // Fpayload pointer to payload information
 var Fpayload *qclient.Payload
 
@@ -182,6 +185,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&Fstdout, "stdout", "", "Filename containing the result")
 	rootCmd.PersistentFlags().BoolVar(&Ftransported, "transported", false, "Indicate if command is transported")
 	rootCmd.PersistentFlags().BoolVar(&Funquote, "unquote", false, "Removes JSON escapes in a string")
+	rootCmd.PersistentFlags().StringVar(&Fjoiner, "joiner", "", "Joins lists with unquote")
 	rootCmd.PersistentFlags().MarkHidden("transported")
 	rootCmd.PersistentFlags().MarkHidden("uid")
 
@@ -371,7 +375,7 @@ func Execute(buildTime string, goVersion string, buildHost string, payload *qcli
 	err := rootCmd.Execute()
 	stderr := ""
 	if err != nil && len(args) != 1 {
-		stderr = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		stderr = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		if stderr != "" {
 			l := log.New(os.Stderr, "", 0)
 			l.Println(stderr)

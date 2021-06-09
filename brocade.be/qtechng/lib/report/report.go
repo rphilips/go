@@ -23,7 +23,7 @@ type report struct {
 	Errors []error     `json:"ERRORS" yaml:"ERRORS"`
 }
 
-func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, silent bool) string {
+func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, joiner string, silent bool) string {
 	if silent {
 		return ""
 	}
@@ -101,7 +101,7 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 				if err != nil {
 					return s
 				}
-				return strings.Join(z, " ")
+				return strings.Join(z, qutil.Joiner(joiner))
 			}
 		}
 		return s

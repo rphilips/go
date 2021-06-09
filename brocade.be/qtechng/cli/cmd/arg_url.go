@@ -28,7 +28,7 @@ func argURL(cmd *cobra.Command, args []string) error {
 			Msg:  []string{"Argument is empty"},
 		}
 		return err
-		//Fmsg = qreport.Report(nil, errorlist, Fjq, Fyaml, Funquote, Fsilent)
+		//Fmsg = qreport.Report(nil, errorlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	}
 	return nil
 

@@ -815,3 +815,45 @@ func TestSplitter01(t *testing.T) {
 	}
 	return
 }
+
+func TestJoiner(t *testing.T) {
+	type T struct {
+		S string
+		R string
+	}
+
+	TestData := []T{
+		{
+			"",
+			"",
+		},
+		{
+			" ",
+			" ",
+		},
+		{
+			"32",
+			" ",
+		},
+		{
+			"Hello",
+			"Hello",
+		},
+		{
+			"13,10",
+			"\r\n",
+		},
+		{
+			"10,A",
+			"10,A",
+		},
+	}
+
+	for _, x := range TestData {
+		s := Joiner(x.S)
+		if x.R != s {
+			t.Errorf(fmt.Sprintf("\n\n%s\n\nfound:\n%s\n\nexpected:\n%s", x.S, s, x.R))
+		}
+	}
+
+}

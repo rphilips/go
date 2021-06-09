@@ -41,7 +41,7 @@ func versionClose(cmd *cobra.Command, args []string) error {
 	nextversion := Fnextversion
 	if nextversion == "" || nextversion == "0.00" {
 		err := fmt.Errorf("next version `%s` is invalid", nextversion)
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -53,13 +53,13 @@ func versionClose(cmd *cobra.Command, args []string) error {
 
 	if br == nextversion {
 		err := fmt.Errorf("version `%s` is already closed", br)
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
 	_, err := qserver.Release{}.New(nextversion, true)
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
@@ -69,25 +69,25 @@ func versionClose(cmd *cobra.Command, args []string) error {
 			Ref: []string{"close.version.lowest"},
 			Msg: []string{"The version of the new release `" + nextversion + "` should be higher than `" + br + "`"},
 		}
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
 	_, _, err = qsync.Sync("0.00", br, true)
 
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
 	err = qregistry.SetRegistry("brocade-release", nextversion)
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	err = qregistry.SetRegistry("brocade-release-say", nextversion+"beta")
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	x := qregistry.Registry["brocade-releases"]
@@ -98,7 +98,7 @@ func versionClose(cmd *cobra.Command, args []string) error {
 		err = qregistry.SetRegistry("brocade-releases", x+br)
 	}
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	return nil

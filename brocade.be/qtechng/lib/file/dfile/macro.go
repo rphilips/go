@@ -187,7 +187,7 @@ func (macro *Macro) Lint() (errslice qerror.ErrorSlice) {
 	if strings.TrimSpace(macro.Synopsis) == "" {
 		e := &qerror.QError{
 			Ref:    []string{"macro.lint.synopsis"},
-			File:   fname,
+			QPath:  fname,
 			Lineno: lineno,
 			Object: name,
 			Type:   "Error",
@@ -203,7 +203,7 @@ func (macro *Macro) Lint() (errslice qerror.ErrorSlice) {
 		if doc == "" {
 			e := &qerror.QError{
 				Ref:    []string{"macro.lint.paramcomment"},
-				File:   fname,
+				QPath:  fname,
 				Lineno: lineno,
 				Object: name,
 				Type:   "Error",
@@ -225,7 +225,7 @@ func (macro *Macro) Lint() (errslice qerror.ErrorSlice) {
 		if i != 1 {
 			e := &qerror.QError{
 				Ref:    []string{"macro.lint.ref1"},
-				File:   fname,
+				QPath:  fname,
 				Lineno: lineno,
 				Object: name,
 				Type:   "Error",
@@ -238,7 +238,7 @@ func (macro *Macro) Lint() (errslice qerror.ErrorSlice) {
 		if param.Ref != first {
 			e := &qerror.QError{
 				Ref:    []string{"macro.lint.ref2"},
-				File:   fname,
+				QPath:  fname,
 				Lineno: lineno,
 				Object: name,
 				Type:   "Error",
@@ -446,7 +446,7 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 	if msg != "" {
 		err = &qerror.QError{
 			Ref:    []string{"parse.args.parse"},
-			File:   macro.EditFile(),
+			QPath:  macro.EditFile(),
 			Lineno: -1,
 			Object: macro.String(),
 			Type:   "Error",

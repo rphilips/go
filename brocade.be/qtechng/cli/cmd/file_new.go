@@ -61,7 +61,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 					Type: "Error",
 					Msg:  []string{fmt.Sprintf("File `%s` exists already", fname)},
 				}
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 				return nil
 			}
 			if qfs.IsDir(fname) {
@@ -70,7 +70,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 					Type: "Error",
 					Msg:  []string{fmt.Sprintf("`%s` is the name of a directory", fname)},
 				}
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 				return nil
 			}
 			dirname := filepath.Dir(fname)
@@ -80,7 +80,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 					Type: "Error",
 					Msg:  []string{fmt.Sprintf("Directory `%s` does not exist", dirname)},
 				}
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 				return nil
 			}
 			e := qutil.FileCreate(fname, Fhint)
@@ -90,7 +90,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 					Type: "Error",
 					Msg:  []string{fmt.Sprintf("Error in creating `%s`: `%s`", fname, e.Error())},
 				}
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 				return nil
 			}
 
@@ -112,7 +112,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce version"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	if Fqdir == "" || Fqdir == "/" || Fqdir == "." {
@@ -121,7 +121,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know how to deduce directory in repository"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	if Fcwd == "" {
@@ -130,7 +130,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			Type: "Error",
 			Msg:  []string{"Do not know where to place the files"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 	result := make([]adder, 0)
@@ -217,9 +217,9 @@ func fileNew(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(errorlist) == 0 {
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	} else {
-		Fmsg = qreport.Report(result, qerror.ErrorSlice(errorlist), Fjq, Fyaml, Funquote, Fsilent)
+		Fmsg = qreport.Report(result, qerror.ErrorSlice(errorlist), Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	}
 	return nil
 }

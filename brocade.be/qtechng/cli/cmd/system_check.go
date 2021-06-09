@@ -136,6 +136,6 @@ func systemCheck(cmd *cobra.Command, args []string) error {
 		errmsg = append(errmsg, `OK`)
 	}
 
-	Fmsg = qreport.Report(errmsg, nil, Fjq, Fyaml, Funquote, Fsilent)
+	Fmsg = qreport.Report(errmsg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 	return nil
 }
