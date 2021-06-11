@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -14,6 +15,7 @@ import (
 	qparallel "brocade.be/base/parallel"
 	qphp "brocade.be/base/php"
 	qpython "brocade.be/base/python"
+	qrst "brocade.be/base/rst"
 	qerror "brocade.be/qtechng/lib/error"
 	qofile "brocade.be/qtechng/lib/file/ofile"
 	qmeta "brocade.be/qtechng/lib/meta"
@@ -25,7 +27,7 @@ import (
 )
 
 // FetchList gets a number of paths
-func LintList(version string, paths []string, warnings bool) (infos [][]byte, metas []*qmeta.Meta, errs error) {
+func LintList(version string, paths []string, warnings bool) (infos []error, metas []*qmeta.Meta, errs error) {
 
 	if len(paths) == 0 {
 		return
@@ -55,8 +57,8 @@ func LintList(version string, paths []string, warnings bool) (infos [][]byte, me
 	}
 
 	type lintdata struct {
-		content []byte
-		pmeta   *qmeta.Meta
+		info  error
+		pmeta *qmeta.Meta
 	}
 
 	fn := func(n int) (interface{}, error) {
@@ -92,20 +94,21 @@ func LintList(version string, paths []string, warnings bool) (infos [][]byte, me
 			}
 			return nil, err
 		}
-		return lintdata{[]byte(content), pmeta}, nil
+
+		return lintdata{content, pmeta}, nil
 	}
 
 	result, errorlist := qparallel.NMap(len(paths), -1, fn)
-	infos = make([][]byte, len(result))
+	infos = make([]error, len(result))
 	metas = make([]*qmeta.Meta, len(result))
 
 	for i, res := range result {
 		if errorlist[i] != nil {
-			infos[i] = []byte("")
+			infos[i] = nil
 			metas[i] = nil
 		} else {
 			fres := res.(lintdata)
-			infos[i] = fres.content
+			infos[i] = fres.info
 			metas[i] = fres.pmeta
 		}
 	}
@@ -128,58 +131,63 @@ func LintList(version string, paths []string, warnings bool) (infos [][]byte, me
 }
 
 // Fetch haalt de data op
-func (source *Source) Lint(warnings bool) (info string, err error) {
+func (source *Source) Lint(warnings bool) (info error, err error) {
 	natures := source.Natures()
 	nolint := natures["nolint"]
 	if nolint {
-		return "NOLINT", nil
+		return errors.New("NOLINT"), nil
 	}
 	body, err := source.Fetch()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if natures["text"] {
 		_, _, e := qutil.NoUTF8(bytes.NewReader(body))
 		if e != nil {
-			info = fmt.Sprintf("`%s` contains non UTF-8 charcter", source.String())
+			info = fmt.Errorf("`%s` contains non UTF-8 charcter", source.String())
 			return
 		}
 	}
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	buffer := new(bytes.Buffer)
 
 	switch {
 	case strings.HasSuffix(source.String(), "/brocade.json"):
 		buffer.Write(body)
-		return source.LintBrocadeJson(buffer, warnings)
+		info, err := source.LintBrocadeJson(buffer, warnings)
+		return source.LintResult(info), err
 	case natures["lfile"]:
 		err = source.Resolve("r", nil, nil, buffer, true)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return source.LintL(buffer, warnings)
+		info, err := source.LintL(buffer, warnings)
+		return source.LintResult(info), err
 	case natures["dfile"]:
 		err = source.Resolve("rl", nil, nil, buffer, true)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return source.LintD(buffer, warnings)
+		info, err := source.LintD(buffer, warnings)
+		return source.LintResult(info), err
 	case natures["ifile"]:
 		err = source.Resolve("rlm", nil, nil, buffer, true)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return source.LintI(buffer, warnings)
+		info, err := source.LintI(buffer, warnings)
+		return source.LintResult(info), err
 	case natures["bfile"]:
 		err = source.Resolve("rilm", nil, nil, buffer, true)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return source.LintB(buffer, warnings)
+		info, err := source.LintB(buffer, warnings)
+		return source.LintResult(info), err
 	}
 	if natures["mfile"] {
 		err = source.Resolve("rilm", nil, nil, buffer, true)
@@ -187,28 +195,53 @@ func (source *Source) Lint(warnings bool) (info string, err error) {
 		err = source.Resolve("rilm", nil, nil, buffer, false)
 	}
 	if err != nil {
-		return err.Error(), nil
+		return nil, err
 	}
 	ext := path.Ext(source.String())
 	switch ext {
 	case ".php", ".phtml":
-		return source.LintPHP(buffer, warnings)
+		info, err := source.LintPHP(buffer, warnings)
+		return source.LintResult(info), err
+	case ".rst":
+		info, err := source.LintRST(buffer, warnings)
+		return source.LintResult(info), err
 	case ".yaml", ".yml":
-		return source.LintYAML(buffer, warnings)
+		info, err := source.LintYAML(buffer, warnings)
+		return source.LintResult(info), err
 	case ".json":
-		return source.LintJSON(buffer, warnings)
+		info, err := source.LintJSON(buffer, warnings)
+		return source.LintResult(info), err
 	case ".xml":
-		return source.LintXML(buffer, warnings)
+		info, err := source.LintXML(buffer, warnings)
+		return source.LintResult(info), err
 	case ".py":
-		return source.LintPy(buffer, warnings)
+		info, err := source.LintPy(buffer, warnings)
+		return source.LintResult(info), err
 	case ".x":
-		return source.LintX(buffer, warnings)
+		info, err := source.LintX(buffer, warnings)
+		return source.LintResult(info), err
 	case ".m":
-		return source.LintM(buffer, warnings)
+		info, err := source.LintM(buffer, warnings)
+		return source.LintResult(info), err
 	}
 
-	return "OK", nil
+	return nil, nil
 
+}
+
+// LintResult combines a lintresult
+
+func (source *Source) LintResult(info string) (err error) {
+	if info == "OK" {
+		return nil
+	}
+	err = &qerror.QError{
+		Ref:     []string{"lint.message"},
+		Version: source.Release().String(),
+		QPath:   source.String(),
+		Msg:     []string{info},
+	}
+	return err
 }
 
 //Parse Python File
@@ -250,6 +283,27 @@ func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool) (info string,
 	}
 	if info == "OK" {
 		qfs.Rmpath(tmpphp)
+	}
+	return info, nil
+}
+
+//Parse RST File
+func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool) (info string, err error) {
+	body := buffer.Bytes()
+	release := source.Release()
+	fs, rst := release.SourcePlace(source.String())
+	rst, _ = fs.RealPath(rst)
+	tmprst, _ := qfs.TempFile("", filepath.Base(rst)+"_")
+
+	tmprst += ".rst"
+	qfs.Store(tmprst, body, "")
+	e := qrst.Check(tmprst, warnings)
+	info = "OK"
+	if e != nil {
+		info = e.Error()
+	}
+	if info == "OK" {
+		qfs.Rmpath(tmprst)
 	}
 	return info, nil
 }

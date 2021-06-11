@@ -60,7 +60,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources)
+	err := qsource.Install(Frefname, sources, false)
 
 	if err != nil {
 		if err != nil {

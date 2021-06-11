@@ -26,18 +26,22 @@ import (
 // - a project is installed
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
-func Install(batchid string, sources []*Source) (err error) {
+func Install(batchid string, sources []*Source, warnings bool) (err error) {
 	if len(sources) == 0 {
 		return nil
 	}
 	qtechType := qregistry.Registry["qtechng-type"]
 	sr := sources[0].Release().String()
 
-	if strings.ContainsRune(qtechType, 'B') && sr != "0.00" {
-		return nil
+	r := ""
+	if strings.ContainsRune(qtechType, 'B') {
+		r = "0.00"
 	}
-	r := qserver.Canon(qregistry.Registry["brocade-release"])
-	if strings.ContainsRune(qtechType, 'P') && sr != r {
+	if strings.ContainsRune(qtechType, 'P') {
+		r = qserver.Canon(qregistry.Registry["brocade-release"])
+	}
+
+	if r != sr {
 		return nil
 	}
 
@@ -68,7 +72,6 @@ func Install(batchid string, sources []*Source) (err error) {
 		err := p.IsInstallable()
 		if err != nil {
 			badproj[ps] = true
-			errs = append(errs, err)
 			continue
 		}
 		mproj[ps] = p
@@ -90,6 +93,10 @@ func Install(batchid string, sources []*Source) (err error) {
 		return nil
 	}
 
+	if len(errs) == 0 {
+		return qerror.ErrorSlice(errs)
+	}
+
 	projs := make([]*qproject.Project, 0)
 	for _, p := range mproj {
 		projs = append(projs, p)
@@ -106,21 +113,39 @@ func Install(batchid string, sources []*Source) (err error) {
 	}
 
 	// install m-files
-	e = installMfiles(batchid, projs, qsources, msources)
+	mfiles, e := installMfiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
 	}
 
 	// install other auto files
-	e = installAutofiles(batchid, projs, qsources, msources)
+	ofiles, e := installAutofiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
 	}
 
 	// install projects
-	e = installInstallfiles(batchid, projs, qsources, msources)
+	zfiles, e := installInstallfiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
+	}
+
+	allfiles := append(mfiles, ofiles...)
+	allfiles = append(allfiles, zfiles...)
+	if len(allfiles) > 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'B') {
+		infos, _, lerrs := LintList(r, allfiles, warnings)
+		if lerrs != nil {
+			errs = append(errs, lerrs)
+		}
+		for _, info := range infos {
+			if info == nil {
+				continue
+			}
+			if info.Error() == "OK" {
+				continue
+			}
+			errs = append(errs, info)
+		}
 	}
 
 	if len(errs) == 0 {
@@ -140,7 +165,7 @@ func RSync(r string) (changed []string, deleted []string, err error) {
 	return changed, deleted, err
 }
 
-func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
+func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (installed []string, errs []error) {
 
 	tmpdir, e := qfs.TempDir("", "qtechng."+batchid+".")
 	if e != nil {
@@ -189,8 +214,17 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 		err := installInstallsource(basedir, batchid, inso)
 		if err != nil {
 			errs = append(errs, err)
+		} else {
+			for _, q := range qsources {
+				if q.Project().String() == ps {
+					installed = append(installed, q.String())
+				}
+			}
 		}
 
+	}
+	if len(errs) == 0 {
+		errs = nil
 	}
 	return
 }
@@ -254,11 +288,24 @@ func installInstallsource(tdir string, batchid string, inso *Source) (err error)
 		"QPATH__='" + inso.String() + "'",
 		"ID__='" + batchid + "'",
 	}
-	_, serr := qpython.Run(finso, py == "py3", nil, extra, tdir)
-	serr = strings.TrimSpace(serr)
+	sout, serr := qpython.Run(finso, py == "py3", nil, extra, tdir)
+	sout = string(qutil.Ignore([]byte(sout)))
+	sout = strings.TrimSpace(sout)
 	serr = string(qutil.Ignore([]byte(serr)))
-	if serr == "" {
+	serr = strings.TrimSpace(serr)
+	if serr == "" && sout == "" {
 		return nil
+	}
+	errmsg := ""
+	if sout != "" {
+		errmsg = inso.String() + " > stdout:\n" + sout
+	}
+
+	if serr != "" {
+		if errmsg != "" {
+			errmsg += "\n\n"
+		}
+		errmsg += inso.String() + " > stderr:\n" + serr
 	}
 	return errors.New(serr)
 }
@@ -273,7 +320,13 @@ func installReleasefiles(batchid string, projs []*qproject.Project, qsources map
 		}
 		err := installReleasesource(batchid, reso)
 		if err != nil {
-			errs = append(errs, err)
+			e := &qerror.QError{
+				Ref:     []string{"install.release"},
+				Version: proj.Release().String(),
+				QPath:   repy,
+				Msg:     []string{err.Error()},
+			}
+			errs = append(errs, e)
 		}
 	}
 	return
@@ -290,19 +343,33 @@ func installReleasesource(batchid string, reso *Source) (err error) {
 		"QPATH__='" + reso.String() + "'",
 		"ID__='" + batchid + "'",
 	}
-	_, serr := qpython.Run(freso, py == "py3", nil, extra, tdir)
-	serr = strings.TrimSpace(serr)
+	sout, serr := qpython.Run(freso, py == "py3", nil, extra, tdir)
+
+	sout = string(qutil.Ignore([]byte(sout)))
+	sout = strings.TrimSpace(sout)
 	serr = string(qutil.Ignore([]byte(serr)))
-	if serr == "" {
+	serr = strings.TrimSpace(serr)
+	if serr == "" && sout == "" {
 		return nil
+	}
+	errmsg := ""
+	if sout != "" {
+		errmsg = reso.String() + " > stdout:\n" + sout
+	}
+
+	if serr != "" {
+		if errmsg != "" {
+			errmsg += "\n\n"
+		}
+		errmsg += reso.String() + " > stderr:\n" + serr
 	}
 	return errors.New(serr)
 }
 
-func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
+func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (mfiles []string, errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
 	if mostype == "" {
-		return errs
+		return nil, nil
 	}
 	for _, proj := range projs {
 		ps := proj.String()
@@ -310,15 +377,21 @@ func installMfiles(batchid string, projs []*qproject.Project, qsources map[strin
 		if len(files) == 0 {
 			continue
 		}
-		err := installMsources(batchid, files, qsources)
+		ofiles, err := installMsources(batchid, files, qsources)
 		if err != nil {
 			errs = append(errs, err...)
 		}
+		if len(ofiles) > 0 {
+			mfiles = append(mfiles, ofiles...)
+		}
+	}
+	if len(mfiles) == 0 {
+		mfiles = nil
 	}
 	return
 }
 
-func installMsources(batchid string, files []string, qsources map[string]*Source) (errs []error) {
+func installMsources(batchid string, files []string, qsources map[string]*Source) (installed []string, errs []error) {
 	roudir := qregistry.Registry["gtm-rou-dir"]
 	fn := func(n int) (interface{}, error) {
 		qp := files[n]
@@ -326,24 +399,41 @@ func installMsources(batchid string, files []string, qsources map[string]*Source
 		nature := qps.Natures()
 		buf := new(bytes.Buffer)
 		if !nature["auto"] {
-			return buf, nil
+			return nil, nil
 		}
-		qps.MFileToMumps(batchid, buf)
-		if roudir != "" {
+		err := qps.MFileToMumps(batchid, buf)
+		if roudir != "" && buf.Len() != 0 {
 			_, b := qutil.QPartition(qp)
 			target := filepath.Join(roudir, b)
 			qfs.Store(target, buf, "process")
 		}
-		return buf, nil
+		return qp, err
 	}
 
 	if roudir != "" {
-		qparallel.NMap(len(files), -1, fn)
+		result, errorlist := qparallel.NMap(len(files), -1, fn)
+		for _, r := range result {
+			rs := r.(string)
+			if rs == "" {
+				continue
+			}
+			installed = append(installed, rs)
+		}
+		for _, e := range errorlist {
+			if e == nil {
+				continue
+			}
+			errs = append(errs, e)
+		}
 	}
+	if len(errs) == 0 {
+		errs = nil
+	}
+
 	return
 }
 
-func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
+func installAutofiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (zfiles []string, errs []error) {
 
 	for _, proj := range projs {
 		ps := proj.String()
@@ -357,20 +447,23 @@ func installAutofiles(batchid string, projs []*qproject.Project, qsources map[st
 		if len(files) == 0 {
 			continue
 		}
-		err := installAutosources(batchid, files, qsources)
+		ofiles, err := installAutosources(batchid, files, qsources)
 		if err != nil {
 			errs = append(errs, err...)
+		}
+		if len(ofiles) > 0 {
+			zfiles = append(zfiles, ofiles...)
 		}
 	}
 	return
 
 }
 
-func installAutosources(batchid string, files []string, qsources map[string]*Source) (errs []error) {
+func installAutosources(batchid string, files []string, qsources map[string]*Source) (installed []string, errs []error) {
 	mostype := qregistry.Registry["m-os-type"]
 
 	if mostype == "" {
-		return errs
+		return nil, errs
 	}
 
 	fn := func(n int) (interface{}, error) {
@@ -382,23 +475,30 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 			return buf, nil
 		}
 		ext := filepath.Ext(qps.String())
+		var err error
 		switch ext {
 		case ".l":
-			qps.LFileToMumps(batchid, buf)
+			err = qps.LFileToMumps(batchid, buf)
 		case ".x":
-			qps.XFileToMumps(batchid, buf)
+			err = qps.XFileToMumps(batchid, buf)
 		case ".b":
-			qps.BFileToMumps(batchid, buf)
+			err = qps.BFileToMumps(batchid, buf)
 		}
-		return buf, nil
+		return buf, err
 	}
 
-	bufs, _ := qparallel.NMap(len(files), -1, fn)
+	bufs, errorlist := qparallel.NMap(len(files), -1, fn)
 
-	buffers := make([]*bytes.Buffer, len(bufs))
-	for i, b := range bufs {
-		buffers[i] = b.(*bytes.Buffer)
+	buffers := make([]*bytes.Buffer, 0)
+	for n, r := range errorlist {
+		if r == nil {
+			installed = append(installed, files[n])
+			buffers = append(buffers, bufs[n].(*bytes.Buffer))
+		} else {
+			errs = append(errs, r)
+		}
 	}
+
 	e := qmumps.PipeTo("", buffers)
 	if e != nil {
 		e := &qerror.QError{
@@ -408,6 +508,8 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 		errs = append(errs, e)
 		return
 	}
-
+	if len(errs) == 0 {
+		errs = nil
+	}
 	return
 }

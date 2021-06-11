@@ -588,7 +588,7 @@ func StoreTree(batchid string, version string, basedir string, fmeta func(string
 		return blob, nil
 	}
 
-	results, errs = StoreList(batchid, version, sources, false, fmeta, fdata)
+	results, errs = StoreList(batchid, version, sources, false, fmeta, fdata, false)
 
 	return
 
@@ -600,7 +600,7 @@ type storeeffect struct {
 }
 
 // StoreList creates a list of projects.
-func StoreList(batchid string, version string, paths []string, reset bool, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error)) (results map[string]*qmeta.Meta, errs error) {
+func StoreList(batchid string, version string, paths []string, reset bool, fmeta func(string) qmeta.Meta, fdata func(string) ([]byte, error), warnings bool) (results map[string]*qmeta.Meta, errs error) {
 	if batchid == "" {
 		batchid = "install"
 	}
@@ -773,7 +773,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 		sources[i] = source
 		i++
 	}
-	e := Install(batchid, sources)
+	e := Install(batchid, sources, warnings)
 	if e != nil {
 		errslice = append(errslice, e)
 		errs = qerror.ErrorSlice(errslice)

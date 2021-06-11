@@ -307,7 +307,7 @@ func TestSourceList01(t *testing.T) {
 		return []byte(data + " " + obj + " " + p), nil
 	}
 
-	results, es := StoreList("install", r, paths, false, fmeta, fdata)
+	results, es := StoreList("install", r, paths, false, fmeta, fdata, false)
 	if es != nil {
 		t.Errorf(es.Error())
 		return
@@ -375,7 +375,7 @@ func TestSourceObject01(t *testing.T) {
 			return []byte(data3), nil
 		}
 	}
-	_, es := StoreList("install", r, []string{f1, f2, f3}, false, fmeta, fdata)
+	_, es := StoreList("install", r, []string{f1, f2, f3}, false, fmeta, fdata, false)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -395,7 +395,7 @@ func TestSourceObject01(t *testing.T) {
 	}
 
 	data1 = "1 m4_B"
-	_, es = StoreList("install", r, []string{f1}, false, fmeta, fdata)
+	_, es = StoreList("install", r, []string{f1}, false, fmeta, fdata, false)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -487,7 +487,7 @@ func TestSourceObject02(t *testing.T) {
 			return []byte(data3), nil
 		}
 	}
-	_, es := StoreList("install", r, []string{f1, f2, f3}, false, fmeta, fdata)
+	_, es := StoreList("install", r, []string{f1, f2, f3}, false, fmeta, fdata, false)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return
@@ -507,7 +507,7 @@ func TestSourceObject02(t *testing.T) {
 	}
 
 	data1 = "1 m4_B"
-	_, es = StoreList("install", r, []string{f1}, false, fmeta, fdata)
+	_, es = StoreList("install", r, []string{f1}, false, fmeta, fdata, false)
 	if es != nil {
 		t.Errorf(errs.Error())
 		return

@@ -190,11 +190,20 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 	bodies := make([][]byte, 0)
 	infos := make([][]byte, 0)
 	var errs error
+
 	if withcontent {
 		bodies, _, errs = qsource.FetchList(query.Release, paths)
 	}
 	if withlint {
-		infos, _, errs = qsource.LintList(query.Release, paths, strings.HasPrefix(batchid, "w:"))
+		einfos := make([]error, 0)
+		einfos, _, errs = qsource.LintList(query.Release, paths, strings.HasPrefix(batchid, "w:"))
+		for _, einfo := range einfos {
+			if einfo == nil {
+				infos = append(infos, []byte("OK"))
+			} else {
+				infos = append(infos, []byte(einfo.Error()))
+			}
+		}
 	}
 	buffer := new(bytes.Buffer)
 	transports := make([]qclient.Transport, len(paths))
@@ -272,13 +281,13 @@ func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, batchid str
 	pcargo.Data = buffer.Bytes()
 }
 
-func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
+func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, warnings bool, batchid string) {
 	query := ppayload.Query.Copy()
 	psources := query.Run()
 	if batchid == "" {
 		batchid = "install"
 	}
-	errs := qsource.Install(batchid, psources)
+	errs := qsource.Install(batchid, psources, warnings)
 	switch err := errs.(type) {
 	case qerror.ErrorSlice:
 		if len(err) == 0 {

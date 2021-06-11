@@ -2,7 +2,6 @@ package source
 
 import (
 	"bytes"
-	"fmt"
 	"path"
 	"strings"
 
@@ -12,10 +11,10 @@ import (
 )
 
 // MFileToMumps schrijft een M file naar een buffer
-func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) {
+func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) error {
 	content, err := mfile.Fetch()
 	if err != nil {
-		return
+		return err
 	}
 	bufnoc := new(bytes.Buffer)
 	qpath := mfile.String()
@@ -83,9 +82,7 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) {
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
 	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, bufmac, "")
-	if err != nil {
-		fmt.Println("err:", err.Error())
-	}
+
 	content = bufmac.Bytes()
 
 	lines = bytes.SplitN(content, []byte("\n"), -1)
@@ -114,6 +111,7 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) {
 		}
 	}
 	buf.WriteString("ltechend ; path=" + qpath + "\n")
+	return err
 }
 
 func mdetag(line []byte) ([]byte, []byte, string) {

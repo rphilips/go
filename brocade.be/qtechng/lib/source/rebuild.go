@@ -21,6 +21,6 @@ func Rebuild(batchid string, version string, qpaths []string) (err error) {
 		fs, qpath := release.SourcePlace(qp)
 		return fs.ReadFile(qpath)
 	}
-	_, err = StoreList(batchid, version, qpaths, true, fmeta, fdata)
+	_, err = StoreList(batchid, version, qpaths, true, fmeta, fdata, false)
 	return err
 }
