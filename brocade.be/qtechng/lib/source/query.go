@@ -113,10 +113,7 @@ func (query *Query) Harmonise() {
 	if len(query.Objects) != 0 {
 		objects := make([]string, 0)
 		for _, obj := range query.Objects {
-			if strings.HasPrefix(obj, "l4_") && strings.Count(obj, "_") == 2 {
-				parts := strings.SplitN(obj, "_", 3)
-				obj = "l4_" + parts[2]
-			}
+			obj, _ := qutil.DeNEDFU(obj)
 			objects = append(objects, obj)
 		}
 		query.Objects = objects

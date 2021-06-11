@@ -26,6 +26,7 @@ var objectListCmd = &cobra.Command{
 
 func init() {
 	objectCmd.AddCommand(objectListCmd)
+	objectListCmd.PersistentFlags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern on object names")
 }
 
 func objectList(cmd *cobra.Command, args []string) error {

@@ -44,6 +44,20 @@ func EMatch(pattern string, qpath string) bool {
 	return qfnmatch.Match(pattern, qpath)
 }
 
+// EMatch extende match
+func OMatch(pattern string, objname string) bool {
+	if pattern == "" || pattern == "*" {
+		return true
+	}
+	if objname == pattern {
+		return true
+	}
+	if qfnmatch.Match(pattern, objname) {
+		return true
+	}
+	return false
+}
+
 // About changes the comment form to '//'
 func About(blob []byte) (result []byte) {
 	buffer := bytes.NewBuffer(blob)
@@ -1050,4 +1064,21 @@ func Joiner(joiner string) string {
 		delim += string(rune(i))
 	}
 	return delim
+}
+
+// DeNEDU removes language part of lgcode
+func DeNEDFU(objname string) (canon string, lg string) {
+	if strings.HasPrefix(objname, "l4_") && strings.Count(objname, "_") == 2 {
+		parts := strings.SplitN(objname, "_", 3)
+		remove := parts[1]
+		if strings.IndexAny(remove, "NEDFU") == 0 {
+			remove = lg[1:]
+			if remove == "" || remove == "php" || remove == "py" || remove == "js" {
+				parts := strings.SplitN(objname, "_", 3)
+				objname = "l4_" + parts[2]
+				lg = parts[1]
+			}
+		}
+	}
+	return objname, lg
 }

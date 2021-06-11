@@ -145,9 +145,32 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 
 func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 
+	if len(args) != 0 {
+		if len(Fqpattern) == 0 {
+			Fqpattern = args
+		} else {
+			for _, arg := range args {
+				ok := len(Fqpattern) == 0
+				for _, p := range Fqpattern {
+					if p == arg {
+						ok = true
+						break
+					}
+					if qutil.EMatch(p, arg) {
+						ok = true
+						break
+					}
+				}
+				if ok {
+					Fqpattern = append(Fqpattern, arg)
+				}
+			}
+		}
+	}
+
 	squery := qsource.SQuery{
 		Release: Fversion,
-		Objects: args,
+		Objects: Fqpattern,
 	}
 	Fpayload = &qclient.Payload{
 		ID:     "Once",

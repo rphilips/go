@@ -201,10 +201,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 			object.SetName(obj[3:])
 			objectlist[count] = object
 		case "l":
-			if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
-				parts := strings.SplitN(obj, "_", 3)
-				obj = "l4_" + parts[2]
-			}
+			obj, _ := qutil.DeNEDFU(string(obj))
 			object := new(qofile.Lgcode)
 			object.SetRelease(r)
 			object.SetName(obj[3:])
@@ -273,12 +270,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 			parts := strings.SplitN(spiece, "_", 2)
 			spiece = parts[0] + "_" + lgalgo + "_" + parts[1]
 		}
-		obj := spiece
-		if strings.HasPrefix(obj, "l4_") && strings.Count(obj, "_") == 2 {
-			parts := strings.SplitN(obj, "_", 3)
-			lgalgo = parts[1]
-			obj = "l4_" + parts[2]
-		}
+		obj, _ := qutil.DeNEDFU(spiece)
 
 		object, ok := objectmap[obj]
 		if !ok || object == nil {
@@ -348,9 +340,7 @@ func l4ResolveText(env map[string]string, lgcode string, what string, notreplace
 		parts := strings.SplitN(obj, "_", 2)
 		obj = parts[0] + lastlgalgo + "_" + parts[1]
 	}
-	parts := strings.SplitN(obj, "_", 3)
-	obj = "l4_" + parts[2]
-	lgalgo = parts[1]
+	obj, lgalgo = qutil.DeNEDFU(obj)
 	object := objectmap[obj].(*qofile.Lgcode)
 	content := object.Replacer(nil, lgcode)
 	if content == lgcode {

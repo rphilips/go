@@ -149,6 +149,7 @@ func (uber *Uber) Replacer(env map[string]string, original string) string {
 
 // MakeObjectList makes a list of Objects starting with string
 func MakeObjectList(r string, objstr []string) (objectlist []Object) {
+	allobjs := make([]string, 0)
 
 	for _, obj := range objstr {
 		prefix := ""
@@ -164,6 +165,7 @@ func MakeObjectList(r string, objstr []string) (objectlist []Object) {
 				obj = "l4_" + parts[1]
 			}
 		}
+
 		uber := new(Uber)
 		uber.SetName(obj)
 		uber.SetRelease(r)
@@ -490,11 +492,7 @@ func StoreLinks(r string, name string, before []byte, actual []byte) {
 		for _, bobj := range qutil.ObjectSplitter(actual) {
 			odd = !odd
 			if odd {
-				obj := string(bobj)
-				if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
-					parts := strings.SplitN(obj, "_", 3)
-					obj = "l4_" + parts[2]
-				}
+				obj, _ := qutil.DeNEDFU(string(bobj))
 				oactual[obj] = true
 			}
 		}
@@ -505,11 +503,7 @@ func StoreLinks(r string, name string, before []byte, actual []byte) {
 		for _, bobj := range qutil.ObjectSplitter(before) {
 			odd = !odd
 			if odd {
-				obj := string(bobj)
-				if strings.HasPrefix(obj, "l4") && strings.Count(obj, "_") == 2 {
-					parts := strings.SplitN(obj, "_", 3)
-					obj = "l4_" + parts[2]
-				}
+				obj, _ := qutil.DeNEDFU(string(bobj))
 				obefore[obj] = true
 			}
 		}
