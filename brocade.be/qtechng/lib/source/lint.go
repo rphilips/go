@@ -297,7 +297,11 @@ func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool) (info string,
 
 	tmprst += ".rst"
 	qfs.Store(tmprst, body, "")
-	e := qrst.Check(tmprst, warnings)
+	level := "info"
+	if warnings {
+		level = "error"
+	}
+	e := qrst.Check(tmprst, level)
 	info = "OK"
 	if e != nil {
 		info = e.Error()

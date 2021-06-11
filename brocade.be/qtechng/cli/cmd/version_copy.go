@@ -21,8 +21,8 @@ var versionCopyCmd = &cobra.Command{
 The command finds all changes committed to the given release
 (registry value brocade-release)
 and applies these changes`,
-	Args:    cobra.ExactArgs(1),
-	Example: "qtechng version copy 5.40",
+	Args:    cobra.RangeArgs(1, 2),
+	Example: "qtechng version copy 5.40\nqtechng version copy 0.00 5.50",
 	RunE:    versionCopy,
 	Annotations: map[string]string{
 		"with-qtechtype": "P",
@@ -34,9 +34,22 @@ func init() {
 }
 
 func versionCopy(cmd *cobra.Command, args []string) error {
+	if len(args) == 1 {
+		args = append(args, args[0])
+	}
+	tversion := qserver.Canon(args[1])
+	sversion := qserver.Canon(args[0])
+	if sversion != tversion && sversion != "0.00" {
+		err := &qerror.QError{
+			Ref: []string{"copy.unequal"},
+			Msg: []string{"Only `0.00` can be copied to a different version"},
+		}
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		return nil
+	}
 
 	qtechType := qregistry.Registry["qtechng-type"]
-	if strings.Contains(qtechType, "B") && strings.Contains(qtechType, "P") {
+	if strings.ContainsRune(qtechType, 'B') && strings.ContainsRune(qtechType, 'P') {
 		err := &qerror.QError{
 			Ref: []string{"copy.bp"},
 			Msg: []string{"No copy necessary: server is both production and development"},
@@ -55,27 +68,34 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	if args[0] == "0.00" {
+	if sversion == "0.00" && !strings.ContainsRune(qtechType, 'B') {
 		err := &qerror.QError{
-			Ref: []string{"copy.open"},
-			Msg: []string{"Cannot copy version `0.00`"},
+			Ref: []string{"copy.dev.from000"},
+			Msg: []string{"version `0.00` can only be copied from a development machine"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
-	version := qserver.Canon(args[0])
+	if tversion == "0.00" {
+		err := &qerror.QError{
+			Ref: []string{"copy.dev.to000"},
+			Msg: []string{"cannot copy to version `0.00`"},
+		}
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		return nil
+	}
 
-	if version == current {
+	if tversion == current {
 		err := &qerror.QError{
 			Ref: []string{"copy.current"},
-			Msg: []string{"Cannot copy the current release: use `qtechng system sync`"},
+			Msg: []string{"Cannot copy the current release: use `qtechng version sync`"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil
 	}
 
-	lowest := qutil.LowestVersion(current, version)
+	lowest := qutil.LowestVersion(current, tversion)
 	if current != lowest {
 		err := &qerror.QError{
 			Ref: []string{"copy.version.production.lowest"},
@@ -86,7 +106,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 
 	}
 
-	changed, deleted, err := qsync.Sync(version, version, false)
+	changed, deleted, err := qsync.Sync(sversion, tversion, false)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
