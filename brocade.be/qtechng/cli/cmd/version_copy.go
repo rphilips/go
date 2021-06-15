@@ -9,7 +9,6 @@ import (
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
-	qserver "brocade.be/qtechng/lib/server"
 	qsync "brocade.be/qtechng/lib/sync"
 	qutil "brocade.be/qtechng/lib/util"
 )
@@ -37,8 +36,8 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 {
 		args = append(args, args[0])
 	}
-	tversion := qserver.Canon(args[1])
-	sversion := qserver.Canon(args[0])
+	tversion := args[1]
+	sversion := args[0]
 	if sversion != tversion && sversion != "0.00" {
 		err := &qerror.QError{
 			Ref: []string{"copy.unequal"},
@@ -63,15 +62,6 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 		err := &qerror.QError{
 			Ref: []string{"copy.production"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
-		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
-		return nil
-	}
-
-	if sversion == "0.00" && !strings.ContainsRune(qtechType, 'B') {
-		err := &qerror.QError{
-			Ref: []string{"copy.dev.from000"},
-			Msg: []string{"version `0.00` can only be copied from a development machine"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil

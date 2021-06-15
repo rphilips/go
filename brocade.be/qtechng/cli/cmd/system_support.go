@@ -24,6 +24,7 @@ var systemSupportCmd = &cobra.Command{
 	RunE:    systemSupport,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
+		"with-qtechtype": "W",
 	},
 }
 
