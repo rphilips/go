@@ -32,16 +32,17 @@ func NMap(n int, parmax int, fn func(m int) (r interface{}, err error)) (resultl
 	if max > 1 {
 		max = max - 1
 	}
-	if x, _ := strconv.Atoi(pmax); max < x {
+	if x, _ := strconv.Atoi(pmax); x != -1 && max > x {
 		max = x
 	}
 
-	if parmax != -1 && parmax < max {
+	if parmax != -1 && max > parmax {
 		max = parmax
 	}
 	if n < max {
 		max = n
 	}
+
 	// Channel for blocking until work done
 
 	done := make(chan bool, max)

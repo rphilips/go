@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	qfnmatch "brocade.be/base/fnmatch"
+	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qserver "brocade.be/qtechng/lib/server"
@@ -149,29 +151,124 @@ func (uber *Uber) Replacer(env map[string]string, original string) string {
 
 // MakeObjectList makes a list of Objects starting with string
 func MakeObjectList(r string, objstr []string) (objectlist []Object) {
-	allobjs := make([]string, 0)
+	allobjs := FindObjects(r, objstr)
 
-	for _, obj := range objstr {
-		prefix := ""
-		code := ""
-		k := strings.Index(obj, "_")
-		if k > 1 {
-			prefix = obj[:k]
-			code = obj[k+1:]
-		}
-		if prefix == "l4" {
-			if strings.Count(code, "_") == 1 {
-				parts := strings.SplitN(code, "_", 2)
-				obj = "l4_" + parts[1]
-			}
-		}
-
+	for _, obj := range allobjs {
 		uber := new(Uber)
 		uber.SetName(obj)
 		uber.SetRelease(r)
 		objectlist = append(objectlist, uber)
 	}
 	return
+}
+
+// FindObjects zoekt objecten op naam
+func FindObjects(r string, objstr []string) (objectlist []string) {
+	version, err := qserver.Release{}.New(r, true)
+	if err != nil {
+		return
+	}
+	patterns := make([]string, 0)
+	wheres := make([]string, 0)
+	where := make(map[string]bool)
+	allobjs := make(map[string]bool)
+	for _, obj := range objstr {
+		obj, _ := qutil.DeNEDFU(obj)
+		k := strings.IndexAny(obj, "*[?")
+		if k == -1 {
+			allobjs[obj] = true
+			continue
+		}
+		patterns = append(patterns, obj)
+		if k > 0 {
+			for _, x := range []string{"m", "l", "b", "r", "i"} {
+				if strings.HasPrefix(obj, x) {
+					y := x + "4"
+					if where[y] {
+						continue
+					}
+					where[y] = true
+					wheres = append(wheres, y)
+					break
+				}
+			}
+		} else {
+			for _, x := range []string{"m", "l", "b", "r", "i"} {
+				y := x + "4"
+				if where[y] {
+					continue
+				}
+				where[y] = true
+				wheres = append(wheres, y)
+			}
+		}
+	}
+	if len(patterns) == 0 {
+		return objstr
+	}
+
+	fn1 := func(n int) (interface{}, error) {
+		ty := wheres[n]
+		fs, _ := version.ObjectPlace(ty + "_xyz")
+		dir, _ := fs.RealPath("/")
+		all, _ := qfs.Find(dir, []string{"obj.json"}, true, true, false)
+		if len(all) == 0 {
+			return nil, nil
+		}
+		fn2 := func(n int) (interface{}, error) {
+			fname := all[n]
+			m := make(map[string]interface{})
+			body, e := qfs.Fetch(fname)
+			if e != nil {
+				return "", nil
+			}
+			if len(body) == 0 {
+				return "", nil
+			}
+			e = json.Unmarshal(body, &m)
+			if e != nil {
+				return "", nil
+			}
+			iname := m["id"]
+			if iname == nil {
+				return "", nil
+			}
+			name := iname.(string)
+			if !strings.HasPrefix(name, ty+"_") {
+				name = ty + "_" + name
+			}
+			for _, pattern := range patterns {
+				if qfnmatch.Match(pattern, name) {
+					return name, nil
+				}
+			}
+			return "", nil
+		}
+		resultlist, _ := qparallel.NMap(len(all), -1, fn2)
+		result := make([]string, 0)
+		for _, r := range resultlist {
+			s := r.(string)
+			if s == "" {
+				continue
+			}
+			result = append(result, s)
+		}
+		return result, nil
+	}
+
+	resultlist, _ := qparallel.NMap(len(wheres), -1, fn1)
+	for _, rl := range resultlist {
+		if rl == nil {
+			continue
+		}
+		for _, ol := range rl.([]string) {
+			if ol == "" {
+				continue
+			}
+			objectlist = append(objectlist, ol)
+		}
+	}
+	return objectlist
 }
 
 // InfoObjectList maak een structuur aan met object informatie

@@ -218,7 +218,7 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		bodies, _, errs = qsource.FetchList(query.Release, paths)
 	}
 	if withlint {
-		einfos := make([]error, 0)
+		var einfos []error
 		einfos, _, errs = qsource.LintList(query.Release, paths, strings.HasPrefix(batchid, "w:"))
 		for _, einfo := range einfos {
 			if einfo == nil {

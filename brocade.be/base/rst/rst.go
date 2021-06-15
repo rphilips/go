@@ -1,12 +1,12 @@
 package rst
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
-	"strings"
 
-	"brocade.be/base/registry"
+	qpy "brocade.be/base/python"
+
+	qregistry "brocade.be/base/registry"
 )
 
 // Compile tests if a phpthon script compiles:
@@ -14,15 +14,13 @@ import (
 //    If the script has syntax errors: returns false
 //    If the script has no syntax errors: returns true
 func Check(scriptrst string, level string) error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	tdir := registry.Registry["scratch-dir"]
+	tdir := qregistry.Registry["scratch-dir"]
 	rstexe, _ := exec.LookPath("rstcheck")
+
 	if level == "" {
 		level = "info"
 	}
 	argums := []string{
-		rstexe,
 		"--report",
 		level,
 		"--ignore-roles",
@@ -31,20 +29,37 @@ func Check(scriptrst string, level string) error {
 		"sample",
 		scriptrst,
 	}
-	cmd := exec.Cmd{
-		Path:   rstexe,
-		Args:   argums,
-		Dir:    tdir,
-		Stdout: &stdout,
-		Stderr: &stderr,
-	}
 
-	cmd.Run()
+	sout, serr := qpy.Run(rstexe, true, argums, nil, tdir)
 
-	sout := stdout.String()
-	sout = strings.TrimSpace(sout)
-	serr := stderr.String()
-	serr = strings.TrimSpace(serr)
+	// cmd := exec.Cmd{
+	// 	Path: rstexe,
+	// 	Args: argums,
+	// 	Dir:  tdir,
+	// }
+	// stdout, err := cmd.StdoutPipe()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// stderr, err := cmd.StderrPipe()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// err = cmd.Run()
+
+	// extra := ""
+	// if err != nil {
+	// 	extra = err.Error()
+	// }
+
+	// out, _ := io.ReadAll(stdout)
+	// sout := strings.TrimSpace(string(out))
+	// er, _ := io.ReadAll(stderr)
+	// serr := strings.TrimSpace(string(er))
+	// if extra != "" {
+	// 	serr = extra + "\n" + serr
+	// }
 	if serr == "" && sout == "" {
 		return nil
 	}

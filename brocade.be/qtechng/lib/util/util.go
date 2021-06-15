@@ -1072,7 +1072,7 @@ func DeNEDFU(objname string) (canon string, lg string) {
 		parts := strings.SplitN(objname, "_", 3)
 		remove := parts[1]
 		if strings.IndexAny(remove, "NEDFU") == 0 {
-			remove = lg[1:]
+			remove = remove[1:]
 			if remove == "" || remove == "php" || remove == "py" || remove == "js" {
 				parts := strings.SplitN(objname, "_", 3)
 				objname = "l4_" + parts[2]

@@ -383,7 +383,7 @@ func (release Release) Restore(tarfile string, init bool) (previous string, err 
 func (release Release) ObjectCount() map[string]int {
 	stat := make(map[string]int)
 	fs := release.FS("/")
-	for _, ty := range []string{"i4", "l4", "m4", "r4"} {
+	for _, ty := range []string{"i4", "l4", "m4", "r4", "b4"} {
 		dir, _ := fs.RealPath("/object/" + ty)
 		all, _ := qfs.Find(dir, []string{"obj.json"}, true, true, false)
 		stat[ty] = len(all)
@@ -423,6 +423,10 @@ func (release *Release) SourcePlace(qpath string) (*qvfs.QFs, string) {
 }
 
 func (release *Release) ObjectPlace(objname string) (*qvfs.QFs, string) {
+	if objname == "" {
+		fs := release.FS("object", "")
+		return &fs, ""
+	}
 	ty := strings.SplitN(objname, "_", 2)[0]
 	objname, _ = qutil.DeNEDFU(objname)
 	fs := release.FS("object", ty)

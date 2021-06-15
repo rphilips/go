@@ -14,7 +14,7 @@ var objectListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "Lists objects in the repository",
 	Long:    `Lists objects by name (prefix included)`,
-	Args:    cobra.MinimumNArgs(1),
+	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng object list m4_getCatIsbdTitles m4_CO`,
 	RunE:    objectList,
 	PreRun:  preObjectList,
@@ -30,6 +30,7 @@ func init() {
 }
 
 func objectList(cmd *cobra.Command, args []string) error {
+
 	result := listObjectTransport(Fcargo)
 	v := make(map[string]interface{})
 	json.Unmarshal(result, &v)
@@ -38,6 +39,9 @@ func objectList(cmd *cobra.Command, args []string) error {
 }
 
 func preObjectList(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		args = []string{"*"}
+	}
 	if !Ftransported {
 		var err error
 		Fcargo, err = fetchObjectData(args)
