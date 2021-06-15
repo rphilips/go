@@ -468,7 +468,7 @@ func checkUID(uid string) (usr string) {
 	}
 
 	if usr == "" {
-		usr = "usystem"
+		usr = "root"
 	}
 	return
 }

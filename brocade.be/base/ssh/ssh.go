@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -39,17 +40,24 @@ func SSHcmd(payload Payload, whowhere string) (catchOut *bytes.Buffer, catchErr 
 		err = fmt.Errorf("no host and/or user specified")
 		return
 	}
-	cop, _, err := qagent.New()
-	if err != nil {
-		if runtime.GOOS == "windows" {
-			err = fmt.Errorf("cannot find SSH agent. On windows, work with PuTTY and Pageant: `%s`", err)
-			return
+	var auth ssh.AuthMethod
+	if strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') {
+		cop, _, err := qagent.New()
+		if err != nil {
+			if runtime.GOOS == "windows" {
+				err = fmt.Errorf("cannot find SSH agent. On windows, work with PuTTY and Pageant: `%s`", err)
+				return nil, nil, err
+			}
+			err = fmt.Errorf("cannot find SSH agent `%s`", err)
+			return nil, nil, err
 		}
-		err = fmt.Errorf("cannot find SSH agent `%s`", err)
-		return
+		auth = ssh.PublicKeysCallback(cop.Signers)
+	} else {
+		auth, err = PublicKeyFile(user, host)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-
-	auth := ssh.PublicKeysCallback(cop.Signers)
 
 	sshConfig := &ssh.ClientConfig{
 		User:            user,
@@ -133,4 +141,18 @@ func parseRemote(remote string, uid string) (user string, host string) {
 		host = qregistry.Registry["ssh-default-host"]
 	}
 	return
+}
+
+func PublicKeyFile(user string, host string) (auth ssh.AuthMethod, err error) {
+	privfile := qregistry.Registry["ssh-default-privatekey"]
+	privfile = strings.ReplaceAll(privfile, "{user}", user)
+	buffer, err := os.ReadFile(privfile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load private key file: `%s`, err: %v", privfile, err)
+	}
+	key, err := ssh.ParsePrivateKey(buffer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse private key file: `%s`, err: %v", privfile, err)
+	}
+	return ssh.PublicKeys(key), nil
 }
