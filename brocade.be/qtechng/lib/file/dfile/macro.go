@@ -298,12 +298,12 @@ func (macro *Macro) Format() string {
 		}
 	}
 	for _, param := range macro.Params {
-		id := param.ID
 		plus := ""
-		if len(id) < k {
-			plus = strings.Repeat(" ", k-len(id))
-			plus = ""
-		}
+		// id := param.ID
+		// if len(id) < k {
+		// 	plus = strings.Repeat(" ", k-len(id))
+		// 	plus = ""
+		// }
 		prefix := param.ID + plus
 		value := param.Doc
 		result = append(result, collect(value, prefix)...)

@@ -24,7 +24,7 @@ func init() {
 	commandCmd.AddCommand(commandCompleteCmd)
 }
 
-func commandComplete(cmd *cobra.Command, args []string) error {
+func commandComplete(cmdo *cobra.Command, args []string) error {
 
 	argums := make([]string, 0)
 
@@ -54,7 +54,7 @@ func commandComplete(cmd *cobra.Command, args []string) error {
 	}
 
 	verb := argums[0]
-	cmd = searchCmd(verb, rootCmd.Commands())
+	cmd := searchCmd(verb, rootCmd.Commands())
 	if cmd == nil {
 		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
 		return nil

@@ -178,10 +178,7 @@ func eval(term, operand, value string, env map[string]string) bool {
 				return false
 			}
 			re := regexp.MustCompile(`^\.[@a-zA-Z%]`)
-			if re.MatchString(termc) {
-				return false
-			}
-			return true
+			return !re.MatchString(termc)
 		}
 		if value == "actualname" {
 			re := regexp.MustCompile(`^[%a-zA-Z][a-zA-Z0-9]*$`)
