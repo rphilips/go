@@ -34,7 +34,7 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 		if err != nil {
 			e := &qerror.QError{
 				Ref:    []string{"objfile.loads.read"},
-				File:   fname,
+				QPath:  fname,
 				Lineno: 1,
 				Type:   "Error",
 				Msg:    qerror.ErrorMsg(err),
@@ -49,7 +49,7 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 
 		err := &qerror.QError{
 			Ref:    []string{"objfile.loads.parse"},
-			File:   fname,
+			QPath:  fname,
 			Lineno: lineno,
 			Type:   "Error",
 			Msg:    msg,
@@ -96,7 +96,7 @@ func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 		if err != nil {
 			e := &qerror.QError{
 				Ref:    []string{"objfile.lint.read"},
-				File:   fname,
+				QPath:  fname,
 				Lineno: 1,
 				Type:   "Error",
 				Msg:    []string{err.Error()},
@@ -110,7 +110,7 @@ func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 	if e != nil {
 		err = &qerror.QError{
 			Ref:    []string{"objfile.lint"},
-			File:   fname,
+			QPath:  fname,
 			Lineno: 1,
 			Type:   "Error",
 			Msg:    []string{e.Error()},
@@ -120,7 +120,7 @@ func Lint(ofile OFile, blob []byte, current []byte) (err error) {
 	if len(badutf8) != 0 {
 		err = &qerror.QError{
 			Ref:    []string{"objfile.lint.utf8"},
-			File:   fname,
+			QPath:  fname,
 			Lineno: badutf8[0][0],
 			Type:   "Error",
 			Msg:    []string{"Contains non-UTF8"},

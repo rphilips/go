@@ -43,7 +43,7 @@ func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) error {
 	notreplace := bfile.NotReplace()
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
-	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, textmap, bufmac, "")
+	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, textmap, bufmac, "", bfile.String())
 	if err != nil {
 		return err
 	}

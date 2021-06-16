@@ -394,9 +394,6 @@ func Fetch(object Object) (err error) {
 		u := make(map[string]string)
 		json.Unmarshal(content, &u)
 		v.Source = u["source"]
-
-	default:
-		erro = object.Unmarshal(content)
 	}
 	erro = object.Unmarshal(content)
 	if erro != nil {

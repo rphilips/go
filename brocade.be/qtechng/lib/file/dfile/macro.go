@@ -384,7 +384,7 @@ func (macro *Macro) Replacer(env map[string]string, original string) string {
 }
 
 // Args zoekt de argumenten bij een macro
-func (macro *Macro) Args(original string) (args map[string]string, rest string, err error) {
+func (macro *Macro) Args(original string, qpath string) (args map[string]string, rest string, err error) {
 	x := original
 	if !strings.HasPrefix(x, "(") {
 		return nil, original, nil
@@ -400,7 +400,7 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 			break
 		}
 		if i >= len(macro.Params) {
-			msg = "Too many arguments in " + macro.String()
+			msg = "Too many arguments in " + macro.String() + " [" + strings.Join(xargs, ",") + "]"
 			break
 		}
 		k := strings.Index(arg, "=")
@@ -444,9 +444,12 @@ func (macro *Macro) Args(original string) (args map[string]string, rest string, 
 	}
 
 	if msg != "" {
+		if qpath == "" {
+			qpath = macro.EditFile()
+		}
 		err = &qerror.QError{
 			Ref:    []string{"parse.args.parse"},
-			QPath:  macro.EditFile(),
+			QPath:  qpath,
 			Lineno: -1,
 			Object: macro.String(),
 			Type:   "Error",

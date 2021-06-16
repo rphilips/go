@@ -251,7 +251,7 @@ func resolve(s string, qpath string) (result string, err error) {
 	notreplace := source.NotReplace()
 	bufmac := new(bytes.Buffer)
 	objectmap := make(map[string]qobject.Object)
-	_, err = qsource.ResolveText(env, body, Frilm, notreplace, objectmap, nil, bufmac, "")
+	_, err = qsource.ResolveText(env, body, Frilm, notreplace, objectmap, nil, bufmac, "", qpath)
 	result = bufmac.String()
 	return
 }

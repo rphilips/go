@@ -773,7 +773,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 		sources[i] = source
 		i++
 	}
-	e := Install(batchid, sources, warnings)
+	e := Install(batchid, sources, warnings, false)
 	if e != nil {
 		errslice = append(errslice, e)
 		errs = qerror.ErrorSlice(errslice)

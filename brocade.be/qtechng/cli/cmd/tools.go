@@ -304,13 +304,13 @@ func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, batchid str
 	pcargo.Data = buffer.Bytes()
 }
 
-func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, warnings bool, batchid string) {
+func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, warnings bool, batchid string, verbose bool) {
 	query := ppayload.Query.Copy()
 	psources := query.Run()
 	if batchid == "" {
 		batchid = "install"
 	}
-	errs := qsource.Install(batchid, psources, warnings)
+	errs := qsource.Install(batchid, psources, warnings, verbose)
 	switch err := errs.(type) {
 	case qerror.ErrorSlice:
 		if len(err) == 0 {

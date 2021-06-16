@@ -98,7 +98,7 @@ func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, 
 	env := source.Env()
 	notreplace := source.NotReplace()
 
-	_, err = ResolveText(env, body, what, notreplace, objectmap, textmap, buffer, "")
+	_, err = ResolveText(env, body, what, notreplace, objectmap, textmap, buffer, "", source.String())
 	if err != nil {
 		body, _ = source.Fetch()
 		buffer.Write(body)
@@ -108,7 +108,7 @@ func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, 
 }
 
 // ResolveText vervangt in een byte slice - geassocieerd met een bestand
-func ResolveText(env map[string]string, body []byte, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string) (lastlgalgo string, err error) {
+func ResolveText(env map[string]string, body []byte, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string, qpath string) (lastlgalgo string, err error) {
 	lastlgalgo = lgalgo
 	if what == "" {
 		what = "rlmit"
@@ -280,7 +280,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 
 		// i4
 		if i4y && strings.HasPrefix(spiece, "i4_") {
-			err = i4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, "")
+			err = i4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, "", qpath)
 			if err != nil {
 				return
 			}
@@ -288,7 +288,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 		}
 		// t4
 		if t4y && strings.HasPrefix(spiece, "t4_") {
-			err = t4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, "")
+			err = t4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, "", qpath)
 			if err != nil {
 				return
 			}
@@ -296,7 +296,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 		}
 		// l4
 		if l4y && strings.HasPrefix(spiece, "l4_") {
-			lgalgo, err = l4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, lgalgo)
+			lgalgo, err = l4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 			if err != nil {
 				return
 			}
@@ -304,7 +304,7 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 		}
 		// m4
 		if m4y && strings.HasPrefix(spiece, "m4_") {
-			err = m4ResolveText(env, spiece, string(split[i+1]), what, notreplace, objectmap, textmap, buffer, "")
+			err = m4ResolveText(env, spiece, string(split[i+1]), what, notreplace, objectmap, textmap, buffer, "", qpath)
 			if err != nil {
 				return
 			}
@@ -317,24 +317,24 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 }
 
 // handles i4
-func i4ResolveText(env map[string]string, include string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string) (err error) {
+func i4ResolveText(env map[string]string, include string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string, qpath string) (err error) {
 	object := objectmap[include].(*qofile.Include)
 	content := []byte(object.Content)
 
-	_, err = ResolveText(env, content, what, notreplace, objectmap, textmap, buffer, lgalgo)
+	_, err = ResolveText(env, content, what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 	return err
 }
 
 // handles t4
-func t4ResolveText(env map[string]string, text string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string) (err error) {
+func t4ResolveText(env map[string]string, text string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string, qpath string) (err error) {
 
 	content := []byte(textmap[text])
-	_, err = ResolveText(env, content, what, notreplace, objectmap, textmap, buffer, lgalgo)
+	_, err = ResolveText(env, content, what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 	return err
 }
 
 // handles l4
-func l4ResolveText(env map[string]string, lgcode string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lastlgalgo string) (lgalgo string, err error) {
+func l4ResolveText(env map[string]string, lgcode string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lastlgalgo string, qpath string) (lgalgo string, err error) {
 	obj := lgcode
 	if strings.HasPrefix(obj, "l4_") && strings.Count(obj, "_") == 1 {
 		parts := strings.SplitN(obj, "_", 2)
@@ -350,15 +350,15 @@ func l4ResolveText(env map[string]string, lgcode string, what string, notreplace
 	what = strings.ReplaceAll(what, "m", "")
 	what = strings.ReplaceAll(what, "i", "")
 	what = strings.ReplaceAll(what, "t", "")
-	lgalgo, err = ResolveText(env, []byte(content), what, notreplace, objectmap, textmap, buffer, lgalgo)
+	lgalgo, err = ResolveText(env, []byte(content), what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 	return
 }
 
 // handles m4
-func m4ResolveText(env map[string]string, macro string, extra string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string) (err error) {
+func m4ResolveText(env map[string]string, macro string, extra string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string, qpath string) (err error) {
 	obj := macro
 	object := objectmap[obj].(*qofile.Macro)
-	args, rest, err := object.Args(extra)
+	args, rest, err := object.Args(extra, qpath)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func m4ResolveText(env map[string]string, macro string, extra string, what strin
 	calc := object.Replacer(envex, "")
 	what = strings.ReplaceAll(what, "i", "")
 
-	_, err = ResolveText(env, []byte(calc+rest), what, notreplace, objectmap, textmap, buffer, lgalgo)
+	_, err = ResolveText(env, []byte(calc+rest), what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 
 	return err
 }

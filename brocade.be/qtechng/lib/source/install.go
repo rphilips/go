@@ -3,6 +3,7 @@ package source
 import (
 	"bytes"
 	"errors"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -26,7 +27,13 @@ import (
 // - a project is installed
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
-func Install(batchid string, sources []*Source, warnings bool) (err error) {
+
+func Install(batchid string, sources []*Source, warnings bool, verbose bool) (err error) {
+	var logme *log.Logger
+	if verbose {
+		logme = log.New(os.Stderr, batchid+" ", log.LstdFlags)
+	}
+
 	if len(sources) == 0 {
 		return nil
 	}
@@ -45,9 +52,12 @@ func Install(batchid string, sources []*Source, warnings bool) (err error) {
 		return nil
 	}
 
+	if logme != nil {
+		logme.Println("Start")
+	}
+
 	errs := make([]error, 0)
 	badproj := make(map[string]bool)
-	// Find all projects
 	mproj := make(map[string]*qproject.Project)
 	msources := make(map[string]map[string][]string)
 	qsources := make(map[string]*Source)
@@ -93,7 +103,7 @@ func Install(batchid string, sources []*Source, warnings bool) (err error) {
 		return nil
 	}
 
-	if len(errs) == 0 {
+	if len(errs) != 0 {
 		return qerror.ErrorSlice(errs)
 	}
 
@@ -106,10 +116,18 @@ func Install(batchid string, sources []*Source, warnings bool) (err error) {
 
 	projs = qproject.Sort(projs)
 
+	if logme != nil {
+		logme.Printf("Projects sorted: %d projects\n", len(projs))
+	}
+
 	// install releases
-	e := installReleasefiles(batchid, projs, qsources, msources)
+	count, e := installReleasefiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
+	}
+
+	if logme != nil {
+		logme.Printf("release.py's executed: %d release.py\n", count)
 	}
 
 	// install m-files
@@ -117,17 +135,26 @@ func Install(batchid string, sources []*Source, warnings bool) (err error) {
 	if len(e) != 0 {
 		errs = append(errs, e...)
 	}
+	if logme != nil {
+		logme.Printf("*.m files installed: %d m-files\n", len(mfiles))
+	}
 
 	// install other auto files
 	ofiles, e := installAutofiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
 	}
+	if logme != nil {
+		logme.Printf("*.[blx] files installed: %d files\n", len(ofiles))
+	}
 
 	// install projects
-	zfiles, e := installInstallfiles(batchid, projs, qsources, msources)
+	zfiles, count, e := installInstallfiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
+	}
+	if logme != nil {
+		logme.Printf("install.py's executed: %d install.py\n", count)
 	}
 
 	allfiles := append(mfiles, ofiles...)
@@ -147,8 +174,12 @@ func Install(batchid string, sources []*Source, warnings bool) (err error) {
 			errs = append(errs, info)
 		}
 	}
+	if logme != nil {
+		logme.Println("End")
+	}
 
 	if len(errs) == 0 {
+
 		return nil
 	}
 
@@ -165,7 +196,7 @@ func RSync(r string) (changed []string, deleted []string, err error) {
 	return changed, deleted, err
 }
 
-func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (installed []string, errs []error) {
+func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (installed []string, count int, errs []error) {
 
 	tmpdir, e := qfs.TempDir("", "qtechng."+batchid+".")
 	if e != nil {
@@ -205,6 +236,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 		if qfs.IsDir(basedir) {
 			continue
 		}
+		count++
 		errz := projcopy(proj, qpaths, qtos, tmpdir)
 		if len(errz) != 0 {
 			errs = append(errs, errz...)
@@ -260,7 +292,7 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 		notreplace := qps.NotReplace()
 		objectmap := make(map[string]qobject.Object)
 		buf := new(bytes.Buffer)
-		_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, buf, "")
+		_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, buf, "", qp)
 		if err != nil {
 			return "", err
 		}
@@ -307,10 +339,10 @@ func installInstallsource(tdir string, batchid string, inso *Source) (err error)
 		}
 		errmsg += inso.String() + " > stderr:\n" + serr
 	}
-	return errors.New(serr)
+	return errors.New(errmsg)
 }
 
-func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (errs []error) {
+func installReleasefiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (count int, errs []error) {
 	for _, proj := range projs {
 		ps := proj.String()
 		repy := ps + "/release.py"
@@ -328,6 +360,7 @@ func installReleasefiles(batchid string, projs []*qproject.Project, qsources map
 			}
 			errs = append(errs, e)
 		}
+		count++
 	}
 	return
 }
@@ -363,7 +396,7 @@ func installReleasesource(batchid string, reso *Source) (err error) {
 		}
 		errmsg += reso.String() + " > stderr:\n" + serr
 	}
-	return errors.New(serr)
+	return errors.New(errmsg)
 }
 
 func installMfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (mfiles []string, errs []error) {
@@ -406,6 +439,18 @@ func installMsources(batchid string, files []string, qsources map[string]*Source
 			_, b := qutil.QPartition(qp)
 			target := filepath.Join(roudir, b)
 			qfs.Store(target, buf, "process")
+		}
+		if err != nil {
+			switch v := err.(type) {
+			case qerror.QError:
+				v.QPath = qp
+				err = v
+			case *qerror.QError:
+				v.QPath = qp
+				err = v
+			default:
+				err = v
+			}
 		}
 		return qp, err
 	}
@@ -483,6 +528,18 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 			err = qps.XFileToMumps(batchid, buf)
 		case ".b":
 			err = qps.BFileToMumps(batchid, buf)
+		}
+		if err != nil {
+			switch v := err.(type) {
+			case qerror.QError:
+				v.QPath = qp
+				err = v
+			case *qerror.QError:
+				v.QPath = qp
+				err = v
+			default:
+				err = v
+			}
 		}
 		return buf, err
 	}

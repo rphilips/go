@@ -81,7 +81,7 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) error {
 	notreplace := mfile.NotReplace()
 	objectmap := make(map[string]qobject.Object)
 	bufmac := new(bytes.Buffer)
-	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, bufmac, "")
+	_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, bufmac, "", mfile.String())
 
 	content = bufmac.Bytes()
 
