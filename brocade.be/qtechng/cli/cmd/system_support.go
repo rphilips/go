@@ -4,24 +4,26 @@ import (
 	"archive/tar"
 	"io"
 	"log"
-	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
+	"github.com/spf13/cobra"
 )
 
 var systemSupportCmd = &cobra.Command{
-	Use:     "support",
-	Short:   "Update qtechng-support-dir",
-	Long:    `Update the directory containing support files for QtechNG`,
-	Args:    cobra.MaximumNArgs(1),
-	Example: `qtechng system support`,
-	RunE:    systemSupport,
+	Use:   "support",
+	Short: "Update qtechng-support-dir",
+	Long: `Update the directory containing support files for QtechNG.
+With the flag --editor=vscode, the QtechNG extensions for VScode
+are also downloaded and installed.`,
+	Args: cobra.MaximumNArgs(1),
+	Example: `qtechng system support
+qtechng system support --editor=vscode`,
+	RunE: systemSupport,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "W",
@@ -29,11 +31,12 @@ var systemSupportCmd = &cobra.Command{
 }
 
 func init() {
+	systemSupportCmd.Flags().StringVar(&Feditor, "editor", "", "Editor used in development")
 	systemCmd.AddCommand(systemSupportCmd)
 }
 
 // Untar untars a tarball and writes the files to a target path
-// Source: https://golangdocs.com/tar-gzip-in-golang
+// Source: https://golangdocs.com/tar-gzip-in-golang (modified)
 func Untar(tarball, target string) error {
 	reader, err := os.Open(tarball)
 	if err != nil {
@@ -68,6 +71,7 @@ func Untar(tarball, target string) error {
 		if err != nil {
 			return err
 		}
+		// close file here to prevent lots of open files!
 		file.Close()
 	}
 	return nil
@@ -96,26 +100,48 @@ func systemSupport(cmd *cobra.Command, args []string) error {
 	qSegments := strings.Split(qtechngURL, "/")
 	binary := qSegments[len(qSegments)-1]
 	qtechngSubDomain := strings.TrimRight(qtechngURL, binary)
-	tarURL := strings.Join([]string{qtechngSubDomain, "support.tar"}, "")
-
-	fileURL, err := url.Parse(tarURL)
-	if err != nil {
-		log.Fatal("cmd/system_support/4:\n", err)
-	}
-	path := fileURL.Path
-	fileSegments := strings.Split(path, "/")
-	tarPath := filepath.Join(supportDir, fileSegments[len(fileSegments)-1])
-	err = qfs.GetURL(tarURL, tarPath, "tempfile")
+	supportTar := "support.tar"
+	supportLink := strings.Join([]string{qtechngSubDomain, supportTar}, "")
+	supportPath := filepath.Join(supportDir, supportTar)
+	err := qfs.GetURL(supportLink, supportPath, "tempfile")
 	if err != nil {
 		log.Fatal("cmd/system_support/5:\n", err)
 	}
 
-	// Untar file
-	err = Untar(tarPath, supportDir)
+	err = Untar(supportPath, supportDir)
 	if err != nil {
 		log.Fatal("cmd/system_support/6:\n", err)
 	}
-	os.Remove(tarPath)
+	os.Remove(supportPath)
 
+	if Feditor != "vscode" {
+		return nil
+	}
+
+	vscode := qregistry.Registry["vscode-exe"]
+	if vscode == "" {
+		log.Fatal("cmd/system_support/7:\n", "registry qtechng-vscode-exe is empty or missing")
+	}
+
+	// workdir := qregistry.Registry["qtechng-work-dir"]
+	workdir := qregistry.Registry["qtech-workstation-basedir"]
+	dotvscode := filepath.Join(workdir, ".vscode")
+	if !qfs.IsDir(dotvscode) {
+		qfs.Mkdir(dotvscode, "process")
+	}
+	vscodeDir := filepath.Join(supportDir, "vscode")
+	qfs.CopyFile(filepath.Join(vscodeDir, "tasks.json"), filepath.Join(dotvscode, "tasks.json"), "=", false)
+	files, err := os.ReadDir(vscodeDir)
+	if err != nil {
+		log.Fatal("cmd/system_support/8:\n", err)
+	}
+	for _, file := range files {
+		extensionPath := filepath.Join(vscodeDir, file.Name())
+		if strings.HasSuffix(extensionPath, ".vsix") {
+			extArgs := []string{"--install-extension", extensionPath, "--force"}
+			extCmd := exec.Command(vscode, extArgs...)
+			extCmd.Run()
+		}
+	}
 	return nil
 }
