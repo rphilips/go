@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -159,5 +160,6 @@ func main() {
 			os.Args = append(os.Args, payload.Args...)
 		}
 	}
+	rand.Seed(time.Now().UTC().UnixNano())
 	cmd.Execute(buildTime, goVersion, buildHost, payload, os.Args)
 }

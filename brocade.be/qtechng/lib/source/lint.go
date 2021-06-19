@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	qfs "brocade.be/base/fs"
+	qmumps "brocade.be/base/mumps"
 	qparallel "brocade.be/base/parallel"
 	qphp "brocade.be/base/php"
 	qpython "brocade.be/base/python"
@@ -205,7 +206,7 @@ func (source *Source) Lint(lintdir string, warnings bool) (info error, err error
 		return source.LintResult(info), err
 	}
 	if natures["mfile"] {
-		err = source.Resolve("rilm", nil, nil, buffer, true)
+		err = source.MFileToMumps("lint", buffer)
 	} else {
 		err = source.Resolve("rilm", nil, nil, buffer, false)
 	}
@@ -259,13 +260,18 @@ func (source *Source) LintResult(info string) (err error) {
 	return err
 }
 
-func tmplint(lintdir string, source *Source, buffer *bytes.Buffer) string {
+func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool) string {
 	body := buffer.Bytes()
 	_, base := qutil.QPartition(source.String())
 	ext := path.Ext(base)
-	name := strings.TrimSuffix(base, ext) + "_*" + ext
-
-	tmp, _ := qfs.TempFile(lintdir, name)
+	name := strings.TrimSuffix(base, ext)
+	tmp := ""
+	if justcopy {
+		name += "_*" + ext
+		tmp, _ = qfs.TempFile(lintdir, name)
+	} else {
+		tmp = filepath.Join(lintdir, name) + ext
+	}
 	qfs.Store(tmp, body, "temp")
 	return tmp
 }
@@ -276,7 +282,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 	fs, pyscript := release.SourcePlace(source.String())
 	pyscript, _ = fs.RealPath(pyscript)
 	py := qutil.GetPy(pyscript)
-	tmppy := tmplint(lintdir, source, buffer)
+	tmppy := tmplint(lintdir, source, buffer, true)
 	e := qpython.Compile(tmppy, py == "py3")
 	info = "OK"
 	if e != nil {
@@ -290,7 +296,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 
 //Parse PHP File
 func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
-	tmpphp := tmplint(lintdir, source, buffer)
+	tmpphp := tmplint(lintdir, source, buffer, true)
 	e := qphp.Compile(tmpphp)
 	info = "OK"
 	if e != nil {
@@ -307,7 +313,7 @@ func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool, lintdir strin
 	if true {
 		return "OK", nil
 	}
-	tmprst := tmplint(lintdir, source, buffer)
+	tmprst := tmplint(lintdir, source, buffer, true)
 	level := "info"
 	if !warnings {
 		level = "error"
@@ -488,6 +494,19 @@ func (source *Source) LintM(buffer *bytes.Buffer, warnings bool, lintdir string)
 	info = "OK"
 	if info == "OK" && !strings.Contains(preamble, "About") {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
+	}
+	if !warnings {
+		tmpm := tmplint(lintdir, source, buffer, false)
+		e := qmumps.Compile(tmpm)
+		info = "OK"
+		if e != nil {
+			info = e.Error()
+		}
+		if info == "OK" {
+			qfs.Rmpath(tmpm)
+		}
+		tmpo := strings.TrimSuffix(tmpm, ".m") + ".o"
+		qfs.Rmpath(tmpo)
 	}
 	return
 }

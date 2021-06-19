@@ -12,6 +12,7 @@ import (
 	qserver "brocade.be/qtechng/lib/server"
 	qsource "brocade.be/qtechng/lib/source"
 	qsync "brocade.be/qtechng/lib/sync"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +46,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	if Frefname == "" {
-		Frefname = "install-" + current
+		Frefname = "install-" + qutil.Timestamp(true)
 	}
 
 	if !strings.Contains(QtechType, "B") {

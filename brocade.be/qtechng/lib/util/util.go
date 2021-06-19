@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -676,7 +677,6 @@ func GetPy(pyscript string) string {
 		fname := filepath.Join(dirname, "brocade.json")
 		blob, e := qfs.Fetch(fname)
 		if e != nil {
-			fmt.Println(fname, e.Error())
 			continue
 		}
 		cfg := make(map[string]interface{})
@@ -1081,4 +1081,18 @@ func DeNEDFU(objname string) (canon string, lg string) {
 		}
 	}
 	return objname, lg
+}
+
+// Timestamp creates a timestamp
+
+func Timestamp(rnd bool) string {
+	h := time.Now()
+	t := h.Format(time.RFC3339)
+	t = strings.ReplaceAll(t, ":", ".")
+	t = strings.ReplaceAll(t, "+", ".")
+	if rnd {
+		r := strconv.Itoa(rand.Intn(1000000))
+		t += "-" + r
+	}
+	return t
 }

@@ -352,13 +352,63 @@ func Rmpath(dirname string) (err error) {
 	dirname, err = AbsPath(dirname)
 	if err == nil {
 		parent := filepath.Dir(dirname)
-		if parent == dirname {
+		if parent == dirname || parent == "" {
 			err = errors.New("cannot delete a root")
 		} else {
 			err = os.RemoveAll(dirname)
 		}
 	}
 	return err
+}
+
+// RmpathUntil removes a file or a dirctory tree except root
+func RmpathUntil(dirname string, until string) (err error) {
+	if until == "" {
+		return Rmpath(dirname)
+	}
+	dirname, err = AbsPath(dirname)
+	if err != nil {
+		return err
+	}
+	until, err = AbsPath(until)
+	if err != nil {
+		return err
+	}
+	if SameFile(dirname, until) {
+		return nil
+	}
+	rel, err := filepath.Rel(until, dirname)
+	if err != nil {
+		return err
+	}
+	if rel == "" {
+		return nil
+	}
+	up := ".." + string(os.PathSeparator)
+	if strings.HasPrefix(rel, up) {
+		return nil
+	}
+
+	parent := ""
+	if err == nil {
+		parent = filepath.Dir(dirname)
+		if parent == dirname || parent == "" {
+			err = errors.New("cannot delete a root")
+		} else {
+			err = os.RemoveAll(dirname)
+		}
+	}
+	if err != nil {
+		return err
+	}
+	if SameFile(parent, until) {
+		return nil
+	}
+	empty, _ := IsDirEmpty(parent)
+	if !empty {
+		return nil
+	}
+	return RmpathUntil(parent, until)
 }
 
 // EmptyDir Empties a directory

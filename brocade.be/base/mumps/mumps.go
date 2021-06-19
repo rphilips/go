@@ -10,7 +10,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 )
 
@@ -96,18 +98,13 @@ func Tom(s string) string {
 	}
 	if len(buf) != 0 {
 		prefix := strings.Join(buf, ",")
-		buf = buf[:0]
 		sb.WriteString(`"_$C(`)
 		sb.WriteString(prefix)
 		sb.WriteString(`)`)
 	} else {
 		sb.WriteString(`"`)
 	}
-	x := sb.String()
-	if strings.HasPrefix(x, `""_`) {
-		x = x[3:]
-	}
-	return x
+	return strings.TrimPrefix(sb.String(), `""_`)
 }
 
 func Set(mumps MUMPS, subs []string, value string) MUMPS {
@@ -195,21 +192,27 @@ func PipeLineTo(mdb string, reader *bufio.Reader) (err error) {
 }
 
 func newMCMD(mdb string) (cmd *exec.Cmd, err error) {
-	rou := qregistry.Registry["m-import-auto-exe"]
+	rou := qregistry.Registry["m-import-auto-exe"] // m-import-auto-exe  : ["anetcache", "%RunDS^bqtm"]
+	//rou := ""
 	rouparts := make([]string, 0)
 	if rou != "" {
 		e := json.Unmarshal([]byte(rou), &rouparts)
 		if e != nil {
-			return nil, fmt.Errorf("Registry value `m-import-auto-exe` is not JSON: `%s`", e.Error())
+			return nil, fmt.Errorf("registry value `m-import-auto-exe` is not JSON: `%s`", e.Error())
 		}
 	} else {
-		target := filepath.Join(qregistry.Registry["scratch-dir"], "mumpssinc")
+		h := time.Now()
+		t := h.Format(time.RFC3339)
+		t = strings.ReplaceAll(t, ":", ".")
+		t = strings.ReplaceAll(t, "+", ".")
+		target := "mumpssinc" + t + ".*.txt"
+		target, _ = qfs.TempFile("", target)
+
 		rouparts = []string{
 			"qtechng",
 			"fs",
 			"store",
 			target,
-			"--append",
 		}
 	}
 	inm := rouparts[0]
@@ -227,4 +230,53 @@ func newMCMD(mdb string) (cmd *exec.Cmd, err error) {
 	}
 	cmd.Dir = mdb
 	return cmd, nil
+}
+
+// Compile tests if a m script compiles:
+func Compile(scriptm string) error {
+	compiler := qregistry.Registry["m-compile-exe"]
+	if compiler == "" {
+		return nil
+	}
+	exe := make([]string, 0)
+
+	json.Unmarshal([]byte(compiler), &exe)
+
+	if len(exe) < 2 {
+		return nil
+	}
+
+	pexe, _ := exec.LookPath(exe[0])
+	argums := make([]string, 0)
+	for _, arg := range exe {
+		arg = strings.ReplaceAll(arg, "{source}", scriptm)
+		argums = append(argums, arg)
+	}
+	dir := filepath.Dir(scriptm)
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Cmd{
+		Path:   pexe,
+		Args:   argums,
+		Dir:    dir,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	cmd.Run()
+
+	sout := strings.TrimSpace(stdout.String())
+	serr := strings.TrimSpace(stderr.String())
+	msg := ""
+	if sout != "" {
+		msg += sout + "\n"
+	}
+	if serr != "" {
+		msg += serr + "\n"
+	}
+	if msg == "" {
+		return nil
+	}
+
+	return fmt.Errorf("compile `%s` with `%s`:\n%s", scriptm, pexe, msg)
 }

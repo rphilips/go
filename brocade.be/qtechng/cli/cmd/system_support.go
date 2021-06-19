@@ -13,6 +13,7 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var systemSupportCmd = &cobra.Command{
@@ -116,6 +117,14 @@ func systemSupport(cmd *cobra.Command, args []string) error {
 		log.Fatal("cmd/system_support/6:\n", err)
 	}
 	os.Remove(tarPath)
+
+	// install vsix for vscode
+
+	dir := filepath.Join(supportDir, "vscode")
+	err = qutil.VSCode(dir)
+	if err != nil {
+		log.Fatal("cmd/system_support/7:\n", err)
+	}
 
 	return nil
 }

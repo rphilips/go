@@ -3,6 +3,7 @@ package source
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -149,7 +150,7 @@ func Install(batchid string, sources []*Source, warnings bool, verbose bool) (er
 	}
 
 	// install projects
-	zfiles, count, e := installInstallfiles(batchid, projs, qsources, msources)
+	zfiles, count, e := installInstallfiles(batchid, projs, qsources, msources, logme)
 	if len(e) != 0 {
 		errs = append(errs, e...)
 	}
@@ -196,9 +197,11 @@ func RSync(r string) (changed []string, deleted []string, err error) {
 	return changed, deleted, err
 }
 
-func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string) (installed []string, count int, errs []error) {
+func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string, logme *log.Logger) (installed []string, count int, errs []error) {
 
-	tmpdir, e := qfs.TempDir("", "qtechng."+batchid+".")
+	tmpdir := filepath.Join(qregistry.Registry["scratch-dir"], "qtechng."+batchid)
+	qfs.Rmpath(tmpdir)
+	e := qfs.Mkdir(tmpdir, "qtech")
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.tmpdir"},
@@ -237,16 +240,22 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 			continue
 		}
 		count++
-		errz := projcopy(proj, qpaths, qtos, tmpdir)
+		errz, projplace := projcopy(proj, qpaths, qtos, tmpdir)
 		if len(errz) != 0 {
 			errs = append(errs, errz...)
 			continue
 		}
-
-		err := installInstallsource(basedir, batchid, inso)
+		err := installInstallsource(projplace, batchid, inso)
 		if err != nil {
 			errs = append(errs, err)
+			if qfs.IsDir(projplace) {
+				qfs.Store(filepath.Join(projplace, "__error__"), err.Error(), "qtech")
+			}
+			if logme != nil {
+				logme.Printf("Error in installing `%s: see `%s`\n", inso, projplace)
+			}
 		} else {
+			qfs.RmpathUntil(projplace, tmpdir)
 			for _, q := range qsources {
 				if q.Project().String() == ps {
 					installed = append(installed, q.String())
@@ -261,7 +270,13 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 	return
 }
 
-func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Source, tmpdir string) []error {
+func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Source, tmpdir string) ([]error, string) {
+	projparts := strings.SplitN(proj.String(), "/", -1)
+	if len(projparts) == 1 {
+		return nil, ""
+	}
+	projparts[0] = tmpdir
+	projplace := filepath.Join(projparts...)
 	done := make(map[string]bool)
 	where := make(map[string]string)
 	for _, qp := range qpaths {
@@ -307,12 +322,26 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 	}
 	_, errorlist := qparallel.NMap(len(qpaths), -1, fn)
 
-	return errorlist
+	errs := make([]error, 0)
+	for _, e := range errorlist {
+		if e == nil {
+			continue
+		}
+		errs = append(errs, e)
+	}
+
+	return errs, projplace
 }
 
 func installInstallsource(tdir string, batchid string, inso *Source) (err error) {
-	finso := inso.Path()
-	py := qutil.GetPy(finso)
+	r := inso.Release()
+	fs, place := r.SourcePlace(inso.String())
+	place, err = fs.RealPath(place)
+	if err != nil {
+		return
+	}
+	py := qutil.GetPy(place)
+	finso := filepath.Join(tdir, "install.py")
 
 	extra := []string{
 		"VERSION__='" + inso.Release().String() + "'",
@@ -326,6 +355,7 @@ func installInstallsource(tdir string, batchid string, inso *Source) (err error)
 	serr = string(qutil.Ignore([]byte(serr)))
 	serr = strings.TrimSpace(serr)
 	if serr == "" && sout == "" {
+
 		return nil
 	}
 	errmsg := ""
@@ -555,7 +585,10 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 			errs = append(errs, r)
 		}
 	}
-
+	if len(buffers) != 0 {
+		b := bytes.NewBufferString(fmt.Sprintf(`d %%Run^bqtin("%s")`, batchid))
+		buffers = append(buffers, b)
+	}
 	e := qmumps.PipeTo("", buffers)
 	if e != nil {
 		e := &qerror.QError{
