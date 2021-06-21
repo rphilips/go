@@ -20,8 +20,9 @@ var stdinResolveCmd = &cobra.Command{
 	Short: "replace i4/r4/l4/m4 constructions",
 	Long:  `replace i4/r4/l4/m4 constructions`,
 	Example: `
-  qtechng stdin resolve --csv=1,3,4`,
-	Args: cobra.NoArgs,
+  qtechng stdin resolve --csv=1,3,4
+  qtechng stdin resolve "s x=m4_CO" --csv=1,3,4`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: stdinResolve,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -135,8 +136,12 @@ func stdinResolve(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 	}
-
-	reader := bufio.NewReader(os.Stdin)
+	var reader *bufio.Reader
+	if len(args) == 0 {
+		reader = bufio.NewReader(os.Stdin)
+	} else {
+		reader = bufio.NewReader(strings.NewReader(args[0]))
+	}
 
 	output := os.Stdout
 	if Fstdout != "" {

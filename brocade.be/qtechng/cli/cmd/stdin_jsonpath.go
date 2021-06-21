@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
@@ -23,8 +25,18 @@ func init() {
 }
 
 func stdinJsonpath(cmd *cobra.Command, args []string) (err error) {
-	data, err := io.ReadAll(os.Stdin)
-	output, err := qutil.Transform(data, args, Fyaml)
+	var reader *bufio.Reader
+	if len(args) == 1 {
+		reader = bufio.NewReader(os.Stdin)
+	} else {
+		reader = bufio.NewReader(strings.NewReader(args[0]))
+	}
+
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return err
+	}
+	output, err := qutil.Transform(data, Fjq, Fyaml)
 	if err != nil {
 		return err
 	}

@@ -36,7 +36,6 @@ func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) error {
 		return err
 	}
 
-	objectlist := bf.Objects()
 	textmap := make(map[string]string)
 	env := bfile.Env()
 
@@ -54,6 +53,7 @@ func (bfile *Source) BFileToMumps(batchid string, buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
+	objectlist := bf.Objects()
 	brobs := make([]*qbfile.Brob, len(objectlist))
 	for i, obj := range objectlist {
 		brobs[i] = obj.(*qbfile.Brob)

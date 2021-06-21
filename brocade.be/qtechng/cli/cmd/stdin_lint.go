@@ -23,7 +23,7 @@ var stdinLintCmd = &cobra.Command{
 
 The argument specifies the type of file: b | d | i | l | m | x
 `,
-	Args: cobra.MinimumNArgs(1),
+	Args: cobra.ExactArgs(1),
 	Example: `
   qtechng stdin lint m`,
 	RunE: stdinLint,
@@ -33,6 +33,7 @@ The argument specifies the type of file: b | d | i | l | m | x
 }
 
 func stdinLint(cmd *cobra.Command, args []string) error {
+
 	ext := args[0]
 	if !strings.HasPrefix(ext, ".") {
 		ext = "." + ext

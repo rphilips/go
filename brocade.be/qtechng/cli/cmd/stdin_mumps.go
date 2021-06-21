@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -17,7 +18,7 @@ var stdinMumpsCmd = &cobra.Command{
 	Long:  `the lines, read from stdin, are M commands and they are sent to M`,
 	Example: `
   qtechng stdin mumps`,
-	Args: cobra.NoArgs,
+	Args: cobra.MinimumNArgs(1),
 	RunE: stdinMumps,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -38,6 +39,14 @@ func init() {
 }
 
 func stdinMumps(cmd *cobra.Command, args []string) (err error) {
+	var reader *bufio.Reader
+	if len(args) == 0 {
+		reader = bufio.NewReader(os.Stdin)
+	} else {
+		Fbulk = true
+		reader = bufio.NewReader(strings.NewReader(args[0]))
+	}
+
 	if Fbulk {
 		data, err := io.ReadAll(os.Stdin)
 		if err != nil {
@@ -49,7 +58,6 @@ func stdinMumps(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 	// send line per line
-	reader := bufio.NewReader(os.Stdin)
 	err = qmumps.PipeLineTo(Fmdb, reader)
 	return err
 }

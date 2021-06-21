@@ -3,17 +3,11 @@ package xfile
 import (
 	"bytes"
 	"os"
-	"regexp"
 	"strings"
 
 	qerror "brocade.be/qtechng/lib/error"
 	qobject "brocade.be/qtechng/lib/object"
 	qutil "brocade.be/qtechng/lib/util"
-)
-
-var (
-	retagb = regexp.MustCompile(`^\s*(format|screen|text)\s+([^:\s]+)\s*:(.*)$`)
-	ws     = regexp.MustCompile(`\s+`)
 )
 
 // XFile stelt een bestand met screens en formats voor (*.x)

@@ -421,8 +421,13 @@ func x4args(ty string, args []string, hull string) (argums []string, err string)
 		buffer := make([]X4, 0)
 
 		for {
-			buffer, arg, err = x4extract(ty, arg, hull)
-			if arg == "" || err != "" {
+			var b []X4
+			b, arg, err = x4extract(ty, arg, hull)
+			if err != "" {
+				break
+			}
+			buffer = append(buffer, b...)
+			if arg == "" {
 				break
 			}
 		}
@@ -570,7 +575,7 @@ func x4varcode(args []string, ty string, hull string, x4in bool) (result X4, err
 func x4format(args []string, ty string, hull string, x4in bool) (result X4, err string) {
 	// not write
 	if hull != "" {
-		err = fmt.Sprintf("x4_format cannot be used in other x4 constructions")
+		err = "x4_format cannot be used in other x4 constructions"
 		return
 	}
 	// check on ty
@@ -596,7 +601,7 @@ func x4format(args []string, ty string, hull string, x4in bool) (result X4, err 
 		dnull = args[0]
 	}
 	if dnull == "" {
-		err = fmt.Sprintf("x4_format does not work with empty argument")
+		err = "x4_format does not work with empty argument"
 		return
 	}
 
@@ -739,13 +744,19 @@ func x4vararray(args []string, ty string, hull string, x4in bool) (result X4, er
 func x4exec(args []string, ty string, hull string, x4in bool) (result X4, err string) {
 	// not write
 	if hull != "" {
-		err = fmt.Sprintf("x4_exec cannot be used in other x4 constructions")
+		err = "x4_exec cannot be used in other x4 constructions"
 		return
 	}
 	// check on arguments
 	if len(args) != 1 {
-		err = fmt.Sprintf("x4_exec works with exactly 1 parameter")
+		err = "x4_exec works with exactly 1 parameter"
 		return
+	}
+	if x4in {
+		args, err = x4args(ty, args, "exec")
+		if err != "" {
+			return
+		}
 	}
 	result.mode = "X"
 	result.text = args[0]
@@ -755,17 +766,23 @@ func x4exec(args []string, ty string, hull string, x4in bool) (result X4, err st
 func x4if(args []string, ty string, hull string, x4in bool) (result X4, err string) {
 	// not write
 	if hull != "" {
-		err = fmt.Sprintf("x4_if cannot be used in other x4 constructions")
+		err = "x4_if cannot be used in other x4 constructions"
 		return
 	}
 
 	if len(args) != 2 {
-		err = fmt.Sprintf("x4_if works with exactly 2 parameters")
+		err = "x4_if works with exactly 2 parameters"
 		return
+	}
+	if x4in {
+		args, err = x4args(ty, args, "if")
+		if err != "" {
+			return
+		}
 	}
 	label := args[0]
 	if label == "" {
-		err = fmt.Sprintf("x4_if should have a non-emyty label")
+		err = "x4_if should have a non-emyty label"
 	}
 	result.mode = "I"
 	result.text = ":" + args[1]
@@ -776,12 +793,18 @@ func x4if(args []string, ty string, hull string, x4in bool) (result X4, err stri
 func x4select(args []string, ty string, hull string, x4in bool) (result X4, err string) {
 	// not write
 	if hull != "" {
-		err = fmt.Sprintf("x4_select cannot be used in other x4 constructions")
+		err = "x4_select cannot be used in other x4 constructions"
 		return
 	}
 	if len(args) != 3 {
-		err = fmt.Sprintf("x4_select works with exactly 3 parameters")
+		err = "x4_select works with exactly 3 parameters"
 		return
+	}
+	if x4in {
+		args, err = x4args(ty, args, "select")
+		if err != "" {
+			return
+		}
 	}
 	dnull := `"` + strings.ReplaceAll(args[0], `"`, `""`) + `"`
 	done := `"` + strings.ReplaceAll(args[1], `"`, `""`) + `"`
@@ -792,16 +815,22 @@ func x4select(args []string, ty string, hull string, x4in bool) (result X4, err 
 func x4lookupinitscreen(args []string, ty string, hull string, x4in bool) (result X4, err string) {
 	// not write
 	if hull != "" {
-		err = fmt.Sprintf("x4_lookupinitscreen cannot be used in other x4 constructions")
+		err = "x4_lookupinitscreen cannot be used in other x4 constructions"
 		return
 	}
 	if len(args) < 2 {
-		err = fmt.Sprintf("x4_lookupinitscreen works with at least 2 parameters")
+		err = "x4_lookupinitscreen works with at least 2 parameters"
 		return
 	}
 	if len(args) > 5 {
-		err = fmt.Sprintf("x4_lookupinitscreen works with no more than 5 parameters")
+		err = "x4_lookupinitscreen works with no more than 5 parameters"
 		return
+	}
+	if x4in {
+		args, err = x4args(ty, args, "lookupinitscreen")
+		if err != "" {
+			return
+		}
 	}
 	v0 := args[0]
 	v1 := args[1]
@@ -830,19 +859,25 @@ func x4lookupinitscreen(args []string, ty string, hull string, x4in bool) (resul
 func x4lookupinitformat(args []string, ty string, hull string, x4in bool) (result X4, err string) {
 	// not write
 	if hull != "" {
-		err = fmt.Sprintf("x4_lookupinitformat cannot be used in other x4 constructions")
+		err = "x4_lookupinitformat cannot be used in other x4 constructions"
 		return
 	}
 	if ty == "screen" {
 		err = "x4_lookupinitformat does not work in screens"
 	}
 	if len(args) < 2 {
-		err = fmt.Sprintf("x4_lookupinitformat works with at least 2 parameters")
+		err = "x4_lookupinitformat works with at least 2 parameters"
 		return
 	}
 	if len(args) > 5 {
-		err = fmt.Sprintf("x4_lookupinitformat works with no more than 5 parameters")
+		err = "x4_lookupinitformat works with no more than 5 parameters"
 		return
+	}
+	if x4in {
+		args, err = x4args(ty, args, "lookupinitformat")
+		if err != "" {
+			return
+		}
 	}
 	v0 := args[0]
 	v1 := args[1]

@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +18,7 @@ var stdinJSONCmd = &cobra.Command{
 	Short:   "Beautifies JSON input",
 	Long:    `Receives JSON on stdin, beautifies it and writes to stdout. Subscripts are sorted.`,
 	Example: `qtechng stdin json '{"b":"B", "a":"A"}'`,
-	Args:    cobra.NoArgs,
+	Args:    cobra.MaximumNArgs(1),
 	RunE:    stdinJSON,
 }
 
@@ -25,7 +27,14 @@ func init() {
 }
 
 func stdinJSON(cmd *cobra.Command, args []string) (err error) {
-	data, err := io.ReadAll(os.Stdin)
+	var reader *bufio.Reader
+	if len(args) == 0 {
+		reader = bufio.NewReader(os.Stdin)
+	} else {
+		reader = bufio.NewReader(strings.NewReader(args[0]))
+	}
+
+	data, err := io.ReadAll(reader)
 	if err != nil {
 		return err
 	}

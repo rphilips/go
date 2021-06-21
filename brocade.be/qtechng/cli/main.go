@@ -49,7 +49,7 @@ func main() {
 				break
 			}
 		case "file":
-			if len(os.Args) == 3 {
+			if len(os.Args) < 4 {
 				data = nil
 				break
 			}
@@ -61,20 +61,20 @@ func main() {
 				break
 			}
 			defer file.Close()
-			data, err = io.ReadAll(os.Stdin)
+			data, err = io.ReadAll(file)
 			if err != nil {
 				data = nil
 				break
 			}
 		case "json":
-			if len(os.Args) == 3 {
+			if len(os.Args) < 4 {
 				data = nil
 				break
 			}
 			data = []byte(os.Args[3])
 
 		case "url":
-			if len(os.Args) == 3 {
+			if len(os.Args) < 4 {
 				data = nil
 				break
 			}
@@ -90,7 +90,7 @@ func main() {
 				break
 			}
 		case "ssh":
-			if len(os.Args) == 3 {
+			if len(os.Args) < 4 {
 				data = nil
 				break
 			}
