@@ -85,13 +85,13 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// get 'about'
 	soutr, serrr, err := qutil.QtechNG([]string{"about", "--remote"}, "$..DATA", false, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	mr := make(map[string]string)
 	err = json.Unmarshal([]byte(soutr), &mr)
 	if err != nil {
-		Fmsg = qreport.Report(soutr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(soutr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	username := mr["!!user.username"]
@@ -151,13 +151,13 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// QtechNG
 	soutl, serrl, err := qutil.QtechNG([]string{"about"}, "$..DATA", false, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	ml := make(map[string]string)
 	err = json.Unmarshal([]byte(soutl), &ml)
 	if err != nil {
-		Fmsg = qreport.Report(soutl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(soutl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	// releases

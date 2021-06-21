@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	qfs "brocade.be/base/fs"
 	qerror "brocade.be/qtechng/lib/error"
 	qutil "brocade.be/qtechng/lib/util"
 )
@@ -23,11 +24,18 @@ type report struct {
 	Errors []error     `json:"ERRORS" yaml:"ERRORS"`
 }
 
-func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, joiner string, silent bool) string {
+func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, joiner string, silent bool, file string) string {
 	if silent {
 		return ""
 	}
 	show := report{}
+	withfile := func(s string) string {
+		if file == "" {
+			return s
+		}
+		qfs.Store(file, s, "qtech")
+		return s
+	}
 
 	// header
 
@@ -64,7 +72,7 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 
 	b, _ := json.MarshalIndent(show, "", "    ")
 	if show.Errors != nil {
-		return string(b)
+		return withfile(string(b))
 	}
 	s := string(b)
 
@@ -94,31 +102,31 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 				if err != nil {
 					z = s
 				}
-				return z
+				return withfile(z)
 			case strings.HasPrefix(s, `[`):
 				z := make([]string, 0)
 				err := json.Unmarshal([]byte(s), &z)
 				if err != nil {
-					return s
+					return withfile(s)
 				}
-				return strings.Join(z, qutil.Joiner(joiner))
+				return withfile(strings.Join(z, qutil.Joiner(joiner)))
 			}
 		}
-		return s
+		return withfile(s)
 	}
 
 	// Yaml
 	if len(s) < 5 {
 		b, _ := qutil.Yaml(show.Header)
-		return string(b)
+		return withfile(string(b))
 	}
 
 	var x interface{}
 	json.Unmarshal([]byte(s), &x)
 	y, err := qutil.Yaml(&x)
 	if err != nil {
-		return s
+		return withfile(s)
 	}
 
-	return string(y)
+	return withfile(string(y))
 }

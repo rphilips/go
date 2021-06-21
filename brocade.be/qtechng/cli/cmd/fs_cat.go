@@ -77,12 +77,12 @@ func fsCat(cmd *cobra.Command, args []string) error {
 		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false)
 		if len(files) == 0 {
 			if err != nil {
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 				return nil
 			}
 			msg := make(map[string][]string)
 			msg["copied"] = files
-			Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+			Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 			return nil
 		}
 	}

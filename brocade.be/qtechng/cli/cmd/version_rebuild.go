@@ -35,7 +35,7 @@ func versionRebuild(cmd *cobra.Command, args []string) error {
 			Ref: []string{"rebuild.notexist"},
 			Msg: []string{"version does not exist."},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 
@@ -50,6 +50,6 @@ func versionRebuild(cmd *cobra.Command, args []string) error {
 	if err == nil {
 		msg["status"] = "Rebuild SUCCESS"
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }

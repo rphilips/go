@@ -119,12 +119,12 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["grepped"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	type line struct {
@@ -197,9 +197,9 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 	msg := make(map[string][]string)
 	msg["grepped"] = grep
 	if len(errs) == 0 {
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	} else {
-		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	}
 	return nil
 }

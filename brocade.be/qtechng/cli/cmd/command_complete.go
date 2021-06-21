@@ -49,24 +49,24 @@ func commandComplete(cmdo *cobra.Command, args []string) error {
 			}
 
 		}
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 
 	verb := argums[0]
 	cmd := searchCmd(verb, rootCmd.Commands())
 	if cmd == nil {
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	cmds := cmd.Commands()
 	if !checkQtCmd(cmd, QtechType) {
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	if len(cmds) == 0 {
 		result = getComplete(cmd, argums[1:], QtechType)
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	if len(argums) == 1 {
@@ -76,13 +76,13 @@ func commandComplete(cmdo *cobra.Command, args []string) error {
 				result = append(result, parts[0])
 			}
 		}
-		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	cmd = searchCmd(argums[1], cmds)
 	result = getComplete(cmd, argums[2:], QtechType)
 
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 
 }

@@ -32,7 +32,7 @@ func init() {
 func sourceList(cmd *cobra.Command, args []string) error {
 	qpaths, result := listTransport(Fcargo)
 	qutil.EditList(Flist, Ftransported, qpaths)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
 

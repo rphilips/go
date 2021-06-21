@@ -53,7 +53,7 @@ func preProjectList(cmd *cobra.Command, args []string) {
 func projectList(cmd *cobra.Command, args []string) error {
 
 	result := projlistTransport(Fcargo)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
 

@@ -116,7 +116,7 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 		if len(result) == 0 {
 			result = nil
 		}
-		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 
@@ -127,12 +127,12 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 	}
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["noutf8"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 	fn := func(n int) (interface{}, error) {
@@ -168,6 +168,6 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 
 	msg := make(map[string]map[string][][2]int)
 	msg["noutf8"] = m
-	Fmsg = qreport.Report(msg, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent)
+	Fmsg = qreport.Report(msg, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
