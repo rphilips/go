@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -50,8 +54,14 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 		Frefname = "install-" + current
 	}
 
+	logme := log.New(os.Stderr, Frefname+" ", log.LstdFlags)
+	t0 := time.Now()
+
+	logme.Println("Start")
+
 	if !strings.Contains(QtechType, "B") {
 		qsync.Sync("", "", true)
+		logme.Println(fmt.Sprintf("Synchronised version `%s` with dev.anet.be", current))
 	}
 
 	query := &qsource.Query{
@@ -61,9 +71,13 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources, false, true)
-
+	err := qsource.Install(Frefname, sources, false, logme)
 	reportfile := filepath.Join(qregistry.Registry["scratch-dir"], Frefname+".json")
+	t1 := time.Now()
+	logme.Printf("Results also in `%s`", reportfile)
+	logme.Printf("Runtime: %v\n", t1.Sub(t0))
+	logme.Println("End")
+
 	if err != nil {
 		if err != nil {
 			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, reportfile)

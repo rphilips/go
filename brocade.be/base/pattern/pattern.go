@@ -15,7 +15,7 @@ import (
 //    `finish` ruimt op
 //    Elke `borrow` moet uiteindelijk worden gevolgd door een `release`
 func Number(nrTokens int) (borrow func(), release func(), finish func()) {
-	maxopen, _ := qregistry.Registry["qtechng-max-openfiles"]
+	maxopen, _ := qregistry.Registry["qtechng-max-parallel"]
 	num := runtime.GOMAXPROCS(-1)
 	if maxopen != "" {
 		n, e := strconv.Atoi(maxopen)

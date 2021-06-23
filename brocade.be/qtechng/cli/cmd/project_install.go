@@ -66,7 +66,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources, true, false)
+	err := qsource.Install(Frefname, sources, true, nil)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
@@ -95,7 +95,7 @@ func preProjectInstall(cmd *cobra.Command, args []string) {
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		installData(Fpayload, Fcargo, false, true, "", false)
+		installData(Fpayload, Fcargo, false, true, "", nil)
 	}
 
 	if Ftransported {

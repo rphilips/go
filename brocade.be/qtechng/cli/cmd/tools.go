@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -304,13 +305,13 @@ func addObjectData(ppayload *qclient.Payload, pcargo *qclient.Cargo, batchid str
 	pcargo.Data = buffer.Bytes()
 }
 
-func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, warnings bool, batchid string, verbose bool) {
+func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, warnings bool, batchid string, logme *log.Logger) {
 	query := ppayload.Query.Copy()
 	psources := query.Run()
 	if batchid == "" {
 		batchid = "install"
 	}
-	errs := qsource.Install(batchid, psources, warnings, verbose)
+	errs := qsource.Install(batchid, psources, warnings, logme)
 	switch err := errs.(type) {
 	case qerror.ErrorSlice:
 		if len(err) == 0 {

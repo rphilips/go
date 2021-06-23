@@ -434,6 +434,7 @@ func x4args(ty string, args []string, hull string) (argums []string, err string)
 		if err != "" {
 			return
 		}
+		buffer = handleArg(buffer, hull)
 		arg := ""
 		for _, a := range buffer {
 			arg += a.text
@@ -441,6 +442,82 @@ func x4args(ty string, args []string, hull string) (argums []string, err string)
 		argums = append(argums, arg)
 	}
 	return
+}
+
+func handleArg(bees []X4, hull string) (result []X4) {
+	if hull != "if" && hull != "select" {
+		return bees
+	}
+	if len(bees) < 2 {
+		return bees
+	}
+	result = make([]X4, 0)
+	odd := false
+	addedb := false
+	addeda := false
+	paren := false
+
+	for _, b := range bees {
+		odd = !odd
+		if !odd {
+			if addedb {
+				addedb = false
+				addeda = true
+				if len(result) != 0 {
+					b.text = "_" + b.text
+				}
+			}
+			result = append(result, b)
+			continue
+		}
+		count := strings.Count(b.text, `"`)
+		if count%2 == 0 {
+			result = append(result, b)
+			paren = false
+			continue
+		}
+		if addeda {
+			addeda = false
+			// if len(result) == 1 && strings.HasPrefix(b.text, `"`) {
+			// 	b.text = b.text[1:]
+			// 	result = append(result, b)
+			// 	continue
+			// }
+			k := strings.Index(b.text, `"`)
+			t := ""
+			p := ""
+			if paren {
+				paren = false
+				p = ")"
+			}
+			if k == 0 {
+				t = p + b.text[k+1:]
+			} else {
+				t = `_"` + b.text[:k] + `"` + p + b.text[k+1:]
+			}
+			b.text = t
+			result = append(result, b)
+			continue
+		}
+		// if b.text == `"` && len(result) == 0 {
+		// 	addedb = true
+		// 	continue
+		// }
+		k := strings.LastIndex(b.text, `"`)
+		t := ""
+		if k == 0 {
+			t = `(` + b.text
+		} else {
+			t = b.text[:k] + `(` + b.text[k:]
+		}
+		b.text = t + `"`
+		result = append(result, b)
+		addedb = true
+		paren = true
+
+	}
+	return result
+
 }
 
 func x4varruntime(args []string, ty string, hull string, x4in bool) (result X4, err string) {

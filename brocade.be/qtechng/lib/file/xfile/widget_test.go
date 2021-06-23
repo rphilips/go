@@ -110,6 +110,30 @@ func TestY(t *testing.T) {
 	}
 }
 
+func TestZ(t *testing.T) {
+	body := `format meta:
+	<table class="metascreen-table">
+	x4_if(.END_1,x4_parconstant(1)'="")
+	<span class="metascreen-lookup">m4_lookupCopy('x4_varruntime(FDid)')</span>
+.END_1`
+	widget := makewidget("format", body)
+	expect := `-:Hello World#|I:4:$G(FDedit)|-:#A#B|-:|-:#rest`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
 func makewidget(ty string, body string) *Widget {
 	widget := Widget{
 		ID:      ty + " " + "myWidget",

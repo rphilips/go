@@ -26,7 +26,7 @@ var stdinResolveCmd = &cobra.Command{
 	RunE: stdinResolve,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
-		"with-qtechtype": "B",
+		"with-qtechtype": "BP",
 	},
 }
 

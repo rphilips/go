@@ -47,7 +47,7 @@ func preSourceInstall(cmd *cobra.Command, args []string) {
 	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		installData(Fpayload, Fcargo, false, true, "", false)
+		installData(Fpayload, Fcargo, false, true, "", nil)
 	}
 
 	if Ftransported {

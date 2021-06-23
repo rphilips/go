@@ -29,12 +29,7 @@ import (
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
 
-func Install(batchid string, sources []*Source, warnings bool, verbose bool) (err error) {
-	var logme *log.Logger
-	if verbose {
-		logme = log.New(os.Stderr, batchid+" ", log.LstdFlags)
-	}
-
+func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger) (err error) {
 	if len(sources) == 0 {
 		return nil
 	}
@@ -51,10 +46,6 @@ func Install(batchid string, sources []*Source, warnings bool, verbose bool) (er
 
 	if r != sr {
 		return nil
-	}
-
-	if logme != nil {
-		logme.Println("Start")
 	}
 
 	errs := make([]error, 0)
@@ -175,9 +166,6 @@ func Install(batchid string, sources []*Source, warnings bool, verbose bool) (er
 			errs = append(errs, info)
 		}
 	}
-	if logme != nil {
-		logme.Println("End")
-	}
 
 	if len(errs) == 0 {
 
@@ -252,7 +240,8 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 				qfs.Store(filepath.Join(projplace, "__error__"), err.Error(), "qtech")
 			}
 			if logme != nil {
-				logme.Printf("Error in installing `%s: see `%s`\n", inso, projplace)
+				logme.Printf("Error in installing `%s`\n", inso)
+				logme.Printf("    see: %s\n", filepath.Join(projplace, "__error__"))
 			}
 		} else {
 			qfs.RmpathUntil(projplace, tmpdir)

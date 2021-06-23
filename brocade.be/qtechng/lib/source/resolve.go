@@ -73,6 +73,9 @@ func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, 
 	if objectmap == nil {
 		objectmap = make(map[string]qobject.Object)
 	}
+	if textmap == nil {
+		textmap = make(map[string]string)
+	}
 	body, err := source.Fetch()
 	if err != nil {
 		return err
@@ -113,12 +116,13 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 	if what == "" {
 		what = "rlmit"
 	}
-	if !bytes.Contains(body, []byte("4_")) {
+	if len(textmap) == 0 {
+		what = strings.ReplaceAll(what, "t", "")
+	}
+	if len(what) == 0 || !bytes.Contains(body, []byte("4_")) {
 		buffer.Write(body)
 		return
 	}
-	r := env["%version"]
-	split := qutil.ObjectSplitter(body)
 
 	check := true
 	t4y := strings.Contains(what, "t")
@@ -130,6 +134,9 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 		buffer.Write(body)
 		return
 	}
+	r := env["%version"]
+	split := qutil.ObjectSplitter(body)
+
 	objs := make(map[string]bool)
 	skip := make(map[string]bool)
 	for _, piece := range split {
@@ -270,14 +277,15 @@ func ResolveText(env map[string]string, body []byte, what string, notreplace []s
 			parts := strings.SplitN(spiece, "_", 2)
 			spiece = parts[0] + "_" + lgalgo + "_" + parts[1]
 		}
-		obj, _ := qutil.DeNEDFU(spiece)
+		if !strings.HasPrefix(spiece, "t4_") {
+			obj, _ := qutil.DeNEDFU(spiece)
 
-		object, ok := objectmap[obj]
-		if !ok || object == nil {
-			buffer.Write(piece)
-			continue
+			object, ok := objectmap[obj]
+			if !ok || object == nil {
+				buffer.Write(piece)
+				continue
+			}
 		}
-
 		// i4
 		if i4y && strings.HasPrefix(spiece, "i4_") {
 			err = i4ResolveText(env, spiece, what, notreplace, objectmap, textmap, buffer, "", qpath)
@@ -327,7 +335,6 @@ func i4ResolveText(env map[string]string, include string, what string, notreplac
 
 // handles t4
 func t4ResolveText(env map[string]string, text string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string, qpath string) (err error) {
-
 	content := []byte(textmap[text])
 	_, err = ResolveText(env, content, what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 	return err

@@ -543,7 +543,7 @@ func IsObjStarter(rest []byte) bool {
 	}
 	mode := rest[0]
 	switch mode {
-	case byte('m'), byte('i'):
+	case byte('m'), byte('i'), byte('t'):
 		if strings.IndexByte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", rest[3]) == -1 {
 			return false
 		}

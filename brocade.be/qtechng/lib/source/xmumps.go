@@ -66,9 +66,8 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) error {
 
 	for _, obj := range objectlist {
 		ty := obj.Type()
-		if ty == "text" {
-			id := obj.String()
-			name := strings.SplitN(id, " ", 1)[0]
+		if strings.HasPrefix(ty, "text") {
+			name := strings.TrimSpace(strings.TrimPrefix(ty, "text"))
 			textmap[name] = obj.(*qofile.Widget).Body
 		}
 	}
