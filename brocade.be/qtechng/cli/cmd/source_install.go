@@ -2,10 +2,16 @@ package cmd
 
 import (
 	"log"
+	"sort"
 	"strings"
 
+	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
+	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qserver "brocade.be/qtechng/lib/server"
+	qsource "brocade.be/qtechng/lib/source"
+	qsync "brocade.be/qtechng/lib/sync"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
@@ -31,9 +37,53 @@ func init() {
 }
 
 func sourceInstall(cmd *cobra.Command, args []string) error {
-	qpaths, result := listTransport(Fcargo)
-	qutil.EditList(Flist, Ftransported, qpaths)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+
+	current := qserver.Canon(qregistry.Registry["brocade-release"])
+	if current == "" {
+		err := &qerror.QError{
+			Ref: []string{"install.source"},
+			Msg: []string{"Registry value `brocade-release` should be a valid release"},
+		}
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
+	if Frefname == "" {
+		Frefname = "sourceinstall-" + qutil.Timestamp(true)
+	}
+
+	if !strings.Contains(QtechType, "B") {
+		qsync.Sync("", "", true)
+	}
+
+	patterns := make([]string, len(args))
+
+	for i, arg := range args {
+		patterns[i] = arg
+	}
+
+	query := &qsource.Query{
+		Release:  current,
+		Patterns: patterns,
+	}
+
+	sources := query.Run()
+
+	err := qsource.Install(Frefname, sources, true, nil)
+
+	if err != nil {
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
+	msg := make(map[string][]string)
+	if len(sources) != 0 {
+		qpaths := make([]string, len(sources))
+		for i, s := range sources {
+			qpaths[i] = s.String()
+		}
+		sort.Strings(qpaths)
+		msg["installed"] = qpaths
+	}
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
 

@@ -48,6 +48,8 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 
 	// base
 	qregistry.SetRegistry("qtechng-test", "test-entry")
+	qregistry.SetRegistry("qtechng-vc-url", "https://dev.anet.be/cgit")
+
 	qregistry.InitRegistry("qtechng-server", "dev.anet.be:22")
 	qregistry.InitRegistry("ssh-default-host", qregistry.Registry["qtechng-server"])
 	server := strings.SplitN(qregistry.Registry["qtechng-server"]+":", ":", -1)[0]

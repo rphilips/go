@@ -46,7 +46,7 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	if Frefname == "" {
-		Frefname = "install-" + qutil.Timestamp(true)
+		Frefname = "projectinstall-" + qutil.Timestamp(true)
 	}
 
 	if !strings.Contains(QtechType, "B") {

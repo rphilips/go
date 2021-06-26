@@ -335,7 +335,7 @@ func i4ResolveText(env map[string]string, include string, what string, notreplac
 
 // handles t4
 func t4ResolveText(env map[string]string, text string, what string, notreplace []string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, lgalgo string, qpath string) (err error) {
-	content := []byte(textmap[text])
+	content := []byte(textmap[text[3:]])
 	_, err = ResolveText(env, content, what, notreplace, objectmap, textmap, buffer, lgalgo, qpath)
 	return err
 }

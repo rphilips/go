@@ -134,6 +134,152 @@ func TestZ(t *testing.T) {
 	}
 }
 
+func TestS1(t *testing.T) {
+	body := `format meta:
+x4_select(<tr><td></td><td></td>,,x4_parconstant(9)>1)`
+	widget := makewidget("format", body)
+	expect := `-:format meta:#|X:w $s($$GetParVl^uwwwscr(PRvar,"9","CONSTANT","")>1:"<tr><td></td><td></td>",1:"")`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
+func TestS2(t *testing.T) {
+	body := `format meta:
+x4_select(x4_parconstant(1),,x4_parconstant(9)>1)`
+	widget := makewidget("format", body)
+	expect := `-:format meta:#|X:w $s($$GetParVl^uwwwscr(PRvar,"9","CONSTANT","")>1:$$GetParVl^uwwwscr(PRvar,"1","CONSTANT",""),1:"")`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
+func TestS3(t *testing.T) {
+	body := `format meta:
+x4_select(x4_parconstant(1),,"x4_parconstant(9)"=1)`
+	widget := makewidget("format", body)
+	expect := `-:format meta:#|X:w $s($$GetParVl^uwwwscr(PRvar,"9","CONSTANT","")=1:$$GetParVl^uwwwscr(PRvar,"1","CONSTANT",""),1:"")`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
+func TestS31(t *testing.T) {
+	body := `format meta:
+x4_select(x4_varcode(code ontdooien),x4_varcode(code bevriezen),FDfrozen)`
+	widget := makewidget("format", body)
+	expect := `-:format meta:#|X:w $s(FDfrozen:$$TrlCode^uwwwscr("code ontdooien",""),1:$$TrlCode^uwwwscr("code bevriezen",""))`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
+func TestS4(t *testing.T) {
+	body := `format meta:
+x4_varruntime(FDx)`
+	widget := makewidget("format", body)
+	expect := `-:format meta:#|X:w $$Runtime^uwwwscr("FDx","")`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
+func TestS5(t *testing.T) {
+	body := `<span x4_select(class="x4_parconstant(2)",,x4_parconstant(2)'="")>x4_select(x4_parconstant(1,raw),x4_parconstant(1),x4_parconstant(3)=1)</span>`
+	widget := makewidget("format", body)
+	expect := `-:<span |X:w $s($$GetParVl^uwwwscr(PRvar,"2","CONSTANT","")'="":"class="""_$$GetParVl^uwwwscr(PRvar,"2","CONSTANT","")_"""",1:"")|-:>|X:w $s($$GetParVl^uwwwscr(PRvar,"3","CONSTANT","")=1:$$GetParVl^uwwwscr(PRvar,"1","CONSTANT","raw"),1:$$GetParVl^uwwwscr(PRvar,"1","CONSTANT",""))|-:</span>`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
+func TestL1(t *testing.T) {
+	body := `format meta:
+x4_lookupinitscreen(docfile,set,FDdata_ill_x4_parconstant(1)_dloi,FDupload)`
+	widget := makewidget("format", body)
+	expect := `-:format meta:#|X:d %Entry^uluwake("docfile","set","FDdata_ill_"_$$GetParVl^uwwwscr(PRvar,"1","CONSTANT","")_"_dloi",$$Runtime^uwwwscr(FDupload),"")`
+	expect = strings.ReplaceAll(expect, "|", "\n")
+
+	result, err := widget.Resolve()
+
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	sresult := strings.Join(result, "|")
+	sresult = strings.ReplaceAll(sresult, "\n", "#")
+	sresult = strings.ReplaceAll(sresult, "|", "\n")
+	if sresult != expect {
+		t.Errorf("Error: [%s]\n\nExpected: \n[%s]\nFound   : \n[%s]\n", body, expect, sresult)
+	}
+}
+
 func makewidget(ty string, body string) *Widget {
 	widget := Widget{
 		ID:      ty + " " + "myWidget",

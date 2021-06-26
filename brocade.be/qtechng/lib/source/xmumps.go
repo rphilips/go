@@ -5,17 +5,25 @@ import (
 	"strings"
 
 	qmumps "brocade.be/base/mumps"
+	qerror "brocade.be/qtechng/lib/error"
 	qofile "brocade.be/qtechng/lib/file/ofile"
 	qobject "brocade.be/qtechng/lib/object"
 	qutil "brocade.be/qtechng/lib/util"
 )
 
 // WidgetsListToMumps bereidt een verzameling van Lgcodes
-func WidgetsListToMumps(batchid string, widgets []*qofile.Widget, buf *bytes.Buffer) {
+func WidgetsListToMumps(batchid string, widgets []*qofile.Widget, buf *bytes.Buffer) (errs []error) {
 	for _, pwidget := range widgets {
-		mumps := pwidget.Mumps(batchid)
+		mumps, err := pwidget.Mumps(batchid)
+		if err != nil {
+			errs = append(errs, err)
+		}
 		qmumps.Println(buf, mumps)
 	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return errs
 }
 
 // XFileToMumps schrijft een M file naar een buffer
@@ -66,8 +74,8 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) error {
 
 	for _, obj := range objectlist {
 		ty := obj.Type()
-		if strings.HasPrefix(ty, "text") {
-			name := strings.TrimSpace(strings.TrimPrefix(ty, "text"))
+		if ty == "text" {
+			name := strings.TrimSpace(strings.TrimPrefix(obj.Name(), "text"))
 			textmap[name] = obj.(*qofile.Widget).Body
 		}
 	}
@@ -108,8 +116,12 @@ func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) error {
 		}
 		widgets = append(widgets, obj.(*qofile.Widget))
 	}
-	WidgetsListToMumps(batchid, widgets, buf)
-	return nil
+	errs := WidgetsListToMumps(batchid, widgets, buf)
+	if errs == nil {
+		return nil
+	}
+
+	return qerror.ErrorSlice(errs)
 }
 
 func xdecomment(line []byte) ([]byte, []byte) {

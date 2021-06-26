@@ -32,6 +32,7 @@ func RefreshBinary() (err error) {
 		return err
 	}
 	qfs.Rmpath(tmp)
+
 	return nil
 }
 

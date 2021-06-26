@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,9 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qutil "brocade.be/qtechng/lib/util"
 )
+
+var rverb = regexp.MustCompile(`x4_varruntime\(|x4_varcoderuntime\(|x4_parconstant\(|x4_parcode\(|x4_varcode\(|x4_vararray\(|x4_format\(|x4_exec\(|x4_if\(|x4_select\(|x4_lookupinitscreen\(|x4_lookupinitformat\(`)
+var rdequote = regexp.MustCompile(`"(\$\$.*\))"`)
 
 // Widget staat voor een Brocade macro
 type Widget struct {
@@ -39,7 +43,7 @@ func (widget *Widget) SetName(id string) {
 // Type of macro
 func (widget *Widget) Type() string {
 	x := widget.ID
-	return strings.SplitN(x, " ", 1)[0]
+	return strings.SplitN(x, " ", 2)[0]
 }
 
 // Release of macro
@@ -138,18 +142,19 @@ type X4 struct {
 	mode  string
 	text  string
 	label string
+	ask   int
+	give  int
 }
 
 // Resolve maakt een lijst aan met M opdrachten
 func (widget *Widget) Resolve() ([]string, error) {
 	ty := widget.Type()
-	lineno, _ := strconv.Atoi(widget.Lineno())
 	if ty == "text" {
 		return nil, nil
 	}
 
 	body := widget.Body
-	buffer := make([]X4, 0)
+
 	if strings.HasPrefix(widget.ID, "format $") || strings.HasPrefix(widget.ID, "format @") {
 		return []string{"-:" + body}, nil
 	}
@@ -157,14 +162,17 @@ func (widget *Widget) Resolve() ([]string, error) {
 	if body == "" {
 		return []string{"-:"}, nil
 	}
+
+	lineno, _ := strconv.Atoi(widget.Lineno())
+	x4all := make([]X4, 0)
 	for body != "" {
-		buf, s, e := x4extract(ty, body, "")
+		x4s, s, e := x4extract(ty, body, "")
 		body = s
 		if e != "" {
 			err := &qerror.QError{
 				Ref:     []string{"xfile.parse.extract"},
 				Version: widget.Release(),
-				File:    widget.EditFile(),
+				QPath:   widget.EditFile(),
 				Lineno:  lineno,
 				Object:  widget.ID,
 				Msg:     []string{e},
@@ -172,24 +180,24 @@ func (widget *Widget) Resolve() ([]string, error) {
 
 			return nil, err
 		}
-		if len(buf) == 0 {
+		if len(x4s) == 0 {
 			continue
 		}
-		if len(buffer) != 0 && buffer[len(buffer)-1].mode == "I" {
-			buf0 := buf[0]
-			if buf0.mode == "-" {
-				k := strings.Index(buf0.text, "\n")
-				if k != -1 {
-					buf[0].text = buf0.text[k+1:]
-				}
-			}
-		}
-		buffer = append(buffer, buf...)
+		// if len(x4all) != 0 && x4all[len(x4all)-1].mode == "I" {
+		// 	buf0 := buf[0]
+		// 	if buf0.mode == "-" {
+		// 		k := strings.Index(buf0.text, "\n")
+		// 		if k != -1 {
+		// 			buf[0].text = buf0.text[k+1:]
+		// 		}
+		// 	}
+		// }
+		x4all = append(x4all, x4s...)
 	}
 
 	ilabels := make([]int, 0)
 
-	for i, x4def := range buffer {
+	for i, x4def := range x4all {
 		if x4def.label == "" {
 			continue
 		}
@@ -197,44 +205,38 @@ func (widget *Widget) Resolve() ([]string, error) {
 	}
 
 	if len(ilabels) == 0 {
-		result := packX4(buffer)
+		result := packX4(x4all)
 		return stringX4(result), nil
-	}
-	for len(ilabels) != 0 {
-		ilabel := ilabels[len(ilabels)-1]
-		ilabels = ilabels[:len(ilabels)-1]
-		label := buffer[ilabel].label
-		ok := false
-		for i := ilabel + 1; i < len(buffer); i++ {
-			buffer, ok = findLabel(buffer, i, label)
-			if ok {
-				break
-			}
+	} else {
+		for i := 0; i < len(ilabels); i++ {
+			j := ilabels[len(ilabels)-i-1]
+			x4all, _ = findLabel(x4all, j)
 		}
 	}
 
-	for i, x4def := range buffer {
+	for i, x4def := range x4all {
 		label := x4def.label
 		if label == "" {
 			continue
 		}
+		ask := x4def.ask
 		found := false
-		for j := i + 1; j < len(buffer); j++ {
-			if buffer[j].mode != "L" {
+		for j := i + 1; j < len(x4all); j++ {
+			if x4all[j].mode != "L" {
 				continue
 			}
-			if buffer[j].text != label {
+			if x4all[j].give != ask {
 				continue
 			}
 			found = true
-			buffer[i].text = strconv.Itoa(j+1) + x4def.text
+			x4all[i].text = strconv.Itoa(j+1) + x4def.text
 			break
 		}
 		if !found {
 			err := &qerror.QError{
 				Ref:     []string{"xfile.parse.label"},
 				Version: widget.Release(),
-				File:    widget.EditFile(),
+				QPath:   widget.EditFile(),
 				Lineno:  lineno,
 				Object:  widget.ID,
 				Msg:     []string{"label `" + label + "` not found"},
@@ -243,15 +245,16 @@ func (widget *Widget) Resolve() ([]string, error) {
 			return nil, err
 		}
 	}
-	for i := range buffer {
-		if buffer[i].mode != "L" {
+	for i := range x4all {
+		if x4all[i].mode != "L" {
 			continue
 		}
-		buffer[i].mode = "-"
-		buffer[i].text = ""
+		x4all[i].mode = "-"
+		x4all[i].text = ""
 	}
+	//result := packX4(x4all)
 
-	return stringX4(buffer), nil
+	return stringX4(x4all), nil
 }
 
 func stringX4(x4s []X4) []string {
@@ -291,236 +294,234 @@ func packX4(x4s []X4) (result []X4) {
 	return
 }
 
-func findLabel(buffer []X4, from int, label string) ([]X4, bool) {
+func findLabel(buffer []X4, index int) ([]X4, bool) {
 	ok := false
-	for i := from; i < len(buffer); i++ {
+	label := buffer[index].label
+	if label == "" {
+		return buffer, true
+	}
+	for i := index + 1; i < len(buffer); i++ {
 		x4def := buffer[i]
 		mode := x4def.mode
-		text := x4def.text
-		if mode != "-" && mode != "L" {
-			continue
-		}
-		if mode == "L" && text == label {
-			return buffer, true
-		}
 		if mode == "L" {
 			continue
 		}
+		text := x4def.text
 
-		k := strings.Index(text, label)
-		if k == -1 {
+		if !strings.Contains(text, label) {
 			continue
 		}
-		before := strings.TrimRight(text[:k], " \t\r")
-		if before != "" && !strings.HasSuffix(before, "\n") {
+		parts := strings.SplitN(text, label, -1)
+		here := -1
+		for z := 0; z < len(parts)-1; z++ {
+
+			k := strings.LastIndex(parts[z], "\n")
+			if k == -1 && z != 0 {
+				continue
+			}
+			before := parts[z][k+1:]
+			if strings.TrimSpace(before) != "" {
+				continue
+			}
+			after := parts[1+z]
+			if after != "" && strings.TrimLeft(after, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_") != after {
+				continue
+			}
+			ok = true
+			here = z
+			break
+		}
+		if !ok {
 			continue
 		}
-		after := text[k+len(label):]
-		if after != "" && strings.TrimLeft(after, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_") != after {
-			continue
-		}
-		ok = true
-		xi := X4{
-			mode: "-",
-			text: before,
-		}
+		buffer[index].ask = index + 1
+		x := append([]X4{}, buffer[:i]...)
+		before := strings.Join(parts[:here+1], label)
+		after := strings.Join(parts[here+1:], label)
+		xi := buffer[i]
+		xi.text = before
+		x = append(x, xi)
 		xii := X4{
 			mode: "L",
 			text: label,
+			give: index + 1,
 		}
-		xiii := X4{
-			mode: "-",
-			text: after,
+		x = append(x, xii)
+		if after != "" {
+			xiii := X4{
+				mode: "-",
+				text: after,
+			}
+			x = append(x, xiii)
 		}
-		buffer = append(buffer[:i], append([]X4{xi, xii, xiii}, buffer[i+1:]...)...)
-		break
+		x = append(x, buffer[i+1:]...)
+		return x, ok
 	}
 	return buffer, ok
 }
 
-func x4extract(ty string, body string, hull string) (buffer []X4, rest string, err string) {
-	buffer = make([]X4, 0)
-	k := strings.Index(body, "x4_")
-	switch k {
-	case -1:
+func x4extract(ty string, body string, hull string) (x4s []X4, rest string, err string) {
+	x4s = make([]X4, 0)
+	here := rverb.FindStringIndex(body)
+	if here == nil {
 		if body != "" {
-			buffer = append(buffer, X4{
+			x4s = append(x4s, X4{
 				mode: "-",
 				text: body,
 			})
 		}
 		rest = ""
 		return
-	case 0:
-	default:
-		buffer = append(buffer, X4{
-			mode: "-",
-			text: body[:k],
-		})
-		body = body[k:]
 	}
-	body = body[3:]
-	rest = strings.TrimLeft(body, "abcdefghijklmnopqrstuvwxyz")
-	if len(rest) == len(body) {
-		buffer = append(buffer, X4{
+
+	k1 := here[0]
+	k2 := here[1] - 1
+	verb := body[k1+3 : k2]
+	rest = body[k2:]
+	if !strings.ContainsRune(rest, ')') {
+		x4s = append(x4s, X4{
 			mode: "-",
-			text: "x4_",
+			text: body,
 		})
+		rest = ""
+		return
+	}
+	argums, until, err := qutil.BuildArgs(rest)
+	if err != "" {
+		x4s = append(x4s, X4{
+			mode: "-",
+			text: body,
+		})
+		rest = ""
+		return
+	}
+	if len(argums) == 0 {
+		x4s = append(x4s, X4{
+			mode: "-",
+			text: body,
+		})
+		err = "Missing arguments"
+		rest = ""
 		return
 	}
 
-	verb := body[:len(body)-len(rest)]
-	x4inrest := strings.Contains(rest, "x4_")
-	args, until, err := qutil.BuildArgs(rest)
-	rest = rest[len(until):]
-	if err != "" {
-		return
+	args := make([]string, len(argums))
+	for i, arg := range argums {
+		if strings.ContainsAny(arg, "«»⟦⟧") {
+			arg = strings.ReplaceAll(arg, "«", "")
+			arg = strings.ReplaceAll(arg, "»", "")
+			arg = strings.ReplaceAll(arg, "⟦", "")
+			arg = strings.ReplaceAll(arg, "⟧", "")
+		}
+		args[i] = arg
 	}
+
+	rest = rest[len(until):]
 
 	var result X4
 	switch verb {
 	case "varruntime":
-		result, err = x4varruntime(args, ty, hull, x4inrest)
+		result, err = x4varruntime(args, ty, hull)
 	case "varcoderuntime":
-		result, err = x4varcoderuntime(args, ty, hull, x4inrest)
+		result, err = x4varcoderuntime(args, ty, hull)
 	case "parconstant":
-		result, err = x4parconstant(args, ty, hull, x4inrest)
+		result, err = x4parconstant(args, ty, hull)
 	case "parcode":
-		result, err = x4parcode(args, ty, hull, x4inrest)
+		result, err = x4parcode(args, ty, hull)
 	case "varcode":
-		result, err = x4varcode(args, ty, hull, x4inrest)
+		result, err = x4varcode(args, ty, hull)
 	case "vararray":
-		result, err = x4vararray(args, ty, hull, x4inrest)
+		result, err = x4vararray(args, ty, hull)
 	case "format":
-		result, err = x4format(args, ty, hull, x4inrest)
+		result, err = x4format(args, ty, hull)
 	case "exec":
-		result, err = x4exec(args, ty, hull, x4inrest)
+		result, err = x4exec(args, ty, hull)
 	case "if":
-		result, err = x4if(args, ty, hull, x4inrest)
+		result, err = x4if(args, ty, hull)
 	case "select":
-		result, err = x4select(args, ty, hull, x4inrest)
+		result, err = x4select(args, ty, hull)
 	case "lookupinitscreen":
-		result, err = x4lookupinitscreen(args, ty, hull, x4inrest)
+		result, err = x4lookupinitscreen(args, ty, hull)
 	case "lookupinitformat":
-		result, err = x4lookupinitformat(args, ty, hull, x4inrest)
+		result, err = x4lookupinitformat(args, ty, hull)
 	}
 
 	if err != "" {
+		x4s = append(x4s, X4{
+			mode: "-",
+			text: body,
+		})
+		rest = ""
 		return
 	}
-	buffer = append(buffer, result)
+	x4s = append(x4s, X4{
+		mode: "-",
+		text: body[:k1],
+	})
+
+	x4s = append(x4s, result)
 	return
 }
 
-func x4args(ty string, args []string, hull string) (argums []string, err string) {
-	for _, arg := range args {
-		if !strings.Contains(arg, "x4_") {
-			argums = append(argums, arg)
+func mexpr(arg string, quote bool) string {
+	if !strings.Contains(arg, "x4_") {
+		if !quote {
+			return arg
+		}
+		return `"` + strings.ReplaceAll(arg, `"`, `""`) + `"`
+	}
+	rest := arg
+	x4all := make([]X4, 0)
+	for {
+		x4s, rest1, _ := x4extract("format", rest, "if")
+		x4all = append(x4all, x4s...)
+		if rest1 == "" || rest == rest1 {
+			break
+		}
+		rest = rest1
+	}
+	result := ""
+	t := ""
+	for _, x4 := range x4all {
+		if x4.mode == "-" && x4.text != "" {
+			t += x4.text
 			continue
 		}
-		buffer := make([]X4, 0)
+		if t != "" {
 
-		for {
-			var b []X4
-			b, arg, err = x4extract(ty, arg, hull)
-			if err != "" {
-				break
+			if quote {
+				t = `"` + strings.ReplaceAll(t, `"`, `""`) + `"`
 			}
-			buffer = append(buffer, b...)
-			if arg == "" {
-				break
-			}
-		}
-		if err != "" {
-			return
-		}
-		buffer = handleArg(buffer, hull)
-		arg := ""
-		for _, a := range buffer {
-			arg += a.text
-		}
-		argums = append(argums, arg)
-	}
-	return
-}
-
-func handleArg(bees []X4, hull string) (result []X4) {
-	if hull != "if" && hull != "select" {
-		return bees
-	}
-	if len(bees) < 2 {
-		return bees
-	}
-	result = make([]X4, 0)
-	odd := false
-	addedb := false
-	addeda := false
-	paren := false
-
-	for _, b := range bees {
-		odd = !odd
-		if !odd {
-			if addedb {
-				addedb = false
-				addeda = true
-				if len(result) != 0 {
-					b.text = "_" + b.text
-				}
-			}
-			result = append(result, b)
-			continue
-		}
-		count := strings.Count(b.text, `"`)
-		if count%2 == 0 {
-			result = append(result, b)
-			paren = false
-			continue
-		}
-		if addeda {
-			addeda = false
-			// if len(result) == 1 && strings.HasPrefix(b.text, `"`) {
-			// 	b.text = b.text[1:]
-			// 	result = append(result, b)
-			// 	continue
-			// }
-			k := strings.Index(b.text, `"`)
-			t := ""
-			p := ""
-			if paren {
-				paren = false
-				p = ")"
-			}
-			if k == 0 {
-				t = p + b.text[k+1:]
+			if result != "" && quote {
+				result += "_" + t
 			} else {
-				t = `_"` + b.text[:k] + `"` + p + b.text[k+1:]
+
+				result += t
 			}
-			b.text = t
-			result = append(result, b)
-			continue
+			t = ""
 		}
-		// if b.text == `"` && len(result) == 0 {
-		// 	addedb = true
-		// 	continue
-		// }
-		k := strings.LastIndex(b.text, `"`)
-		t := ""
-		if k == 0 {
-			t = `(` + b.text
+		if result != "" && quote {
+			result += "_" + x4.text
 		} else {
-			t = b.text[:k] + `(` + b.text[k:]
+			result += x4.text
 		}
-		b.text = t + `"`
-		result = append(result, b)
-		addedb = true
-		paren = true
-
 	}
-	return result
+	if t != "" {
+		if quote {
+			t = `"` + strings.ReplaceAll(t, `"`, `""`) + `"`
+		}
+		if result != "" && quote {
+			result += "_" + t
+		} else {
 
+			result += t
+		}
+		t = ""
+	}
+	return rdequote.ReplaceAllString(result, `$1`)
 }
 
-func x4varruntime(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4varruntime(args []string, ty string, hull string) (result X4, err string) {
 	if hull != "" {
 		switch hull {
 		case "exec", "if", "select", "lookupinitscreen", "lookupinitformat":
@@ -535,16 +536,13 @@ func x4varruntime(args []string, ty string, hull string, x4in bool) (result X4, 
 		return
 	}
 
-	if x4in {
-		args, err = x4args(ty, args, "varruntime")
-		if err != "" {
-			return
-		}
-	}
-
 	enc := ""
 	if len(args) == 2 {
-		switch args[1] {
+		check := args[1]
+		if strings.Contains(check, "_") {
+			check = strings.SplitN(check, "_", 2)[0]
+		}
+		switch check {
 		case "raw", "html", "js", "url", "num", "date", "xml":
 			enc = args[1]
 		default:
@@ -571,7 +569,7 @@ func x4varruntime(args []string, ty string, hull string, x4in bool) (result X4, 
 	return
 }
 
-func x4varcoderuntime(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4varcoderuntime(args []string, ty string, hull string) (result X4, err string) {
 	if hull != "" {
 		switch hull {
 		case "exec", "if", "select", "lookupinitscreen", "lookupinitformat":
@@ -584,12 +582,6 @@ func x4varcoderuntime(args []string, ty string, hull string, x4in bool) (result 
 	if len(args) > 1 {
 		err = fmt.Sprintf("x4_varcoderuntime cannot work with %d arguments", len(args))
 		return
-	}
-	if x4in {
-		args, err = x4args(ty, args, "varcoderuntime")
-		if err != "" {
-			return
-		}
 	}
 
 	// argument transformation
@@ -609,7 +601,7 @@ func x4varcoderuntime(args []string, ty string, hull string, x4in bool) (result 
 	return
 }
 
-func x4varcode(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4varcode(args []string, ty string, hull string) (result X4, err string) {
 	if hull != "" {
 		switch hull {
 		case "exec", "if", "select", "lookupinitscreen", "lookupinitformat":
@@ -622,13 +614,6 @@ func x4varcode(args []string, ty string, hull string, x4in bool) (result X4, err
 	if len(args) > 1 {
 		err = fmt.Sprintf("x4_varcode cannot work with %d arguments", len(args))
 		return
-	}
-
-	if x4in {
-		args, err = x4args(ty, args, "varcode")
-		if err != "" {
-			return
-		}
 	}
 
 	// argument transformation
@@ -649,7 +634,7 @@ func x4varcode(args []string, ty string, hull string, x4in bool) (result X4, err
 	return
 }
 
-func x4format(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4format(args []string, ty string, hull string) (result X4, err string) {
 	// not write
 	if hull != "" {
 		err = "x4_format cannot be used in other x4 constructions"
@@ -663,13 +648,6 @@ func x4format(args []string, ty string, hull string, x4in bool) (result X4, err 
 	if len(args) > 1 {
 		err = fmt.Sprintf("x4_format cannot work with %d arguments", len(args))
 		return
-	}
-
-	if x4in {
-		args, err = x4args(ty, args, "format")
-		if err != "" {
-			return
-		}
 	}
 
 	// argument transformation
@@ -689,7 +667,7 @@ func x4format(args []string, ty string, hull string, x4in bool) (result X4, err 
 	return
 }
 
-func x4parconstant(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4parconstant(args []string, ty string, hull string) (result X4, err string) {
 	if hull != "" {
 		switch hull {
 		case "exec", "if", "select", "lookupinitscreen", "lookupinitformat":
@@ -706,12 +684,6 @@ func x4parconstant(args []string, ty string, hull string, x4in bool) (result X4,
 		err = fmt.Sprintf("x4_parconstant cannot work with %d arguments", len(args))
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "parconstant")
-		if err != "" {
-			return
-		}
-	}
 
 	switch hull {
 	case "", "exec", "if", "select", "lookupinitscreen", "lookupinitformat":
@@ -720,13 +692,13 @@ func x4parconstant(args []string, ty string, hull string, x4in bool) (result X4,
 		return
 	}
 
-	if x4in {
-		args, err = x4args(ty, args, "varcoderuntime")
-	}
-
 	enc := ""
 	if len(args) == 2 {
-		switch args[1] {
+		check := args[1]
+		if strings.Contains(check, "_") {
+			check = strings.SplitN(check, "_", 2)[0]
+		}
+		switch check {
 		case "raw", "html", "js", "url", "num", "date", "xml":
 			enc = args[1]
 		default:
@@ -751,7 +723,7 @@ func x4parconstant(args []string, ty string, hull string, x4in bool) (result X4,
 	return
 }
 
-func x4parcode(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4parcode(args []string, ty string, hull string) (result X4, err string) {
 	if hull != "" {
 		switch hull {
 		case "exec", "if", "select", "lookupinitscreen", "lookupinitformat":
@@ -768,12 +740,7 @@ func x4parcode(args []string, ty string, hull string, x4in bool) (result X4, err
 		err = fmt.Sprintf("x4_parcode cannot work with %d arguments", len(args))
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "parcode")
-		if err != "" {
-			return
-		}
-	}
+
 	// argument transformation
 	dnull := ""
 	if len(args) != 0 {
@@ -791,19 +758,13 @@ func x4parcode(args []string, ty string, hull string, x4in bool) (result X4, err
 	return
 }
 
-func x4vararray(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4vararray(args []string, ty string, hull string) (result X4, err string) {
 	// check on arguments
 	if len(args) > 1 {
 		err = fmt.Sprintf("x4_vararray cannot work with %d arguments", len(args))
 		return
 	}
 
-	if x4in {
-		args, err = x4args(ty, args, "vararray")
-		if err != "" {
-			return
-		}
-	}
 	// argument transformation
 	dnull := ""
 	if len(args) != 0 {
@@ -818,7 +779,7 @@ func x4vararray(args []string, ty string, hull string, x4in bool) (result X4, er
 	}
 	return
 }
-func x4exec(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4exec(args []string, ty string, hull string) (result X4, err string) {
 	// not write
 	if hull != "" {
 		err = "x4_exec cannot be used in other x4 constructions"
@@ -829,18 +790,15 @@ func x4exec(args []string, ty string, hull string, x4in bool) (result X4, err st
 		err = "x4_exec works with exactly 1 parameter"
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "exec")
-		if err != "" {
-			return
-		}
-	}
+
+	par := mexpr(args[0], false)
+
 	result.mode = "X"
-	result.text = args[0]
+	result.text = par
 	return
 }
 
-func x4if(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4if(args []string, ty string, hull string) (result X4, err string) {
 	// not write
 	if hull != "" {
 		err = "x4_if cannot be used in other x4 constructions"
@@ -851,23 +809,17 @@ func x4if(args []string, ty string, hull string, x4in bool) (result X4, err stri
 		err = "x4_if works with exactly 2 parameters"
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "if")
-		if err != "" {
-			return
-		}
-	}
-	label := args[0]
+	label := strings.TrimSpace(args[0])
 	if label == "" {
 		err = "x4_if should have a non-emyty label"
 	}
 	result.mode = "I"
-	result.text = ":" + args[1]
+	result.text = ":" + mexpr(strings.TrimSpace(args[1]), false)
 	result.label = label
 
 	return
 }
-func x4select(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4select(args []string, ty string, hull string) (result X4, err string) {
 	// not write
 	if hull != "" {
 		err = "x4_select cannot be used in other x4 constructions"
@@ -877,19 +829,13 @@ func x4select(args []string, ty string, hull string, x4in bool) (result X4, err 
 		err = "x4_select works with exactly 3 parameters"
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "select")
-		if err != "" {
-			return
-		}
-	}
-	dnull := `"` + strings.ReplaceAll(args[0], `"`, `""`) + `"`
-	done := `"` + strings.ReplaceAll(args[1], `"`, `""`) + `"`
+
 	result.mode = "X"
-	result.text = fmt.Sprintf(`w $s(%s:%s,1:%s)`, args[2], dnull, done)
+	result.text = fmt.Sprintf(`w $s(%s:%s,1:%s)`, mexpr(args[2], false), mexpr(args[0], true), mexpr(args[1], true))
 	return
 }
-func x4lookupinitscreen(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+
+func x4lookupinitscreen(args []string, ty string, hull string) (result X4, err string) {
 	// not write
 	if hull != "" {
 		err = "x4_lookupinitscreen cannot be used in other x4 constructions"
@@ -903,37 +849,27 @@ func x4lookupinitscreen(args []string, ty string, hull string, x4in bool) (resul
 		err = "x4_lookupinitscreen works with no more than 5 parameters"
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "lookupinitscreen")
-		if err != "" {
-			return
-		}
-	}
-	v0 := args[0]
-	v1 := args[1]
-	v2 := ""
-	v3 := ""
-	v4 := ""
+	v0 := mexpr(args[0], true)
+	v1 := mexpr(args[1], true)
+	v2 := `""`
+	v3 := ``
+	v4 := `""`
 	switch len(args) {
 	case 5:
-		v2 = args[2]
-		v3 = args[3]
-		v4 = args[4]
+		v2 = mexpr(args[2], true)
+		v3 = mexpr(args[3], false)
+		v4 = mexpr(args[4], true)
 	case 4:
-		v2 = args[2]
-		v3 = args[3]
+		v2 = mexpr(args[2], true)
+		v3 = mexpr(args[3], false)
 	case 3:
-		v2 = args[2]
+		v2 = mexpr(args[2], true)
 	}
-	v0 = `"` + strings.ReplaceAll(v0, `"`, `""`) + `"`
-	v1 = `"` + strings.ReplaceAll(v1, `"`, `""`) + `"`
-	v2 = `"` + strings.ReplaceAll(v2, `"`, `""`) + `"`
-	v4 = `"` + strings.ReplaceAll(v4, `"`, `""`) + `"`
 	result.mode = "X"
 	result.text = fmt.Sprintf(`d %%Entry^uluwake(%s,%s,%s,$$Runtime^uwwwscr(%s),%s)`, v0, v1, v2, v3, v4)
 	return
 }
-func x4lookupinitformat(args []string, ty string, hull string, x4in bool) (result X4, err string) {
+func x4lookupinitformat(args []string, ty string, hull string) (result X4, err string) {
 	// not write
 	if hull != "" {
 		err = "x4_lookupinitformat cannot be used in other x4 constructions"
@@ -950,16 +886,11 @@ func x4lookupinitformat(args []string, ty string, hull string, x4in bool) (resul
 		err = "x4_lookupinitformat works with no more than 5 parameters"
 		return
 	}
-	if x4in {
-		args, err = x4args(ty, args, "lookupinitformat")
-		if err != "" {
-			return
-		}
-	}
+
 	v0 := args[0]
 	v1 := args[1]
 	v2 := ""
-	v3 := ""
+	v3 := ``
 	v4 := ""
 	switch len(args) {
 	case 5:
@@ -981,7 +912,7 @@ func x4lookupinitformat(args []string, ty string, hull string, x4in bool) (resul
 }
 
 // Mumps genereert een M structuur
-func (widget *Widget) Mumps(batchid string) (mumps qmumps.MUMPS) {
+func (widget *Widget) Mumps(batchid string) (mumps qmumps.MUMPS, err error) {
 
 	m := qmumps.M{
 		Subs:   []string{"ZA"},
@@ -1006,7 +937,7 @@ func (widget *Widget) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	mumps = append(mumps, m)
 
-	parts := strings.SplitN(widget.Type(), " ", 2)
+	parts := strings.SplitN(widget.ID, " ", 2)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "type"},
@@ -1029,7 +960,7 @@ func (widget *Widget) Mumps(batchid string) (mumps qmumps.MUMPS) {
 	}
 	mumps = append(mumps, m)
 
-	lines, _ := widget.Resolve()
+	lines, err := widget.Resolve()
 
 	for i, line := range lines {
 		recno := strconv.Itoa(i + 1)
