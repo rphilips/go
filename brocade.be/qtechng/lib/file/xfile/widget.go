@@ -392,15 +392,10 @@ func x4extract(ty string, body string, hull string) (x4s []X4, rest string, err 
 			mode: "-",
 			text: body,
 		})
-		rest = ""
-		return
-	}
-	if len(argums) == 0 {
-		x4s = append(x4s, X4{
-			mode: "-",
-			text: body,
-		})
-		err = "Missing arguments"
+		if len(rest) > 32 {
+			rest = rest[:32]
+		}
+		err += " > " + verb + ": " + rest
 		rest = ""
 		return
 	}

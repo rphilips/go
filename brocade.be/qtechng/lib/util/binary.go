@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"os/exec"
 	"path"
+	"runtime"
+	"strings"
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
@@ -32,6 +34,26 @@ func RefreshBinary() (err error) {
 		return err
 	}
 	qfs.Rmpath(tmp)
+
+	if runtime.GOOS == "windows" {
+
+		tmp, err := qfs.TempFile("", "qtechng-bin-")
+		if err != nil {
+			return err
+		}
+		url := strings.ReplaceAll(qregistry.Registry["qtechng-url"], "qtechng.exe", "qtechngw.exe")
+		err = qfs.GetURL(url, tmp, "tempfile")
+		if err != nil {
+			return err
+		}
+		pexe = strings.ReplaceAll(pexe, "qtechng.exe", "qtechngw.exe")
+		err = qfs.RefreshEXE(pexe, tmp)
+		if err != nil {
+			return err
+		}
+		qfs.Rmpath(tmp)
+
+	}
 
 	return nil
 }
