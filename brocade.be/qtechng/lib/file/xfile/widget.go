@@ -386,7 +386,7 @@ func x4extract(ty string, body string, hull string) (x4s []X4, rest string, err 
 		rest = ""
 		return
 	}
-	argums, until, err := qutil.BuildArgs(rest)
+	args, until, err := qutil.BuildArgs(rest)
 	if err != "" {
 		x4s = append(x4s, X4{
 			mode: "-",
@@ -398,17 +398,6 @@ func x4extract(ty string, body string, hull string) (x4s []X4, rest string, err 
 		err += " > " + verb + ": " + rest
 		rest = ""
 		return
-	}
-
-	args := make([]string, len(argums))
-	for i, arg := range argums {
-		if strings.ContainsAny(arg, "«»⟦⟧") {
-			arg = strings.ReplaceAll(arg, "«", "")
-			arg = strings.ReplaceAll(arg, "»", "")
-			arg = strings.ReplaceAll(arg, "⟦", "")
-			arg = strings.ReplaceAll(arg, "⟧", "")
-		}
-		args[i] = arg
 	}
 
 	rest = rest[len(until):]
@@ -808,8 +797,15 @@ func x4if(args []string, ty string, hull string) (result X4, err string) {
 	if label == "" {
 		err = "x4_if should have a non-emyty label"
 	}
+	arg1 := mexpr(strings.TrimSpace(args[1]), false)
+	if strings.ContainsAny(arg1, "«»⟦⟧") {
+		arg1 = strings.ReplaceAll(arg1, "«", "")
+		arg1 = strings.ReplaceAll(arg1, "»", "")
+		arg1 = strings.ReplaceAll(arg1, "⟦", "")
+		arg1 = strings.ReplaceAll(arg1, "⟧", "")
+	}
 	result.mode = "I"
-	result.text = ":" + mexpr(strings.TrimSpace(args[1]), false)
+	result.text = ":" + arg1
 	result.label = label
 
 	return
