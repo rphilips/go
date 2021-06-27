@@ -79,7 +79,12 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 	}
 
 	fnoutf8 := func(reader io.Reader) (result [][2]int, err error) {
-		breader := bufio.NewReader(reader)
+		var breader *bufio.Reader
+		if reader == nil {
+			breader = bufio.NewReader(os.Stdin)
+		} else {
+			breader = bufio.NewReader(reader)
+		}
 		count := 0
 		repl := rune(65533)
 		for {

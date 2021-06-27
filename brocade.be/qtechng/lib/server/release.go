@@ -133,7 +133,15 @@ func (release Release) Init() (err error) {
 		fs.MkdirAll(dir, 0o770)
 	}
 
-	if !strings.ContainsRune(qtechType, 'B') || qregistry.Registry["qtechng-git-enable"] == "1" {
+	if !strings.ContainsRune(qtechType, 'B') {
+		return nil
+	}
+
+	if qregistry.Registry["qtechng-git-enable"] != "1" {
+		return nil
+	}
+
+	if release.String() != "0.00" {
 		return nil
 	}
 
