@@ -3,9 +3,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"time"
 
+	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
 	qutil "brocade.be/qtechng/lib/util"
@@ -51,7 +54,10 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	last := time.Now().AddDate(0, 0, -1)
+
 	for {
+		supportDirs(&last, startdir, Fversion)
 		d, _ := time.ParseDuration(strconv.Itoa(Fsleep) + "s")
 		time.Sleep(d)
 		plocfils, errlist := qclient.Find(startdir, nil, Fversion, true, nil, true)
@@ -78,5 +84,41 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 		fmt.Println(string(b))
 		continue
 	}
+}
 
+func supportDirs(last *time.Time, startdir string, version string) {
+	d := time.Since(*last)
+	if d.Hours() < 1 {
+		return
+	}
+	matches, err := qfs.Find(startdir, []string{".qtechng"}, true, true, false)
+	if err != nil {
+		return
+	}
+	qpaths := make(map[string]bool)
+	for _, f := range matches {
+		dirname := filepath.Dir(f)
+		dir := new(qclient.Dir)
+		dir.Dir = dirname
+		m := dir.Repository()
+		qdirs, ok := m[version]
+		if !ok || len(qdirs) == 0 {
+			continue
+		}
+		for qdir := range qdirs {
+			qpaths[qdir] = true
+		}
+	}
+
+	result := make([]string, len(qpaths))
+	i := 0
+	for qdir := range qpaths {
+		result[i] = qdir
+		i++
+	}
+	sort.Strings(result)
+
+	b, _ := json.Marshal(result)
+	target := filepath.Join(qregistry.Registry["qtechng-support-dir"], "qdir.json")
+	qfs.Store(target, b, "qtech")
 }

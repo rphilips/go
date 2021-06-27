@@ -56,10 +56,7 @@ func sourceInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	patterns := make([]string, len(args))
-
-	for i, arg := range args {
-		patterns[i] = arg
-	}
+	copy(patterns, args)
 
 	query := &qsource.Query{
 		Release:  current,
