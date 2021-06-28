@@ -2,7 +2,6 @@ package util
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"path"
 	"runtime"
@@ -47,7 +46,6 @@ func RefreshBinary() (err error) {
 			return nil
 		}
 		url := u[:k+1] + "qtechngw.exe"
-		fmt.Println("url:", url, pexe)
 		err = qfs.GetURL(url, tmp, "tempfile")
 		if err != nil {
 			return err

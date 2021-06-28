@@ -1022,7 +1022,7 @@ func EditList(list string, transported bool, qpaths []string) {
 		return
 	}
 
-	listname := filepath.Join(supportdir, "data", list+".lst")
+	listname := filepath.Join(supportdir, "lists", list+".lst")
 	qfs.Mkdir(filepath.Dir(listname), "process")
 	qfs.Store(listname, strings.Join(qpaths, "\n"), "process")
 }
