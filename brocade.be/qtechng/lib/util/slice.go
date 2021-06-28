@@ -20,7 +20,7 @@ func CmpByteSlice(first [][]byte, second [][]byte) bool {
 	}
 	i := 0
 	for i < len(first) {
-		if bytes.Compare(first[i], second[i]) != 0 {
+		if !bytes.Equal(first[i], second[i]) {
 			return false
 		}
 		i++

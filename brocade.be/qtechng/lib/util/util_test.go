@@ -701,7 +701,6 @@ func TestIsObjStarter(t *testing.T) {
 			return
 		}
 	}
-	return
 
 }
 func TestSplitter01(t *testing.T) {
@@ -813,7 +812,6 @@ func TestSplitter01(t *testing.T) {
 			return
 		}
 	}
-	return
 }
 
 func TestJoiner(t *testing.T) {

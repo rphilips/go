@@ -28,14 +28,14 @@ func TestPathURI(t *testing.T) {
 
 func TestAbsPath(t *testing.T) {
 
-	path, err := AbsPath("$BROCADE_REGISTRY")
-	_, err = os.ReadFile(path)
+	path, _ := AbsPath("$BROCADE_REGISTRY")
+	_, err := os.ReadFile(path)
 
 	if err != nil {
 		t.Errorf("fs.AbsPath fails")
 	}
 
-	path, err = AbsPath("$BROCADE_REGISTRY/shouldnotexist")
+	path, _ = AbsPath("$BROCADE_REGISTRY/shouldnotexist")
 	_, err = os.ReadFile(path)
 	if err == nil {
 		t.Errorf("fs.AbsPath fails")
@@ -68,7 +68,7 @@ func TestStore(t *testing.T) {
 	if err != nil {
 		t.Errorf("Should succeed")
 	}
-	data, err := Fetch(filename)
+	data, _ := Fetch(filename)
 	if string(data) != write {
 		t.Errorf("Should succeed 2")
 	}
@@ -83,8 +83,8 @@ func TestMkdir(t *testing.T) {
 	}
 	write := "Hello World"
 	filename := filepath.Join(dirname, "test.txt")
-	err = Store(filename, write, "process")
-	data, err := Fetch(filename)
+	Store(filename, write, "process")
+	data, _ := Fetch(filename)
 	if string(data) != write {
 		t.Errorf("Should succeed 2")
 	}

@@ -516,7 +516,7 @@ func lgobble(rest []byte) (obj string) {
 			return ""
 		}
 		algo := parts[0][1:]
-		if strings.IndexRune("NEDFU", rune(obj[0])) == -1 {
+		if !strings.ContainsRune("NEFDU", rune(obj[0])) {
 			return ""
 		}
 		if algo != "" && algo != "js" && algo != "py" && algo != "php" {

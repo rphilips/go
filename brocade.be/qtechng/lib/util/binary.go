@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"path"
 	"runtime"
@@ -28,7 +29,6 @@ func RefreshBinary() (err error) {
 	if err != nil {
 		return err
 	}
-
 	err = qfs.RefreshEXE(pexe, tmp)
 	if err != nil {
 		return err
@@ -41,7 +41,13 @@ func RefreshBinary() (err error) {
 		if err != nil {
 			return err
 		}
-		url := strings.ReplaceAll(qregistry.Registry["qtechng-url"], "qtechng.exe", "qtechngw.exe")
+		u := qregistry.Registry["qtechng-url"]
+		k := strings.LastIndex(u, "/")
+		if k < 0 {
+			return nil
+		}
+		url := u[:k+1] + "qtechngw.exe"
+		fmt.Println("url:", url, pexe)
 		err = qfs.GetURL(url, tmp, "tempfile")
 		if err != nil {
 			return err
@@ -51,7 +57,7 @@ func RefreshBinary() (err error) {
 		if err != nil {
 			return err
 		}
-		qfs.Rmpath(tmp)
+		//qfs.Rmpath(tmp)
 
 	}
 

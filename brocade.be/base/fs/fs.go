@@ -20,7 +20,6 @@ import (
 	"time"
 
 	qpattern "brocade.be/base/pattern"
-	"brocade.be/base/registry"
 	qregistry "brocade.be/base/registry"
 
 	fatomic "github.com/natefinch/atomic"
@@ -28,9 +27,9 @@ import (
 
 var (
 	// ErrNoHome error "No HOME found"
-	ErrNoHome = errors.New("No HOME found")
+	ErrNoHome = errors.New("no HOME found")
 	// ErrNotPathMode indicates not a valid pathmode
-	ErrNotPathMode = errors.New("Not a filemode")
+	ErrNotPathMode = errors.New("not a filemode")
 )
 
 // AbsPath creates absolute path for a filename
@@ -215,7 +214,7 @@ func QSetPathMode() bool {
 	if runtime.GOOS == "windows" {
 		return false
 	}
-	if registry.Registry["qtechng-type"] == "W" {
+	if qregistry.Registry["qtechng-type"] == "W" {
 		return false
 	}
 	return true
@@ -730,7 +729,7 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 	if keepmtime {
 		mtime := si.ModTime()
 		atime := time.Now()
-		err = os.Chtimes(dst, atime, mtime)
+		os.Chtimes(dst, atime, mtime)
 	}
 
 	entries, err := os.ReadDir(src)
@@ -765,16 +764,6 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 		}
 	}
 	return
-}
-
-// cleanGlobPath prepares path for glob matching.
-func cleanGlobPath(path string) string {
-	switch path {
-	case "":
-		return "."
-	default:
-		return path[0 : len(path)-1] // chop off trailing separator
-	}
 }
 
 // glob searches for files matching pattern in the directory dir
@@ -817,18 +806,6 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 		}
 	}
 	return
-}
-
-// hasMeta reports whether path contains any of the magic characters
-// recognized by filepath.Match.
-func hasMeta(path string) bool {
-	for i := 0; i < len(path); i++ {
-		c := path[i]
-		if c == '*' || c == '?' || c == '[' || runtime.GOOS == "windows" && c == '\\' {
-			return true
-		}
-	}
-	return false
 }
 
 // Find lists regular files matching one of a list of patterns on the basename
@@ -932,29 +909,27 @@ func SameFile(file1, file2 string) bool {
 // Refresh executable
 func RefreshEXE(oldexe string, newexe string) error {
 	old, err := os.Stat(oldexe)
-	if err != nil {
-		return err
+	shadow := ""
+	if err == nil {
+		new, err := os.Stat(newexe)
+		if err != nil {
+			return err
+		}
+		if os.SameFile(old, new) {
+			return nil
+		}
+		shadow = oldexe + ".bak"
+		os.Remove(shadow)
+		err = os.Rename(oldexe, shadow)
+		if err != nil {
+			return err
+		}
 	}
-	new, err := os.Stat(newexe)
-	if err != nil {
-		return err
-	}
-	if os.SameFile(old, new) {
-		return nil
-	}
-
 	source, err := os.Open(newexe)
 	if err != nil {
 		return err
 	}
 	defer source.Close()
-
-	shadow := oldexe + ".bak"
-	os.Remove(shadow)
-	err = os.Rename(oldexe, shadow)
-	if err != nil {
-		return err
-	}
 
 	destination, err := os.Create(oldexe)
 	if err != nil {
@@ -967,7 +942,10 @@ func RefreshEXE(oldexe string, newexe string) error {
 		return err
 	}
 
-	CopyMeta(shadow, oldexe, false)
+	if shadow != "" {
+
+		CopyMeta(shadow, oldexe, false)
+	}
 
 	return err
 

@@ -76,17 +76,17 @@ func BMSearch(haystack []byte, needle []byte, bad [][]int, good []int, full []in
 		return false
 	}
 	if lneedle < 4 {
-		return bytes.Index(haystack, needle) != -1
+		return bytes.Contains(haystack, needle)
 	}
 	if lhaystack < 64 {
-		return bytes.Index(haystack, needle) != -1
+		return bytes.Contains(haystack, needle)
 	}
 	max := lhaystack
 	if max > 1024 {
 		max = 1024
 	}
 	if bytes.IndexByte(haystack[:max], 0) != -1 {
-		return bytes.Index(haystack, needle) != -1
+		return bytes.Contains(haystack, needle)
 	}
 
 	k := lneedle - 1

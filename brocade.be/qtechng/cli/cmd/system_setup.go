@@ -173,6 +173,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
+
 	if ml["!BuildTime"] != mr["!BuildTime"] {
 		qutil.RefreshBinary()
 
