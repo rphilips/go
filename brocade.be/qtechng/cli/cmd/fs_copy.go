@@ -54,7 +54,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	ask := false
 	if len(args) == 0 {
 		ask = true
-		fmt.Print("Enter search string     : ")
+		fmt.Print("Enter search string in name: ")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -64,7 +64,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	}
 	if len(args) == 1 {
 		ask = true
-		fmt.Print("Enter replacement string: ")
+		fmt.Print("Enter replacement string   : ")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		args = append(args, text)
@@ -73,7 +73,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	if len(args) == 2 {
 		ask = true
 		for {
-			fmt.Print("File/directory          : ")
+			fmt.Print("File/directory             : ")
 			text, _ := reader.ReadString('\n')
 			text = strings.TrimSuffix(text, "\n")
 			if text == "" {
@@ -86,7 +86,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if ask && !Fdelete {
-		fmt.Print("Delete ?                : <n>")
+		fmt.Print("Delete ?                   : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -97,7 +97,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if ask && !Fregexp {
-		fmt.Print("Regexp ?                : <n>")
+		fmt.Print("Regexp ?                   : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -109,7 +109,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	}
 
 	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
+		fmt.Print("Recurse ?                  : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -122,7 +122,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 
 	if ask && len(Fpattern) == 0 {
 		for {
-			fmt.Print("Pattern on basename     : ")
+			fmt.Print("Pattern on basename        : ")
 			text, _ := reader.ReadString('\n')
 			text = strings.TrimSuffix(text, "\n")
 			if text == "" {
@@ -133,7 +133,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	}
 
 	if ask && !Fconfirm {
-		fmt.Print("Confirm first time ?    : <n>")
+		fmt.Print("Confirm first time ?       : <n>")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {

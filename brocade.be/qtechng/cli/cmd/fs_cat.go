@@ -103,7 +103,7 @@ func fsCat(cmd *cobra.Command, args []string) error {
 		io.Copy(output, f)
 		f.Close()
 	}
-	if len(args) == 1 || args[0] == "-" {
+	if len(args) == 1 && args[0] == "-" {
 		io.Copy(output, os.Stdin)
 	}
 	return nil

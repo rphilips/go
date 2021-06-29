@@ -29,9 +29,11 @@ var fileLoopCmd = &cobra.Command{
 }
 
 var Fsleep int
+var Fonce bool
 
 func init() {
 	fileLoopCmd.Flags().IntVar(&Fsleep, "sleep", -1, "Sleep before restarting")
+	fileLoopCmd.Flags().BoolVar(&Fonce, "once", false, "Run once")
 	fileCmd.AddCommand(fileLoopCmd)
 }
 
@@ -40,7 +42,7 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 {
 		startdir = qutil.AbsPath(args[0], Fcwd)
 	}
-	if Fsleep < 1 {
+	if !Fonce && Fsleep < 1 {
 		x := qregistry.Registry["qtechng-workstation-introspect"]
 		if x != "" {
 			y, err := strconv.Atoi(x)
@@ -50,7 +52,7 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 			Fsleep = y
 		}
 	}
-	if Fsleep < 1 {
+	if !Fonce && Fsleep < 1 {
 		return nil
 	}
 
@@ -58,19 +60,30 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 
 	for {
 		supportDirs(&last, startdir, Fversion)
-		d, _ := time.ParseDuration(strconv.Itoa(Fsleep) + "s")
-		time.Sleep(d)
+		if !Fonce {
+			d, _ := time.ParseDuration(strconv.Itoa(Fsleep) + "s")
+			time.Sleep(d)
+		}
 		plocfils, errlist := qclient.Find(startdir, nil, Fversion, true, nil, true)
 		if errlist != nil {
 			fmt.Println("[]")
+			if Fonce {
+				break
+			}
 			continue
 		}
 		if plocfils == nil {
 			fmt.Println("[]")
+			if Fonce {
+				break
+			}
 			continue
 		}
 		if len(plocfils) == 0 {
 			fmt.Println("[]")
+			if Fonce {
+				break
+			}
 			continue
 		}
 		tip := make([]string, 0, len(plocfils))
@@ -82,8 +95,12 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 		}
 		b, _ := json.Marshal(tip)
 		fmt.Println(string(b))
+		if Fonce {
+			break
+		}
 		continue
 	}
+	return nil
 }
 
 func supportDirs(last *time.Time, startdir string, version string) {
