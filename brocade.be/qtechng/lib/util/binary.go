@@ -45,7 +45,7 @@ func RefreshBinary() (err error) {
 		if k < 0 {
 			return nil
 		}
-		url := u[:k+1] + "qtechngw.exe"
+		url := u[:k+1] + "qtechngw-windows-amd64"
 		err = qfs.GetURL(url, tmp, "tempfile")
 		if err != nil {
 			return err

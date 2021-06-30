@@ -16,10 +16,11 @@
                 value='{{index .Vars "clear"}}' onclick='return handleCheck("clear")' />
             <input type='hidden' name='clear' id='clear' value='{{index .Vars "clear"}}' data-on='1'
                 data-off='0' />
+                <input type='hidden' name='checkout' id='checkout' value='1' />
         </label>
-        <label class="input-label-primary" for="mode"><span>Auto </span><input type="radio" name="mode" id="mode_auto" value='auto' /></label>
-        <label class="input-label-primary" for="mode"><span>Tree </span><input type="radio" name="mode" id="mode_tree" value='tree' /></label>
-        <label class="input-label-primary" for="mode"><span>Flat </span><input type="radio" name="mode" id="mode_flat" value='' /></label>
+        <label class="input-label-primary" for="mode"><span>Auto </span><input type="radio" name="mode" id="mode_auto" value='auto' {{if (.VarsH.auto)}}checked{{end}} /></label>
+        <label class="input-label-primary" for="mode"><span>Tree </span><input type="radio" name="mode" id="mode_tree" value='tree' {{if (.VarsH.tree)}}checked{{end}} /></label>
+        <label class="input-label-primary" for="mode"><span>Flat </span><input type="radio" name="mode" id="mode_flat" value='' {{if (.VarsH.flat)}}checked{{end}} /></label>
 
 
         <label class="input-label-secondary" for="editlist"><span>Edit list </span><input type="text" name="editlist"

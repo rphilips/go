@@ -965,3 +965,19 @@ func GetURL(url string, fname string, pathmode string) error {
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
+
+func IsSubDir(parent string, ksubdir string) bool {
+	parent, _ = AbsPath(parent)
+	ksubdir, _ = AbsPath(ksubdir)
+	if parent == ksubdir {
+		return true
+	}
+	rel, e := filepath.Rel(parent, ksubdir)
+	if e != nil {
+		return false
+	}
+	if strings.HasPrefix(rel, "..") {
+		return false
+	}
+	return true
+}

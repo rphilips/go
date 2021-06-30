@@ -416,7 +416,6 @@ func Find(cwd string, files []string, release string, recurse bool, qpattern []s
 				continue
 			}
 		}
-
 		plocfil.Place = place
 		qpath := plocfil.QPath
 		ofile, qok := qpaths[qpath]

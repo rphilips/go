@@ -646,6 +646,9 @@ func Log(v ...interface{}) {
 
 // GetPy find the suitable python executable
 func GetPy(pyscript string) string {
+	if !strings.HasSuffix(pyscript, ".py") {
+		return ""
+	}
 	cwd, e := os.Getwd()
 	if e != nil {
 		return ""
@@ -670,7 +673,7 @@ func GetPy(pyscript string) string {
 	}
 	dirname := pyscript
 	for {
-		dirname := filepath.Dir(dirname)
+		dirname = filepath.Dir(dirname)
 		if dirname == "" || filepath.Dir(dirname) == dirname {
 			return "py2"
 		}

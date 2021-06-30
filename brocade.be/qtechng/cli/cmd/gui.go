@@ -275,7 +275,9 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							menulistener <- "stop"
 							return
 						}
-						handleSearch(ui, &guiFiller)
+						if len(args) == 0 {
+							handleSearch(ui, &guiFiller)
+						}
 						menulistener <- handleCheckout(ui, &guiFiller, args)
 					})
 				case "property":
@@ -349,7 +351,10 @@ func loadVars(menu string, guiFiller *GuiFiller) {
 			varsH[k] = true
 		}
 	}
-	for _, k := range []string{"tolower", "regexp", "checkout", "clear"} {
+	if vars["tree"] != "1" && vars["flat"] != "1" {
+		vars["auto"] = "1"
+	}
+	for _, k := range []string{"tolower", "regexp", "checkout", "clear", "auto", "flat", "tree"} {
 		_, ok := vars[k]
 		if !ok {
 			vars[k] = "0"
@@ -403,7 +408,7 @@ func handleCheckin(cwd string, args []string) string {
 
 func handleTouch(cwd string, args []string) string {
 	argums := []string{
-		"file",
+		"fs",
 		"touch",
 		"--cwd=" + cwd,
 		"--recurse",
@@ -411,7 +416,7 @@ func handleTouch(cwd string, args []string) string {
 	if len(args) != 0 {
 		argums = append(argums, args...)
 	}
-	sout, _, _ := qutil.QtechNG(argums, "$..file", true, cwd)
+	sout, _, _ := qutil.QtechNG(argums, "$..touched", true, cwd)
 	return sout
 }
 
@@ -544,12 +549,28 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
 
 func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
 	f := make(map[string]string)
-	for _, key := range []string{"qpattern", "version", "mode", "yaml", "jsonpath", "editlist", "clear"} {
+	for _, key := range []string{"qpattern", "version", "yaml", "jsonpath", "editlist", "clear", "checkout"} {
 		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
 		f[key] = value
 	}
+	for _, mode := range []string{"auto", "tree", "flat"} {
+		value := ui.Eval(`document.getElementById('mode_` + mode + `').checked ? '1' : '0'`).String()
+		if value == "1" {
+			f["mode"] = mode
+			break
+		}
+	}
 	guiFiller.Vars = f
 	storeVars("checkout", *guiFiller)
+
+	if len(args) != 0 {
+		first := args[0]
+		absfirst := qutil.AbsPath(first, Fcwd)
+		workdir := qregistry.Registry["qtechng-work-dir"]
+		if qfs.IsSubDir(workdir, absfirst) {
+		}
+
+	}
 
 	if f["qpattern"] == "" || f["version"] == "" {
 		return "search"
@@ -557,8 +578,16 @@ func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
 	argums := []string{
 		"source",
 	}
+
 	if f["checkout"] == "1" {
-		argums = append(argums, "co", "--auto")
+		mode := "--" + f["mode"]
+		if mode == "--flat" {
+			mode = ""
+		}
+		argums = append(argums, "co")
+		if mode != "" {
+			argums = append(argums, mode)
+		}
 		if f["clear"] == "1" {
 			argums = append(argums, "--clear")
 		}
