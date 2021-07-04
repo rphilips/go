@@ -33,9 +33,9 @@
             <input type='hidden' name='regexp' id='regexp' value='{{index .Vars "regexp"}}' data-on='1' data-off='0' />
         </label>
         <label class="input-label-primary" for="checkout0"><span>Checkout ?</span>
-            <input type='checkbox' name='checkout0' id='checkout0' {{if (.VarsH.checkout)}}checked{{end}}
-                value='{{index .Vars "checkout"}}' onclick='return handleCheck("checkout")' />
-            <input type='hidden' name='checkout' id='checkout' value='{{index .Vars "checkout"}}' data-on='1'
+            <input type='checkbox' name='checkout0' id='checkout0' 
+                value='0' onclick='return handleCheck("checkout")' />
+            <input type='hidden' name='checkout' id='checkout' value='0' data-on='1'
                 data-off='0' />
         </label>
         <label class="input-label-primary" for="clear0"><span>Clear ?</span>

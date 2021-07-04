@@ -918,6 +918,10 @@ func RefreshEXE(oldexe string, newexe string) error {
 		if os.SameFile(old, new) {
 			return nil
 		}
+		err = CopyFile(oldexe, newexe, "", false)
+		if err == nil {
+			return nil
+		}
 		shadow = oldexe + ".bak"
 		os.Remove(shadow)
 		err = os.Rename(oldexe, shadow)
@@ -967,9 +971,15 @@ func GetURL(url string, fname string, pathmode string) error {
 }
 
 func IsSubDir(parent string, ksubdir string) bool {
+	if ksubdir == "" {
+		return false
+	}
 	parent, _ = AbsPath(parent)
 	ksubdir, _ = AbsPath(ksubdir)
 	if parent == ksubdir {
+		return true
+	}
+	if strings.HasPrefix(ksubdir, strings.TrimSuffix(parent, string(os.PathSeparator))+string(os.PathSeparator)) {
 		return true
 	}
 	rel, e := filepath.Rel(parent, ksubdir)

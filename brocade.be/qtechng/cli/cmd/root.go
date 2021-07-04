@@ -450,12 +450,7 @@ func checkCwd(cwd string) (dir string, err error) {
 func checkUID(uid string) (usr string) {
 	usr = uid
 	if usr == "" {
-		switch {
-		case strings.ContainsRune(QtechType, 'W'):
-			usr = qregistry.Registry["qtechng-user"]
-		default:
-			usr = ""
-		}
+		usr = qregistry.Registry["qtechng-user"]
 	}
 	if usr == "" {
 		pusr, e := user.Current()

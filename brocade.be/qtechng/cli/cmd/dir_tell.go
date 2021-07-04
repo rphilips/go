@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	qfs "brocade.be/base/fs"
@@ -146,4 +147,85 @@ func dirTell(cmd *cobra.Command, args []string) error {
 	}
 	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
+}
+
+func dirProps(dirname string) (version string, qdir string) {
+
+	kr := ""
+	if strings.Contains(QtechType, "P") {
+		kr = qregistry.Registry["brocade-release"]
+	}
+
+	if kr == "" && strings.Contains(QtechType, "W") {
+		kr = qregistry.Registry["qtechng-version"]
+	}
+	if kr == "" {
+		kr = "0.00"
+	}
+	dir := new(qclient.Dir)
+	dir.Dir = dirname
+	m := dir.Repository()
+	if len(m) != 0 {
+		_, ok := m[kr]
+		if ok {
+			version = kr
+		} else {
+			vs := make([]string, len(m))
+			i := 0
+			for v := range m {
+				vs[i] = v
+				i++
+			}
+			sort.Strings(vs)
+			version = vs[len(vs)-1]
+		}
+		qdirs := m[version]
+		for d := range qdirs {
+			qdir = d
+			break
+		}
+		if len(qdirs) == 1 {
+			return version, qdir
+		}
+	}
+
+	workdir := qregistry.Registry["qtechng-work-dir"]
+	if workdir == "" {
+		return "", ""
+	}
+	if !qfs.IsSubDir(workdir, dirname) {
+		return version, qdir
+	}
+
+	version = kr
+	subdir := ""
+	if workdir != "" {
+		workdir, _ = qfs.AbsPath(workdir)
+		dirname, _ = qfs.AbsPath(dirname)
+		relpath, _ := filepath.Rel(workdir, dirname)
+		if !strings.HasPrefix(relpath, "..") {
+			subdir = filepath.ToSlash(relpath)
+			subdir = strings.TrimPrefix(subdir, "./")
+			if subdir == "." {
+				subdir = ""
+			}
+			qdir = ""
+			found := false
+			parts := strings.SplitN(subdir, "/", -1)
+			re := regexp.MustCompile(`^[0-9]+\.[0-9][0-9]$`)
+			for _, part := range parts {
+				ok := re.MatchString(part)
+				if !ok {
+					if !found {
+						qdir += "/" + part
+					}
+					continue
+				}
+				found = true
+				version = part
+			}
+		}
+	}
+
+	return version, qdir
 }

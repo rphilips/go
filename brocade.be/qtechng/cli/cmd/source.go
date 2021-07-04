@@ -10,6 +10,9 @@ var Fauto bool
 // Ftree ? writes according to the hierarchie
 var Ftree bool
 
+// Froot ? writes according to the hierarchie
+var Froot bool
+
 // Flist identifier of list of the results, if in auto mode
 var Flist string
 
@@ -28,8 +31,9 @@ func init() {
 	rootCmd.AddCommand(sourceCmd)
 	sourceCmd.PersistentFlags().StringVar(&Flist, "list", "", "Lists for convenient editing")
 	sourceCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
-	sourceCmd.PersistentFlags().BoolVar(&Ftree, "tree", false, "Files with hierarchy intact")
+	sourceCmd.PersistentFlags().BoolVar(&Ftree, "tree", false, "Files with the repository hierarchy intact")
 	sourceCmd.PersistentFlags().BoolVar(&Fauto, "auto", false, "Files according to the registry")
+	sourceCmd.PersistentFlags().BoolVar(&Froot, "root", false, "Files according to the directory structure")
 	sourceCmd.PersistentFlags().StringSliceVar(&Fnature, "nature", []string{}, "QtechNG nature of file")
 	sourceCmd.PersistentFlags().StringSliceVar(&Fcu, "cuser", []string{}, "UID of creator")
 	sourceCmd.PersistentFlags().StringSliceVar(&Fmu, "muser", []string{}, "UID of last modifier")

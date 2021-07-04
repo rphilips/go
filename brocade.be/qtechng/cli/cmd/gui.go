@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/url"
@@ -66,8 +67,11 @@ func init() {
 }
 
 func guiMenu(cmd *cobra.Command, args []string) error {
-	if len(args) == 1 && (args[0] == Fcwd || qfs.SameFile(args[0], Fcwd)) {
+	if Fmenu != "checkout" && len(args) == 1 && (args[0] == Fcwd || qfs.SameFile(args[0], Fcwd)) {
 		args = args[1:]
+	}
+	if Fmenu == "checkout" && len(args) != 0 {
+		Fmenu = "checkoutargs"
 	}
 	standalone := Fmenu != "menu" && Fmenu != ""
 	width := 520
@@ -108,6 +112,22 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 				switch Fmenu {
 				case "touch":
 					sout := handleTouch(Fcwd, args)
+					bx, _ := json.Marshal(sout)
+					sx := string(bx)
+					st := ""
+					if len(sx) > 2 {
+						st = sx[:2]
+					}
+					k := strings.IndexAny(st, "[{")
+					if k == 1 {
+						guiFiller.Vars["jsondisplay"] = sx
+						guiFiller.Vars["yamldisplay"] = ""
+					} else {
+						guiFiller.Vars["jsondisplay"] = ""
+						guiFiller.Vars["yamldisplay"] = sx
+					}
+				case "checkoutargs":
+					sout := handleCheckoutArgs(Fcwd, args)
 					bx, _ := json.Marshal(sout)
 					sx := string(bx)
 					st := ""
@@ -238,6 +258,17 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
 						ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
 					}
+				case "checkoutargs":
+					sx := guiFiller.Vars["jsondisplay"]
+					if sx != "" {
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
+					}
+					sx = guiFiller.Vars["yamldisplay"]
+					if sx != "" {
+						ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
+						ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
+					}
 				}
 
 				switch Fmenu {
@@ -256,6 +287,10 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 					})
 
 				case "touch":
+					ui.Bind("golangfunc", func(indicator string) {
+						menulistener <- "stop"
+					})
+				case "checkoutargs":
 					ui.Bind("golangfunc", func(indicator string) {
 						menulistener <- "stop"
 					})
@@ -563,15 +598,6 @@ func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
 	guiFiller.Vars = f
 	storeVars("checkout", *guiFiller)
 
-	if len(args) != 0 {
-		first := args[0]
-		absfirst := qutil.AbsPath(first, Fcwd)
-		workdir := qregistry.Registry["qtechng-work-dir"]
-		if qfs.IsSubDir(workdir, absfirst) {
-		}
-
-	}
-
 	if f["qpattern"] == "" || f["version"] == "" {
 		return "search"
 	}
@@ -607,9 +633,11 @@ func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
 	if f["regexp"] == "1" {
 		argums = append(argums, "--regexp")
 	}
+
 	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
 	ui.Eval(`document.getElementById("busy").style="display:block;")`)
 	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1", Fcwd)
+	fmt.Println(sout)
 	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
 	if err != nil {
 		serr += "\n\nError:" + err.Error()
@@ -629,6 +657,57 @@ func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
 		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
 	}
 	return "checkout"
+}
+
+func handleCheckoutArgs(cwd string, args []string) string {
+	files := make([]string, 0)
+	dirs := make([]string, 0)
+	for _, arg := range args {
+		arg := qutil.AbsPath(arg, cwd)
+		if qfs.IsFile(arg) {
+			files = append(files, arg)
+			continue
+		}
+		if qfs.IsDir(arg) {
+			dirs = append(dirs, arg)
+		}
+	}
+
+	qpaths := make([]string, 0)
+
+	if len(files) != 0 {
+		argums := []string{"file", "refresh"}
+		argums = append(argums, files...)
+		sout, _, _ := qutil.QtechNG(argums, "$..DATA", false, cwd)
+		if sout != "" {
+			slice := make([]string, 0)
+			e := json.Unmarshal([]byte(sout), &slice)
+			if e == nil {
+				qpaths = append(qpaths, slice...)
+			}
+		}
+
+	}
+	if len(dirs) != 0 {
+		argums := []string{"dir", "refresh"}
+		argums = append(argums, dirs...)
+		sout, _, _ := qutil.QtechNG(argums, "$..DATA", false, cwd)
+		if sout != "" {
+			slice := make([]string, 0)
+			e := json.Unmarshal([]byte(sout), &slice)
+			if e == nil {
+				qpaths = append(qpaths, slice...)
+			}
+		}
+	}
+	argums := []string{"file", "list", "--recurse"}
+	for _, qp := range qpaths {
+		argums = append(argums, "--qpattern="+qp)
+	}
+
+	sout, _, _ := qutil.QtechNG(argums, "$..qpath", true, cwd)
+
+	return sout
 }
 
 func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {

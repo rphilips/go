@@ -136,6 +136,6 @@ func supportDirs(last *time.Time, startdir string, version string) {
 	sort.Strings(result)
 
 	b, _ := json.Marshal(result)
-	target := filepath.Join(qregistry.Registry["qtechng-support-dir"], "qdir.json")
+	target := filepath.Join(qregistry.Registry["qtechng-support-dir"], "qdir_list.json")
 	qfs.Store(target, b, "qtech")
 }

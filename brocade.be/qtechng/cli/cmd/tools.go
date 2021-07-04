@@ -455,7 +455,7 @@ func listObjectTransport(pcargo *qclient.Cargo) []byte {
 	return pcargo.Data
 }
 
-func storeTransport() ([]string, []storer, []error) {
+func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 	result := make([]storer, len(Fcargo.Transports))
 	qpaths := make([]string, len(Fcargo.Transports))
 	errlist := make([]error, 0)
@@ -465,14 +465,21 @@ func storeTransport() ([]string, []storer, []error) {
 	dirs := make(map[string][]int)
 	idirs := make([]string, 0)
 
-	coredir := Fcwd
+	coredir := dirname
+	if !Froot {
+		qdir = ""
+	}
 	if Fauto {
 		Ftree = true
 	}
+	if Froot {
+		Ftree = true
+	}
+
 	if Fauto && strings.ContainsRune(QtechType, 'W') {
 		coredir = qregistry.Registry["qtechng-work-dir"]
 		if coredir == "" {
-			coredir = Fcwd
+			coredir = dirname
 			Fclear = false
 			Fauto = false
 		}
@@ -483,7 +490,8 @@ func storeTransport() ([]string, []storer, []error) {
 		qpath := locfil.QPath
 		place := ""
 		if Ftree {
-			parts := strings.SplitN(qpath, "/", -1)
+			qp := strings.TrimPrefix(qpath, qdir)
+			parts := strings.SplitN(qp, "/", -1)
 			parts[0] = coredir
 			place = filepath.Join(parts...)
 		} else {
