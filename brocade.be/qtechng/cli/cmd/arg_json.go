@@ -8,9 +8,17 @@ import (
 )
 
 var argJSONCmd = &cobra.Command{
-	Use:     "json",
-	Short:   "Start qtechng with arguments in JSON",
-	Long:    `Launches qtechng with the arguments in a JSON string`,
+	Use:   "json",
+	Short: "Start qtechng with arguments in JSON",
+	Long: `Launches qtechng with the arguments in a JSON string.
+	
+The command works with exactly one argument: a string containing a JSON array.
+
+The following applies:
+    - The first element should always be *qtechng*
+    - Whitespace is never stripped
+    - Empty arguments remain in the argument list
+`,
 	Args:    cobra.ExactArgs(1),
 	Example: `qtechng arg json '["system", "info"]'`,
 	RunE:    argJSON,

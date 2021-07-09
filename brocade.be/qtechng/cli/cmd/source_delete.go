@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"log"
-	"strings"
+	"fmt"
 
-	qclient "brocade.be/qtechng/lib/client"
 	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
@@ -16,9 +14,9 @@ var sourceDeleteCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source delete --qpattern=/application/*.m`,
 	RunE:    sourceDelete,
-	PreRun:  preSourceDelete,
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
-		"remote-allowed": "no",
+		"remote-allowed": "yes",
 		"with-qtechtype": "BW",
 		"fill-version":   "yes",
 	},
@@ -28,37 +26,51 @@ func init() {
 	sourceCmd.AddCommand(sourceDeleteCmd)
 }
 
+// func sourceDelete(cmd *cobra.Command, args []string) error {
+// 	if Fcargo.Error != nil {
+// 		Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+// 	} else {
+// 		err, result := listTransport(Fcargo)
+// 		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+// 	}
+// 	return nil
+// }
+
+// func preSourceDelete(cmd *cobra.Command, args []string) {
+// 	if !Ftransported {
+// 		var err error
+// 		Fcargo, err = fetchData(args, Ffilesinproject, nil, false)
+// 		if err != nil {
+// 			log.Fatal("cmd/source_delete/1:\n", err)
+// 		}
+// 	}
+
+// 	if strings.ContainsRune(QtechType, 'B') {
+// 		delData(Fpayload, Fcargo)
+// 	}
+
+// 	if Ftransported {
+// 		if Fcargo.Error == nil {
+// 			err := qclient.SendCargo(Fcargo)
+// 			if err != nil {
+// 				log.Fatal("cmd/source_delete/2:\n", err)
+// 			}
+// 		} else {
+// 			Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+// 		}
+// 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
+// 	}
+
+// }
+
 func sourceDelete(cmd *cobra.Command, args []string) error {
-	_, result := listTransport(Fcargo)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+
+	squery := buildSQuery(args, Ffilesinproject, nil, false)
+	qpaths, errs := delData(squery)
+	if qpaths == nil && errs == nil {
+		errs = fmt.Errorf("no matching sources found to delete")
+	}
+	Fmsg = qreport.Report(qpaths, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+
 	return nil
-}
-
-func preSourceDelete(cmd *cobra.Command, args []string) {
-	if !Ftransported {
-		var err error
-		Fcargo, err = fetchData(args, Ffilesinproject, nil, false)
-		if err != nil {
-			log.Fatal("cmd/source_delete/1:\n", err)
-		}
-	}
-
-	var errs error = nil
-
-	if strings.ContainsRune(QtechType, 'B') {
-		errs = delData(Fpayload, Fcargo)
-	}
-
-	if Ftransported {
-		if errs == nil {
-			err := qclient.SendCargo(Fcargo)
-			if err != nil {
-				log.Fatal("cmd/source_delete/2:\n", err)
-			}
-		} else {
-			Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-		}
-		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
-	}
-
 }

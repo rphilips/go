@@ -272,6 +272,14 @@ func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool
 	} else {
 		tmp = filepath.Join(lintdir, name) + ext
 	}
+
+	r := source.Release().String()
+	qpath := "/doc/application/epilog.sphinx"
+	epilog, _ := Source{}.New(r, qpath, true)
+	edata, _ := epilog.Fetch()
+	body = append(body, []byte("\n\n\n")...)
+	body = append(body, edata...)
+
 	qfs.Store(tmp, body, "temp")
 	return tmp
 }
@@ -310,9 +318,7 @@ func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir strin
 
 //Parse RST File
 func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
-	if true {
-		return "OK", nil
-	}
+
 	tmprst := tmplint(lintdir, source, buffer, true)
 	level := "info"
 	if !warnings {

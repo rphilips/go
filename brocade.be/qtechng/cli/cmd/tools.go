@@ -69,7 +69,7 @@ type storer struct {
 	Place   string `json:"file"`
 }
 
-func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (pcargo *qclient.Cargo, err error) {
+func buildSQuery(args []string, filesinproject bool, qdirs []string, mumps bool) qsource.SQuery {
 	if len(args) != 0 {
 		if len(Fqpattern) == 0 {
 			Fqpattern = args
@@ -93,7 +93,7 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 		}
 	}
 
-	squery := qsource.SQuery{
+	return qsource.SQuery{
 		Release:        Fversion,
 		CmpRelease:     Fcmpversion,
 		QDirs:          qdirs,
@@ -114,13 +114,17 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 		Mumps:          mumps,
 	}
 
+}
+
+func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (pcargo *qclient.Cargo, err error) {
+
 	Fpayload = &qclient.Payload{
 		ID:     "Once",
 		UID:    FUID,
 		CMD:    "qtechng",
 		Origin: QtechType,
 		Args:   os.Args[1:],
-		Query:  squery,
+		Query:  buildSQuery(args, filesinproject, qdirs, mumps),
 	}
 	pcargo = new(qclient.Cargo)
 	if !strings.ContainsRune(QtechType, 'B') && !strings.ContainsRune(QtechType, 'P') {
@@ -359,39 +363,57 @@ func rebuildData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 	}
 }
 
-func delData(ppayload *qclient.Payload, pcargo *qclient.Cargo) (errs error) {
-	query := ppayload.Query.Copy()
+// func delData(ppayload *qclient.Payload, pcargo *qclient.Cargo) (errs error) {
+// 	query := ppayload.Query.Copy()
+// 	psources := query.Run()
+// 	paths := make([]string, len(psources))
+// 	transports := make([]qclient.Transport, len(paths))
+// 	for i, ps := range psources {
+// 		paths[i] = ps.String()
+// 	}
+
+// 	for i, qpath := range paths {
+// 		locfile := qclient.LocalFile{}
+// 		pmeta, err := qmeta.Meta{}.New(query.Release, qpath)
+// 		digest := "?"
+// 		if err == nil {
+// 			digest = pmeta.Digest
+// 		}
+// 		psource := psources[i]
+// 		locfile.Release = query.Release
+// 		locfile.QPath = qpath
+// 		locfile.Project = psource.Project().String()
+// 		locfile.Digest = digest
+// 		locfile.Cu = pmeta.Cu
+// 		locfile.Mu = pmeta.Mu
+// 		locfile.Ct = pmeta.Ct
+// 		locfile.Mt = pmeta.Mt
+// 		transports[i].LocFile = locfile
+// 	}
+// 	pcargo.Transports = transports
+
+// 	r := query.Release
+
+// 	pcargo.Error = qsource.WasteList(r, paths)
+// 	return pcargo.Error
+// }
+
+func delData(squery qsource.SQuery) (qpaths []string, errs error) {
+	query := squery.Copy()
 	psources := query.Run()
-	paths := make([]string, len(psources))
-	transports := make([]qclient.Transport, len(paths))
+	if len(psources) == 0 {
+		return nil, nil
+	}
+	qpaths = make([]string, len(psources))
 	for i, ps := range psources {
-		paths[i] = ps.String()
+		qpaths[i] = ps.String()
 	}
-
-	for i, qpath := range paths {
-		locfile := qclient.LocalFile{}
-		pmeta, err := qmeta.Meta{}.New(query.Release, qpath)
-		digest := "?"
-		if err == nil {
-			digest = pmeta.Digest
-		}
-		psource := psources[i]
-		locfile.Release = query.Release
-		locfile.QPath = qpath
-		locfile.Project = psource.Project().String()
-		locfile.Digest = digest
-		locfile.Cu = pmeta.Cu
-		locfile.Mu = pmeta.Mu
-		locfile.Ct = pmeta.Ct
-		locfile.Mt = pmeta.Mt
-		transports[i].LocFile = locfile
-	}
-	pcargo.Transports = transports
-
 	r := query.Release
-
-	errs = qsource.WasteList(r, paths)
-	return errs
+	errs = qsource.WasteList(r, qpaths)
+	if errs != nil {
+		qpaths = nil
+	}
+	return qpaths, errs
 }
 
 func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {

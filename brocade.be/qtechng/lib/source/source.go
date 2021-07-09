@@ -957,8 +957,7 @@ func WasteList(version string, paths []string) (errs error) {
 	}
 
 	if len(errslice) != 0 {
-		errs = errslice
-		return
+		return errslice
 	}
 
 	return nil

@@ -48,7 +48,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 
 	// base
 	qregistry.SetRegistry("qtechng-test", "test-entry")
-	qregistry.SetRegistry("qtechng-vc-url", "https://dev.anet.be/cgit")
+	qregistry.SetRegistry("qtechng-vc-url", "https://dev.anet.be/cgit/cgit.cgi/qtechng/tree/data{qpath}")
 
 	qregistry.InitRegistry("qtechng-server", "dev.anet.be:22")
 	qregistry.InitRegistry("ssh-default-host", qregistry.Registry["qtechng-server"])
@@ -175,7 +175,11 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	}
 
 	if ml["!BuildTime"] != mr["!BuildTime"] {
-		qutil.RefreshBinary()
+		err := qutil.RefreshBinary()
+		if err != nil {
+			Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			return nil
+		}
 
 	}
 	return nil

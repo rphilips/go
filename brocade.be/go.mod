@@ -3,6 +3,7 @@ module brocade.be
 go 1.16
 
 require (
+	cloud.google.com/go v0.86.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/benhoyt/goawk v1.7.0
 	github.com/google/uuid v1.2.0
@@ -16,6 +17,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.0
 	github.com/zserge/lorca v0.1.10
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	google.golang.org/genproto v0.0.0-20210701133433-6b8dcf568a95
 	gopkg.in/yaml.v2 v2.4.0
 
 )

@@ -908,51 +908,44 @@ func SameFile(file1, file2 string) bool {
 
 // Refresh executable
 func RefreshEXE(oldexe string, newexe string) error {
-	old, err := os.Stat(oldexe)
-	shadow := ""
-	if err == nil {
-		new, err := os.Stat(newexe)
+	si, err := os.Stat(oldexe)
+	if err != nil {
+		return err
+	}
+	os.Remove(oldexe + ".bak")
+	ftmp, err := TempFile(filepath.Dir(oldexe), "qtechng-exe-")
+	if err != nil {
+		return err
+	}
+	err = os.Rename(newexe, ftmp)
+	if err != nil {
+		err = CopyFile(newexe, ftmp, "", false)
+	}
+	if err != nil {
+		return err
+	}
+	newexe = ftmp
+
+	for i := 0; i < 2; i++ {
+		os.Rename(oldexe, oldexe+".bak")
+		os.Remove(oldexe)
+		err = os.Rename(newexe, oldexe)
+
+		if err == nil || i == 1 {
+			break
+		}
 		if err != nil {
 			return err
 		}
-		if os.SameFile(old, new) {
-			return nil
-		}
-		err = CopyFile(oldexe, newexe, "", false)
-		if err == nil {
-			return nil
-		}
-		shadow = oldexe + ".bak"
-		os.Remove(shadow)
-		err = os.Rename(oldexe, shadow)
-		if err != nil {
-			return err
-		}
 	}
-	source, err := os.Open(newexe)
 	if err != nil {
 		return err
 	}
-	defer source.Close()
-
-	destination, err := os.Create(oldexe)
+	err = os.Chmod(oldexe, si.Mode())
 	if err != nil {
 		return err
 	}
-	defer destination.Close()
-	_, err = io.Copy(destination, source)
-
-	if err != nil {
-		return err
-	}
-
-	if shadow != "" {
-
-		CopyMeta(shadow, oldexe, false)
-	}
-
 	return err
-
 }
 
 func GetURL(url string, fname string, pathmode string) error {

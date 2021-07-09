@@ -67,7 +67,7 @@ func init() {
 }
 
 func guiMenu(cmd *cobra.Command, args []string) error {
-	if Fmenu != "checkout" && len(args) == 1 && (args[0] == Fcwd || qfs.SameFile(args[0], Fcwd)) {
+	if len(args) == 1 && (args[0] == Fcwd || qfs.SameFile(args[0], Fcwd)) {
 		args = args[1:]
 	}
 	if Fmenu == "checkout" && len(args) != 0 {
@@ -301,8 +301,8 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							menulistener <- "stop"
 							return
 						}
-						handleSearch(ui, &guiFiller)
-						menulistener <- handleSearch(ui, &guiFiller)
+						//handleSearch(ui, &guiFiller, "search")
+						menulistener <- handleSearch(ui, &guiFiller, "search")
 					})
 				case "checkout":
 					ui.Bind("golangfunc", func(indicator string) {
@@ -310,10 +310,12 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							menulistener <- "stop"
 							return
 						}
-						if len(args) == 0 {
-							handleSearch(ui, &guiFiller)
-						}
-						menulistener <- handleCheckout(ui, &guiFiller, args)
+						menulistener <- handleSearch(ui, &guiFiller, "checkout")
+						// if len(args) == 0 {
+						// 	menulistener <- handleSearch(ui, &guiFiller, "checkout")
+						// } else {
+						// 	menulistener <- handleCheckout(ui, &guiFiller, args)
+						// }
 					})
 				case "property":
 					ui.Bind("golangfunc", func(indicator string) {
@@ -420,7 +422,15 @@ func loadVars(menu string, guiFiller *GuiFiller) {
 
 func storeVars(menu string, guiFiller GuiFiller) {
 	fname := filepath.Join(qregistry.Registry["scratch-dir"], "menu-"+menu+".json")
-	b, err := json.Marshal(guiFiller.Vars)
+
+	m := make(map[string]string)
+	for k, v := range guiFiller.Vars {
+		if k == "checkout" && menu == "search" {
+			continue
+		}
+		m[k] = v
+	}
+	b, err := json.Marshal(m)
 	if err != nil {
 		return
 	}
@@ -522,17 +532,17 @@ func handleNew(ui lorca.UI, guiFiller *GuiFiller, cwd string, args []string) str
 	return "new"
 }
 
-func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
+func handleSearch(ui lorca.UI, guiFiller *GuiFiller, sech string) string {
 	f := make(map[string]string)
 	for _, key := range []string{"qpattern", "version", "needle", "perline", "tolower", "regexp", "checkout", "yaml", "jsonpath", "editlist", "clear"} {
 		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
 		f[key] = value
 	}
 	guiFiller.Vars = f
-	storeVars("search", *guiFiller)
+	storeVars(sech, *guiFiller)
 
 	if f["qpattern"] == "" || f["version"] == "" {
-		return "search"
+		return sech
 	}
 	argums := []string{
 		"source",
@@ -579,96 +589,97 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller) string {
 		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
 		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
 	}
-	return "search"
+	return sech
 }
 
-func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
-	f := make(map[string]string)
-	for _, key := range []string{"qpattern", "version", "yaml", "jsonpath", "editlist", "clear", "checkout"} {
-		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
-		f[key] = value
-	}
-	for _, mode := range []string{"auto", "tree", "flat"} {
-		value := ui.Eval(`document.getElementById('mode_` + mode + `').checked ? '1' : '0'`).String()
-		if value == "1" {
-			f["mode"] = mode
-			break
-		}
-	}
-	guiFiller.Vars = f
-	storeVars("checkout", *guiFiller)
+// func handleCheckout(ui lorca.UI, guiFiller *GuiFiller, args []string) string {
+// 	f := make(map[string]string)
+// 	for _, key := range []string{"qpattern", "version", "yaml", "jsonpath", "editlist", "clear", "checkout"} {
+// 		value := ui.Eval(`document.getElementById('` + key + `').value`).String()
+// 		f[key] = value
+// 	}
+// 	for _, mode := range []string{"auto", "tree", "flat"} {
+// 		value := ui.Eval(`document.getElementById('mode_` + mode + `').checked ? '1' : '0'`).String()
+// 		if value == "1" {
+// 			f["mode"] = mode
+// 			break
+// 		}
+// 	}
+// 	guiFiller.Vars = f
+// 	storeVars("checkout", *guiFiller)
 
-	if f["qpattern"] == "" || f["version"] == "" {
-		return "search"
-	}
-	argums := []string{
-		"source",
-	}
+// 	if f["qpattern"] == "" || f["version"] == "" {
+// 		return "search"
+// 	}
+// 	argums := []string{
+// 		"source",
+// 	}
 
-	if f["checkout"] == "1" {
-		mode := "--" + f["mode"]
-		if mode == "--flat" {
-			mode = ""
-		}
-		argums = append(argums, "co")
-		if mode != "" {
-			argums = append(argums, mode)
-		}
-		if f["clear"] == "1" {
-			argums = append(argums, "--clear")
-		}
-	} else {
-		argums = append(argums, "list")
-	}
-	argums = append(argums, "--version="+f["version"])
-	argums = append(argums, "--qpattern="+f["qpattern"])
-	argums = append(argums, "--needle="+f["needle"])
-	argums = append(argums, "--list="+f["editlist"])
-	if f["perline"] == "1" {
-		argums = append(argums, "--perline")
-	}
-	if f["tolower"] == "1" {
-		argums = append(argums, "--tolower")
-	}
-	if f["regexp"] == "1" {
-		argums = append(argums, "--regexp")
-	}
+// 	if f["checkout"] == "1" {
+// 		mode := "--" + f["mode"]
+// 		if mode == "--flat" {
+// 			mode = ""
+// 		}
+// 		argums = append(argums, "co")
+// 		if mode != "" {
+// 			argums = append(argums, mode)
+// 		}
+// 		if f["clear"] == "1" {
+// 			argums = append(argums, "--clear")
+// 		}
+// 	} else {
+// 		argums = append(argums, "list")
+// 	}
+// 	argums = append(argums, "--version="+f["version"])
+// 	argums = append(argums, "--qpattern="+f["qpattern"])
+// 	argums = append(argums, "--needle="+f["needle"])
+// 	argums = append(argums, "--list="+f["editlist"])
+// 	if f["perline"] == "1" {
+// 		argums = append(argums, "--perline")
+// 	}
+// 	if f["tolower"] == "1" {
+// 		argums = append(argums, "--tolower")
+// 	}
+// 	if f["regexp"] == "1" {
+// 		argums = append(argums, "--regexp")
+// 	}
 
-	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
-	ui.Eval(`document.getElementById("busy").style="display:block;")`)
-	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1", Fcwd)
-	fmt.Println(sout)
-	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
-	if err != nil {
-		serr += "\n\nError:" + err.Error()
-	}
-	bx, _ := json.Marshal(sout)
-	sx := string(bx)
-	st := ""
-	if len(sx) > 2 {
-		st = sx[:2]
-	}
-	k := strings.IndexAny(st, "[{")
-	if k == 1 {
-		ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
-		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
-	} else {
-		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
-		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
-	}
-	return "checkout"
-}
+// 	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
+// 	ui.Eval(`document.getElementById("busy").style="display:block;")`)
+// 	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1", Fcwd)
+// 	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
+// 	if err != nil {
+// 		serr += "\n\nError:" + err.Error()
+// 	}
+// 	bx, _ := json.Marshal(sout)
+// 	sx := string(bx)
+// 	st := ""
+// 	if len(sx) > 2 {
+// 		st = sx[:2]
+// 	}
+// 	k := strings.IndexAny(st, "[{")
+// 	if k == 1 {
+// 		ui.Eval(`document.getElementById("jsondisplay").innerHTML = syntaxHighlight(` + sx + `)`)
+// 		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ""`)
+// 	} else {
+// 		ui.Eval(`document.getElementById("yamldisplay").innerHTML = ` + sx)
+// 		ui.Eval(`document.getElementById("jsondisplay").innerHTML = ""`)
+// 	}
+// 	return "checkout"
+// }
 
 func handleCheckoutArgs(cwd string, args []string) string {
 	files := make([]string, 0)
 	dirs := make([]string, 0)
 	for _, arg := range args {
+		fmt.Println("arg:", arg)
 		arg := qutil.AbsPath(arg, cwd)
 		if qfs.IsFile(arg) {
 			files = append(files, arg)
 			continue
 		}
 		if qfs.IsDir(arg) {
+			fmt.Println("arg2:", arg)
 			dirs = append(dirs, arg)
 		}
 	}

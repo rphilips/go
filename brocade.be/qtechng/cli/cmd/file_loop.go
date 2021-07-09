@@ -115,14 +115,8 @@ func supportDirs(last *time.Time, startdir string, version string) {
 	qpaths := make(map[string]bool)
 	for _, f := range matches {
 		dirname := filepath.Dir(f)
-		dir := new(qclient.Dir)
-		dir.Dir = dirname
-		m := dir.Repository()
-		qdirs, ok := m[version]
-		if !ok || len(qdirs) == 0 {
-			continue
-		}
-		for qdir := range qdirs {
+		_, qdir := dirProps(dirname)
+		if qdir != "" {
 			qpaths[qdir] = true
 		}
 	}

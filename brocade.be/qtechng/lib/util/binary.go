@@ -32,7 +32,7 @@ func RefreshBinary() (err error) {
 	if err != nil {
 		return err
 	}
-	qfs.Rmpath(tmp)
+	//qfs.Rmpath(tmp)
 
 	if runtime.GOOS == "windows" {
 
