@@ -1055,6 +1055,17 @@ func FillList(list string, b []byte) {
 	if e != nil {
 		return
 	}
+	ok := false
+	for _, q := range qpaths {
+		if strings.HasPrefix(q, "/") {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return
+	}
+
 	EditList(list, false, qpaths)
 }
 
