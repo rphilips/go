@@ -398,7 +398,7 @@ func rebuildData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 // 	return pcargo.Error
 // }
 
-func delData(squery qsource.SQuery) (qpaths []string, errs error) {
+func delData(squery qsource.SQuery, number int) (qpaths []string, errs error) {
 	query := squery.Copy()
 	psources := query.Run()
 	if len(psources) == 0 {
@@ -408,12 +408,17 @@ func delData(squery qsource.SQuery) (qpaths []string, errs error) {
 	for i, ps := range psources {
 		qpaths[i] = ps.String()
 	}
+
+	if number >= 0 && number != len(qpaths) {
+		return qpaths, fmt.Errorf("there are %d sources to be deleted. Given number is %d", len(qpaths), number)
+	}
+
 	r := query.Release
 	errs = qsource.WasteList(r, qpaths)
 	if errs != nil {
-		qpaths = nil
+		return nil, errs
 	}
-	return qpaths, errs
+	return qpaths, nil
 }
 
 func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	qregistry "brocade.be/base/registry"
 	qssh "brocade.be/base/ssh"
 	qclient "brocade.be/qtechng/lib/client"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +30,10 @@ func preSSH(cmd *cobra.Command) {
 		log.Fatal("cmd/ssh/1:\n", err, "\n====\n", catchErr)
 	}
 	if catchOut.Len() != 0 {
+		b := catchOut.Bytes()
+		if Flist != "" && len(b) != 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') && qregistry.Registry["qtechng-support-dir"] != "" {
+			qutil.FillList(Flist, b)
+		}
 		fmt.Print(catchOut)
 	}
 	if catchErr.Len() != 0 {

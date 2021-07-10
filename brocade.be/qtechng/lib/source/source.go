@@ -799,6 +799,7 @@ func TestForWasteList(version string, paths []string) (err error) {
 			for _, q := range qpaths {
 				deps[q] = true
 			}
+
 			return deps, err
 		}
 		if natures["objectfile"] {
@@ -826,6 +827,11 @@ func TestForWasteList(version string, paths []string) (err error) {
 				for _, d := range depos {
 					deps[d] = true
 				}
+			}
+		}
+		if len(deps) != 0 {
+			for _, q := range paths {
+				delete(deps, q)
 			}
 		}
 		return deps, nil

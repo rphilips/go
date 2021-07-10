@@ -1030,6 +1030,34 @@ func EditList(list string, transported bool, qpaths []string) {
 	qfs.Store(listname, strings.Join(qpaths, "\n"), "process")
 }
 
+func FillList(list string, b []byte) {
+
+	if len(b) == 0 {
+		return
+	}
+	sqpaths, e := JSONpath(b, "$..qpath")
+	if e != nil {
+		return
+	}
+	sqpaths = strings.TrimSpace(sqpaths)
+	if sqpaths == "" {
+		return
+	}
+	if strings.HasPrefix(sqpaths, "{") {
+		return
+	}
+	if !strings.HasPrefix(sqpaths, "[") {
+		sqpaths = "[" + sqpaths + "]"
+	}
+
+	qpaths := make([]string, 0)
+	e = json.Unmarshal([]byte(sqpaths), &qpaths)
+	if e != nil {
+		return
+	}
+	EditList(list, false, qpaths)
+}
+
 func AbsPath(name string, cwd string) string {
 	if filepath.IsAbs(name) {
 		return name

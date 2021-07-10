@@ -8,69 +8,51 @@ import (
 )
 
 var sourceDeleteCmd = &cobra.Command{
-	Use:     "delete",
-	Short:   "Deletes sources in the repository",
-	Long:    `Deletes sources in the repository according to patterns, nature and contents`,
+	Use:   "delete",
+	Short: "Deletes sources in the repository",
+	Long: `Deletes sources in the repository. 
+The sources are specified by a combination of:
+
+- specific arguments
+- by one or more *--qpattern* flags
+- by the specification of the nature of the files with the *--nature* flag
+- by specification of *--needle* flags (text in the files)
+- by specification of *--cuser* flags (uid of the creator)
+- by specification of *--muser* flags (uid of the last modifier)
+- by specification of *--cafter* flags (uid of the last modifier)
+
+Give with the *--number* flag the number of files to be deleted.`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source delete --qpattern=/application/*.m`,
+	Example: `qtechng source delete --qpattern=/application/*.m --number=12`,
 	RunE:    sourceDelete,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
 	Annotations: map[string]string{
-		"remote-allowed": "yes",
-		"with-qtechtype": "BW",
-		"fill-version":   "yes",
+		"remote-allowed":    "yes",
+		"always-remote-onW": "yes",
+		"with-qtechtype":    "BW",
+		"fill-version":      "yes",
 	},
 }
 
+var Fnumber int
+
 func init() {
+	sourceDeleteCmd.PersistentFlags().IntVar(&Fnumber, "number", 0, "number of deletes")
 	sourceCmd.AddCommand(sourceDeleteCmd)
 }
 
-// func sourceDelete(cmd *cobra.Command, args []string) error {
-// 	if Fcargo.Error != nil {
-// 		Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-// 	} else {
-// 		err, result := listTransport(Fcargo)
-// 		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-// 	}
-// 	return nil
-// }
-
-// func preSourceDelete(cmd *cobra.Command, args []string) {
-// 	if !Ftransported {
-// 		var err error
-// 		Fcargo, err = fetchData(args, Ffilesinproject, nil, false)
-// 		if err != nil {
-// 			log.Fatal("cmd/source_delete/1:\n", err)
-// 		}
-// 	}
-
-// 	if strings.ContainsRune(QtechType, 'B') {
-// 		delData(Fpayload, Fcargo)
-// 	}
-
-// 	if Ftransported {
-// 		if Fcargo.Error == nil {
-// 			err := qclient.SendCargo(Fcargo)
-// 			if err != nil {
-// 				log.Fatal("cmd/source_delete/2:\n", err)
-// 			}
-// 		} else {
-// 			Fmsg = qreport.Report(nil, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-// 		}
-// 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
-// 	}
-
-// }
-
 func sourceDelete(cmd *cobra.Command, args []string) error {
-
 	squery := buildSQuery(args, Ffilesinproject, nil, false)
-	qpaths, errs := delData(squery)
+	qpaths, errs := delData(squery, Fnumber)
 	if qpaths == nil && errs == nil {
 		errs = fmt.Errorf("no matching sources found to delete")
 	}
-	Fmsg = qreport.Report(qpaths, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-
+	result := make(map[string][]string)
+	if len(qpaths) == 0 {
+		result = nil
+	} else {
+		result["qpath"] = qpaths
+	}
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }

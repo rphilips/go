@@ -30,6 +30,9 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 	}
 	show := report{}
 	withfile := func(s string) string {
+		if silent {
+			return ""
+		}
 		if file == "" {
 			return s
 		}
@@ -73,6 +76,10 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 	b, _ := json.MarshalIndent(show, "", "    ")
 	if show.Errors != nil {
 		return withfile(string(b))
+	}
+
+	if silent {
+		return ""
 	}
 	s := string(b)
 
