@@ -249,7 +249,7 @@ func resolve(s string, qpath string) (result string, err error) {
 	if !nature["text"] {
 		return s, nil
 	}
-	if nature["objfile"] {
+	if nature["objectfile"] {
 		return s, nil
 	}
 	env := source.Env()

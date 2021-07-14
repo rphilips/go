@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -410,7 +411,7 @@ func delData(squery qsource.SQuery, number int) (qpaths []string, errs error) {
 	}
 
 	if number >= 0 && number != len(qpaths) {
-		return qpaths, fmt.Errorf("there are %d sources to be deleted. Given number is %d", len(qpaths), number)
+		return qpaths, fmt.Errorf("there are %d sources to be deleted. Given number is %d. Use the `--number=%d` flag", len(qpaths), number, len(qpaths))
 	}
 
 	r := query.Release
@@ -419,6 +420,83 @@ func delData(squery qsource.SQuery, number int) (qpaths []string, errs error) {
 		return nil, errs
 	}
 	return qpaths, nil
+}
+
+func renameData(squery qsource.SQuery, number int, replace string, with string, regexp bool, overwrite bool) (qrenames map[string]string, errs []error) {
+	query := squery.Copy()
+	psources := query.Run()
+	if len(psources) == 0 {
+		return nil, nil
+	}
+	qpaths := make([]string, len(psources))
+	for i, ps := range psources {
+		qpaths[i] = ps.String()
+	}
+	qrenames, errs = calcRenames(qpaths, replace, with, regexp)
+	if errs != nil {
+		return qrenames, errs
+	}
+
+	if number >= 0 && number != len(qpaths) {
+		errs = append(errs, fmt.Errorf("there are %d sources to be renamed. Given number is %d. Use the `--number=%d` flag", len(qpaths), number, len(qpaths)))
+		return qrenames, errs
+	}
+
+	if len(errs) == 0 {
+		e := qsource.Rename(query.Release, qrenames, overwrite)
+		if e != nil {
+			errs = append(errs, e)
+		}
+	}
+
+	return qrenames, errs
+}
+
+func calcRenames(qpaths []string, replace string, with string, regxp bool) (qrenames map[string]string, errs []error) {
+	if len(qpaths) == 0 {
+		return nil, nil
+	}
+	doubles := make(map[string]bool)
+	qrenames = make(map[string]string)
+	var rex *regexp.Regexp
+	if replace != "" && regxp {
+		rex, _ = regexp.Compile(replace)
+	}
+	for _, qpath := range qpaths {
+		_, ok := qrenames[qpath]
+		if ok {
+			continue
+		}
+		ren := ""
+		if replace == "" {
+			ren = with
+		}
+		if ren == "" && !regxp {
+			ren = strings.ReplaceAll(qpath, replace, with)
+		}
+		if ren == "" && regxp {
+			ren = rex.ReplaceAllString(qpath, with)
+		}
+		if ren == "" {
+			errs = append(errs, fmt.Errorf("`%s` is renamed to empty", qpath))
+			continue
+		}
+		if ren == "/" {
+			errs = append(errs, fmt.Errorf("`%s` is renamed to `/`", qpath))
+			continue
+		}
+		ren = qutil.Canon(ren)
+		if doubles[ren] {
+			errs = append(errs, fmt.Errorf("`%s` found more than once", ren))
+			continue
+		}
+		if ren == qpath {
+			continue
+		}
+		qrenames[qpath] = ren
+		doubles[ren] = true
+	}
+	return
 }
 
 func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {

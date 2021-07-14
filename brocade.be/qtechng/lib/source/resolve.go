@@ -94,7 +94,7 @@ func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, 
 		buffer.Write(body)
 		return nil
 	}
-	if nature["objfile"] {
+	if nature["objectfile"] {
 		buffer.Write(body)
 		return nil
 	}

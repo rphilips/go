@@ -31,7 +31,7 @@ The *--lgtarget flag* specifies the target language(s) according to BCP-47. Defa
 If the *--isjson flag* is present, the argument is interpreted as a file with 
 a JSON array. Every element of the array is translated.`,
 	Args: cobra.MaximumNArgs(1),
-	Example: `qtechng text translate "Goede morgen"
+	Example: `qtechng text translate "Opgelet ! Er staan cijfers in de auteursnaam en dit is GEEN authority code"
 qtechng text translate translateme.json --isjson`,
 
 	RunE:   textTranslate,

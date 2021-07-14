@@ -145,9 +145,19 @@ func TestSeq01(t *testing.T) {
 		project.UpdateConfig(cfg)
 	}
 	seq1, _ := Sequence(r, "/a/b", true)
+	seq11, _ := Sequence(r, "/a/b/brocade.json", true)
+	seq12, _ := Sequence(r, "/a/b/brocade1.json", true)
 
 	if len(seq1) != 1 {
 		t.Errorf(fmt.Sprintf("\n%v", seq1))
+		return
+	}
+	if len(seq11) != 1 {
+		t.Errorf(fmt.Sprintf("\n%v", seq11))
+		return
+	}
+	if len(seq12) != 1 {
+		t.Errorf(fmt.Sprintf("\n%v", seq11))
 		return
 	}
 

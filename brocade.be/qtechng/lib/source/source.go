@@ -260,8 +260,7 @@ func (source *Source) Waste() (err error) {
 	fs.Waste(s)
 
 	// Unlink 'unique'
-	UniqueUnlink(version, s)
-
+	version.UniqueUnlink(s)
 	// Cache
 	pid := r + " " + s
 	sourceCache.Delete(pid)
@@ -783,24 +782,54 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 }
 
 // TestForWasteList test of een lijst mag worden geschrapt
-func TestForWasteList(version string, paths []string) (err error) {
+func TestForWasteList(version string, paths []string, added []string, cfgs []string, except map[string]bool) (err error) {
 
 	fn := func(n int) (interface{}, error) {
 		deps := make(map[string]bool)
 		p := paths[n]
+		if except[p] {
+			return deps, nil
+		}
 		source, err := Source{}.New(version, p, true)
 		if err != nil {
 			return deps, err
 		}
 		natures := source.Natures()
 		if natures["config"] {
-			project := source.Project()
-			qpaths := project.QPaths(nil, false)
-			for _, q := range qpaths {
-				deps[q] = true
+			seq, _ := qproject.Sequence(version, p, true)
+			if len(seq) < 2 {
+				project := source.Project()
+				qpaths := project.QPaths(nil, false)
+				for _, q := range qpaths {
+					deps[q] = true
+				}
+				if len(added) != 0 {
+					qc, _ := qutil.QPartition(p)
+					qc = qc + "/"
+					for _, qp := range added {
+						if strings.HasPrefix(qp, qc) {
+							deps[qp] = true
+						}
+					}
+				}
+				if len(deps) != 0 {
+					m := make(map[string]bool)
+					for _, cfg := range cfgs {
+						qc, _ := qutil.QPartition(cfg)
+						m[qc] = true
+					}
+					for oqp := range deps {
+						qp := oqp
+						for qp != "/" {
+							qp, _ = qutil.QPartition(qp)
+							if m[qp] {
+								delete(deps, oqp)
+								break
+							}
+						}
+					}
+				}
 			}
-
-			return deps, err
 		}
 		if natures["objectfile"] {
 			var objfile qobject.OFile
@@ -834,6 +863,9 @@ func TestForWasteList(version string, paths []string) (err error) {
 				delete(deps, q)
 			}
 		}
+		if len(deps) == 0 {
+			return nil, nil
+		}
 		return deps, nil
 	}
 
@@ -853,7 +885,13 @@ func TestForWasteList(version string, paths []string) (err error) {
 	deps := make(map[string]bool)
 
 	for _, resu := range resultlist {
+		if resu == nil {
+			continue
+		}
 		resm := resu.(map[string]bool)
+		if resm == nil {
+			continue
+		}
 		for d := range resm {
 			deps[d] = true
 		}
@@ -893,7 +931,7 @@ func WasteList(version string, paths []string) (errs error) {
 	}
 
 	// test of de lijst kan worden geschrapt
-	errs = TestForWasteList(version, paths)
+	errs = TestForWasteList(version, paths, nil, nil, nil)
 	if errs != nil {
 		return
 	}

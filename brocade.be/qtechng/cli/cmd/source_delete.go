@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
 
 	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
@@ -45,7 +45,7 @@ func sourceDelete(cmd *cobra.Command, args []string) error {
 	squery := buildSQuery(args, Ffilesinproject, nil, false)
 	qpaths, errs := delData(squery, Fnumber)
 	if qpaths == nil && errs == nil {
-		errs = fmt.Errorf("no matching sources found to delete")
+		errs = errors.New("no matching sources found to delete")
 	}
 	result := make(map[string][]string)
 	if len(qpaths) == 0 {
