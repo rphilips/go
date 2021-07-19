@@ -35,7 +35,7 @@ a JSON array. Every element of the array is translated.`,
 qtechng text translate translateme.json --isjson`,
 
 	RunE:   textTranslate,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed":    "yes",
 		"always-remote-onW": "yes",

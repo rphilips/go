@@ -16,7 +16,7 @@ var versionNewCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Example: "qtechng version new",
 	RunE:    versionNew,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"always-remote":  "yes",

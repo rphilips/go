@@ -20,7 +20,7 @@ Creates and returns a temporary directory`,
 	Example: "  qtechng tempdir get\n  qtechng tempdir get --prefix=qtechng.",
 	Args:    cobra.NoArgs,
 	RunE:    tempdirGet,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 	},

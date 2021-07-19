@@ -22,7 +22,7 @@ If the input *IS* a JSON array, the following applies:
 	- Whitespace is never stripped
 	- Empty arguments remain in the argument list`,
 	Args:    cobra.NoArgs,
-	Example: `qtechng arg stdin`,
+	Example: `qtechng arg stdin < commands.txt`,
 	RunE:    argStdin,
 }
 

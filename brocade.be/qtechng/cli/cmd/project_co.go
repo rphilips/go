@@ -24,6 +24,7 @@ var projectCoCmd = &cobra.Command{
 }
 
 func init() {
+	projectCoCmd.Flags().BoolVar(&Fcopyonly, "copyonly", false, "Checks out without updating local repository information")
 	projectCmd.AddCommand(projectCoCmd)
 }
 

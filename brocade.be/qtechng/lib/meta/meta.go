@@ -19,7 +19,7 @@ type Meta struct {
 	Mu     string `json:"mu"`
 	Ct     string `json:"ct"`
 	Mt     string `json:"mt"`
-	It     string `json:"it"`
+	Fu     string `json:"fu"`
 	Ft     string `json:"ft"`
 	Digest string `json:"-"`
 }
@@ -143,6 +143,14 @@ func (meta *Meta) Update(met Meta) {
 		if meta.Ct == "" {
 			meta.Ct = meta.Mt
 		}
+	}
+
+	if met.Ft != "" {
+		meta.Ft = met.Ft
+	}
+
+	if met.Fu != "" {
+		meta.Fu = met.Fu
 	}
 
 	if meta.Mt == "" {

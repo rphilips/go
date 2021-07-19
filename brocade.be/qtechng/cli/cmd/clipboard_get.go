@@ -12,11 +12,10 @@ import (
 var clipboardGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Retrieves the content of the system clipboard",
-	Long: `
-Retrieves the content of the system clipboard and writes on stdout.
+	Long: `Retrieves the content of the system clipboard and writes on stdout.
 Works only with text.
 Read-only!`,
-	Example: "  qtechng clipboard get",
+	Example: "qtechng clipboard get",
 	Args:    cobra.NoArgs,
 	RunE:    clipboardGet,
 }

@@ -18,7 +18,7 @@ If arguments are given, they are shown in 'hexified' format.`,
 	Args:    cobra.ArbitraryArgs,
 	Example: "  qtechng about\n  qtechng about --remote",
 	RunE:    about,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"complete":       "end",

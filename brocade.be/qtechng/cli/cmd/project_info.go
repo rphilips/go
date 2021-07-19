@@ -13,7 +13,7 @@ var projectInfoCmd = &cobra.Command{
 	Long:    `Command provides information about a project`,
 	Example: "qtechng project info /stdlib/template",
 	RunE:    projectInfo,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed":    "yes",
 		"always-remote-onW": "yes",

@@ -12,7 +12,7 @@ import (
 
 var fileDeleteCmd = &cobra.Command{
 	Use:     "delete",
-	Short:   "Deletes QtechNG files",
+	Short:   "Deletes status of QtechNG files",
 	Long:    `Deletes the status of a file as a QtechNG file`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file delete application/bcawedit.m install.py cwd=../catalografie`,

@@ -26,7 +26,7 @@ qtechng file lint --cwd=../strings --remote
 qtechng file lint mymfile.d
 qtechng file lint /stdlib/strings/mymfile.d --version=5.10`,
 	RunE:   fileLint,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",

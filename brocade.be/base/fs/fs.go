@@ -44,6 +44,15 @@ func AbsPath(pth string) (abspath string, err error) {
 		}
 		abspath = home + pth[1:]
 	}
+	if !strings.HasPrefix(pth, "~") {
+		abspath, err = pth, nil
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			home = "~"
+		}
+		abspath = home + pth[1:]
+	}
 	abspath = os.ExpandEnv(abspath)
 	abspath = filepath.FromSlash(abspath)
 	abspath, err = filepath.Abs(abspath)

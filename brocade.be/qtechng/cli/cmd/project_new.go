@@ -23,7 +23,7 @@ var projectNewCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(0),
 	Example: "qtechng project new /stdlib/template\nqtechng project new /stdlib/template  --version=5.10",
 	RunE:    projectNew,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"always-remote":  "yes",

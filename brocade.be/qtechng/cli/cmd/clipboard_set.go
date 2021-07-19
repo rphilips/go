@@ -6,12 +6,11 @@ import (
 )
 
 var clipboardSetCmd = &cobra.Command{
-	Use:   "set text",
-	Short: "Stores in the system clipboard",
-	Long: `
-Stores text in the system clipboard`,
-	Example: "  qtechng clipboard set \"Hello World\"",
-	Args:    cobra.MaximumNArgs(1),
+	Use:     "set text",
+	Short:   "Stores in the system clipboard",
+	Long:    `Stores text in the system clipboard`,
+	Example: "qtechng clipboard set \"Hello World\"",
+	Args:    cobra.ExactArgs(1),
 	RunE:    clipboardSet,
 }
 

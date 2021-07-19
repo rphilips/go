@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func preSSH(cmd *cobra.Command) {
+func preSSH(cmd *cobra.Command, catch func(s string) string) {
 	if !Fremote {
 		return
 	}
@@ -34,10 +34,15 @@ func preSSH(cmd *cobra.Command) {
 		if Flist != "" && len(b) != 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') && qregistry.Registry["qtechng-support-dir"] != "" {
 			qutil.FillList(Flist, b)
 		}
-		fmt.Print(catchOut)
+		if catch == nil {
+			fmt.Print(catchOut)
+		}
 	}
 	if catchErr.Len() != 0 {
 		fmt.Print(catchErr)
+	}
+	if catch != nil {
+		fmt.Print(catch(catchOut.String()))
 	}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 }

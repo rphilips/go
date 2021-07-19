@@ -12,7 +12,7 @@ var argJSONCmd = &cobra.Command{
 	Short: "Start qtechng with arguments in JSON",
 	Long: `Launches qtechng with the arguments in a JSON string.
 	
-The command works with exactly one argument: a string containing a JSON array.
+The command works with exactly one argument: a string containing a *JSON array*.
 
 The following applies:
     - The first element should always be *qtechng*
@@ -20,7 +20,7 @@ The following applies:
     - Empty arguments remain in the argument list
 `,
 	Args:    cobra.ExactArgs(1),
-	Example: `qtechng arg json '["system", "info"]'`,
+	Example: `qtechng arg json '["qtechng", "system", "info"]'`,
 	RunE:    argJSON,
 }
 
@@ -38,7 +38,6 @@ func argJSON(cmd *cobra.Command, args []string) error {
 			Msg:  []string{"Argument is empty"},
 		}
 		return err
-		//Fmsg = qreport.Report(nil, errorlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	}
 
 	argums := make([]string, 0)

@@ -20,7 +20,7 @@ var systemInfoCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Example: "  qtechng system info",
 	RunE:    systemInfo,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 	},

@@ -41,11 +41,11 @@ With only one argument and no '--inplace' flag, the result is written on stdout.
 `,
 	Args: cobra.MinimumNArgs(0),
 	Example: `
-  qtechng file format cwd=../strings
+  qtechng file format --cwd=../strings
   qtechng file format --cwd=../strings --remote
   qtechng file format mymfile.d --inplace`,
 	RunE:   fileFormat,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

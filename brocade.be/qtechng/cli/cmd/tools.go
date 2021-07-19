@@ -660,9 +660,11 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 			}
 			oklocfils = append(oklocfils, t.LocFile)
 		}
-		d := new(qclient.Dir)
-		d.Dir = dir
-		d.Add(oklocfils...)
+		if !Fcopyonly {
+			d := new(qclient.Dir)
+			d.Dir = dir
+			d.Add(oklocfils...)
+		}
 		if len(errlist) == 0 {
 			return oklocfils, nil
 		}

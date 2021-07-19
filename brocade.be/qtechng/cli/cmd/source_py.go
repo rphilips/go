@@ -20,7 +20,7 @@ var sourcePyCmd = &cobra.Command{
 	Example: "qtechng source py /core/qtech/local.py",
 	Args:    cobra.MinimumNArgs(1),
 	RunE:    sourcePy,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"fill-version":   "yes",

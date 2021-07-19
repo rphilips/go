@@ -17,10 +17,11 @@ import (
 
 //Ftell tells what kind of informatiom has to be returned
 var fileDiffCmd = &cobra.Command{
-	Use:     "diff",
-	Short:   "Gives difference between a file and its source",
-	Long:    `Gives information about files (to be used in shell scripts)`,
-	Example: `  qtechng file diff bcawedit.m`,
+	Use:   "diff",
+	Short: "Shows changes to a file",
+	Long: `Shows difference between a QtechNG file and a version in the repository.
+The format of this difference is unified output format.`,
+	Example: `qtechng file diff bcawedit.m --version=5.20`,
 	Args:    cobra.ExactArgs(1),
 	RunE:    fileDiff,
 
@@ -76,7 +77,6 @@ func fileDiff(cmd *cobra.Command, args []string) error {
 		ext := filepath.Ext(basename)
 		name = strings.TrimSuffix(fname, ext) + "-" + Fversion + ext
 		qfs.CopyFile(target, name, "qtech", false)
-		fmt.Println(fname, name)
 		qfs.Rmpath(tmpdir)
 	} else {
 		Fmsg = qreport.Report("", fmt.Errorf("cannot retrieve `%s`", locfil.QPath), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

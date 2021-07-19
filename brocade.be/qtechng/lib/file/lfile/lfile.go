@@ -173,6 +173,17 @@ func (lf *LFile) Sort() {
 	lf.Lgcodes = lgcodes
 }
 
+func (lf *LFile) Format() (output *bytes.Buffer) {
+	output = bytes.NewBuffer([]byte(lf.Comment()))
+	output.Write([]byte(lf.Comment()))
+	for _, lgcode := range lf.Lgcodes {
+		output.WriteString("\n\n")
+		output.WriteString(lgcode.Format())
+	}
+	output.WriteString("\n")
+	return output
+}
+
 // Format formats a L-file
 func Format(fname string, blob []byte, output *bytes.Buffer) error {
 

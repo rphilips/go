@@ -27,9 +27,11 @@ var sourceCoCmd = &cobra.Command{
 
 // Fclear Clears visited directories, if in auto mode
 var Fclear bool
+var Fcopyonly bool
 
 func init() {
 	sourceCoCmd.Flags().BoolVar(&Fclear, "clear", false, "Clears visited directories, if in auto mode")
+	sourceCoCmd.Flags().BoolVar(&Fcopyonly, "copyonly", false, "Checks out without updating local repository information")
 	sourceCmd.AddCommand(sourceCoCmd)
 }
 

@@ -13,7 +13,7 @@ var argSSHCmd = &cobra.Command{
 The argument is a full path to a file on the development server. 
 This file is retrieved and the arguments are extracted.
 
-If the first non-whitespace character in the file is a *[*, the contents should be a JSON array.
+If the first non-whitespace character in the file is a *[*, the contents should be a *JSON array*.
 
 If the file is *NOT* a JSON array, the following restriction apply:
     - Arguments are read line-by-line from the named file.

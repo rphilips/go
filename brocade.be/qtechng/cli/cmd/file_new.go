@@ -26,7 +26,7 @@ qtechng file new bcawedit.m  cwd=application
 qtechng file new bcawedit.m
 	`,
 	RunE:   fileNew,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",

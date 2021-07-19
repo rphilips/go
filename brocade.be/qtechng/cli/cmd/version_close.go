@@ -24,7 +24,7 @@ var versionCloseCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Example: "qtechng version close --nextversion=5.30",
 	RunE:    versionClose,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"with-qtechtype": "B",
 		"fill-version":   "yes",

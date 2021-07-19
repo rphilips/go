@@ -13,7 +13,7 @@ var commandListCmd = &cobra.Command{
 	Short: "Available commands",
 	Long: `
 Displays a list of all available qtechng commands`,
-	Example: "  qtechng command list",
+	Example: "qtechng command list",
 	RunE:    commandList}
 
 func init() {

@@ -27,7 +27,7 @@ Give with the *--number* flag the number of files to be deleted.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source rename --qpattern=/application/*.m --number=12`,
 	RunE:    sourceRename,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed":    "yes",
 		"always-remote-onW": "yes",

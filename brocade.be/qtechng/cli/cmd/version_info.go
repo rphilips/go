@@ -16,7 +16,7 @@ var versionInfoCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version info 5.10",
 	RunE:    versionInfo,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed":    "yes",
 		"always-remote-onW": "yes",

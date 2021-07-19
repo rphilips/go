@@ -29,7 +29,7 @@ a JSON array. Every element of the array is examined.`,
 	Example: `qtechng text detect "Goede morgen"`,
 
 	RunE:   textDetect,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed":    "yes",
 		"always-remote-onW": "yes",

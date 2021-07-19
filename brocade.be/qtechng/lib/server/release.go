@@ -435,6 +435,10 @@ func (release *Release) ObjectPlace(objname string) (*qvfs.QFs, string) {
 		fs := release.FS("object", "")
 		return &fs, ""
 	}
+	if !strings.ContainsRune(objname, '_') {
+		fs := release.FS("object", objname)
+		return &fs, ""
+	}
 	ty := strings.SplitN(objname, "_", 2)[0]
 	objname, _ = qutil.DeNEDFU(objname)
 	fs := release.FS("object", ty)

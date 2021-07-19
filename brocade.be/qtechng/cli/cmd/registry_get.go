@@ -23,7 +23,7 @@ List all registry values, with the key matching a pattern, and writes on stdout`
 
 	Args:   cobra.ExactArgs(1),
 	RunE:   registryGet,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed":       "yes",
 		"rstrip-trailing-crlf": "yes",

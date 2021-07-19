@@ -16,7 +16,7 @@ var fileListCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file list application/bcawedit.m install.py`,
 	RunE:    fileList,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd) },
+	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
