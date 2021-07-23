@@ -10,7 +10,7 @@ import (
 var argJSONCmd = &cobra.Command{
 	Use:   "json",
 	Short: "Start qtechng with arguments in JSON",
-	Long: `Launches qtechng with the arguments in a JSON string.
+	Long: `Launches qtechng with the arguments specified in a JSON string.
 	
 The command works with exactly one argument: a string containing a *JSON array*.
 

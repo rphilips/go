@@ -19,15 +19,22 @@ import (
 var fileDiffCmd = &cobra.Command{
 	Use:   "diff",
 	Short: "Shows changes to a file",
-	Long: `Shows difference between a QtechNG file and a version in the repository.
-The format of this difference is unified output format.`,
+	Long: `Shows difference between a QtechNG file and a version of the file
+in the repository.
+
+The format of this difference is unified output format (unidiff).
+(see: https://en.wikipedia.org/wiki/Diff)
+
+Give exactly one argument: the file to be examined.
+Take care that this file is a QtechNG file.
+
+In no version is specified, the version of the give file is taken.`,
 	Example: `qtechng file diff bcawedit.m --version=5.20`,
 	Args:    cobra.ExactArgs(1),
 	RunE:    fileDiff,
 
 	Annotations: map[string]string{
 		"remote-allowed": "no",
-		"fill-version":   "yes",
 		"with-qtechtype": "BWP",
 	},
 }
@@ -39,7 +46,7 @@ func init() {
 
 func fileDiff(cmd *cobra.Command, args []string) error {
 
-	plocfils, _ := qclient.Find(Fcwd, args, "", Frecurse, Fqpattern, false)
+	plocfils, _ := qclient.Find(Fcwd, args, "", Frecurse, Fqpattern, false, Finlist, Fnotinlist, nil)
 
 	if len(plocfils) == 0 {
 		err := qerror.QError{
@@ -57,13 +64,17 @@ func fileDiff(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	locfil := plocfils[0]
-	if locfil == nil {
+	plocfil := plocfils[0]
+	if plocfil == nil {
 		return nil
 	}
 
-	argums := []string{"source", "co", locfil.QPath, "--version=" + Fversion}
-	fname, _ := qfs.AbsPath(locfil.Place)
+	if Fversion != "" {
+		Fversion = plocfil.Release
+	}
+
+	argums := []string{"source", "co", plocfil.QPath, "--version=" + Fversion}
+	fname, _ := qfs.AbsPath(plocfil.Place)
 	basename := filepath.Base(fname)
 	tmpdir, _ := qfs.TempDir("", "diff-")
 	target := filepath.Join(tmpdir, basename)
@@ -79,7 +90,7 @@ func fileDiff(cmd *cobra.Command, args []string) error {
 		qfs.CopyFile(target, name, "qtech", false)
 		qfs.Rmpath(tmpdir)
 	} else {
-		Fmsg = qreport.Report("", fmt.Errorf("cannot retrieve `%s`", locfil.QPath), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", fmt.Errorf("cannot retrieve `%s`", plocfil.QPath), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 

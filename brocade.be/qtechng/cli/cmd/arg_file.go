@@ -10,7 +10,7 @@ import (
 var argFileCmd = &cobra.Command{
 	Use:   "file",
 	Short: "Start qtechng with arguments in a file",
-	Long: `Launches qtechng with the arguments as lines in a file. 
+	Long: `Launches qtechng with the arguments specified as lines in a file. 
 If the first non-whitespace character in the file is a *[*, the contents should be a *JSON array*.
 
 If the file is *NOT* a JSON array, the following restriction apply:

@@ -5,26 +5,35 @@ import (
 
 	qfs "brocade.be/base/fs"
 	qclient "brocade.be/qtechng/lib/client"
-	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fileDeleteCmd = &cobra.Command{
-	Use:     "delete",
-	Short:   "Deletes status of QtechNG files",
-	Long:    `Deletes the status of a file as a QtechNG file`,
+	Use:   "delete",
+	Short: "Deletes status of a file as a QtechNG files",
+	Long: `Deletes the status of a local file as a QtechNG file.
+
+Remember:
+    - This action has no effect on the repository
+    - Use the '--unlink' flag to remove the files from the filesystem!
+
+
+` + Mfiles,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file delete application/bcawedit.m install.py cwd=../catalografie`,
 	RunE:    fileDelete,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
-		"fill-version":   "yes",
 	},
 }
 
+var Funlink bool
+
 func init() {
+	fileDeleteCmd.Flags().BoolVar(&Funlink, "unlink", false, "Remove from filesystem")
 	fileDeleteCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
 	fileDeleteCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
@@ -39,26 +48,8 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 	}
 
 	done := make(map[string]bool)
-	if Fversion == "" {
-		err := &qerror.QError{
-			Ref:  []string{"file.delete.version"},
-			Type: "Error",
-			Msg:  []string{"Do not know how to deduce version"},
-		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-		return nil
-	}
-	if Fcwd == "" {
-		err := &qerror.QError{
-			Ref:  []string{"file.delete.cwd"},
-			Type: "Error",
-			Msg:  []string{"Do not know where to find the files"},
-		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-		return nil
-	}
 
-	plocfils, err := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
+	plocfils, err := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false, Finlist, Fnotinlist, nil)
 	direxists := make(map[string][]qclient.LocalFile)
 
 	result := make([]deleter, 0)
@@ -66,21 +57,15 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		errorlist = append(errorlist, err)
 	}
+	list := make([]string, 0)
 	for _, plocfil := range plocfils {
 		place := plocfil.Place
 		if done[place] {
 			continue
 		}
 		done[place] = true
-
-		if qfs.IsDir(place) {
-			err := &qerror.QError{
-				Ref:  []string{"file.delete.dir"},
-				Type: "Error",
-				Msg:  []string{"Cannot delete a directory: `" + place + "`"},
-			}
-			errorlist = append(errorlist, err)
-			continue
+		if Flist != "" {
+			list = append(list, plocfil.QPath)
 		}
 
 		dir := filepath.Dir(place)
@@ -105,8 +90,14 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 				Release: locfil.Release,
 				QPath:   locfil.QPath,
 			})
+			if Funlink {
+				qfs.Rmpath(locfil.Place)
+			}
 		}
 	}
 	Fmsg = qreport.Report(result, errorlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	if len(list) != 0 {
+		qutil.EditList(Flist, false, list)
+	}
 	return nil
 }

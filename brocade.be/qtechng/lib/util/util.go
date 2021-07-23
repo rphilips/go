@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -28,7 +29,7 @@ import (
 
 // EMatch extende match
 func EMatch(pattern string, qpath string) bool {
-	if pattern == "" || pattern == "*" {
+	if pattern == "" || pattern == "/" || pattern == "*" {
 		return true
 	}
 	if qpath == pattern {
@@ -37,12 +38,10 @@ func EMatch(pattern string, qpath string) bool {
 	if qfnmatch.Match(pattern, qpath) {
 		return true
 	}
-	k := strings.IndexAny(pattern, "*[?")
-	if k != -1 {
+	if strings.ContainsAny(pattern, "*[?") {
 		return false
 	}
-	pattern += "/*"
-	return qfnmatch.Match(pattern, qpath)
+	return strings.HasPrefix(qpath, pattern+"/")
 }
 
 // EMatch extende match
@@ -1024,10 +1023,41 @@ func EditList(list string, transported bool, qpaths []string) {
 	if supportdir == "" {
 		return
 	}
-
+	sort.Strings(qpaths)
+	body := strings.Join(qpaths, "\n")
 	listname := filepath.Join(supportdir, "lists", list+".lst")
-	qfs.Mkdir(filepath.Dir(listname), "process")
-	qfs.Store(listname, strings.Join(qpaths, "\n"), "process")
+	data, err := qfs.Fetch(listname)
+	if err != nil || body != string(data) {
+		qfs.Mkdir(filepath.Dir(listname), "process")
+		qfs.Store(listname, strings.Join(qpaths, "\n"), "qtech")
+	}
+}
+
+func FromList(list string) (qpaths map[string]bool) {
+	if list == "" {
+		return nil
+	}
+	supportdir := qregistry.Registry["qtechng-support-dir"]
+	if supportdir == "" {
+		return nil
+	}
+	listname := filepath.Join(supportdir, "lists", list+".lst")
+	data, err := qfs.Fetch(listname)
+	if err != nil {
+		return nil
+	}
+	lines := strings.SplitN(string(data), "\n", -1)
+
+	qpaths = make(map[string]bool)
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		qpaths[line] = true
+	}
+	return qpaths
 }
 
 func FillList(list string, b []byte) {

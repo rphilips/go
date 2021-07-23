@@ -286,7 +286,19 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 	// User
 	if FUID == "" {
 		FUID = checkUID(FUID)
-
+	}
+	if !Ftransported && FUID != "" {
+		ok := true
+		for _, x := range os.Args {
+			if !strings.HasPrefix(x, "--uid=") {
+				continue
+			}
+			ok = false
+			break
+		}
+		if ok {
+			os.Args = append(os.Args, "--uid="+FUID)
+		}
 	}
 
 	// conditions

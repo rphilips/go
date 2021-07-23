@@ -30,7 +30,6 @@ import (
 
 // FetchList gets a number of paths
 func LintList(version string, paths []string, warnings bool) (infos []error, metas []*qmeta.Meta, errs error) {
-
 	if len(paths) == 0 {
 		return
 	}
@@ -260,7 +259,7 @@ func (source *Source) LintResult(info string) (err error) {
 	return err
 }
 
-func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool) string {
+func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool, rst bool) string {
 	body := buffer.Bytes()
 	_, base := qutil.QPartition(source.String())
 	ext := path.Ext(base)
@@ -273,12 +272,14 @@ func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool
 		tmp = filepath.Join(lintdir, name) + ext
 	}
 
-	r := source.Release().String()
-	qpath := "/doc/application/epilog.sphinx"
-	epilog, _ := Source{}.New(r, qpath, true)
-	edata, _ := epilog.Fetch()
-	body = append(body, []byte("\n\n\n")...)
-	body = append(body, edata...)
+	if rst {
+		r := source.Release().String()
+		qpath := "/doc/application/epilog.sphinx"
+		epilog, _ := Source{}.New(r, qpath, true)
+		edata, _ := epilog.Fetch()
+		body = append(body, []byte("\n\n\n")...)
+		body = append(body, edata...)
+	}
 
 	qfs.Store(tmp, body, "temp")
 	return tmp
@@ -290,7 +291,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 	fs, pyscript := release.SourcePlace(source.String())
 	pyscript, _ = fs.RealPath(pyscript)
 	py := qutil.GetPy(pyscript)
-	tmppy := tmplint(lintdir, source, buffer, true)
+	tmppy := tmplint(lintdir, source, buffer, true, false)
 	e := qpython.Compile(tmppy, py == "py3")
 	info = "OK"
 	if e != nil {
@@ -304,7 +305,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 
 //Parse PHP File
 func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
-	tmpphp := tmplint(lintdir, source, buffer, true)
+	tmpphp := tmplint(lintdir, source, buffer, true, false)
 	e := qphp.Compile(tmpphp)
 	info = "OK"
 	if e != nil {
@@ -319,7 +320,7 @@ func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir strin
 //Parse RST File
 func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
 
-	tmprst := tmplint(lintdir, source, buffer, true)
+	tmprst := tmplint(lintdir, source, buffer, true, true)
 	level := "info"
 	if !warnings {
 		level = "error"
@@ -500,20 +501,19 @@ func (source *Source) LintM(buffer *bytes.Buffer, warnings bool, lintdir string)
 	info = "OK"
 	if info == "OK" && !strings.Contains(preamble, "About") {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
+		return
 	}
-	if !warnings {
-		tmpm := tmplint(lintdir, source, buffer, false)
-		e := qmumps.Compile(tmpm)
-		info = "OK"
-		if e != nil {
-			info = e.Error()
-		}
-		if info == "OK" {
-			qfs.Rmpath(tmpm)
-		}
-		tmpo := strings.TrimSuffix(tmpm, ".m") + ".o"
-		qfs.Rmpath(tmpo)
+	tmpm := tmplint(lintdir, source, buffer, false, false)
+	e := qmumps.Compile(tmpm, warnings)
+	info = "OK"
+	if e != nil {
+		info = e.Error()
 	}
+	if info == "OK" {
+		qfs.Rmpath(tmpm)
+	}
+	tmpo := strings.TrimSuffix(tmpm, ".m") + ".o"
+	qfs.Rmpath(tmpo)
 	return
 }
 

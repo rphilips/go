@@ -12,7 +12,7 @@ import (
 var fileListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "Lists QtechNG files",
-	Long:    `Command `,
+	Long:    `Lists local QtechNG files and their properties` + Mfiles,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file list application/bcawedit.m install.py`,
 	RunE:    fileList,
@@ -35,7 +35,7 @@ func init() {
 }
 
 func fileList(cmd *cobra.Command, args []string) error {
-	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, Fonlychanged)
+	plocfils, errlist := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, Fonlychanged, Finlist, Fnotinlist, nil)
 	type adder struct {
 		Name    string `json:"arg"`
 		Changed bool   `json:"changed"`
@@ -51,12 +51,20 @@ func fileList(cmd *cobra.Command, args []string) error {
 		Mt      string `json:"mt"`
 	}
 
+	list := make([]string, 0)
 	result := make([]adder, 0)
 	for _, locfil := range plocfils {
 		changed := locfil.Changed(locfil.Place)
 		rel, _ := filepath.Rel(Fcwd, locfil.Place)
 		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, qutil.FileURL(locfil.Place, -1), locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
+		if Flist != "" {
+			list = append(list, locfil.QPath)
+		}
 	}
 	Fmsg = qreport.Report(result, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	if len(list) != 0 {
+		qutil.EditList(Flist, false, list)
+	}
+
 	return nil
 }

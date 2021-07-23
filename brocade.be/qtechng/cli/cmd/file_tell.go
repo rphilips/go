@@ -21,7 +21,31 @@ var Ftell = ""
 var fileTellCmd = &cobra.Command{
 	Use:   "tell",
 	Short: "Gives information about files",
-	Long:  `Gives information about files (to be used in shell scripts)`,
+	Long: `Gives information about files (to be used in shell scripts)
+	
+The '--tell' flag specifies which information has to be displayed.
+(without this flag, all information is given)
+
+'--tell' can have the values:
+
+    - ext: file extension
+	- basename: basename of the file
+	- dirname: dirname
+	- abspath: complete file specification
+	- version: version
+	- project: project
+	- qpath: qpath
+	- qdir: qdir
+	- python: python executable
+	- relpath: relative path of qpath versus project
+	- fileurl: URL with file scheme
+	- vcurl: URL in version control
+	- changed: true/false
+	
+Note: this information is retrieved locally and can be outdated.
+	
+	` + Mfiles,
+
 	Example: `  qtechng file tell bcawedit.m --cwd=../catalografie --ext
 	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=dirname
 	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=basename
@@ -48,7 +72,7 @@ func init() {
 
 func fileTell(cmd *cobra.Command, args []string) error {
 
-	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false)
+	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, false, Finlist, Fnotinlist, nil)
 
 	if len(plocfils) == 0 {
 		err := qerror.QError{
@@ -87,6 +111,10 @@ func fileTell(cmd *cobra.Command, args []string) error {
 	result["python"] = ""
 	result["relpath"] = relpath
 	result["fileurl"] = qutil.FileURL(fname, -1)
+	result["changed"] = "false"
+	if locfil.Changed(locfil.Place) {
+		result["changed"] = "true"
+	}
 
 	py := qutil.GetPy(fname)
 	if py != "" {

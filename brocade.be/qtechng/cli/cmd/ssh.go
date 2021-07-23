@@ -24,7 +24,7 @@ func preSSH(cmd *cobra.Command, catch func(s string) string) {
 		Origin: QtechType,
 		Args:   os.Args[1:],
 	}
-	whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
+	whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
 	catchOut, catchErr, err := qssh.SSHcmd(&payload, whowhere)
 	if err != nil {
 		log.Fatal("cmd/ssh/1:\n", err, "\n====\n", catchErr)
@@ -55,7 +55,7 @@ func ReadSSHAll(fname string) ([]byte, error) {
 		Origin: QtechType,
 		Args:   []string{"fs", "cat", fname},
 	}
-	whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
+	whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
 	catchOut, catchErr, err := qssh.SSHcmd(&payload, whowhere)
 	if err != nil {
 		log.Fatal("cmd/cat/1:\n", err, "\n====\n", catchErr)

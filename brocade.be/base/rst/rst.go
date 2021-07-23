@@ -24,7 +24,7 @@ func Check(scriptrst string, level string) error {
 		"--report",
 		level,
 		"--ignore-roles",
-		"menucall,issue,staff",
+		"menucall,issue,staff,fa",
 		"--ignore-directives",
 		"sample",
 		scriptrst,

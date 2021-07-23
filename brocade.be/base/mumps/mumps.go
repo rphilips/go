@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -233,7 +235,7 @@ func newMCMD(mdb string) (cmd *exec.Cmd, err error) {
 }
 
 // Compile tests if a m script compiles:
-func Compile(scriptm string) error {
+func Compile(scriptm string, warnings bool) error {
 	compiler := qregistry.Registry["m-compile-exe"]
 	if compiler == "" {
 		return nil
@@ -274,9 +276,65 @@ func Compile(scriptm string) error {
 	if serr != "" {
 		msg += serr + "\n"
 	}
-	if msg == "" {
+	if msg != "" {
+		m := make(map[string]string)
+		m["mode"] = "basic"
+		m["script"] = scriptm
+		m["parser"] = pexe
+		m["error"] = msg
+		errtext, _ := json.Marshal(m)
+
+		return errors.New(string(errtext))
+	}
+	if !warnings {
 		return nil
 	}
+	// advanced parsing
+	mexe := qregistry.Registry["m-exe"]
+	if mexe == "" {
+		return errors.New("registry value `m-exe` is missing")
+	}
+	inm, err := exec.LookPath(mexe)
+	if err != nil {
+		return err
+	}
+	mdb := qregistry.Registry["m-db"]
+	if mdb == "" {
+		return errors.New("registry value `m-db` is missing")
+	}
 
-	return fmt.Errorf("compile `%s` with `%s`:\n%s", scriptm, pexe, msg)
+	stdout.Reset()
+	stderr.Reset()
+	argums = []string{mexe, "%RunF^bqtlint"}
+	cmd = exec.Cmd{
+		Path:   inm,
+		Args:   argums,
+		Dir:    mdb,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	cmd.Env = append(os.Environ(), "BROCADE_AD="+scriptm)
+	cmd.Run()
+
+	sout = strings.TrimSpace(stdout.String())
+	serr = strings.TrimSpace(stderr.String())
+	msg = ""
+	if sout != "" && sout != "[]" && sout != "{}" {
+		msg += sout + "\n"
+	}
+	if serr != "" && sout != "[]" && sout != "{}" {
+		msg += serr + "\n"
+	}
+
+	if msg != "" {
+		m := make(map[string]string)
+		m["mode"] = "advanced"
+		m["script"] = scriptm
+		m["parser"] = "%RunF^bqtlint"
+		m["error"] = msg
+		errtext, _ := json.Marshal(m)
+
+		return errors.New(string(errtext))
+	}
+	return nil
 }

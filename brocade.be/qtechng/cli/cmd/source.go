@@ -15,6 +15,8 @@ var Froot bool
 
 // Flist identifier of list of the results, if in auto mode
 var Flist string
+var Finlist string
+var Fnotinlist string
 
 var stdoutHidden bool
 var stderrHidden bool

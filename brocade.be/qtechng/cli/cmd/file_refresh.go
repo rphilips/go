@@ -13,9 +13,11 @@ import (
 )
 
 var fileRefreshCmd = &cobra.Command{
-	Use:     "refresh",
-	Short:   "Checks out QtechNG files",
-	Long:    `Command to retrieve files from the QtechNG repository`,
+	Use:   "refresh",
+	Short: "Checks out QtechNG files",
+	Long: `This command retrieves the local files with an appropriate (same version, same qpath)
+from the central repository and updates the local version.
+` + Mfiles,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file refresh --qpattern=/catalografie/application/bcawedit.m`,
 	RunE:    fileRefresh,
@@ -36,7 +38,7 @@ func fileRefresh(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 && len(Fqpattern) == 0 {
 		Fqpattern = []string{"*"}
 	}
-	locfils, errlist := qclient.Find(Fcwd, args, "", Frecurse, Fqpattern, Fonlychanged)
+	locfils, errlist := qclient.Find(Fcwd, args, "", Frecurse, Fqpattern, Fonlychanged, Finlist, Fnotinlist, nil)
 	if errlist != nil {
 		Fmsg = qreport.Report(nil, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	}

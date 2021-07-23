@@ -19,9 +19,14 @@ import (
 var Fpysource = make([]string, 0)
 
 var filePyCmd = &cobra.Command{
-	Use:     "py",
-	Short:   "Executes a python script in the local filesystem",
-	Long:    `Executes the python script in the local filesystem.`,
+	Use:   "py",
+	Short: "Executes a python script in the local filesystem",
+	Long: `Executes the python script in the local filesystem.
+
+The system tries to find the appropriate Python interpreter and executes the script.
+The first argument is the python script the other arguments are parameters for this
+script.
+`,
 	Example: "qtechng file py /home/rphilips/core/qtech/local.py",
 	Args:    cobra.MinimumNArgs(1),
 	RunE:    filePy,
@@ -44,14 +49,14 @@ func filePy(cmd *cobra.Command, args []string) error {
 	pyscript := args[0]
 	if !strings.HasSuffix(pyscript, ".py") {
 		e := &qerror.QError{
-			Ref:  []string{"file.py"},
+			Ref:  []string{"file1.py"},
 			File: pyscript,
 			Msg:  []string{"Script should end with `.py`"},
 		}
 		return e
 	}
 
-	fname, _ := qfs.AbsPath(filepath.Join(Fcwd, pyscript))
+	pyscript, _ = qfs.AbsPath(filepath.Join(Fcwd, pyscript))
 
 	py := qutil.GetPy(pyscript)
 	if py == "" {
@@ -60,9 +65,9 @@ func filePy(cmd *cobra.Command, args []string) error {
 
 	if py == "" {
 		e := &qerror.QError{
-			Ref:  []string{"file.py"},
+			Ref:  []string{"file2.py"},
 			File: pyscript,
-			Msg:  []string{"Cannot determine python executable associated with `" + fname + "`"},
+			Msg:  []string{"Cannot determine python executable associated with `" + pyscript + "`"},
 		}
 		return e
 	}
@@ -84,8 +89,8 @@ func filePy(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	dirname := filepath.Dir(fname)
-	basename := filepath.Dir(fname)
+	dirname := filepath.Dir(pyscript)
+	basename := filepath.Dir(pyscript)
 	d := new(qclient.Dir)
 	d.Dir = dirname
 	locfil := d.Get(basename)
@@ -109,7 +114,7 @@ func filePy(cmd *cobra.Command, args []string) error {
 	}
 	args = args[1:]
 
-	sout, serr := qpy.Run(fname, py3, args, extra, Fcwd)
+	sout, serr := qpy.Run(pyscript, py3, args, extra, Fcwd)
 
 	if !stderrHidden && serr != "" {
 		os.Stderr.WriteString(serr)

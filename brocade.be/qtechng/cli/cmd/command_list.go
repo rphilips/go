@@ -9,10 +9,9 @@ import (
 )
 
 var commandListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Available commands",
-	Long: `
-Displays a list of all available qtechng commands`,
+	Use:     "list",
+	Short:   "Available commands",
+	Long:    `Displays a list of all available qtechng commands`,
 	Example: "qtechng command list",
 	RunE:    commandList}
 

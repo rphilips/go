@@ -129,7 +129,7 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 	}
 	pcargo = new(qclient.Cargo)
 	if !strings.ContainsRune(QtechType, 'B') && !strings.ContainsRune(QtechType, 'P') {
-		whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
+		whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
 		if err != nil {
 			return pcargo, fmt.Errorf("cmd/tools/fetchData/1:\n%s\n====\n%s", err.Error(), catchErr)
@@ -188,7 +188,7 @@ func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 	}
 	pcargo = &qclient.Cargo{}
 	if !strings.ContainsRune(QtechType, 'B') && !strings.ContainsRune(QtechType, 'P') {
-		whowhere := FUID + "@" + qregistry.Registry["qtechng-server"]
+		whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
 		if err != nil {
 			return pcargo, fmt.Errorf("cmd/tools/fetchObject/1:\n%s\n====\n%s", err.Error(), catchErr)

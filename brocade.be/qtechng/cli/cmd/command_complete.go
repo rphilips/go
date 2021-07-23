@@ -13,10 +13,12 @@ import (
 var commandCompleteCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "Completion functionality",
-	Long: `
-Displays a list of all available qtechng commands`,
+	Long: `This command is a helper for providing completion information 
+to Bash-like shells.
+
+Is use is mainly for interactive`,
 	Args:    cobra.ArbitraryArgs,
-	Example: "  qtechng command complete version",
+	Example: " qtechng command complete version",
 	RunE:    commandComplete}
 
 func init() {

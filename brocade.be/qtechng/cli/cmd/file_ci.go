@@ -21,8 +21,8 @@ import (
 
 var fileCiCmd = &cobra.Command{
 	Use:     "ci",
-	Short:   "Checks in QtechNG files",
-	Long:    `Command to store local files in QtechNG repository`,
+	Short:   "Check-in of QtechNG files",
+	Long:    `Stores local files in the QtechNG repository` + Mfiles,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file ci application/bcawedit.m install.py cwd=../catalografie`,
 	RunE:    fileCi,
@@ -34,6 +34,7 @@ var fileCiCmd = &cobra.Command{
 }
 
 func init() {
+	fileCiCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileCiCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
 	fileCiCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileCiCmd)
@@ -121,7 +122,7 @@ func preCi(cmd *cobra.Command, args []string) {
 	}
 
 	var errlist []error
-	Fpayload, errlist = getPayload(args, FUID, Fcwd, Fversion, Frecurse, Fqpattern)
+	Fpayload, errlist = getPayload(args, FUID, Fcwd, Fversion, Frecurse, Fqpattern, Finlist, Fnotinlist)
 	if len(errlist) == 0 {
 		errlist = nil
 	} else {
@@ -137,7 +138,7 @@ func preCi(cmd *cobra.Command, args []string) {
 	if !strings.ContainsRune(QtechType, 'B') {
 		whowhere := qregistry.Registry["qtechng-server"]
 		if !strings.Contains(whowhere, "@") {
-			whowhere = FUID + "@" + whowhere
+			whowhere = qregistry.Registry["qtechng-user"] + "@" + whowhere
 		}
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
 		if err != nil {
@@ -150,8 +151,8 @@ func preCi(cmd *cobra.Command, args []string) {
 	}
 }
 
-func getPayload(args []string, uid string, cwd string, version string, recurse bool, patterns []string) (payload *qclient.Payload, errlist []error) {
-	plocfils, elist := qclient.Find(cwd, args, version, recurse, patterns, true)
+func getPayload(args []string, uid string, cwd string, version string, recurse bool, patterns []string, inlist string, notinlist string) (payload *qclient.Payload, errlist []error) {
+	plocfils, elist := qclient.Find(cwd, args, version, recurse, patterns, true, inlist, notinlist, nil)
 	errlist = make([]error, 0)
 	if elist != nil {
 		errlist = append(errlist, elist)

@@ -112,7 +112,7 @@ func preImport(cmd *cobra.Command, args []string) {
 	if !strings.ContainsRune(QtechType, 'B') {
 		whowhere := qregistry.Registry["qtechng-server"]
 		if !strings.Contains(whowhere, "@") {
-			whowhere = FUID + "@" + whowhere
+			whowhere = qregistry.Registry["qtechng-user"] + "@" + whowhere
 		}
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
 		if err != nil {

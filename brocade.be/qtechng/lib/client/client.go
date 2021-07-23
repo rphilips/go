@@ -8,11 +8,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"time"
 
-	qfnmatch "brocade.be/base/fnmatch"
 	qfs "brocade.be/base/fs"
+	qparallel "brocade.be/base/parallel"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qsource "brocade.be/qtechng/lib/source"
@@ -244,14 +243,15 @@ func (dir *Dir) Del(locfils ...LocalFile) {
 		if !ok {
 			continue
 		}
-		if x.QPath == qpath {
-			delete(dir.Files, base)
-			changed = true
+		if x.QPath != qpath {
+			continue
 		}
+		delete(dir.Files, base)
+		changed = true
 	}
 	if changed {
 		qjson := filepath.Join(dir.Dir, ".qtechng")
-		qfs.Store(qjson, dir, "qtech")
+		qfs.Store(qjson, dir.Files, "qtech")
 		dir.Files = nil
 		dir.Load()
 	}
@@ -297,147 +297,117 @@ func (dir *Dir) Repository() map[string]map[string][]LocalFile {
 }
 
 // Find searches/reduces an argument list
-func Find(cwd string, files []string, release string, recurse bool, qpattern []string, onlychanged bool) (result []*LocalFile, err error) {
-	find := false
-
-	if len(files) == 0 {
-		find = true
-		files, err = qfs.Find(cwd, nil, recurse, true, false)
+func Find(cwd string, files []string, release string, recurse bool, qpatterns []string, onlychanged bool, inlist string, notinlist string, f func(plocfil *LocalFile) bool) (result []*LocalFile, err error) {
+	if cwd == "" {
+		cwd, err = os.Getwd()
 		if err != nil {
-			err := &qerror.QError{
-				Ref:  []string{"client.find.io"},
-				Type: "Error",
-				Msg:  []string{"Cannot find files: " + err.Error()},
-			}
 			return nil, err
 		}
 	}
-	argums := make([]string, 0)
-
-	for _, f := range files {
-		f := qutil.AbsPath(f, cwd)
-		if !qfs.IsDir(f) {
-			argums = append(argums, f)
-			continue
-		}
-		if !recurse {
-			continue
-		}
-		if find {
-			continue
-		}
-		a, _ := qfs.Find(f, nil, true, true, false)
-		for _, p := range a {
-			argums = append(argums, qutil.AbsPath(p, f))
-		}
-	}
-	files = argums
-
-	done := make(map[string]bool)
-	qpaths := make(map[string]string)
-
-	result = make([]*LocalFile, 0)
-	errlist := make([]error, 0)
-
-	sort.Strings(files)
-	d := new(Dir)
-	pdir := "/"
-	for _, file := range files {
-		if file == "" {
-			continue
-		}
-		place := qutil.AbsPath(file, cwd)
-		if done[place] {
-			continue
-		}
-		done[place] = true
-
-		dir := filepath.Dir(place)
-		base := filepath.Base(place)
-		if pdir != dir {
-			pdir = dir
-			d = new(Dir)
-			d.Dir = dir
-		}
-		plocfil := d.Get(base)
-		if plocfil == nil {
-			if base == ".qtechng" {
-				continue
-			}
-			if onlychanged {
-				continue
-			}
-			if !find {
-				err := &qerror.QError{
-					Ref:  []string{"client.find.get"},
-					Type: "Error",
-					File: place,
-					Msg:  []string{"`" + base + "` does not exists in QtechNG"},
-				}
-				errlist = append(errlist, err)
-			}
-			continue
-		}
-		if onlychanged && !plocfil.Changed(place) {
-			continue
-		}
-		if release != "" {
-			rok := qfnmatch.Match(release, plocfil.Release)
-
-			if !rok && !find {
-				err := &qerror.QError{
-					Ref:  []string{"client.find.version"},
-					Type: "Error",
-					Msg:  []string{"`" + file + "` does not match version"},
-				}
-				errlist = append(errlist, err)
-			}
-			if !rok {
-				continue
-			}
-		}
-		if len(qpattern) != 0 {
-			qok := false
-			for _, qpat := range qpattern {
-				qok = qfnmatch.Match(qpat, plocfil.QPath)
-				if qok {
-					break
-				}
-			}
-			if !qok && !find {
-				err := &qerror.QError{
-					Ref:  []string{"client.find.qpath"},
-					Type: "Error",
-					Msg:  []string{"`" + file + "` does not match pattern"},
-				}
-				errlist = append(errlist, err)
-			}
-			if !qok {
-				continue
-			}
-		}
-		plocfil.Place = place
-		qpath := plocfil.QPath
-		ofile, qok := qpaths[qpath]
-
-		if qok {
-			err := &qerror.QError{
-				Ref:  []string{"client.find.doubleqpath"},
-				Type: "Error",
-				Msg:  []string{"`" + file + "` and `" + ofile + "` refer both to `" + qpath},
-			}
-			errlist = append(errlist, err)
-			continue
-		}
-		qpaths[qpath] = file
-		result = append(result, plocfil)
+	if len(files) == 0 {
+		files = []string{cwd}
 	}
 
-	if len(result) == 0 {
-		result = nil
+	dirs := make(map[string]map[string]bool)
+
+	for _, fname := range files {
+		if fname == "" {
+			fname = cwd
+		}
+		fname = qutil.AbsPath(fname, cwd)
+		if !qfs.Exists(fname) {
+			continue
+		}
+		if qfs.IsFile(fname) {
+			dir := filepath.Dir(fname)
+			base := filepath.Base(fname)
+			_, ok := dirs[dir]
+			if ok && dirs[dir] == nil {
+				continue
+			}
+			if ok {
+				dirs[dir][base] = true
+				continue
+			}
+			if qfs.Exists(filepath.Join(dir, ".qtechng")) {
+				dirs[dir] = map[string]bool{base: true}
+			}
+			continue
+		}
+		matches, err := qfs.Find(fname, []string{".qtechng"}, recurse, true, false)
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range matches {
+			d := filepath.Dir(m)
+			dirs[d] = nil
+		}
 	}
-	if len(errlist) == 0 {
+
+	dirsslice := make([]string, 0)
+
+	for d := range dirs {
+		dirsslice = append(dirsslice, d)
+	}
+
+	minlist := qutil.FromList(inlist)
+	mnotinlist := qutil.FromList(notinlist)
+
+	fn := func(n int) (interface{}, error) {
+		dir := dirsslice[n]
+		d := new(Dir)
+		d.Dir = dir
+		d.Load()
+		result := make([]*LocalFile, 0)
+		for _, locfil := range d.Files {
+			if release != "" && locfil.Release != release {
+				continue
+			}
+			qpath := locfil.QPath
+			if mnotinlist[qpath] {
+				continue
+			}
+			if minlist != nil && !minlist[qpath] {
+				continue
+			}
+			_, base := qutil.QPartition(qpath)
+			place := filepath.Join(dir, base)
+
+			if dirs[dir] != nil {
+				if !dirs[dir][base] {
+					continue
+				}
+			}
+			if onlychanged && !locfil.Changed(place) {
+				continue
+			}
+			ok := len(qpatterns) == 0
+			for _, qpattern := range qpatterns {
+				if !qutil.EMatch(qpattern, qpath) {
+					continue
+				}
+				ok = true
+				break
+			}
+			if !ok {
+				continue
+			}
+			plocfil := new(LocalFile)
+			*plocfil = locfil
+			plocfil.Place = place
+
+			if f != nil && !f(plocfil) {
+				continue
+			}
+			result = append(result, plocfil)
+		}
 		return result, nil
 	}
-	return result, qerror.ErrorSlice(errlist)
+	resultlist, _ := qparallel.NMap(len(dirsslice), -1, fn)
+
+	for _, rl := range resultlist {
+		result = append(result, rl.([]*LocalFile)...)
+	}
+
+	return result, nil
 }

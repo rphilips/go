@@ -16,9 +16,14 @@ import (
 )
 
 var fileLoopCmd = &cobra.Command{
-	Use:     "loop",
-	Short:   "Loop QtechNG files",
-	Long:    `Command `,
+	Use:   "loop",
+	Short: "Loop QtechNG files",
+	Long: `This command is used on workstations.
+It monitors the local *qtechng-work-dir* and logs on stdout the changed qpaths.
+It also maintains a list in the support directory of all projects on the workstation.
+
+Is main use is for support of IDEs.
+`,
 	Args:    cobra.MaximumNArgs(1),
 	Example: `qtechng file loop`,
 	RunE:    fileLoop,
@@ -57,14 +62,15 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 	}
 
 	last := time.Now().AddDate(0, 0, -1)
-
+	list := make([]string, 0)
 	for {
 		supportDirs(&last, startdir, Fversion)
+
 		if !Fonce {
 			d, _ := time.ParseDuration(strconv.Itoa(Fsleep) + "s")
 			time.Sleep(d)
 		}
-		plocfils, errlist := qclient.Find(startdir, nil, Fversion, true, nil, true)
+		plocfils, errlist := qclient.Find(startdir, nil, Fversion, true, nil, true, "", "", nil)
 		if errlist != nil {
 			fmt.Println("[]")
 			if Fonce {
@@ -72,6 +78,13 @@ func fileLoop(cmd *cobra.Command, args []string) error {
 			}
 			continue
 		}
+		if Flist != "" {
+			for _, plocfil := range plocfils {
+				list = append(list, plocfil.QPath)
+			}
+			qutil.EditList(Flist, false, list)
+		}
+
 		if plocfils == nil {
 			fmt.Println("[]")
 			if Fonce {

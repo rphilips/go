@@ -16,8 +16,25 @@ import (
 var fileNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Adds/Creates files to/for QtechNG",
-	Long:  `Command adds an existing/new file to QtechNG. Version and project information is necessary`,
-	Args:  cobra.MinimumNArgs(0),
+	Long: `Command adds an existing/new file to QtechNG. 
+Version and project information is necessary
+
+This command is atypical: the other file-commands always work with 
+local files which originated in the QtechNG repository.
+
+This command works with either yet to be created files or existing files
+in the local filesystem which are not known in the repository 
+for a given version and a given qdir.
+
+With the '--create' flag non-existing files can be created. 
+With the '--hint=...' flag, a skeleton file can be given.
+Note, with '--create' the '--recurse' flag is meaningless.
+
+Without the '--create' flag, existings files can be added to a specific version and a qdir.
+With '--recurse' alll files in the subdirectories are included as well and the qdir
+specification follows the directory structure.
+`,
+	Args: cobra.MinimumNArgs(0),
 	Example: `
 qtech file new --qdir=/collection/application
 qtechng file new application/bcoledit.m --version=5.10 --qdir=/collection

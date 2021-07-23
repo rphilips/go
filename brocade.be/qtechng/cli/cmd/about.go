@@ -12,13 +12,13 @@ import (
 var aboutCmd = &cobra.Command{
 	Use:   "about",
 	Short: "Information about `qtechng`",
-	Long: `
-Version and builttime information about qtechng.
+	Long: `Version and build time information about the qtechng executable.
 If arguments are given, they are shown in 'hexified' format.`,
-	Args:    cobra.ArbitraryArgs,
-	Example: "  qtechng about\n  qtechng about --remote",
-	RunE:    about,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
+	Args: cobra.ArbitraryArgs,
+	Example: `qtechng about
+qtechng about --remote`,
+	RunE:   about,
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"complete":       "end",
