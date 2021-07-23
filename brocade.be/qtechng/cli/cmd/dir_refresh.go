@@ -13,11 +13,25 @@ import (
 )
 
 var dirRefreshCmd = &cobra.Command{
-	Use:     "refresh",
-	Short:   "Checks out QtechNG directories",
-	Long:    `Command to retrieve files from the QtechNG repository`,
+	Use:   "refresh",
+	Short: "Checks out QtechNG directories",
+	Long: `Command to refresh the files in directories.
+	
+The arguments of the command are the directories to be refreshed.
+
+There is a subtle difference between this command and refreshing
+the files form a directory!
+
+Refreshing files can only refresh existing files, 
+refreshing a directory can also bring new files in the
+directory and even new subdirectories: checking out from 
+the repository is always with '--recurse'
+
+Version and paths are infered by the available files or the position
+of the directory according the 'qtechng-work-dir'.
+`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng dir refresh --qpattern=/catalografie/application/bcawedit.m`,
+	Example: `qtechng dir refresh ../collections/application`,
 	RunE:    dirRefresh,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -30,7 +44,7 @@ func init() {
 }
 
 func dirRefresh(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 && len(Fqpattern) == 0 {
+	if len(args) == 0 {
 		args = []string{Fcwd}
 	}
 
