@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
@@ -711,7 +713,7 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 	return qpaths, result, errlist
 }
 
-func glob(cwd string, args []string, recurse bool, patterns []string, fils bool, dirs bool) (files []string, err error) {
+func glob(cwd string, args []string, recurse bool, patterns []string, fils bool, dirs bool, onlyutf8 bool) (files []string, err error) {
 
 	for _, arg := range args {
 		arg = qutil.AbsPath(arg, cwd)
@@ -743,6 +745,56 @@ func glob(cwd string, args []string, recurse bool, patterns []string, fils bool,
 		}
 		files = append(files, arg)
 	}
-	return
+	if !onlyutf8 {
+		return
+	}
 
+	fn := func(n int) (interface{}, error) {
+		fname := files[n]
+		r := validutf8(fname)
+		if r {
+			return fname, nil
+		}
+		return "", nil
+	}
+	resultlist, _ := qparallel.NMap(len(files), -1, fn)
+	result := make([]string, 0)
+
+	for _, r := range resultlist {
+		fname := r.(string)
+		if fname != "" {
+			result = append(result, fname)
+		}
+	}
+	return result, nil
+}
+
+func validutf8(fname string) bool {
+	f, err := os.Open(fname)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	buf := bytes.NewBuffer(make([]byte, 8192))
+	reader := bufio.NewReader(f)
+	maxlen := 0
+	for {
+		text, err := reader.ReadString('\n')
+		if err == io.EOF {
+			buf.WriteString(text)
+			break
+		}
+		if err != nil {
+			return false
+		}
+		if strings.ContainsRune(text, 0) {
+			return false
+		}
+		buf.WriteString(text)
+		maxlen += len(text)
+		if maxlen > 4096 {
+			break
+		}
+	}
+	return utf8.ValidString(buf.String())
 }

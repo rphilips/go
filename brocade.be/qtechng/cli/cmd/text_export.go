@@ -24,19 +24,20 @@ var textExportCmd = &cobra.Command{
 	Short: "Export lgcodes",
 	Long: `Command which export *lgcodes*.
 All lgcodes are checked (an lgcode stands for a term which can be translated) and,
-if appropriate, are written in a CSV file.
+if appropriate, are written to a CSV file.
 
 The arguments are the languages which should be exported. 
 If no arguments are given, the languages "eng", "fre", "dut"
 are taken.
 
-The flag *--emptyonly* selects only these lgcodes from which a translation is
+The flag '--emptyonly' selects only these lgcodes from which a translation is
 missing.
 
-The command leads to a file which is copied to the temporary directory.
+The command leads to a file which is copied to the 'download' subdirectory of 
+'qtechng-work-dir'.
 `,
 	Args:    cobra.MaximumNArgs(0),
-	Example: `qtechng text export N E F`,
+	Example: `qtechng text export`,
 
 	RunE: textExport,
 	PreRun: func(cmd *cobra.Command, args []string) {

@@ -23,7 +23,7 @@ var textDetectCmd = &cobra.Command{
 The text is specified as the first and only argument.
 If there are no arguments, the text to be examined, is retrieved from stdin.
 
-If the *--isjson flag* is present, the argument is interpreted as a file with 
+If the '--isjson' flag is present, the argument is interpreted as a file with 
 a JSON array. Every element of the array is examined.`,
 	Args:    cobra.MaximumNArgs(1),
 	Example: `qtechng text detect "Goede morgen"`,

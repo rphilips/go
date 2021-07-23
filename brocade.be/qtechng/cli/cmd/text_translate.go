@@ -23,12 +23,12 @@ var textTranslateCmd = &cobra.Command{
 The text is specified as the first and only argument.
 If there are no arguments, the text to be translated, is retrieved from stdin.
 
-The *--lgsource flag* specifies the source language, according to BCP-47 (See: https://www.rfc-editor.org/info/bcp47). 
-Use the --lgsource flag. Default value is "nl-NL"
+The '--lgsource' flag specifies the source language, according to BCP-47 (See: https://www.rfc-editor.org/info/bcp47). 
+Use the '--lgsource' flag. Default value is "nl-NL"
 
-The *--lgtarget flag* specifies the target language(s) according to BCP-47. Default value is "en-GB,fr-FR"
+The '--lgtarget' flag specifies the target language(s) according to BCP-47. Default value is "en-GB,fr-FR"
 
-If the *--isjson flag* is present, the argument is interpreted as a file with 
+If the '--isjson' flag is present, the argument is interpreted as a file with 
 a JSON array. Every element of the array is translated.`,
 	Args: cobra.MaximumNArgs(1),
 	Example: `qtechng text translate "Opgelet ! Er staan cijfers in de auteursnaam en dit is GEEN authority code"

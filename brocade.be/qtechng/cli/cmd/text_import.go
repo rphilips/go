@@ -36,22 +36,26 @@ var textImportCmd = &cobra.Command{
 	Long: `Command which import *lgcodes*.
 There is only one argument: the name of the import file.
 This file should be created by a matching *export* command.
+Take care that this file is CSV file with UTF-8 encoding.
 
 The entries are checked and, if valid, imported in the corresponding L-files.
 An extra column is added with a status message.
 
-Different error messages:
+Different error messages (per lgcode):
 
     - OK: no error found
 	- MISSING: the lgcode is unknown
-	- INCOMPLETE: incomplete record
-	- READFILE: cannot read lgcode
+	- INCOMPLETE: incomplete record, the lgcode is missing
+	- READFILE: cannot read lgcode in the repository
 	- LFILE: missing L-file
 	- UNCHANGED: data is not changed
 	- OUTDATED: the translation is not valid (the original text is changed)
+
+The system makes a backup of the changed L-files: the return message tells
+where, on the development server, the backup is situated.
 `,
 	Args:    cobra.ExactArgs(1),
-	Example: `qtechng text export N E F`,
+	Example: `qtechng text import mytranslations.csv`,
 
 	RunE:   textImport,
 	PreRun: preImport,
