@@ -126,7 +126,7 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 	}
 
 	files := make([]string, 0)
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false)
+	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
 	if err != nil {
 		return err
 	}

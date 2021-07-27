@@ -94,6 +94,9 @@ func fileRefresh(cmd *cobra.Command, args []string) error {
 				errs = append(errs, err)
 			}
 			stdout = strings.TrimSpace(stdout)
+			if strings.HasPrefix(stdout, `"`) {
+				stdout = "[" + stdout + "]"
+			}
 			if !strings.HasPrefix(stdout, "[") {
 				continue
 			}

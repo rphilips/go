@@ -91,7 +91,7 @@ func fsDelete(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false)
+	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
 
 	if Fconfirm && len(files) != 0 {
 		Fconfirm = false

@@ -153,7 +153,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 		rneedle, err = regexp.Compile(needle)
 	}
 	if err == nil {
-		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern, true, false)
+		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern, true, false, false)
 	}
 
 	if len(files) == 0 {

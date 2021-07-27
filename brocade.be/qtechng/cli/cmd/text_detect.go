@@ -23,7 +23,7 @@ var textDetectCmd = &cobra.Command{
 The text is specified as the first and only argument.
 If there are no arguments, the text to be examined, is retrieved from stdin.
 
-If the '--isjson' flag is present, the argument is interpreted as a file with 
+If the '--isfile' flag is present, the argument is interpreted as a file with 
 a JSON array. Every element of the array is examined.`,
 	Args:    cobra.MaximumNArgs(1),
 	Example: `qtechng text detect "Goede morgen"`,
@@ -38,7 +38,7 @@ a JSON array. Every element of the array is examined.`,
 }
 
 func init() {
-	textDetectCmd.Flags().BoolVar(&Fisjson, "isjson", false, "is het argument een JSON bestand")
+	textDetectCmd.Flags().BoolVar(&Fisfile, "isfile", false, "is het argument een JSON bestand")
 	textCmd.AddCommand(textDetectCmd)
 }
 
@@ -68,7 +68,7 @@ func textDetect(cmd *cobra.Command, args []string) error {
 	errs := make([]error, 0)
 
 	texts := make([]string, 0)
-	if Fisjson {
+	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(text, Fcwd))
 		if err != nil {
 			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

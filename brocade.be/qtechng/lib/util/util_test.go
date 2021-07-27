@@ -814,6 +814,44 @@ func TestSplitter01(t *testing.T) {
 	}
 }
 
+func TestObjName(t *testing.T) {
+	type T struct {
+		S  string
+		OK bool
+	}
+
+	TestData := []T{
+		{
+			"",
+			false,
+		},
+		{
+			"m4_CO",
+			true,
+		},
+		{
+			"am4_CO",
+			false,
+		},
+		{
+			"m4_CO?",
+			false,
+		},
+		{
+			"m4_COm4_AB",
+			false,
+		},
+	}
+
+	for _, x := range TestData {
+		ok := IsObjectName(x.S)
+		if ok != x.OK {
+			t.Errorf(fmt.Sprintf("\n\n%s\n\nfound:\n%t\n\nexpected:\n%t", x.S, ok, x.OK))
+		}
+	}
+
+}
+
 func TestJoiner(t *testing.T) {
 	type T struct {
 		S string

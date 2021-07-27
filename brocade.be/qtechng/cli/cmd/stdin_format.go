@@ -43,8 +43,12 @@ func stdinFormat(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	tmpfile = tmpfile + ext
 	defer qfs.Rmpath(tmpfile)
-	qfs.Store(tmpfile+ext, data, "qtech")
-	args[0] = tmpfile + ext
+	err = qfs.Store(tmpfile, data, "qtech")
+	if err != nil {
+		return err
+	}
+	args[0] = tmpfile
 	return fileFormat(cmd, args)
 }

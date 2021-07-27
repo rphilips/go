@@ -367,7 +367,7 @@ func Find(cwd string, files []string, release string, recurse bool, qpatterns []
 			if mnotinlist[qpath] {
 				continue
 			}
-			if minlist != nil && !minlist[qpath] {
+			if len(minlist) != 0 && !minlist[qpath] {
 				continue
 			}
 			_, base := qutil.QPartition(qpath)

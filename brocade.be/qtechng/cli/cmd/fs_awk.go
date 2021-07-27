@@ -19,12 +19,25 @@ import (
 var fsAWKCmd = &cobra.Command{
 	Use:   "awk",
 	Short: "Executes a AWK command",
-	Long: `First argument is a awk command. This command is executed on every file
-Take care: replacement is done over binary files as well!
-The other arguments are filenames or directory names. 
-If the argument is a directory name, all files in that directory are handled.`,
+	Long: `Executes a AWK command on files.
+The first argument is an AWK command.
+See: https://en.wikipedia.org/wiki/AWK
+	
+Warning! This command is very powerful and can permanently alter your files.
+
+Some remarks:
+
+    - this command is executed only on files which are deemed valid UTF-8 files
+	- if the second argument is '-', the AWK program is applied to stdin
+	- if no arguments are given, the command asks for arguments
+	- the other arguments: at least one file or directory are to be specified.
+	  (give '.' to indicate the current working directory)
+	- if an argument is a directory, all files in that directory are taken.
+	- '--recurse' recurses in the subdirectories of the argument directories.
+	- the '--pattern' flag builds a list of acceptable patterns on the basenames`,
+
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs awk "{print $1}" cwd=../catalografie`,
+	Example: `qtechng fs awk '{print $1}' . --cwd=../catalografie`,
 	RunE:    fsAWK,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -56,7 +69,7 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		for {
 			fmt.Print("File/directory          : ")
 			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
+			text = strings.TrimSpace(text)
 			if text == "" {
 				break
 			}
@@ -70,7 +83,7 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	if ask && !Frecurse {
 		fmt.Print("Recurse ?               : <n>")
 		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
+		text = strings.TrimSpace(text)
 		if text == "" {
 			text = "n"
 		}
@@ -83,7 +96,7 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		for {
 			fmt.Print("Pattern on basename     : ")
 			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
+			text = strings.TrimSpace(text)
 			if text == "" {
 				break
 			}
@@ -92,6 +105,20 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	}
 
 	program := args[0]
+	if Fisfile {
+		var err error
+		body, err := qfs.Fetch(program)
+		if err != nil {
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			return nil
+		}
+		program = string(body)
+	}
+	err := qawk.Exec(program, " ", nil, nil)
+	if err != nil {
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
 
 	fawk := func(reader io.Reader, writer io.Writer) error {
 		return qawk.Exec(program, " ", reader, writer)
@@ -111,9 +138,8 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	}
 
 	files := make([]string, 0)
-	var err error = nil
 	if len(args) != 2 || args[1] != "-" {
-		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
+		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, true)
 	}
 
 	if len(files) == 0 {

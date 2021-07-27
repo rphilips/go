@@ -92,7 +92,7 @@ func fsSetproperty(cmd *cobra.Command, args []string) error {
 			Fpattern = append(Fpattern, text)
 		}
 	}
-	files, err := glob(Fcwd, args[1:], Frecurse, Fpattern, true, true)
+	files, err := glob(Fcwd, args[1:], Frecurse, Fpattern, true, true, false)
 
 	if len(files) == 0 {
 		if err != nil {

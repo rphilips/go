@@ -74,7 +74,7 @@ func fsCat(cmd *cobra.Command, args []string) error {
 	var err error
 
 	if len(args) != 1 || args[0] != "-" {
-		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false)
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
 		if len(files) == 0 {
 			if err != nil {
 				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

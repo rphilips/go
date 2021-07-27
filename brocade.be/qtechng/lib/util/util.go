@@ -374,6 +374,21 @@ func MakeBytes(data interface{}) (b []byte, err error) {
 	}
 }
 
+func IsObjectName(name string) bool {
+	bname := []byte(name)
+	parts := ObjectSplitter(bname)
+	if len(parts) != 3 {
+		return false
+	}
+	if len(parts[0]) != 0 {
+		return false
+	}
+	if len(parts[2]) != 0 {
+		return false
+	}
+	return true
+}
+
 // ObjectSplitter maakt een [][]byte van een blob. Elke oneven index is een kandidaat object
 func ObjectSplitter(blob []byte) (result [][]byte) {
 	result = append(make([][]byte, 0), make([]byte, 0))

@@ -98,7 +98,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false)
+	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, true)
 
 	if len(files) == 0 {
 		if err != nil {

@@ -19,12 +19,24 @@ import (
 var fsSedCmd = &cobra.Command{
 	Use:   "sed",
 	Short: "Executes a sed command",
-	Long: `First argument is a sed command. This command is executed on every file
-Take care: replacement is done over binary files as well!
-The other arguments are filenames or directory names. 
-If the argument is a directory name, all files in that directory are handled.`,
+	Long: `Executes a sed command on files.
+	The first argument is an sed command.
+	See: https://en.wikipedia.org/wiki/Sed
+		
+	Warning! This command is very powerful and can permanently alter your files.
+	
+	Some remarks:
+	
+		- this command is executed only on files which are deemed valid UTF-8 files
+		- if the second argument is '-', the sed program is applied to stdin
+		- if no arguments are given, the command asks for arguments
+		- the other arguments: at least one file or directory are to be specified.
+		  (give '.' to indicate the current working directory)
+		- if an argument is a directory, all files in that directory are taken.
+		- '--recurse' recurses in the subdirectories of the argument directories.
+		- the '--pattern' flag builds a list of acceptable patterns on the basenames`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs sed "/remark/d" cwd=../catalografie`,
+	Example: `qtechng fs sed '/remark/d' cwd=../catalografie`,
 	RunE:    fsSed,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -45,7 +57,7 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		ask = true
 		fmt.Print("Enter sed command       : ")
 		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
+		text = strings.TrimSpace(text)
 		if text == "" {
 			return nil
 		}
@@ -56,7 +68,7 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		for {
 			fmt.Print("File/directory          : ")
 			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
+			text = strings.TrimSpace(text)
 			if text == "" {
 				break
 			}
@@ -70,7 +82,7 @@ func fsSed(cmd *cobra.Command, args []string) error {
 	if ask && !Frecurse {
 		fmt.Print("Recurse ?               : <n>")
 		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
+		text = strings.TrimSpace(text)
 		if text == "" {
 			text = "n"
 		}
@@ -83,15 +95,26 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		for {
 			fmt.Print("Pattern on basename     : ")
 			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
+			text = strings.TrimSpace(text)
 			if text == "" {
 				break
 			}
 			Fpattern = append(Fpattern, text)
 		}
 	}
-
-	program := strings.NewReader(args[0])
+	var program io.Reader
+	if Fisfile {
+		var err error
+		fl, err := os.Open(args[0])
+		if err != nil {
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			return nil
+		}
+		defer fl.Close()
+		program = fl
+	} else {
+		program = strings.NewReader(args[0])
+	}
 	engine, err := qsed.New(program)
 
 	if err != nil {
@@ -123,7 +146,7 @@ func fsSed(cmd *cobra.Command, args []string) error {
 	}
 
 	files := make([]string, 0)
-	files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false)
+	files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, true)
 
 	if len(files) == 0 {
 		if err != nil {

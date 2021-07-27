@@ -277,6 +277,15 @@ func InfoObjectList(r string, objstr []string) (objectmap map[string]Object) {
 	return FetchList(uberlist)
 }
 
+func GetEditFile(r string, objstr string) (source string) {
+	objmap := InfoObjectList(r, []string{objstr})
+	obj, ok := objmap[objstr]
+	if !ok {
+		return ""
+	}
+	return obj.EditFile()
+}
+
 // SourceList retrieves the source of a list
 func SourceList(objectlist []Object) (sourcemap map[string]string) {
 	sourcemap = make(map[string]string)

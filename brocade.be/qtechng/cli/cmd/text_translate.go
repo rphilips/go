@@ -23,16 +23,19 @@ var textTranslateCmd = &cobra.Command{
 The text is specified as the first and only argument.
 If there are no arguments, the text to be translated, is retrieved from stdin.
 
-The '--lgsource' flag specifies the source language, according to BCP-47 (See: https://www.rfc-editor.org/info/bcp47). 
+The '--lgsource' flag specifies the source language, according to BCP-47 
+(See: https://www.rfc-editor.org/info/bcp47). 
+
 Use the '--lgsource' flag. Default value is "nl-NL"
 
-The '--lgtarget' flag specifies the target language(s) according to BCP-47. Default value is "en-GB,fr-FR"
+The '--lgtarget' flag specifies the target language(s) according to BCP-47. 
+Default value is "en-GB,fr-FR"
 
-If the '--isjson' flag is present, the argument is interpreted as a file with 
+If the '--isfile' flag is present, the argument is interpreted as a file with 
 a JSON array. Every element of the array is translated.`,
 	Args: cobra.MaximumNArgs(1),
 	Example: `qtechng text translate "Opgelet ! Er staan cijfers in de auteursnaam en dit is GEEN authority code"
-qtechng text translate translateme.json --isjson`,
+qtechng text translate translateme.json --isfile`,
 
 	RunE:   textTranslate,
 	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
@@ -45,12 +48,12 @@ qtechng text translate translateme.json --isjson`,
 
 var Flgsource = ""
 var Flgtarget = ""
-var Fisjson = false
+var Fisfile = false
 
 func init() {
 	textTranslateCmd.Flags().StringVar(&Flgsource, "lgsource", "", "Brontaal")
 	textTranslateCmd.Flags().StringVar(&Flgtarget, "lgtarget", "", "Bestemmingstaal")
-	textTranslateCmd.Flags().BoolVar(&Fisjson, "isjson", false, "is het argument een JSON bestand")
+	textTranslateCmd.Flags().BoolVar(&Fisfile, "isfile", false, "is het argument een JSON bestand")
 	textCmd.AddCommand(textTranslateCmd)
 }
 
@@ -84,7 +87,7 @@ func textTranslate(cmd *cobra.Command, args []string) error {
 	errs := make([]error, 0)
 
 	texts := make([]string, 0)
-	if Fisjson {
+	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(text, Fcwd))
 		if err != nil {
 			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

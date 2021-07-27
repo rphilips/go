@@ -57,12 +57,26 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 	if len(Fqpattern) == 0 {
 		Fqpattern = []string{"*.[dlixmb]"}
 	} else {
-		f = func(plocfil *qclient.LocalFile) bool { return qutil.EMatch("*.[dlixmb]", plocfil.QPath) }
+		f = func(plocfil *qclient.LocalFile) bool {
+			return qutil.EMatch("*.[dlixmb]", plocfil.QPath)
+		}
 	}
 	plocfils, _ := qclient.Find(Fcwd, args, Fversion, Frecurse, Fqpattern, Fonlychanged, Finlist, Fnotinlist, f)
+	argums := make([]string, 0)
+	for _, plocfil := range plocfils {
+		argums = append(argums, plocfil.Place)
+	}
+	if len(argums) == 0 {
+		for _, arg := range args {
+			arg = qutil.AbsPath(arg, Fcwd)
+			if qfs.Exists(arg) {
+				argums = append(argums, arg)
+			}
+		}
+	}
 
 	format := func(n int) (result interface{}, err error) {
-		fname := plocfils[n].Place
+		fname := argums[n]
 		ext := filepath.Ext(fname)
 		buffer := new(bytes.Buffer)
 		switch ext {
@@ -81,6 +95,7 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 		default:
 			return true, nil
 		}
+
 		if Finplace && err == nil {
 			qfs.Store(fname, buffer, "qtech")
 		}
@@ -98,7 +113,7 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 		}
 		return err == nil, err
 	}
-	_, errorlist := qparallel.NMap(len(plocfils), -1, format)
+	_, errorlist := qparallel.NMap(len(argums), -1, format)
 	elist := qerror.FlattenErrors(qerror.ErrorSlice(errorlist))
 	if len(elist) == 0 {
 		if Flist != "" {
