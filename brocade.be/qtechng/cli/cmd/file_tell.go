@@ -110,7 +110,7 @@ func fileTell(cmd *cobra.Command, args []string) error {
 	result["qdir"] = ""
 	result["python"] = ""
 	result["relpath"] = relpath
-	result["fileurl"] = qutil.FileURL(fname, -1)
+	result["fileurl"] = qutil.FileURL(fname, "", -1)
 	result["changed"] = "false"
 	if locfil.Changed(locfil.Place) {
 		result["changed"] = "true"

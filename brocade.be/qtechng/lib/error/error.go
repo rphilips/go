@@ -53,7 +53,7 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 	}
 
 	if qerr.Url == "" && qerr.File != "" {
-		qerr.Url = qutil.FileURL(qerr.File, qerr.Lineno)
+		qerr.Url = qutil.FileURL(qerr.File, qerr.QPath, qerr.Lineno)
 	}
 
 	if qerr.Url != "" {

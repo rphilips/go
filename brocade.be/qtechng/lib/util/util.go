@@ -980,7 +980,18 @@ func Ignore(s []byte) []byte {
 }
 
 //FileURL gives the file as URL
-func FileURL(fname string, lineno int) string {
+func FileURL(fname string, qpath string, lineno int) string {
+	if fname == "" && qpath == "" {
+		return ""
+	}
+	if fname == "" {
+		work := qregistry.Registry["qtechng-work-dir"]
+		if work != "" {
+			parts := strings.SplitN(qpath, "/", -1)
+			parts[0] = work
+			fname = filepath.Join(parts...)
+		}
+	}
 	if fname == "" {
 		return ""
 	}

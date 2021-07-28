@@ -94,7 +94,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 				Release: plocfil.Release,
 				QPath:   plocfil.QPath,
 				File:    place,
-				Url:     qutil.FileURL(place, -1),
+				Url:     qutil.FileURL(place, "", -1),
 				Time:    plocfil.Time,
 				Digest:  plocfil.Digest,
 				Cu:      plocfil.Cu,

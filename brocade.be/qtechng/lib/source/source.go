@@ -339,6 +339,60 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 		return nmeta, false, chobjs, err
 	}
 
+	fdata, err := qutil.MakeBytes(data)
+	if err != nil {
+		return nmeta, false, chobjs, err
+	}
+	ok := natures["objectfile"]
+	var content []byte
+	if ok {
+		content, err = source.Fetch()
+		if err != nil {
+			ok = false
+		}
+		if len(content) == 0 {
+			ok = false
+		}
+	}
+
+	if ok {
+		notdel, notadd, err1 := source.checkOrphanObjects(content, fdata)
+		if err1 != nil {
+			e := &qerror.QError{
+				Ref:     []string{"source.store.check.object"},
+				Version: version.String(),
+				QPath:   source.String(),
+				Msg:     []string{"Problems on checking the objects"},
+			}
+			err = qerror.QErrorTune(err1, e)
+			return
+		}
+		if len(notdel) != 0 {
+			err = &qerror.QError{
+				Ref:     []string{"source.store.orphan.object"},
+				Version: version.String(),
+				QPath:   source.String(),
+				Msg:     []string{"These objects cannot be removed: " + strings.Join(notdel, ", ")},
+			}
+			return
+		}
+		if len(notadd) != 0 {
+			rest := make([]string, len(notadd))
+			i := -1
+			for k, v := range notadd {
+				i++
+				rest[i] = k + " (" + v + ")"
+			}
+			err = &qerror.QError{
+				Ref:     []string{"source.store.orphan.object"},
+				Version: version.String(),
+				QPath:   source.String(),
+				Msg:     []string{"These objects exist already: " + strings.Join(rest, ", ")},
+			}
+			return
+		}
+	}
+
 	// meta object
 
 	nmeta, err = qmeta.Meta{}.New(version.String(), source.String())
@@ -1109,4 +1163,110 @@ func FetchList(version string, paths []string) (bodies [][]byte, metas []*qmeta.
 	}
 
 	return
+}
+
+func (source *Source) checkOrphanObjects(olddata []byte, newdata []byte) (notdel []string, notadd map[string]string, err error) {
+	qpath := source.String()
+	var objfile qobject.OFile
+	natures := source.Natures()
+	switch {
+	case natures["dfile"]:
+		objfile = new(qofile.DFile)
+	case natures["ifile"]:
+		objfile = new(qofile.IFile)
+	case natures["lfile"]:
+		objfile = new(qofile.LFile)
+	}
+	version := source.Release()
+	r := version.String()
+	objfile.SetEditFile(source.String())
+	objfile.SetRelease(r)
+	err = qobject.Loads(objfile, newdata, true)
+	if err != nil {
+		e := &qerror.QError{
+			Ref:     []string{"source.store.load1.object"},
+			Version: version.String(),
+			QPath:   source.String(),
+			Msg:     []string{"Cannot load objects"},
+		}
+		err = qerror.QErrorTune(err, e)
+		return
+	}
+	listnew := objfile.Objects()
+	mapnew := make(map[string]bool)
+	for _, obj := range listnew {
+		mapnew[obj.String()] = true
+	}
+	objfile.SetObjects(nil)
+	err = qobject.Loads(objfile, olddata, true)
+	if err != nil {
+		e := &qerror.QError{
+			Ref:     []string{"source.store.load2.object"},
+			Version: version.String(),
+			QPath:   source.String(),
+			Msg:     []string{"Cannot load objects"},
+		}
+		err = qerror.QErrorTune(err, e)
+		return
+	}
+	listold := objfile.Objects()
+	mapold := make(map[string]bool)
+	for _, obj := range listold {
+		mapold[obj.String()] = true
+	}
+
+	notadd = make(map[string]string)
+	for _, obj := range listnew {
+		name := obj.String()
+		if mapold[name] {
+			continue
+		}
+		oldsource := qobject.GetEditFile(r, name)
+		if oldsource == qpath {
+			continue
+		}
+		notadd[name] = oldsource
+	}
+	if len(notadd) != 0 {
+		return nil, notadd, nil
+	}
+
+	rest := make([]string, 0)
+	for _, obj := range listold {
+		name := obj.String()
+		if mapnew[name] {
+			continue
+		}
+		newsource := qobject.GetEditFile(r, name)
+		if newsource == "" {
+			continue
+		}
+		if newsource != qpath {
+			continue
+		}
+		rest = append(rest, name)
+	}
+	if len(rest) == 0 {
+		return nil, nil, nil
+	}
+	notdel = make([]string, 0)
+	deps, err := qobject.GetDependenciesDeep(version, rest...)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(deps) != 0 {
+		for obj, ds := range deps {
+			if len(ds) == 0 {
+				continue
+			}
+			if len(ds) == 1 && ds[0] == qpath {
+				continue
+			}
+			notdel = append(notdel, obj)
+		}
+	}
+	if len(notdel) == 0 {
+		return nil, nil, nil
+	}
+	return notdel, nil, nil
 }

@@ -11,6 +11,7 @@ var objectCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Example: "qtechng object",
 }
+var Fobjpattern []string
 
 func init() {
 	rootCmd.AddCommand(objectCmd)

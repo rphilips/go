@@ -11,13 +11,20 @@ import (
 )
 
 var objectListCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "Lists objects in the repository",
-	Long:    `Lists objects by name (prefix included)`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng object list m4_getCatIsbdTitles m4_CO`,
-	RunE:    objectList,
-	PreRun:  preObjectList,
+	Use:   "list",
+	Short: "Lists objects in the repository",
+	Long: `Lists objects in the repository
+The objects can be specified:
+    - as arguments
+	- as '--objpattern-...' flags.
+	
+Do not forget the appropriate prefix!`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng object list m4_getCatIsbdTitles m4_CO
+qtechng object list --objpattern='m4_getCat*'
+	`,
+	RunE:   objectList,
+	PreRun: preObjectList,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
@@ -26,7 +33,7 @@ var objectListCmd = &cobra.Command{
 
 func init() {
 	objectCmd.AddCommand(objectListCmd)
-	objectListCmd.PersistentFlags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern on object names")
+	objectListCmd.PersistentFlags().StringSliceVar(&Fobjpattern, "objpattern", []string{}, "Posix glob pattern on object names")
 }
 
 func objectList(cmd *cobra.Command, args []string) error {

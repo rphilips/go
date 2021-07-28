@@ -56,7 +56,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 	for _, locfil := range plocfils {
 		changed := locfil.Changed(locfil.Place)
 		rel, _ := filepath.Rel(Fcwd, locfil.Place)
-		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, qutil.FileURL(locfil.Place, -1), locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
+		result = append(result, adder{rel, changed, locfil.Release, locfil.QPath, locfil.Place, qutil.FileURL(locfil.Place, locfil.QPath, -1), locfil.Time, locfil.Digest, locfil.Cu, locfil.Mu, locfil.Ct, locfil.Mt})
 		if Flist != "" {
 			list = append(list, locfil.QPath)
 		}
