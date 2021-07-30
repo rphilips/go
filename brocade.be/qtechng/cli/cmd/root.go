@@ -8,15 +8,14 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"syscall"
 
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
+	qlog "brocade.be/qtechng/lib/log"
 	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
@@ -196,21 +195,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&Fyaml, "yaml", false, "Convert to YAML")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")
 	rootCmd.PersistentFlags().StringSliceVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
-	// rootCmd.PersistentFlags().StringVar(&Fversion, "version", "", "Version to work with")
-	// rootCmd.PersistentFlags().StringVar(&Fproject, "project", "", "project to work with")
-	// rootCmd.PersistentFlags().StringVar(&Fqdir, "qdir", "", "qpath of a directory under a project")
-	// rootCmd.PersistentFlags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern")
-	// rootCmd.PersistentFlags().StringSliceVar(&Fneedle, "needle", []string{}, "Posix glob pattern")
-	// rootCmd.PersistentFlags().BoolVar(&Fforce, "force", false, "with force")
-	// rootCmd.PersistentFlags().BoolVar(&Fremote, "remote", false, "execute on the remote server")
-	// rootCmd.PersistentFlags().BoolVar(&Fperline, "perline", false, "searches per line")
-	// rootCmd.PersistentFlags().BoolVar(&finfo, "info", false, "lists arguments, flags and global values")
-	// rootCmd.PersistentFlags().BoolVar(&Frecurse, "recurse", false, "recursively walks through directory and subdirectories")
-	// rootCmd.PersistentFlags().BoolVar(&Fregexp, "regexp", false, "searches as a regular expression")
-	// rootCmd.PersistentFlags().BoolVar(&Ftolower, "tolower", false, "transforms to lowercase")
-	// rootCmd.PersistentFlags().BoolVar(&Fsmartcaseoff, "smartcaseoff", false, "transforms with smartcase")
-	// rootCmd.PersistentFlags().BoolVar(&Ftransported, "transported", false, "Indicate if comamnd is transported")
-	// rootCmd.PersistentFlags().BoolVar(&Ffilesinproject, "neighbours", false, "Indicate if all files in project are selected")
 
 }
 
@@ -250,17 +234,6 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	// Jq
-	if len(Fjq) != 0 && !Ftransported {
-		_, err = qutil.Transform(nil, Fjq, false)
-		if err != nil {
-			err = &qerror.QError{
-				Ref: []string{errRoot + "jsonpath"},
-				Msg: []string{fmt.Sprintf("JSONpath error: " + err.Error())},
-			}
-			return
-		}
-	}
 	// Cwd
 	Fcwd, err = checkCwd(Fcwd)
 	if err != nil {
@@ -341,30 +314,18 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	// root
-	withroot := cmd.Annotations["with-root"]
-	yes := withroot == "yes" || withroot == "*"
-	if !yes && withroot != "" {
-		for _, char := range QtechType {
-			yes = strings.ContainsRune(allowed, char)
-			if yes {
-				break
-			}
-		}
-	}
-	if yes {
-		euid := syscall.Geteuid()
-		suid, _ := user.Current()
-		if euid != -1 {
-			suid, _ = user.LookupId(strconv.Itoa(euid))
-		}
-		if suid.Username != "root" {
+	// Jq
+	if len(Fjq) != 0 && !Ftransported {
+		_, err = qutil.Transform(nil, Fjq, false)
+		if err != nil {
 			err = &qerror.QError{
-				Ref: []string{errRoot + "root"},
-				Msg: []string{fmt.Sprintf("Command should be run as root, current is `%s`", suid.Username)},
+				Ref: []string{errRoot + "jsonpath"},
+				Msg: []string{fmt.Sprintf("JSONpath error: " + err.Error())},
 			}
 		}
 	}
+
+	qlog.Log(BuildTime, FUID, Fversion, os.Args[1:])
 
 	if err != nil {
 		return
@@ -376,6 +337,7 @@ func preRun(cmd *cobra.Command, args []string) (err error) {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(buildTime string, goVersion string, buildHost string, payload *qclient.Payload, args []string) {
+	defer qlog.Recover(buildTime, FUID, Fversion, args[1:])
 	BuildTime = buildTime
 	BuildHost = buildHost
 	GoVersion = goVersion

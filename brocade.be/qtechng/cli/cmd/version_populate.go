@@ -157,7 +157,7 @@ func versionPopulate(cmd *cobra.Command, args []string) error {
 		dir := filepath.Dir(files[0])
 		d.Dir = dir
 		d.Add(locfils...)
-		qutil.QtechNG([]string{"file", "ci", "--version=0.00", "--quiet"}, "", false, dir)
+		qutil.QtechNG([]string{"file", "ci", "--version=0.00", "--quiet"}, nil, false, dir)
 	}
 	return nil
 }

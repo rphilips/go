@@ -9,7 +9,7 @@ import (
 
 const CREATE_NO_WINDOW = 0x08000000
 
-func QtechNG(args []string, jsonpath string, yaml bool, cwd string) (string, string, error) {
+func QtechNG(args []string, jsonpaths []string, yaml bool, cwd string) (string, string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	qexe := qregistry.Registry["qtechng-exe"]
@@ -18,8 +18,10 @@ func QtechNG(args []string, jsonpath string, yaml bool, cwd string) (string, str
 		qexe,
 	}
 	argums = append(argums, args...)
-	if jsonpath != "" {
-		argums = append(argums, "--jsonpath="+jsonpath)
+	if len(jsonpaths) != 0 {
+		for _, jq := range jsonpaths {
+			argums = append(argums, "--jsonpath="+jq)
+		}
 	}
 	if yaml {
 		argums = append(argums, "--yaml")

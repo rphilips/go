@@ -92,6 +92,7 @@ func TestMkdir(t *testing.T) {
 	if err != nil {
 		t.Errorf("Cannot remove dir")
 	}
+
 }
 
 func TestCopyFile(t *testing.T) {

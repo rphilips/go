@@ -170,7 +170,7 @@ func objectMove(cmd *cobra.Command, args []string) error {
 	}
 	argums := []string{"source", "co", "--version=" + Fversion, "--tree"}
 	argums = append(argums, retrsources...)
-	_, serr, err := qutil.QtechNG(argums, "$..ERROR", false, tmpdir)
+	_, serr, err := qutil.QtechNG(argums, []string{"$..ERROR"}, false, tmpdir)
 
 	if serr != "" {
 		err = fmt.Errorf("checkout of relevant sources gives error: `%s`", serr)
@@ -246,7 +246,7 @@ func objectMove(cmd *cobra.Command, args []string) error {
 	}
 
 	argums = []string{"file", "ci", "--recurse", "--uid=" + FUID}
-	_, serr, err = qutil.QtechNG(argums, "$..ERROR", Fyaml, tmpdir)
+	_, serr, err = qutil.QtechNG(argums, []string{"$..ERROR"}, Fyaml, tmpdir)
 	if serr != "" {
 		err = fmt.Errorf("checkin of relevant sources gives error: `%s`", serr)
 	}

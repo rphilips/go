@@ -85,7 +85,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	}
 
 	// get 'about'
-	soutr, serrr, err := qutil.QtechNG([]string{"about", "--remote"}, "$..DATA", false, Fcwd)
+	soutr, serrr, err := qutil.QtechNG([]string{"about", "--remote"}, []string{"$..DATA"}, false, Fcwd)
 	if err != nil {
 		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
@@ -119,6 +119,12 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 			os.MkdirAll(work, 0700)
 			qregistry.SetRegistry("qtechng-work-dir", work)
 		}
+		// logdir
+		if qregistry.Registry["qtechng-log-dir"] == "" {
+			logdir := filepath.Join(homedir, "brocade", "log")
+			os.MkdirAll(logdir, 0700)
+			qregistry.SetRegistry("qtechng-log-dir", logdir)
+		}
 		// supportdir
 		if qregistry.Registry["qtechng-support-dir"] == "" {
 			support := filepath.Join(homedir, "brocade", "support")
@@ -151,7 +157,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 		}
 	}
 	// QtechNG
-	soutl, serrl, err := qutil.QtechNG([]string{"about"}, "$..DATA", false, Fcwd)
+	soutl, serrl, err := qutil.QtechNG([]string{"about"}, []string{"$..DATA"}, false, Fcwd)
 	if err != nil {
 		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
@@ -164,7 +170,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	}
 	// releases
 	if onW {
-		sout, _, _ := qutil.QtechNG([]string{"system", "info", "--remote"}, "$..releases", false, Fcwd)
+		sout, _, _ := qutil.QtechNG([]string{"system", "info", "--remote"}, []string{"$..releases"}, false, Fcwd)
 		if sout != "" {
 			x := ""
 			err := json.Unmarshal([]byte(sout), &x)

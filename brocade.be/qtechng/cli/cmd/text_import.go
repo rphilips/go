@@ -402,7 +402,7 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 			"--copyonly",
 		}
 		args = append(args, lfiles...)
-		qutil.QtechNG(args, "", false, backupdir)
+		qutil.QtechNG(args, nil, false, backupdir)
 	}
 
 	fl := func(n int) (interface{}, error) {

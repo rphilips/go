@@ -79,7 +79,7 @@ func dirRefresh(cmd *cobra.Command, args []string) error {
 		args[2] = "--root"
 		args[3] = "--qpattern=" + qdir + "/*"
 		args[4] = "--version=" + version
-		stdout, _, err := qutil.QtechNG(args, "$..qpath", false, dir)
+		stdout, _, err := qutil.QtechNG(args, []string{"$..qpath"}, false, dir)
 		if err != nil {
 			errs = append(errs, err)
 		}

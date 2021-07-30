@@ -174,10 +174,10 @@ func objectRename(cmd *cobra.Command, args []string) error {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
-	argums := []string{"source", "co", "--version=" + Fversion, "--tree"}
+	argums := []string{"source", "co", "--version=" + Fversion, "--tree", "--nature=text"}
 	argums = append(argums, sources...)
 
-	_, serr, err := qutil.QtechNG(argums, "$..ERROR", false, tmpdir)
+	_, serr, err := qutil.QtechNG(argums, []string{"$..ERROR"}, false, tmpdir)
 
 	if serr != "" {
 		err = fmt.Errorf("checkout of relevant sources gives error: `%s`", serr)
@@ -223,11 +223,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	}
 
 	argums = []string{"file", "ci", "--recurse", "--uid=" + FUID}
-	jq := ""
-	if len(Fjq) == 1 {
-		jq = Fjq[0]
-	}
-	Fmsg, _, _ = qutil.QtechNG(argums, jq, Fyaml, tmpdir)
+	Fmsg, _, _ = qutil.QtechNG(argums, Fjq, Fyaml, tmpdir)
 	return nil
 }
 

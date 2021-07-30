@@ -1250,10 +1250,7 @@ func (source *Source) checkOrphanObjects(olddata []byte, newdata []byte) (notdel
 		return nil, nil, nil
 	}
 	notdel = make([]string, 0)
-	deps, err := qobject.GetDependenciesDeep(version, rest...)
-	if err != nil {
-		return nil, nil, err
-	}
+	deps := qobject.GetDependencies(version, rest...)
 	if len(deps) != 0 {
 		for obj, ds := range deps {
 			if len(ds) == 0 {
@@ -1262,7 +1259,37 @@ func (source *Source) checkOrphanObjects(olddata []byte, newdata []byte) (notdel
 			if len(ds) == 1 && ds[0] == qpath {
 				continue
 			}
-			notdel = append(notdel, obj)
+			skip := make(map[string]bool)
+			notresolve := make(map[string][]string)
+			bad := false
+			for _, qp := range ds {
+				if skip[qp] {
+					continue
+				}
+				so, _ := Source{}.New(r, qpath, true)
+				natures := so.Natures()
+				if !natures["text"] {
+					skip[qp] = true
+					continue
+				}
+				nres := notresolve[qp]
+				if nres == nil {
+					nres = so.NotReplace()
+					notresolve[qp] = nres
+				}
+				bad = true
+				for _, pattern := range nres {
+					if qfnmatch.Match(pattern, obj) {
+						bad = false
+					}
+				}
+				if bad {
+					break
+				}
+			}
+			if bad {
+				notdel = append(notdel, obj)
+			}
 		}
 	}
 	if len(notdel) == 0 {

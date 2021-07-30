@@ -70,21 +70,10 @@ func (source *Source) NotReplace() []string {
 
 // Resolve vervangt alle r4/i4/m4/l4/i4
 func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, textmap map[string]string, buffer *bytes.Buffer, decomment bool) (err error) {
-	if objectmap == nil {
-		objectmap = make(map[string]qobject.Object)
-	}
-	if textmap == nil {
-		textmap = make(map[string]string)
-	}
 	body, err := source.Fetch()
 	if err != nil {
 		return err
 	}
-
-	if decomment {
-		body = qutil.Decomment(body).Bytes()
-	}
-
 	if !bytes.Contains(body, []byte("4_")) {
 		buffer.Write(body)
 		return nil
@@ -98,6 +87,17 @@ func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, 
 		buffer.Write(body)
 		return nil
 	}
+	if objectmap == nil {
+		objectmap = make(map[string]qobject.Object)
+	}
+	if textmap == nil {
+		textmap = make(map[string]string)
+	}
+
+	if decomment {
+		body = qutil.Decomment(body).Bytes()
+	}
+
 	env := source.Env()
 	notreplace := source.NotReplace()
 

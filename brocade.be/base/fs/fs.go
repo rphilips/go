@@ -44,15 +44,6 @@ func AbsPath(pth string) (abspath string, err error) {
 		}
 		abspath = home + pth[1:]
 	}
-	if !strings.HasPrefix(pth, "~") {
-		abspath, err = pth, nil
-	} else {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			home = "~"
-		}
-		abspath = home + pth[1:]
-	}
 	abspath = os.ExpandEnv(abspath)
 	abspath = filepath.FromSlash(abspath)
 	abspath, err = filepath.Abs(abspath)
@@ -129,38 +120,22 @@ func Properties(pathmode string) (prop Property, err error) {
 
 	}
 	switch pathmode {
-	case "webdir":
-		perm = 0755
+	case "webdir", "webdavdir", "scriptdir", "daemondir":
+		perm = calcPerm("rwxr-x---")
 	case "webfile":
-		perm = 0644
-	case "webdavdir":
-		perm = 0755
+		perm = calcPerm("rwxr-----")
 	case "webdavfile":
-		perm = 0644
-	case "scriptdir":
-		perm = 0755
-	case "scriptfile":
-		perm = 0755
-	case "processdir":
-		perm = 0770
-	case "daemonfile":
-		perm = 0755
-	case "daemondir":
-		perm = 0755
-	case "processfile":
-		perm = 0770
-	case "tempdir":
-		perm = 0755
-	case "tempfile":
-		perm = 0664
-	case "qtechdir":
-		perm = 0770
-	case "qtechfile":
-		perm = 0660
+		perm = calcPerm("rw-rw----")
+	case "scriptfile", "daemonfile":
+		perm = calcPerm("rwxr-x---")
+	case "processdir", "tempdir", "qtechdir":
+		perm = calcPerm("rwxrwx---")
+	case "qtechfile", "processfile", "tempfile":
+		perm = calcPerm("rw-rw----")
 	case "nakeddir":
-		perm = 0777
+		perm = calcPerm("rwxrwxrwx")
 	case "nakedfile":
-		perm = 0776
+		perm = calcPerm("rw-rw-rw-")
 	default:
 		err = ErrNotPathMode
 		return
@@ -223,9 +198,9 @@ func QSetPathMode() bool {
 	if runtime.GOOS == "windows" {
 		return false
 	}
-	if qregistry.Registry["qtechng-type"] == "W" {
-		return false
-	}
+	// if qregistry.Registry["qtechng-type"] == "W" {
+	// 	return false
+	// }
 	return true
 }
 
@@ -533,7 +508,7 @@ func TempDir(dir string, prefix string) (name string, err error) {
 		dir = qregistry.Registry["scratch-dir"]
 	}
 	name, err = os.MkdirTemp(dir, prefix)
-	if err != nil {
+	if err == nil {
 		err = SetPathmode(name, "tempdir")
 	}
 	return

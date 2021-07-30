@@ -129,7 +129,7 @@ func (release Release) Init() (err error) {
 		return err
 	}
 	fs := release.FS("/")
-	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4", "/object/r4", "/admin"} {
+	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4", "/object/r4", "/admin", "/log"} {
 		fs.MkdirAll(dir, 0o770)
 	}
 

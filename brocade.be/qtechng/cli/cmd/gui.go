@@ -168,7 +168,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 							"list",
 							fname,
 						}
-						out, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
+						out, _, _ := qutil.QtechNG(argums, []string{"$..DATA"}, false, Fcwd)
 						guiFiller.Vars["properties"] = string(out)
 					}
 				case "new":
@@ -178,7 +178,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						"tell",
 						"--cwd=" + mydir,
 					}
-					out, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
+					out, _, _ := qutil.QtechNG(argums, []string{"$..DATA"}, false, Fcwd)
 					m := make(map[string]string)
 					json.Unmarshal([]byte(out), &m)
 					qdir := m["qdir"]
@@ -200,7 +200,7 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 						myfile,
 						"--cwd=" + mydir,
 					}
-					out, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
+					out, _, _ := qutil.QtechNG(argums, []string{"$..DATA"}, false, Fcwd)
 					m := make(map[string]string)
 					json.Unmarshal([]byte(out), &m)
 					qpath := m["qpath"]
@@ -447,7 +447,7 @@ func handleCheckin(cwd string, args []string) string {
 	if len(args) != 0 {
 		argums = append(argums, args...)
 	}
-	sout, _, _ := qutil.QtechNG(argums, "$..file", true, cwd)
+	sout, _, _ := qutil.QtechNG(argums, []string{"$..file"}, true, cwd)
 	return sout
 }
 
@@ -461,7 +461,7 @@ func handleTouch(cwd string, args []string) string {
 	if len(args) != 0 {
 		argums = append(argums, args...)
 	}
-	sout, _, _ := qutil.QtechNG(argums, "$..touched", true, cwd)
+	sout, _, _ := qutil.QtechNG(argums, []string{"$..touched"}, true, cwd)
 	return sout
 }
 
@@ -511,7 +511,7 @@ func handleNew(ui lorca.UI, guiFiller *GuiFiller, cwd string, args []string) str
 		argums = append(argums, args...)
 	}
 
-	sout, _, _ := qutil.QtechNG(argums, "$..DATA", false, Fcwd)
+	sout, _, _ := qutil.QtechNG(argums, []string{"$..DATA"}, false, Fcwd)
 	bx, _ := json.Marshal(sout)
 	sx := string(bx)
 	st := ""
@@ -570,7 +570,7 @@ func handleSearch(ui lorca.UI, guiFiller *GuiFiller, sech string) string {
 	}
 	ui.Eval(`document.getElementById("busy").innerHTML = "Busy ..."`)
 	ui.Eval(`document.getElementById("busy").style="display:block;")`)
-	sout, serr, err := qutil.QtechNG(argums, f["jsonpath"], f["yaml"] == "1", Fcwd)
+	sout, serr, err := qutil.QtechNG(argums, []string{f["jsonpath"]}, f["yaml"] == "1", Fcwd)
 	ui.Eval(`document.getElementById("busy").innerHTML = ""`)
 	if err != nil {
 		serr += "\n\nError:" + err.Error()
@@ -689,7 +689,7 @@ func handleCheckoutArgs(cwd string, args []string) string {
 	if len(files) != 0 {
 		argums := []string{"file", "refresh"}
 		argums = append(argums, files...)
-		sout, _, _ := qutil.QtechNG(argums, "$..DATA", false, cwd)
+		sout, _, _ := qutil.QtechNG(argums, []string{"$..DATA"}, false, cwd)
 		if sout != "" {
 			slice := make([]string, 0)
 			e := json.Unmarshal([]byte(sout), &slice)
@@ -702,7 +702,7 @@ func handleCheckoutArgs(cwd string, args []string) string {
 	if len(dirs) != 0 {
 		argums := []string{"dir", "refresh"}
 		argums = append(argums, dirs...)
-		sout, _, _ := qutil.QtechNG(argums, "$..DATA", false, cwd)
+		sout, _, _ := qutil.QtechNG(argums, []string{"$..DATA"}, false, cwd)
 		if sout != "" {
 			slice := make([]string, 0)
 			e := json.Unmarshal([]byte(sout), &slice)
@@ -716,7 +716,7 @@ func handleCheckoutArgs(cwd string, args []string) string {
 		argums = append(argums, "--qpattern="+qp)
 	}
 
-	sout, _, _ := qutil.QtechNG(argums, "$..qpath", true, cwd)
+	sout, _, _ := qutil.QtechNG(argums, []string{"$..qpath"}, true, cwd)
 
 	return sout
 }
@@ -730,7 +730,7 @@ func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
 		fname,
 		"--tell=" + clip,
 	}
-	toclip, _, _ := qutil.QtechNG(argums, "", true, Fcwd)
+	toclip, _, _ := qutil.QtechNG(argums, nil, true, Fcwd)
 
 	if toclip != "" {
 		argums := []string{
@@ -738,7 +738,7 @@ func handleProperty(ui lorca.UI, guiFiller *GuiFiller) string {
 			"set",
 			toclip,
 		}
-		qutil.QtechNG(argums, "", true, Fcwd)
+		qutil.QtechNG(argums, nil, true, Fcwd)
 	}
 	return "stop"
 }
@@ -775,7 +775,7 @@ func handleDiff(ui lorca.UI, guiFiller *GuiFiller, cwd string) string {
 		"--version=" + cversion,
 	}
 
-	qutil.QtechNG(args, "", false, targetdir)
+	qutil.QtechNG(args, nil, false, targetdir)
 	if !qfs.IsFile(source) {
 		return "stop"
 	}

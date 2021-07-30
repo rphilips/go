@@ -78,7 +78,7 @@ func fileDiff(cmd *cobra.Command, args []string) error {
 	basename := filepath.Base(fname)
 	tmpdir, _ := qfs.TempDir("", "diff-")
 	target := filepath.Join(tmpdir, basename)
-	_, _, err := qutil.QtechNG(argums, "", false, tmpdir)
+	_, _, err := qutil.QtechNG(argums, nil, false, tmpdir)
 	if err != nil {
 		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil

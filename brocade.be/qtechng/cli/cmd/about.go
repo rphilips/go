@@ -35,6 +35,7 @@ func about(cmd *cobra.Command, args []string) error {
 
 	msg := map[string]string{"!BuildTime": BuildTime, "!BuildHost": BuildHost, "!BuildWith": GoVersion}
 	host, e := os.Hostname()
+
 	if e == nil {
 		msg["!!uname"] = host
 	}
