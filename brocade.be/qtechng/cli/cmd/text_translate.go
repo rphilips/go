@@ -1,19 +1,17 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"os"
 	"strings"
 
 	qfs "brocade.be/base/fs"
-	qregistry "brocade.be/base/registry"
+	qparallel "brocade.be/base/parallel"
 	qreport "brocade.be/qtechng/lib/report"
+	qtext "brocade.be/qtechng/lib/text"
 	qutil "brocade.be/qtechng/lib/util"
-	qtranslate "cloud.google.com/go/translate/apiv3"
 	"github.com/spf13/cobra"
-	qtranslatepb "google.golang.org/genproto/googleapis/cloud/translate/v3"
 )
 
 var textTranslateCmd = &cobra.Command{
@@ -59,6 +57,8 @@ func init() {
 
 func textTranslate(cmd *cobra.Command, args []string) error {
 
+	trsystems := []string{"Google", "DeepL"}
+
 	text := ""
 	if len(args) == 0 {
 		btext, err := io.ReadAll(os.Stdin)
@@ -83,77 +83,73 @@ func textTranslate(cmd *cobra.Command, args []string) error {
 
 	lgtargets := strings.SplitN(Flgtarget, ",", -1)
 
-	results := make([]map[string]string, 0)
-	errs := make([]error, 0)
-
 	texts := make([]string, 0)
 	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(text, Fcwd))
 		if err != nil {
-			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		}
 		err = json.Unmarshal(data, &texts)
 		if err != nil {
-			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		}
 	} else {
 		texts = append(texts, text)
 	}
+	type mission struct {
+		From        string `json:"lgsource"`
+		To          string `json:"lgtarget"`
+		Text        string `json:"text"`
+		System      string `json:"system"`
+		Translation string `json:"translation"`
+		Error       string `json:"error"`
+	}
 
-	for _, text := range texts {
-		one := make(map[string]string)
-		results = append(results, one)
-		one[Flgsource] = text
-		for _, lg := range lgtargets {
-			lg = strings.TrimSpace(lg)
-			if lg == "" {
+	missions := make([]mission, 0)
+
+	for _, lg := range lgtargets {
+		lg = strings.TrimSpace(lg)
+		if lg == "" {
+			continue
+		}
+		for _, text := range texts {
+			if text == "" {
 				continue
 			}
-			r, e := translate(text, Flgsource, lg)
-			if e != nil {
-				errs = append(errs, e)
-				continue
+			for _, system := range trsystems {
+
+				missions = append(missions, mission{
+					From:   Flgsource,
+					To:     lg,
+					Text:   text,
+					System: system,
+				})
 			}
-			one[lg] = string(r)
 		}
 	}
-	if len(errs) == 0 {
-		errs = nil
+
+	fn := func(n int) (interface{}, error) {
+		m := missions[n]
+		system := m.System
+		tr := ""
+		var err error
+		switch system {
+		case "Google":
+			tr, err = qtext.GoogleTranslate(m.Text, m.From, m.To)
+		case "DeepL":
+			tr, err = qtext.DeepLTranslate(m.Text, m.From, m.To)
+		}
+		m.Translation = tr
+		if err != nil {
+			m.Error = err.Error()
+		}
+		return m, nil
 	}
-	if len(results) == 0 {
-		results = nil
-	}
-	Fmsg = qreport.Report(results, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+
+	results, _ := qparallel.NMap(len(missions), -1, fn)
+
+	Fmsg = qreport.Report(results, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+
 	return nil
-
-}
-
-func translate(text string, from string, to string) (tr string, err error) {
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", qregistry.Registry["google-translate-privatekey"])
-	ctx := context.Background()
-	c, err := qtranslate.NewTranslationClient(ctx)
-	if err != nil {
-		return
-	}
-	defer c.Close()
-	request := qtranslatepb.TranslateTextRequest{
-		Contents:           []string{text},
-		MimeType:           "text/plain",
-		SourceLanguageCode: from,
-		TargetLanguageCode: to,
-		Parent:             "projects/translation-of-lgcodes",
-	}
-	response, err := c.TranslateText(ctx, &request)
-	if err != nil {
-		return
-	}
-	translations := response.Translations
-	if len(translations) == 0 {
-		return
-	}
-	trl := translations[0]
-	tr = trl.TranslatedText
-
-	return
 
 }
