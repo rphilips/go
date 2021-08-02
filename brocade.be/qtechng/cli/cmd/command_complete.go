@@ -14,9 +14,7 @@ var commandCompleteCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "Completion functionality",
 	Long: `This command is a helper for providing completion information 
-to Bash-like shells.
-
-Is use is mainly for interactive`,
+to Bash-like shells.`,
 	Args:    cobra.ArbitraryArgs,
 	Example: " qtechng command complete version",
 	RunE:    commandComplete}

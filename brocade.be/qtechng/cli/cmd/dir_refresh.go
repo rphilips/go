@@ -20,7 +20,7 @@ var dirRefreshCmd = &cobra.Command{
 The arguments of the command are the directories to be refreshed.
 
 There is a subtle difference between this command and refreshing
-the files form a directory!
+the files from a directory!
 
 Refreshing files can only refresh existing files, 
 refreshing a directory can also bring new files in the
@@ -28,11 +28,11 @@ directory and even new subdirectories: checking out from
 the repository is always with '--recurse'
 
 Version and paths are infered by the available files or the position
-of the directory according the 'qtechng-work-dir'.
-`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng dir refresh ../collections/application`,
-	RunE:    dirRefresh,
+of the directory in relation to the 'qtechng-work-dir' registry value.`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng dir refresh ../collections/application
+qtechng dir refresh`,
+	RunE: dirRefresh,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",

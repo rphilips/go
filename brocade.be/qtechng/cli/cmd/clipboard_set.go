@@ -10,7 +10,7 @@ var clipboardSetCmd = &cobra.Command{
 	Short: "Sets the system clipboard",
 	Long: `Stores text in the system clipboard.
 The text to be set is in the first argument.
-If this argument is missing, the clipboard is emptied. `,
+If this argument is missing, the clipboard is emptied.`,
 	Example: `qtechng clipboard set \"Hello World\"
 qtechng clipboard set`,
 	Args: cobra.MaximumNArgs(1),

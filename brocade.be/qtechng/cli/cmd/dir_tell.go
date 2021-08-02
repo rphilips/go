@@ -41,12 +41,11 @@ The information is infered from the available files in the directory or its
 place in the 'qtechng-work-dir'
 	
 `,
-	Example: `  qtechng file tell application --cwd=../collections --ext
-	  qtechng dir tell application --cwd=../collections --tell=dirname
-	  qtechng dir tell application --cwd=../collections --tell=qdir
-	  qtechng dir tell application --cwd=../collections --tell=version
-	  qtechng dir tell application --cwd=../collections
-	`,
+	Example: `qtechng file tell application --cwd=../collections --ext
+qtechng dir tell application --cwd=../collections --tell=dirname
+qtechng dir tell application --cwd=../collections --tell=qdir
+qtechng dir tell application --cwd=../collections --tell=version
+qtechng dir tell application --cwd=../collections`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: dirTell,
 	Annotations: map[string]string{

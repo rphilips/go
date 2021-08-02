@@ -24,7 +24,7 @@ func init() {
 
 var Mfiles = `
 
-How are the local QtechNG files, we are interested in, specified?
+How are the local QtechNG files, we are interested in, determined?
 
 Local files are always specified against the current working directory (cwd):
 paths are determined against this directory (change the current working 

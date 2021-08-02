@@ -18,7 +18,7 @@ If the first non-whitespace character in the file is a *[*, the contents should 
 If the file is *NOT* a JSON array, the following restriction apply:
     - Arguments are read line-by-line from the named file.
     - Whitespace is stripped at the beginning and the end of each line
-	- Empty lines are skipped
+    - Empty lines are skipped
     - The first line should be *qtechng*
 	
 If the file *IS* a JSON array, the following applies:
