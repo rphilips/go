@@ -54,7 +54,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	ask := false
 	if len(args) == 0 {
 		ask = true
-		fmt.Print("Enter search string in name: ")
+		fmt.Print("Enter search string in file name: ")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
