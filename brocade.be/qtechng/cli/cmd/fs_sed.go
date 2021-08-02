@@ -100,6 +100,9 @@ func fsSed(cmd *cobra.Command, args []string) error {
 				break
 			}
 			Fpattern = append(Fpattern, text)
+			if text == "*" {
+				break
+			}
 		}
 	}
 	var program io.Reader

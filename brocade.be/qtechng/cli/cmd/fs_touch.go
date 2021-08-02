@@ -73,6 +73,9 @@ func fsTouch(cmd *cobra.Command, args []string) error {
 				break
 			}
 			Fpattern = append(Fpattern, text)
+			if text == "*" {
+				break
+			}
 		}
 	}
 	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, false)

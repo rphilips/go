@@ -103,6 +103,9 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 				break
 			}
 			Fpattern = append(Fpattern, text)
+			if text == "*" {
+				break
+			}
 		}
 	}
 

@@ -90,6 +90,9 @@ func fsSetproperty(cmd *cobra.Command, args []string) error {
 				break
 			}
 			Fpattern = append(Fpattern, text)
+			if text == "*" {
+				break
+			}
 		}
 	}
 	files, err := glob(Fcwd, args[1:], Frecurse, Fpattern, true, true, false)
