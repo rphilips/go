@@ -58,9 +58,9 @@ func filePy(cmd *cobra.Command, args []string) error {
 
 	pyscript, _ = qfs.AbsPath(filepath.Join(Fcwd, pyscript))
 
-	py := qutil.GetPy(pyscript)
+	py := Fpy
 	if py == "" {
-		py = Fpy
+		py = qutil.GetPy(pyscript)
 	}
 
 	if py == "" {

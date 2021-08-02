@@ -13,6 +13,7 @@ import (
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
 	qawk "github.com/benhoyt/goawk/interp"
+	qawkp "github.com/benhoyt/goawk/parser"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +23,9 @@ var fsAWKCmd = &cobra.Command{
 	Long: `Executes a AWK command on files.
 The first argument is an AWK command.
 See: https://en.wikipedia.org/wiki/AWK
+
+The files are given as input to the AWK statements.
+The result - what appears on stdout - replaces the original file!
 	
 Warning! This command is very powerful and can permanently alter your files.
 
@@ -46,6 +50,7 @@ Some remarks:
 
 func init() {
 	fsAWKCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsAWKCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is dit een AWK file ?")
 	fsAWKCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsAWKCmd)
 }
@@ -101,6 +106,9 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 				break
 			}
 			Fpattern = append(Fpattern, text)
+			if text == "*" {
+				break
+			}
 		}
 	}
 
@@ -114,7 +122,7 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		}
 		program = string(body)
 	}
-	err := qawk.Exec(program, " ", nil, nil)
+	_, err := qawkp.ParseProgram([]byte(program), nil)
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
@@ -141,7 +149,6 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	if len(args) != 2 || args[1] != "-" {
 		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, true)
 	}
-
 	if len(files) == 0 {
 		if err != nil {
 			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

@@ -13,9 +13,15 @@ import (
 )
 
 var fsCatCmd = &cobra.Command{
-	Use:     "cat",
-	Short:   "cat a file",
-	Long:    `First argument is part of the absolute filepath that has to be copied to stdout`,
+	Use:   "cat",
+	Short: "cat files to stdout",
+	Long: `The arguments are the names of the files.
+The contents of these files will be copied to stdout, one after the other.
+
+With the '--stdout=...' flag, the contents can be redirected to a file.
+
+If there is only one argument and it is '-', input is taken from stdin.
+`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng fs cat bcawedit.m cwd=../catalografie`,
 	RunE:    fsCat,

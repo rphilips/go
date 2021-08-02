@@ -23,23 +23,23 @@ This command is atypical: the other file-commands always work with
 local files which originated in the QtechNG repository.
 
 This command works with either yet to be created files or existing files
-in the local filesystem which are not known in the repository 
-for a given version and a given qdir.
+in the local filesystem which, for a given version and a given qdir, 
+are not known in the repository.
 
 With the '--create' flag non-existing files can be created. 
 With the '--hint=...' flag, a skeleton file can be given.
 Note, with '--create' the '--recurse' flag is meaningless.
 
 Without the '--create' flag, existings files can be added to a specific version and a qdir.
-With '--recurse' alll files in the subdirectories are included as well and the qdir
+With '--recurse' all files in the subdirectories are included as well and the qdir
 specification follows the directory structure.
 `,
 	Args: cobra.MinimumNArgs(0),
 	Example: `
 qtech file new --qdir=/collection/application
 qtechng file new application/bcoledit.m --version=5.10 --qdir=/collection
-qtechng file new application/bcoledit.m  cwd=../catalografie
-qtechng file new bcawedit.m  cwd=application
+qtechng file new application/bcoledit.m  --cwd=../catalografie
+qtechng file new bcawedit.m  --cwd=application
 qtechng file new bcawedit.m
 	`,
 	RunE:   fileNew,
