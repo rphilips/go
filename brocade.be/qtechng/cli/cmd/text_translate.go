@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"strings"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
+	qregistry "brocade.be/base/registry"
 	qreport "brocade.be/qtechng/lib/report"
 	qtext "brocade.be/qtechng/lib/text"
 	qutil "brocade.be/qtechng/lib/util"
@@ -57,7 +59,12 @@ func init() {
 
 func textTranslate(cmd *cobra.Command, args []string) error {
 
-	trsystems := []string{"Google", "DeepL"}
+	services := qregistry.Registry["qtechng-translation-services"]
+	if services == "" {
+		Fmsg = qreport.Report(nil, errors.New("no translation services defined"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
+	trsystems := strings.SplitN(services, ",", -1)
 
 	text := ""
 	if len(args) == 0 {
@@ -134,9 +141,9 @@ func textTranslate(cmd *cobra.Command, args []string) error {
 		tr := ""
 		var err error
 		switch system {
-		case "Google":
+		case "google":
 			tr, err = qtext.GoogleTranslate(m.Text, m.From, m.To)
-		case "DeepL":
+		case "deepl":
 			tr, err = qtext.DeepLTranslate(m.Text, m.From, m.To)
 		}
 		m.Translation = tr

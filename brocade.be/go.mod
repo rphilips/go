@@ -12,8 +12,8 @@ require (
 	github.com/rwtodd/Go.Sed v0.0.0-20190103233418-906bc69c9394
 	github.com/sergi/go-diff v1.2.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/afero v1.6.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/afero  v1.6.0
+	github.com/spf13/cobra v1.2.1
 	github.com/spyzhov/ajson v0.4.2
 	github.com/xanzy/ssh-agent v0.3.0
 	github.com/zserge/lorca v0.1.10

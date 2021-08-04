@@ -59,6 +59,7 @@ var Fcreate bool
 var Fhint string
 
 func init() {
+	fileNewCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileNewCmd.Flags().StringVar(&Fqdir, "qdir", "", "Directory the file belongs to in repository")
 	fileNewCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
 	fileNewCmd.Flags().StringVar(&Fhint, "hint", "", "Hint for new files")
