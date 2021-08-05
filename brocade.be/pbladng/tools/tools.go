@@ -2,9 +2,9 @@ package tools
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -12,6 +12,9 @@ import (
 )
 
 func IsUTF8(body []byte, lineno int) (err error) {
+	if len(body) == 0 {
+		return nil
+	}
 	if !utf8.Valid(body) {
 		lines := bytes.SplitN(body, []byte("\n"), -1)
 		for i, line := range lines {
@@ -34,95 +37,163 @@ func IsUTF8(body []byte, lineno int) (err error) {
 	return nil
 }
 
-func LeftStrip(body []byte) (result []byte, extra int) {
-	i := -1
-	for _, b := range body {
-		i++
-		if unicode.IsSpace(rune(b)) {
-			if b == '\n' {
+// LeftTrim removes whitespace at the beginning and counts the removed \n
+func LeftTrim(body string) (result string, extra int) {
+	if body == "" {
+		return
+	}
+	for i, r := range body {
+		if unicode.IsSpace(r) {
+			if r == '\n' {
 				extra++
 			}
 			continue
 		}
-		break
-	}
-	if i != -1 {
 		result = body[i:]
+		break
 	}
 	return
 }
 
-func LeftWord(body string) (before string, after string) {
-	i := -1
-	for _, r := range body {
-		i++
+// LeftWord splits a string in a word(letters only) and the rest
+func LeftWord(body string) (word string, after string) {
+	word = body
+	for i, r := range body {
 		if unicode.IsLetter(r) {
 			continue
 		}
-		break
-	}
-	if i != -1 {
-		before = body[:i]
+		word = body[:i]
 		after = body[i:]
+		break
 	}
 	return
 }
 
-func FirstAlfa(body string) (before string, after string) {
-	i := -1
+// FirstAlfa splits a string until the first alfa (nummer, digit)
+func FirstAlfa(body string) (before string, word string, rest string) {
+	inword := -1
 	for i, r := range body {
-		i++
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-
+			if inword < 0 {
+				before = body[:i]
+				inword = i
+				word = body[i:]
+			}
+			continue
+		}
+		if inword != -1 {
+			word = body[inword:i]
+			rest = body[i:]
 			break
 		}
 	}
-	if i != -1 {
-		before = body[:i]
-		after = body[i:]
+	return
+}
+
+// LastAlfa splits a string until the last alfa (nummer, digit)
+func LastAlfa(body string) (before string, word string, after string) {
+	if body == "" {
+		return
+	}
+	inword := -1
+	wpos := -1
+	last := len(body)
+	for last > 0 {
+		r, size := utf8.DecodeLastRuneInString(body[:last])
+		last -= size
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			if inword < 0 {
+				after = body[last+size:]
+				inword = last + size
+				word = body[:last+size]
+			}
+			wpos = last
+			continue
+		}
+		if inword != -1 {
+			word = body[wpos:inword]
+			before = body[:wpos]
+			break
+		}
+
 	}
 	return
 }
 
+// ParseIsoDate make a time.Tine and error of string
 func ParseIsoDate(body string) (mytime time.Time, err error) {
 	body = strings.TrimSpace(body)
 	re := regexp.MustCompile(`[^0-9]+`)
 	parts := re.Split(body, -1)
 	if len(parts) == 3 {
+		if len(parts[0]) < 4 {
+			parts[0] = "0000"[:4-len(parts[0])] + parts[0]
+		}
+		if len(parts[1]) < 2 {
+			parts[1] = "0000"[:2-len(parts[1])] + parts[1]
+		}
+		if len(parts[2]) < 2 {
+			parts[2] = "0000"[:2-len(parts[2])] + parts[2]
+		}
+
 		d := parts[0] + "-" + parts[1] + "-" + parts[2] + "T00:00:00Z"
 		mytime, err = time.Parse(time.RFC3339, d)
 		if err == nil {
 			return
 		}
 	}
-
 	err = fmt.Errorf("invalid date `%s`", body)
 	return
 
 }
 
-func NumberSplit(body string) (before string, number int, after string) {
-	k := strings.IndexAny(body, "1234567890")
-	if k == -1 {
-		return body, -1, ""
-	}
-	if k > 0 {
-		before = body[:k]
-	}
+// NumberSplit
 
-	number = -1
+func NumberSplit(body string, start int) (before string, number string, after string) {
+	if len(body) < start {
+		return body, "", ""
+	}
+	k := strings.IndexAny(body[start:], "1234567890")
+	if k == -1 {
+		return body, "", ""
+	}
+	k += start
+	body = escape(body)
+	x := body[:k]
+	if strings.Count(x, "{") != strings.Count(x, "}") {
+		l := strings.Index(body[k:], "}")
+		if l == -1 {
+			return unescape(body), "", ""
+		}
+		return NumberSplit(unescape(body), k+l+1)
+	}
+	before = body[:k]
 	for i, r := range body[k:] {
 		if r > 47 && r < 58 {
 			continue
 		}
-		number, _ = strconv.Atoi(body[k : k+i])
+		number = body[k : k+i]
 		after = body[k+i:]
 		break
 	}
-	if number == -1 {
-		number, _ = strconv.Atoi(body[k:])
+	if number == "" {
+		number = body[k:]
 	}
+	before = unescape(before)
+	after = unescape(after)
 	return
+}
+
+func NumberSplitter(body string) []string {
+	parts := make([]string, 0)
+	before, number, after := NumberSplit(body, 0)
+	parts = append(parts, before)
+	if number == "" {
+		return parts
+	}
+	parts = append(parts, number)
+	parts = append(parts, NumberSplitter(after)...)
+	return parts
 }
 
 func Euro(body string) string {
@@ -130,14 +201,47 @@ func Euro(body string) string {
 	return ""
 }
 
+func escape(body string) string {
+	if len(body) < 2 {
+		return body
+	}
+	set := `\|*_{}`
+	if !strings.ContainsAny(body, set) {
+		return body
+	}
+	for i, r := range set {
+		if !strings.ContainsRune(body, r) {
+			continue
+		}
+		rs := string([]byte{byte(i), byte(i)})
+		body = strings.ReplaceAll(body, `\`+string(r), rs)
+	}
+	return body
+}
+
+func unescape(body string) string {
+	set := "\x00\x01\x02\x03\x04\x05"
+	oset := `\|*_{}`
+	if !strings.ContainsAny(body, set) {
+		return body
+	}
+	for i, r := range set {
+		if !strings.ContainsRune(body, r) {
+			continue
+		}
+		rs := string([]byte{byte(r), byte(r)})
+		body = strings.ReplaceAll(body, rs, `\`+string(oset[i]))
+	}
+	return body
+}
+
 func euro(body string) string {
-	body = strings.ReplaceAll(body, `\{`, "\x01")
-	body = strings.ReplaceAll(body, `\}`, "\x02")
+	body = escape(body)
 	rex := regexp.MustCompile(`[Ee][Uu][Rr][Oo]?`)
 	rex.Longest()
 	parts := rex.FindAllStringIndex(body, -1)
 	if parts == nil {
-		return body
+		return unescape(body)
 	}
 	keep := ""
 	last := 0
@@ -171,6 +275,151 @@ func euro(body string) string {
 	}
 	keep += body[last:]
 	keep = regexp.MustCompile(` +EUR +`).ReplaceAllString(keep, " EUR ")
-	keep = strings.ReplaceAll(keep, "\x01", `\{`)
-	return strings.ReplaceAll(keep, "\x02", `\}`)
+	return unescape(keep)
+}
+
+// func ApplyDates(body string, lastdate string, start int) (result string, lastdate string) {
+// 	parts := NumberSplitter(body)
+
+// 	before, number, after := NumberSplit(body, start)
+// 	if number == "" {
+// 		return body, lastdate
+// 	}
+// 	punct, rest := FirstAlfa(after)
+// 	punct = escape(punct)
+// 	if strings.Count(punct, "{") != strings.Count(punct, "}") {
+// 		rest = escape(rest)
+// 		k := strings.Index(rest, "}")
+// 		if k == -1 {
+// 			return body, lastdate
+// 		}
+// 		return ApplyDates(body, lastdate, start+len(punct)+k+1)
+// 	}
+// 	// 17 juli
+// 	// 17 juli 2021
+// 	// 17 juli '21
+// 	// 17-07
+// 	// 17-7-2021
+// 	// 17-7-21
+// 	// juli, 17
+// 	// juli, 17, 2021
+
+// 	if rest != "" && !strings.ContainsAny(punct,".?!") {
+// 		word := LeftWord(rest)
+// 		month := Month(word)
+// 		if
+
+// 	}
+
+// 	return
+
+// }
+
+func Curly(body string) error {
+	body = escape(body)
+	rex := regexp.MustCompile("{[^{}]*}")
+	y := body
+	for {
+		x := rex.ReplaceAllString(y, "")
+		if x == y {
+			break
+		}
+		y = x
+	}
+	if strings.ContainsAny(y, "{}") {
+		return errors.New("problem with curly braces")
+	}
+	return nil
+}
+
+func Month(word string) string {
+	type month struct {
+		read  string
+		write string
+	}
+	months := []month{
+		{
+			"jan",
+			"januari",
+		},
+		{
+			"feb",
+			"februari",
+		},
+		{
+			"fev",
+			"februari",
+		},
+		{
+			"maart",
+			"maart",
+		},
+		{
+			"mrt",
+			"maart",
+		},
+		{
+			"maa",
+			"maart",
+		},
+		{
+			"apr",
+			"april",
+		},
+		{
+			"mei",
+			"mei",
+		},
+		{
+			"jun",
+			"juni",
+		},
+		{
+			"jul",
+			"juli",
+		},
+		{
+			"july",
+			"juli",
+		},
+		{
+			"aug",
+			"augustus",
+		},
+		{
+			"sep",
+			"september",
+		},
+		{
+			"oct",
+			"oktober",
+		},
+		{
+			"october",
+			"oktober",
+		},
+		{
+			"nov",
+			"november",
+		},
+		{
+			"dec",
+			"december",
+		},
+	}
+
+	word = strings.ToLower(word)
+
+	for _, m := range months {
+		if word == m.read {
+			return m.write
+		}
+		if word == m.write {
+			return m.write
+		}
+		if strings.HasPrefix(word, m.write) && strings.HasPrefix(m.write, word) {
+			return m.write
+		}
+	}
+	return ""
 }

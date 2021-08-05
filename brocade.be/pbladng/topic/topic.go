@@ -34,13 +34,17 @@ func (Topic) New(body []byte, lineno int) (*Topic, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, extra := ptools.LeftStrip(body)
-	if len(body) == 0 {
+	sbody := string(body)
+
+	if err = ptools.Curly(sbody); err != nil {
+		return nil, err
+	}
+	sbody, extra := ptools.LeftTrim(sbody)
+	if len(sbody) == 0 {
 		err := fmt.Errorf("error line %d: empty topic", lineno)
 		return nil, err
 	}
 	lineno += extra
-	sbody := string(body)
 
 	header, from, until, note, rest, err := Header(sbody, lineno)
 	if err != nil {
@@ -54,7 +58,7 @@ func (Topic) New(body []byte, lineno int) (*Topic, error) {
 		Lineno: lineno,
 	}
 
-	brest, extra := ptools.LeftStrip([]byte(rest))
+	brest, extra := ptools.LeftTrim(rest)
 	rest = string(brest)
 	lineno += extra
 
@@ -185,12 +189,13 @@ func Images(body string, lineno int) (images []*Image, extra int, rest string, e
 			extra = i
 			break
 		}
-		before, after := ptools.FirstAlfa(line)
+		before, word, after := ptools.FirstAlfa(line)
 		before = strings.TrimSpace(before)
 		if before != "" {
 			err = fmt.Errorf("error line %d: image name should start at the beginning of line`", lineno+i)
 			return
 		}
+		after = word + after
 		after = strings.TrimSpace(after)
 		if !reimg.MatchString(after) {
 			err = fmt.Errorf("error line %d: image name should be of the form [a-zA-Z0-9_]+.jpg`", lineno+i)
@@ -228,14 +233,14 @@ func Parse(body string, lineno int) (bulk string, err error) {
 	// number handling
 	keep := ""
 	for {
-		before, number, after := ptools.NumberSplit(body)
-		if number == -1 {
+		before, number, after := ptools.NumberSplit(body, 0)
+		if number == "" {
 			break
 		}
 		if before != "" {
 			r, _ := utf8.DecodeLastRuneInString(before)
 			if unicode.IsLetter(r) {
-				keep += before + strconv.Itoa(number)
+				keep += before + number
 				body = after
 				continue
 			}
