@@ -5,8 +5,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
-	ptools "brocade.be/pblad/tools"
+	ptools "brocade.be/pbladng/tools"
 )
 
 type Image struct {
@@ -19,7 +21,7 @@ type Image struct {
 
 type Topic struct {
 	Header string
-	Images []Image
+	Images []*Image
 	From   string
 	Until  string
 	Note   string
@@ -63,7 +65,9 @@ func (Topic) New(body []byte, lineno int) (*Topic, error) {
 	topic.Images = images
 	lineno += extra
 
-	return &topic, nil
+	topic.Body, err = Parse(rest, lineno)
+
+	return &topic, err
 }
 
 func Header(body string, lineno int) (header string, from string, until string, note string, rest string, err error) {
@@ -162,9 +166,11 @@ func Header(body string, lineno int) (header string, from string, until string, 
 	return
 }
 
-func Images(body string, lineno int) (images []Image, extra int, rest string, err error) {
+func Images(body string, lineno int) (images []*Image, extra int, rest string, err error) {
 	lines := strings.SplitN(body, "\n", -1)
 	re := regexp.MustCompile(`\.[Jj][Pp][Ee]?[Gg]`)
+	reimg := regexp.MustCompile(`^[a-zA-Z0-9_]+\.jpg`)
+	recopy := regexp.MustCompile(`[cC][Oo][Pp][Yy][Rr][Ii][Gg][Hh][Tt]`)
 
 	for i, line := range lines {
 		if strings.TrimSpace(line) == "" {
@@ -177,9 +183,63 @@ func Images(body string, lineno int) (images []Image, extra int, rest string, er
 		if !strings.Contains(line, ".jpg") {
 			rest = strings.Join(lines[i:], "\n")
 			extra = i
+			break
+		}
+		before, after := ptools.FirstAlfa(line)
+		before = strings.TrimSpace(before)
+		if before != "" {
+			err = fmt.Errorf("error line %d: image name should start at the beginning of line`", lineno+i)
 			return
 		}
+		after = strings.TrimSpace(after)
+		if !reimg.MatchString(after) {
+			err = fmt.Errorf("error line %d: image name should be of the form [a-zA-Z0-9_]+.jpg`", lineno+i)
+			return
+		}
+		parts := strings.SplitN(after, ".jpg", 2)
+		img := new(Image)
+		img.Name = parts[0]
+		text := strings.TrimSpace(parts[1])
+		text = recopy.ReplaceAllString(text, "©")
+		img.Header = text
+		if strings.ContainsRune(text, '©') {
+			parts := strings.SplitN(text, "©", 2)
+			img.Header = strings.TrimSpace(parts[0])
+			img.Copyright = strings.TrimSpace(parts[1])
+		}
+		images = append(images, img)
+	}
+	if re.MatchString(rest) {
+		lines := strings.SplitN(rest, "\n", -1)
+		for i, line := range lines {
+			if re.MatchString(line) {
+				err = fmt.Errorf("error line %d: images should stand at the beginning of the topic", lineno+extra+i)
+				return
+			}
+		}
+	}
+	return
+}
 
+func Parse(body string, lineno int) (bulk string, err error) {
+	// Euro transformation
+	body = strings.ReplaceAll(body, "€", " EUR ")
+	body = ptools.Euro(body)
+	// number handling
+	keep := ""
+	for {
+		before, number, after := ptools.NumberSplit(body)
+		if number == -1 {
+			break
+		}
+		if before != "" {
+			r, _ := utf8.DecodeLastRuneInString(before)
+			if unicode.IsLetter(r) {
+				keep += before + strconv.Itoa(number)
+				body = after
+				continue
+			}
+		}
 	}
 
 	return
