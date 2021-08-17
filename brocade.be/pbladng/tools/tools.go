@@ -149,7 +149,7 @@ func ParseIsoDate(body string) (mytime time.Time, err error) {
 
 // NumberSplit
 
-func NumberSplit(body string, start int) (before string, number string, after string) {
+func NumberSplit(body string, money bool, start int) (before string, number string, after string) {
 	if len(body) < start {
 		return body, "", ""
 	}
@@ -165,11 +165,15 @@ func NumberSplit(body string, start int) (before string, number string, after st
 		if l == -1 {
 			return unescape(body), "", ""
 		}
-		return NumberSplit(unescape(body), k+l+1)
+		return NumberSplit(unescape(body), money, k+l+1)
 	}
 	before = body[:k]
 	for i, r := range body[k:] {
 		if r > 47 && r < 58 {
+			continue
+		}
+		if money && r == 44 {
+			money = false
 			continue
 		}
 		number = body[k : k+i]
@@ -179,26 +183,13 @@ func NumberSplit(body string, start int) (before string, number string, after st
 	if number == "" {
 		number = body[k:]
 	}
+	if strings.HasSuffix(number, ",") {
+		number = strings.TrimSuffix(number, ",")
+		after = "," + after
+	}
 	before = unescape(before)
 	after = unescape(after)
 	return
-}
-
-func NumberSplitter(body string) []string {
-	parts := make([]string, 0)
-	before, number, after := NumberSplit(body, 0)
-	parts = append(parts, before)
-	if number == "" {
-		return parts
-	}
-	parts = append(parts, number)
-	parts = append(parts, NumberSplitter(after)...)
-	return parts
-}
-
-func Euro(body string) string {
-
-	return ""
 }
 
 func escape(body string) string {
@@ -235,57 +226,123 @@ func unescape(body string) string {
 	return body
 }
 
-func euro(body string) string {
+// Euro transformation
+func Euro(body string) string {
+	body = strings.ReplaceAll(body, "€", " EUR ")
 	body = escape(body)
-	rex := regexp.MustCompile(`[Ee][Uu][Rr][Oo]?`)
-	rex.Longest()
-	parts := rex.FindAllStringIndex(body, -1)
-	if parts == nil {
-		return unescape(body)
-	}
-	keep := ""
-	last := 0
-	for _, duo := range parts {
-		k1 := duo[0]
-		k2 := duo[1]
-		if k1 > 0 {
-			keep += body[last:k1]
+	start := 0
+	for {
+		before, number, after := NumberSplit(body, true, start)
+		if number == "" {
+			break
 		}
-		last = k2
-		if strings.Count(keep, "{") != strings.Count(keep, "}") {
-			keep += body[k1:k2]
+		punct, word, rest := FirstAlfa(after)
+		punct = strings.ReplaceAll(punct, " ", "")
+		punct = strings.ReplaceAll(punct, "\t", "")
+		if punct != "" {
+			start = len(before) + len(number)
 			continue
 		}
-		if keep != "" {
-			r, _ := utf8.DecodeLastRuneInString(keep)
-			if unicode.IsLetter(r) {
-				keep += body[k1:k2]
-				continue
-			}
+		word = strings.ToUpper(word)
+		if word == "EUR" || word == "EURO" {
+			body = before + "{" + number + " EUR}" + rest
+			start = len(before) + len(number) + len("{ EUR}")
+			continue
 		}
-		rest := body[k2:]
-		if rest != "" {
-			r, _ := utf8.DecodeRuneInString(rest)
-			if unicode.IsLetter(r) {
-				keep += body[k1:k2]
-				continue
-			}
-		}
-		keep += " EUR "
+		start = len(before) + len(number)
 	}
-	keep += body[last:]
-	keep = regexp.MustCompile(` +EUR +`).ReplaceAllString(keep, " EUR ")
-	return unescape(keep)
+	return unescape(body)
 }
 
-// func ApplyDates(body string, lastdate string, start int) (result string, lastdate string) {
-// 	parts := NumberSplitter(body)
+// Display phone
 
-// 	before, number, after := NumberSplit(body, start)
+func showphone(x string) string {
+	zones := []string{
+		"02", "03", "09", "010",
+		"011", "012", "013", "014", "015",
+		"016", "019", "050", "051", "052",
+		"053", "054", "055", "056", "057",
+		"058", "059", "060", "061", "063",
+		"064", "065", "067", "069", "071",
+		"080", "081", "082", "083", "085",
+		"086", "087", "089",
+	}
+	rex := regexp.MustCompile(`[^0-9]`)
+	x = rex.ReplaceAllString(x, "")
+	zone := ""
+	for _, p := range zones {
+		if strings.HasPrefix(x, p) {
+			zone = p
+			break
+		}
+	}
+	if zone == "" {
+		zone = x[:4]
+	}
+	x = x[len(zone):]
+	if len(x) == 6 {
+		x = x[:2] + " " + x[2:4] + " " + x[4:]
+	} else {
+		x = x[:3] + " " + x[3:5] + " " + x[5:]
+	}
+	return "(" + zone + ") " + x
+}
+
+// Phone transformation
+func Phone(body string) string {
+
+	// 09 385 62 03
+	// 0475 812 419
+	rex := regexp.MustCompile(`0[1-9]([().]? *[0-9]){7,8}`)
+	body = escape(body)
+
+	phones := rex.FindAllStringIndex(body, -1)
+	if len(phones) == 0 {
+		return unescape(body)
+	}
+	result := ""
+
+	for i, phone := range phones {
+		if i == 0 {
+			result = body[:phone[0]]
+		} else {
+			result += body[phones[i-1][1]:phone[0]]
+		}
+		if strings.Count(result, "{") != strings.Count(result, "}") {
+			result += body[phone[0]:phone[1]]
+			continue
+		}
+		result += "{" + showphone(body[phone[0]:phone[1]]) + "}"
+	}
+	phone := phones[len(phones)-1]
+	result += body[phone[1]:]
+
+	return unescape(result)
+}
+
+// func ApplyDates(body string, lastdate string, start int) (string, string) {
+// 	before, number, after := NumberSplit(body, false, start)
 // 	if number == "" {
 // 		return body, lastdate
 // 	}
-// 	punct, rest := FirstAlfa(after)
+
+// 	// patterns
+
+// 	// 17 juli 2021
+// 	// 17 -07 -2021
+// 	// 17 juli '21
+// 	// 17-07-21
+
+// 	// datum voor de punctuatie
+// 	punct, word, rest := FirstAlfa(after)
+// 	if rest == "" || strings.ContainsAny(punct, ".?!") {
+// 		done, todo, date := beforeDate(before, number, punct, word, rest)
+// 		if date > lastdate {
+// 			lastdate = date
+// 		}
+// 		return ApplyDates(done+todo, lastdate, len(done))
+// 	}
+// 	// punctuatie niet compleet
 // 	punct = escape(punct)
 // 	if strings.Count(punct, "{") != strings.Count(punct, "}") {
 // 		rest = escape(rest)
@@ -295,25 +352,30 @@ func euro(body string) string {
 // 		}
 // 		return ApplyDates(body, lastdate, start+len(punct)+k+1)
 // 	}
-// 	// 17 juli
-// 	// 17 juli 2021
-// 	// 17 juli '21
-// 	// 17-07
-// 	// 17-7-2021
-// 	// 17-7-21
-// 	// juli, 17
-// 	// juli, 17, 2021
+// 	// datum wordt achteraf bepaald
+// 	// done, todo, date := afterDate(before, number, punct, word, rest)
+// 	// if date > lastdate {
+// 	// 	lastdate = date
+// 	// }
+// 	return ApplyDates(done+todo, lastdate, len(done))
+// }
 
-// 	if rest != "" && !strings.ContainsAny(punct,".?!") {
-// 		word := LeftWord(rest)
-// 		month := Month(word)
-// 		if
+// func beforeDate(before, number, punct, word, rest string) (done, todo, datum string) {
+// 	bef, wrd, aft := LastAlfa(before)
+// 	if wrd == "" {
 
 // 	}
 
-// 	return
-
 // }
+
+// 17 juli
+// 17 juli 2021
+// 17 juli '21
+// 17-07
+// 17-7-2021
+// 17-7-21
+// juli, 17
+// juli, 17, 2021
 
 func Curly(body string) error {
 	body = escape(body)
@@ -329,6 +391,24 @@ func Curly(body string) error {
 	if strings.ContainsAny(y, "{}") {
 		return errors.New("problem with curly braces")
 	}
+	for _, r := range `|*_` {
+		if strings.Count(body, string(r))%2 != 0 {
+			return fmt.Errorf("uneven number of `%s`", string(r))
+		}
+	}
+	for _, r := range `|*_` {
+		ch := string(r)
+		ech := regexp.QuoteMeta(ch)
+		rex, _ := regexp.Compile(ech + "[^" + ch + "]*" + ech)
+		im := rex.ReplaceAllString(body, "")
+		set := strings.Replace(`|*_`, ch, "", -1)
+		for _, s := range set {
+			if strings.Count(im, string(s))%2 != 0 {
+				return fmt.Errorf("uneven number of `%s` in substring starting with `%s`", string(s), ch)
+			}
+		}
+	}
+
 	return nil
 }
 

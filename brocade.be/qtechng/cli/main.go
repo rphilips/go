@@ -89,12 +89,7 @@ func main() {
 				data = nil
 				break
 			}
-		case "ssh":
-			if len(os.Args) < 4 {
-				data = nil
-				break
-			}
-			data, _ = cmd.ReadSSHAll(os.Args[3])
+
 		}
 
 		args := make([]string, 0)

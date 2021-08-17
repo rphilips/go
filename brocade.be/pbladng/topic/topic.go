@@ -69,7 +69,11 @@ func (Topic) New(body []byte, lineno int) (*Topic, error) {
 	topic.Images = images
 	lineno += extra
 
-	topic.Body, err = Parse(rest, lineno)
+	lastdate := ""
+	topic.Body, lastdate, err = Parse(rest, lineno)
+	if lastdate > topic.Until {
+		topic.Until = lastdate
+	}
 
 	return &topic, err
 }
@@ -226,14 +230,18 @@ func Images(body string, lineno int) (images []*Image, extra int, rest string, e
 	return
 }
 
-func Parse(body string, lineno int) (bulk string, err error) {
+func Parse(body string, lineno int) (bulk string, date string, err error) {
+
+	// Phone transformation
+	body = ptools.Phone(body)
+
 	// Euro transformation
-	body = strings.ReplaceAll(body, "€", " EUR ")
 	body = ptools.Euro(body)
-	// number handling
+	// date handling
+
 	keep := ""
 	for {
-		before, number, after := ptools.NumberSplit(body, 0)
+		before, number, after := ptools.NumberSplit(body, false, 0)
 		if number == "" {
 			break
 		}

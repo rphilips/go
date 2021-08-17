@@ -39,6 +39,76 @@ func TestIsUTF8(t *testing.T) {
 	}
 }
 
+func TestPhone(t *testing.T) {
+	type teststruct struct {
+		test   string
+		expect string
+	}
+
+	tests := []teststruct{
+		{
+			test:   "09 3 8 5 6 2 0 3",
+			expect: "{(09) 385 62 03}",
+		},
+		{
+			test:   " 04   7 8 28 20   26",
+			expect: " {(0478) 28 20 26}",
+		},
+		{
+			test:   " {04   7 8 28 20   26}",
+			expect: " {04   7 8 28 20   26}",
+		},
+		{
+			test:   " 04   7 8 28 20   ",
+			expect: " 04   7 8 28 20   ",
+		},
+		{
+			test:   "09 3 8 5 6 2 0 3  of 04   7 8 28 20   26",
+			expect: "{(09) 385 62 03}",
+		},
+	}
+
+	for _, test := range tests {
+		work := test.test
+		expect := test.expect
+		calc := Phone(work)
+		if expect != calc {
+			t.Errorf("Problem:\ntest:`%s`\nexpect:`%s`\ncalc:`%s`\n\n", work, expect, calc)
+			return
+
+		}
+	}
+}
+
+func TestShowPhone(t *testing.T) {
+	type teststruct struct {
+		test   string
+		expect string
+	}
+
+	tests := []teststruct{
+		{
+			test:   "0 9 3 8 5 6 2 0 3",
+			expect: "(09) 385 62 03",
+		},
+		{
+			test:   " 0 4   7 8 28 20   26",
+			expect: "(0478) 28 20 26",
+		},
+	}
+
+	for _, test := range tests {
+		work := test.test
+		expect := test.expect
+		calc := showphone(work)
+		if expect != calc {
+			t.Errorf("Problem:\ntest:`%s`\nexpect:`%s`\ncalc:`%s`\n\n", work, expect, calc)
+			return
+
+		}
+	}
+}
+
 func TestEuro(t *testing.T) {
 	type teststruct struct {
 		test   string
@@ -60,36 +130,25 @@ func TestEuro(t *testing.T) {
 		},
 		{
 			test:   "Euro World",
-			expect: " EUR World",
+			expect: "Euro World",
 		},
 		{
 			test:   "Euro",
-			expect: " EUR ",
+			expect: "Euro",
 		},
 		{
-			test:   "{Euro}",
-			expect: "{Euro}",
+			test:   "World 15,3    Euro",
+			expect: "World {15,3 EUR}",
 		},
 		{
-			test:   "\\{Euro\\}",
-			expect: "\\{ EUR \\}",
+			test:   "World 15    Euro",
+			expect: "World {15 EUR}",
 		},
 		{
-			test:   "WorldEuro",
-			expect: "WorldEuro",
+			test:   "World 15,3    \nEuro",
+			expect: "World 15,3    \nEuro",
 		},
-		{
-			test:   "World Euro",
-			expect: "World EUR ",
-		},
-		{
-			test:   "World 19Euro",
-			expect: "World 19 EUR ",
-		},
-		{
-			test:   "Eur Euro",
-			expect: " EUR EUR ",
-		},
+
 		{
 			test:   "15 Europa",
 			expect: "15 Europa",
@@ -99,7 +158,7 @@ func TestEuro(t *testing.T) {
 	for _, test := range tests {
 		work := test.test
 		expect := test.expect
-		calc := euro(work)
+		calc := Euro(work)
 		if expect != calc {
 			t.Errorf("Problem:\ntest:`%s`\nexpect:`%s`\ncalc:`%s`\n\n", work, expect, calc)
 			return
@@ -114,6 +173,7 @@ func TestNumberSplit(t *testing.T) {
 		before string
 		number string
 		after  string
+		money  bool
 	}
 
 	tests := []teststruct{
@@ -177,11 +237,26 @@ func TestNumberSplit(t *testing.T) {
 			number: "15",
 			after:  `\}1ABC`,
 		},
+		{
+			test:   "Hello15,3World",
+			before: "Hello",
+			number: "15,3",
+			money:  true,
+			after:  "World",
+		},
+		{
+			test:   "Hello15,World",
+			before: "Hello",
+			number: "15",
+			money:  true,
+			after:  ",World",
+		},
 	}
 
 	for _, test := range tests {
 		work := test.test
-		before, number, after := NumberSplit(work, 0)
+		money := test.money
+		before, number, after := NumberSplit(work, money, 0)
 		if test.before != before || test.number != number || test.after != after {
 			t.Errorf("Problem:\ntest:`%s`\ncalc.before:`%s`\ncalc.number:`%s`\ncalc.after:`%s`\n\n", work, before, number, after)
 		}
