@@ -24,7 +24,7 @@ func RefreshBinary() (err error) {
 	if err != nil {
 		return err
 	}
-	err = qfs.GetURL(qregistry.Registry["qtechng-url"], tmp, "tempfile")
+	err = qfs.GetURL(qregistry.Registry["qtechng-url"], tmp, "scriptfile")
 	if err != nil {
 		return err
 	}

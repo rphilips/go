@@ -2,17 +2,21 @@ package mumps
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-func MakeGlobalRef(glo string, global bool) (gloref string, subs []string, err error) {
+func GlobalRef(glo string) (gloref string, subs []string, err error) {
 
 	glo = strings.TrimSpace(glo)
-	glo = strings.TrimPrefix(glo, "/")
-	glo = strings.TrimPrefix(glo, "^")
-	glo = strings.TrimSpace(glo)
+	global := strings.HasPrefix(glo, "/") || strings.HasPrefix(glo, "^")
+	if global {
+		glo = strings.TrimPrefix(glo, "/")
+		glo = strings.TrimPrefix(glo, "^")
+		glo = strings.TrimSpace(glo)
+	}
 	if glo == "" {
 		return "", nil, errors.New("invalid global reference")
 	}
@@ -49,6 +53,7 @@ func MakeGlobalRef(glo string, global bool) (gloref string, subs []string, err e
 	gloref += "("
 	number1 := regexp.MustCompile(`^[+-]?(([0-9]+(\.[0-9]+)?)|(\.[0-9]+))(E[+-]?[0-9]+)$`)
 	number2 := regexp.MustCompile(`^[+-]?[0-9]+$`)
+	number3 := regexp.MustCompile(`^[+-]?[0-9]+E[+]?[0-9]+$`)
 	for i, sub := range subs {
 		if i == 0 {
 			continue
@@ -56,20 +61,38 @@ func MakeGlobalRef(glo string, global bool) (gloref string, subs []string, err e
 		if i != 1 {
 			gloref += ","
 		}
-		if number2.MatchString(sub) {
+		switch {
+
+		case number3.MatchString(sub):
+			x := strings.SplitN(sub, "E", -1)
+			y := strings.ReplaceAll(x[len(x)-1], "+", "")
+			z, err := strconv.ParseInt(y, 10, 0)
+			if err != nil || z > 64 {
+				gloref += sub
+				continue
+			}
+			y = x[0] + strings.Repeat("0", int(z))
+			if _, err := strconv.ParseInt(y, 10, 64); err == nil {
+				gloref += y
+				subs[i] = y
+				continue
+			}
+		case number2.MatchString(sub):
 			if _, err := strconv.ParseInt(sub, 10, 64); err == nil {
 				gloref += sub
 				continue
 			}
-		}
-		if number1.MatchString(sub) {
-			if _, err := strconv.ParseFloat(sub, 64); err == nil {
-				gloref += sub
+		case number1.MatchString(sub):
+			if x, err := strconv.ParseFloat(sub, 64); err == nil {
+				y := fmt.Sprintf("%f", x)
+				gloref += y
 				continue
 			}
+		default:
+			sub = strings.ReplaceAll(sub, "\x00", `\`)
+			sub = strings.ReplaceAll(sub, "\x01", `/`)
 		}
-		sub = strings.ReplaceAll(sub, "\x00", `\`)
-		sub = strings.ReplaceAll(sub, "\x01", `/`)
+		subs[i] = sub
 		sub = strings.ReplaceAll(sub, `"`, `""`)
 		gloref += `"` + sub + `"`
 	}

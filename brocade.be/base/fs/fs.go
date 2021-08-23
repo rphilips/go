@@ -898,7 +898,7 @@ func RefreshEXE(oldexe string, newexe string) error {
 		return err
 	}
 	os.Remove(oldexe + ".bak")
-	ftmp, err := TempFile(filepath.Dir(oldexe), "qtechng-exe-")
+	ftmp, err := TempFile(filepath.Dir(oldexe), "exe-")
 	if err != nil {
 		return err
 	}

@@ -187,9 +187,7 @@ func RSync(r string) (changed []string, deleted []string, err error) {
 
 func installInstallfiles(batchid string, projs []*qproject.Project, qsources map[string]*Source, msources map[string]map[string][]string, logme *log.Logger) (installed []string, count int, errs []error) {
 
-	tmpdir := filepath.Join(qregistry.Registry["scratch-dir"], "qtechng."+batchid)
-	qfs.Rmpath(tmpdir)
-	e := qfs.Mkdir(tmpdir, "qtech")
+	tmpdir, e := qfs.TempDir("", batchid+".")
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.tmpdir"},
@@ -244,6 +242,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 				logme.Printf("    see: %s\n", filepath.Join(projplace, "__error__"))
 			}
 		} else {
+
 			qfs.RmpathUntil(projplace, tmpdir)
 			for _, q := range qsources {
 				if q.Project().String() == ps {
@@ -255,6 +254,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 	}
 	if len(errs) == 0 {
 		errs = nil
+		//qfs.Rmpath(tmpdir)
 	}
 	return
 }
@@ -288,15 +288,9 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 		qp := qpaths[n]
 		qps := qsources[qp]
 
-		content, err := qps.Fetch()
-		if err != nil {
-			return "", err
-		}
-		env := qps.Env()
-		notreplace := qps.NotReplace()
 		objectmap := make(map[string]qobject.Object)
 		buf := new(bytes.Buffer)
-		_, err = ResolveText(env, content, "rilm", notreplace, objectmap, nil, buf, "", qp)
+		err := qps.Resolve("rilm", objectmap, nil, buf, true)
 		if err != nil {
 			return "", err
 		}

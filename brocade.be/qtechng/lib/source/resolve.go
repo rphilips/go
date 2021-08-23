@@ -62,6 +62,7 @@ func (source *Source) NotReplace() []string {
 	p := project.String()
 	qrelpath := strings.TrimPrefix(qpath, p+"/")
 	config, err := project.LoadConfig()
+
 	if err != nil {
 		return []string{}
 	}

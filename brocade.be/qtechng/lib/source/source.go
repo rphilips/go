@@ -50,12 +50,14 @@ func (Source) New(r string, s string, readonly bool) (source *Source, err error)
 	}
 	r = version.String()
 	pid := r + " " + s
-	if readonly {
-		pid = r + " " + s + " R"
-	}
+	// if readonly {
+	// 	pid = r + " " + s + " R"
+	// }
 	so, _ := sourceCache.Load(pid)
 	if so != nil {
-		return so.(*Source), nil
+		pso := so.(*Source)
+		pso.r = version
+		return pso, nil
 	}
 	proj := qproject.GetProject(r, s, readonly)
 	if proj == nil {

@@ -213,7 +213,6 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			}
 		}
 		rel = strings.Trim(rel, "/")
-		fmt.Println("rel:", rel)
 		if strings.HasPrefix(rel, "..") {
 			err := &qerror.QError{
 				Ref:  []string{"file.add.noqdir"},

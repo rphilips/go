@@ -236,57 +236,60 @@ func newMCMD(mdb string) (cmd *exec.Cmd, err error) {
 
 // Compile tests if a m script compiles:
 func Compile(scriptm string, warnings bool) error {
-	compiler := qregistry.Registry["m-compile-exe"]
-	if compiler == "" {
-		return nil
-	}
-	exe := make([]string, 0)
-
-	json.Unmarshal([]byte(compiler), &exe)
-
-	if len(exe) < 2 {
-		return nil
-	}
-
-	pexe, _ := exec.LookPath(exe[0])
-	argums := make([]string, 0)
-	for _, arg := range exe {
-		arg = strings.ReplaceAll(arg, "{source}", scriptm)
-		argums = append(argums, arg)
-	}
-	dir := filepath.Dir(scriptm)
-
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Cmd{
-		Path:   pexe,
-		Args:   argums,
-		Dir:    dir,
-		Stdout: &stdout,
-		Stderr: &stderr,
-	}
-	cmd.Run()
-
-	sout := strings.TrimSpace(stdout.String())
-	serr := strings.TrimSpace(stderr.String())
-	msg := ""
-	if sout != "" {
-		msg += sout + "\n"
-	}
-	if serr != "" {
-		msg += serr + "\n"
-	}
-	if msg != "" {
-		m := make(map[string]string)
-		m["mode"] = "basic"
-		m["script"] = scriptm
-		m["parser"] = pexe
-		m["error"] = msg
-		errtext, _ := json.Marshal(m)
-
-		return errors.New(string(errtext))
-	}
+	argums := make([]string, 0)
 	if !warnings {
+		compiler := qregistry.Registry["m-compile-exe"]
+		if compiler == "" {
+			return nil
+		}
+		exe := make([]string, 0)
+
+		json.Unmarshal([]byte(compiler), &exe)
+
+		if len(exe) < 2 {
+			return nil
+		}
+
+		pexe, _ := exec.LookPath(exe[0])
+
+		for _, arg := range exe {
+			arg = strings.ReplaceAll(arg, "{source}", scriptm)
+			argums = append(argums, arg)
+		}
+		dir := filepath.Dir(scriptm)
+
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		cmd := exec.Cmd{
+			Path:   pexe,
+			Args:   argums,
+			Dir:    dir,
+			Stdout: &stdout,
+			Stderr: &stderr,
+		}
+		cmd.Run()
+
+		sout := strings.TrimSpace(stdout.String())
+		serr := strings.TrimSpace(stderr.String())
+		msg := ""
+		if sout != "" {
+			msg += sout + "\n"
+		}
+		if serr != "" {
+			msg += serr + "\n"
+		}
+		if msg != "" {
+			m := make(map[string]string)
+			m["mode"] = "basic"
+			m["script"] = scriptm
+			m["parser"] = pexe
+			m["error"] = msg
+			errtext, _ := json.Marshal(m)
+
+			return errors.New(string(errtext))
+		}
 		return nil
 	}
 	// advanced parsing
@@ -306,7 +309,7 @@ func Compile(scriptm string, warnings bool) error {
 	stdout.Reset()
 	stderr.Reset()
 	argums = []string{mexe, "%RunF^bqtlint"}
-	cmd = exec.Cmd{
+	cmd := exec.Cmd{
 		Path:   inm,
 		Args:   argums,
 		Dir:    mdb,
@@ -316,9 +319,9 @@ func Compile(scriptm string, warnings bool) error {
 	cmd.Env = append(os.Environ(), "BROCADE_AD="+scriptm)
 	cmd.Run()
 
-	sout = strings.TrimSpace(stdout.String())
-	serr = strings.TrimSpace(stderr.String())
-	msg = ""
+	sout := strings.TrimSpace(stdout.String())
+	serr := strings.TrimSpace(stderr.String())
+	msg := ""
 	if sout != "" && sout != "[]" && sout != "{}" {
 		msg += sout + "\n"
 	}

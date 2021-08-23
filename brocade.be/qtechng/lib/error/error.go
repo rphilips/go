@@ -33,7 +33,7 @@ func (pqerr *QError) String() (result string) {
 }
 
 func (qerr QError) MarshalJSON() ([]byte, error) {
-	m := make(map[string]string)
+	m := make(map[string]interface{})
 	if len(qerr.Ref) == 0 {
 		m["ref"] = "unknown"
 	} else {
@@ -61,9 +61,11 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 	}
 	if qerr.Lineno > 0 {
 		m["lineno"] = strconv.Itoa(qerr.Lineno)
-		lineno := m["lineno"]
-		if m["fileurl"] != "" && !strings.HasSuffix(m["fileurl"], "#"+lineno) {
-			m["fileurl"] = m["fileurl"] + "#" + lineno
+		lineno := m["lineno"].(string)
+		fileurl := m["fileurl"].(string)
+
+		if fileurl != "" && !strings.HasSuffix(fileurl, "#"+lineno) {
+			m["fileurl"] = fileurl + "#" + lineno
 		}
 
 	}
@@ -71,7 +73,34 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 		m["object"] = qerr.Object
 	}
 	if len(qerr.Msg) != 0 {
-		m["message"] = strings.Join(qerr.Msg, " ; ")
+		message := make([]interface{}, 0)
+		for _, msg := range qerr.Msg {
+			msg = strings.TrimSpace(msg)
+			if strings.TrimSpace(msg) == "" {
+				continue
+			}
+			if !strings.HasPrefix(msg, "{") {
+				message = append(message, msg)
+				continue
+			}
+			mmsg := make(map[string]interface{})
+			e := json.Unmarshal([]byte(msg), &mmsg)
+			if e != nil {
+				message = append(message, msg)
+				continue
+			}
+			mers, ok := mmsg["error"]
+			if ok {
+				lmers := make([]string, 0)
+				e := json.Unmarshal([]byte(mers.(string)), &lmers)
+				if e == nil {
+					mmsg["error"] = lmers
+				}
+			}
+
+			message = append(message, mmsg)
+		}
+		m["message"] = message
 	}
 
 	return json.MarshalIndent(m, "", "    ")

@@ -81,6 +81,11 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if onB {
+		// err := qutil.RefreshBinary()
+		// if err != nil {
+		// 	Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		// 	return nil
+		// }
 		return nil
 	}
 

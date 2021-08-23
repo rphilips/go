@@ -1,7 +1,6 @@
 package mumps
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -9,7 +8,6 @@ func TestMakeGlobalRef(t *testing.T) {
 	type test struct {
 		input  string
 		erro   bool
-		global bool
 		gloref string
 		subs   []string
 	}
@@ -23,66 +21,77 @@ func TestMakeGlobalRef(t *testing.T) {
 			subs:   nil,
 		},
 		{
-			input:  "ABC",
+			input:  "---",
+			erro:   true,
+			gloref: "",
+			subs:   nil,
+		},
+		{
+			input:  "/ABC",
 			erro:   false,
-			global: true,
 			gloref: "^ABC",
 			subs:   []string{`^ABC`},
 		},
 		{
 			input:  "^%ABC1",
 			erro:   false,
-			global: false,
-			gloref: "%ABC1",
-			subs:   []string{`ABC1`},
+			gloref: "^%ABC1",
+			subs:   []string{`^%ABC1`},
 		},
 		{
 			input:  "^%ABC1/",
 			erro:   false,
-			global: false,
-			gloref: "%ABC1",
-			subs:   []string{`%ABC1`},
+			gloref: `^%ABC1("")`,
+			subs:   []string{`^%ABC1`, ""},
 		},
 		{
 			input:  "^%ABC1/q/w",
 			erro:   false,
-			global: false,
-			gloref: `%ABC1("q","w")`,
-			subs:   []string{`%ABC1`, `q`, `w`},
+			gloref: `^%ABC1("q","w")`,
+			subs:   []string{`^%ABC1`, `q`, `w`},
 		},
 		{
 			input:  "^%ABC1/\\q/w",
 			erro:   false,
-			global: false,
-			gloref: `%ABC1("\q","w")`,
-			subs:   []string{`%ABC1`, `q`, `w`},
+			gloref: `^%ABC1("\q","w")`,
+			subs:   []string{`^%ABC1`, `\q`, `w`},
 		},
 		{
-			input:  `/^%ABC1/\\q/"w`,
+			input:  `/%ABC1/\\q/"w`,
 			erro:   false,
-			global: false,
-			gloref: `ABC1("\q","w")`,
-			subs:   []string{`%ABC1`, `q`, `wz`},
+			gloref: `^%ABC1("\q","""w")`,
+			subs:   []string{`^%ABC1`, `\q`, `"w`},
+		},
+		{
+			input:  `/%ABC1/\\q/123`,
+			erro:   false,
+			gloref: `^%ABC1("\q",123)`,
+			subs:   []string{`^%ABC1`, `\q`, `123`},
+		},
+
+		{
+			input:  `/%ABC1/\\q/10E2`,
+			erro:   false,
+			gloref: `^%ABC1("\q",1000)`,
+			subs:   []string{`^%ABC1`, `\q`, `1000`},
 		},
 	}
 
 	for _, mytest := range tests {
 		input := mytest.input
-		global := mytest.global
 		gloref := mytest.gloref
 		// fmt.Println("input:", input)
 		subs := mytest.subs
 		err := mytest.erro
-		g, ss, e := MakeGlobalRef(input, global)
+		g, ss, e := GlobalRef(input)
 
 		if g == gloref && cmp(subs, ss) && ((err && e.Error() != "") || (!err && e == nil)) {
 			continue
 		}
-
-		fmt.Printf("\n%#v\n", mytest)
-		fmt.Printf("%s\n", g)
-		fmt.Printf("%#v\n", ss)
-		fmt.Printf("%#v\n", e)
+		t.Errorf("\n%#v\n", mytest)
+		t.Errorf("%s\n", g)
+		t.Errorf("%#v\n", ss)
+		t.Errorf("%#v\n", e)
 
 	}
 }
