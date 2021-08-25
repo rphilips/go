@@ -116,7 +116,7 @@ func fileTell(cmd *cobra.Command, args []string) error {
 		result["changed"] = "true"
 	}
 
-	py := qutil.GetPy(fname)
+	py := qutil.GetPy(fname, filepath.Dir(fname))
 	if py != "" {
 		pyexe := qpy.GetPython(py == "py3")
 		result["python"] = pyexe

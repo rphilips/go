@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	qfs "brocade.be/base/fs"
 	qpy "brocade.be/base/python"
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
@@ -24,7 +23,9 @@ var filePyCmd = &cobra.Command{
 	Long: `Executes a Python script in the local filesystem.
 
 The system tries to find the appropriate Python interpreter and executes the script.
-The first argument is the Python script the other arguments are parameters for this
+
+It uses 'brocade.json' files in the directory of the script and its parent directories.
+The first argument is the python script the other arguments are parameters for this
 script.
 `,
 	Example: "qtechng file py /home/rphilips/core/qtech/local.py",
@@ -56,11 +57,11 @@ func filePy(cmd *cobra.Command, args []string) error {
 		return e
 	}
 
-	pyscript, _ = qfs.AbsPath(filepath.Join(Fcwd, pyscript))
+	pyscript = qutil.AbsPath(pyscript, Fcwd)
 
 	py := Fpy
 	if py == "" {
-		py = qutil.GetPy(pyscript)
+		py = qutil.GetPy(pyscript, filepath.Dir(pyscript))
 	}
 
 	if py == "" {

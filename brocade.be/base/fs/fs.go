@@ -112,12 +112,10 @@ func Properties(pathmode string) (prop Property, err error) {
 		suid = parts[0]
 		sgid = parts[1]
 	} else {
-		if len(mode) != 9 {
-			err = ErrNotPathMode
-			return
+		if len(mode) == 9 {
+			perm = calcPerm(mode)
+			return Property{nil, nil, perm}, nil
 		}
-		perm = calcPerm(mode)
-		return Property{nil, nil, perm}, nil
 
 	}
 	switch pathmode {
@@ -140,6 +138,9 @@ func Properties(pathmode string) (prop Property, err error) {
 	default:
 		err = ErrNotPathMode
 		return
+	}
+	if suid == "" || sgid == "" {
+		return Property{nil, nil, perm}, nil
 	}
 	uid, err := user.Lookup(suid)
 	if err != nil {

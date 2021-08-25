@@ -1227,6 +1227,9 @@ func (source *Source) checkOrphanObjects(olddata []byte, newdata []byte) (notdel
 		if oldsource == qpath {
 			continue
 		}
+		if oldsource == "" {
+			continue
+		}
 		notadd[name] = oldsource
 	}
 	if len(notadd) != 0 {
