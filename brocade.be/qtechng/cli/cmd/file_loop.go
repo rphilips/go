@@ -17,12 +17,12 @@ import (
 
 var fileLoopCmd = &cobra.Command{
 	Use:   "loop",
-	Short: "Loop QtechNG files",
+	Short: "Loop over qtechng files",
 	Long: `This command is used on workstations.
-It monitors the local *qtechng-work-dir* and logs on stdout the changed qpaths.
+It monitors the local *qtechng-work-dir* and logs the changed qpaths on stdout.
 It also maintains a list in the support directory of all projects on the workstation.
 
-Is main use is for support of IDEs.
+It is mainly used for supporting IDEs.
 `,
 	Args:    cobra.MaximumNArgs(1),
 	Example: `qtechng file loop`,

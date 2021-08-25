@@ -11,7 +11,7 @@ import (
 
 var clipboardGetCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Retrieves the content of the system clipboard",
+	Short: "Get the content of the system clipboard",
 	Long: `Retrieves the content of the system clipboard and writes on stdout.
 Works only with text.`,
 	Example: "qtechng clipboard get",

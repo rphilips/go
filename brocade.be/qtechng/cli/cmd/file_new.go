@@ -15,19 +15,19 @@ import (
 
 var fileNewCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Adds/Creates files to/for QtechNG",
-	Long: `Command adds an existing/new file to QtechNG. 
-Version and project information is necessary
+	Short: "Create or add files to qtechng",
+	Long: `Command creates a new file for qtechng or adds an existing one to qtechng.
+Version and project information is necessary.
 
-This command is atypical: the other file-commands always work with 
-local files which originated in the QtechNG repository.
+This command is atypical: the other file-commands always work with
+local files which originated in the qtechng repository.
 
 This command works with either yet to be created files or existing files
-in the local filesystem which, for a given version and a given qdir, 
+in the local filesystem which, for a given version and a given qdir,
 are not known in the repository.
 
-With the '--create' flag non-existing files can be created. 
-With the '--hint=...' flag, a skeleton file can be given.
+With the '--create' flag non-existing files can be created.
+With the '--hint=...' flag, a skeleton file can be created.
 Note, with '--create' the '--recurse' flag is meaningless.
 
 Without the '--create' flag, existings files can be added to a specific version and a qdir.
@@ -61,7 +61,7 @@ var Fhint string
 func init() {
 	fileNewCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileNewCmd.Flags().StringVar(&Fqdir, "qdir", "", "Directory the file belongs to in repository")
-	fileNewCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileNewCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileNewCmd.Flags().StringVar(&Fhint, "hint", "", "Hint for new files")
 	fileNewCmd.Flags().BoolVar(&Fcreate, "create", false, "Create a new file")
 	fileCmd.AddCommand(fileNewCmd)
@@ -77,7 +77,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 				err := &qerror.QError{
 					Ref:  []string{"file.create.isfile"},
 					Type: "Error",
-					Msg:  []string{fmt.Sprintf("File `%s` exists already", fname)},
+					Msg:  []string{fmt.Sprintf("File `%s` already exists", fname)},
 				}
 				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 				return nil
@@ -128,7 +128,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 		err := &qerror.QError{
 			Ref:  []string{"file.add.version"},
 			Type: "Error",
-			Msg:  []string{"Do not know how to deduce version"},
+			Msg:  []string{"Cannot deduce version"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
@@ -137,7 +137,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 		err := &qerror.QError{
 			Ref:  []string{"file.add.qdir"},
 			Type: "Error",
-			Msg:  []string{"Do not know how to deduce directory in repository"},
+			Msg:  []string{"Cannot deduce directory in repository"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
@@ -146,7 +146,7 @@ func fileNew(cmd *cobra.Command, args []string) error {
 		err := &qerror.QError{
 			Ref:  []string{"file.add.cwd"},
 			Type: "Error",
-			Msg:  []string{"Do not know where to place the files"},
+			Msg:  []string{"Cannot deduce where to place the files"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil

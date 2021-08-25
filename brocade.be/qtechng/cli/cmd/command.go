@@ -6,9 +6,9 @@ import (
 
 var commandCmd = &cobra.Command{
 	Use:     "command",
-	Short:   "Command functionality",
-	Long:    `Working with the QtechNG commands`,
-	Example: "qtechng command",
+	Short:   "Command functions",
+	Long:    `Working with qtechng commands`,
+	Example: "qtechng command list",
 }
 
 func init() {

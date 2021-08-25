@@ -25,7 +25,7 @@ import (
 func init() {
 	fileCmd.AddCommand(fileFormatCmd)
 	fileFormatCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
-	fileFormatCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileFormatCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileFormatCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces file")
 	fileFormatCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 
@@ -33,15 +33,14 @@ func init() {
 
 var fileFormatCmd = &cobra.Command{
 	Use:   "format [files]",
-	Short: "Formats a file",
-	Long: `Command to format the standard Brocade files.
-Only the files matching "*.[dlixmb]" are considered.
+	Short: "Format a file",
+	Long: `Formats the standard Brocade files, namely those matching "*.[dlixmb]".
 
 With the '--inplace' flag specified, the file content is replaced with the formatted
 code.
 
 Without the '--inplace' flag, the formatted output of the first file is printed on stdout.
-This is only reliable if the command is given with one argument.` + Mfiles,
+This is only reliable if the command is executed with one argument.` + Mfiles,
 	Args: cobra.MinimumNArgs(0),
 	Example: `qtechng file format mymfile.d --inplace
 qtechng file format mymfile.d`,

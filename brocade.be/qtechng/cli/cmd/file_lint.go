@@ -19,8 +19,8 @@ import (
 
 var fileLintCmd = &cobra.Command{
 	Use:   "lint",
-	Short: "Checks a file",
-	Long:  `Command checks file file on its well-formedness`,
+	Short: "Lint a file",
+	Long:  `Command performs linting of one or more files, i.e. it checks their well-formedness`,
 	Args:  cobra.MinimumNArgs(0),
 	Example: `qtechng file lint cwd=../strings
 qtechng file lint --cwd=../strings --remote
@@ -38,7 +38,7 @@ qtechng file lint /stdlib/strings/mymfile.d --version=5.10`,
 // Frefname is a reference name
 
 func init() {
-	fileLintCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileLintCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileLintCmd.Flags().BoolVar(&Fforce, "force", false, "Lint even if the file is not in repository")
 	fileLintCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileLintCmd.Flags().StringVar(&Frefname, "refname", "", "Reference name instead of actual filename")

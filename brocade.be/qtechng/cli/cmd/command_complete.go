@@ -12,11 +12,11 @@ import (
 
 var commandCompleteCmd = &cobra.Command{
 	Use:   "complete",
-	Short: "Completion functionality",
-	Long: `This command is a helper for providing completion information 
+	Short: "Provide completion functionality",
+	Long: `This command is a helper for providing completion information
 to Bash-like shells.`,
 	Args:    cobra.ArbitraryArgs,
-	Example: " qtechng command complete version",
+	Example: "qtechng command complete version",
 	RunE:    commandComplete}
 
 func init() {

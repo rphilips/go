@@ -12,12 +12,12 @@ import (
 
 var fileDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Deletes status of a file as a QtechNG files",
-	Long: `Deletes the status of a local file as a QtechNG file.
+	Short: "Delete qtechng status of files",
+	Long: `Removes the status of one or more local files as qtechng files.
 
 Remember:
     - This action has no effect on the repository
-    - Use the '--unlink' flag to remove the files from the filesystem!
+    - Use the '--unlink' flag to also remove the files from the filesystem!
 
 
 ` + Mfiles,
@@ -35,7 +35,7 @@ var Funlink bool
 func init() {
 	fileDeleteCmd.Flags().BoolVar(&Funlink, "unlink", false, "Remove from filesystem")
 	fileDeleteCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
-	fileDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileDeleteCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileDeleteCmd)
 }

@@ -18,17 +18,17 @@ import (
 //Ftell tells what kind of informatiom has to be returned
 var fileDiffCmd = &cobra.Command{
 	Use:   "diff",
-	Short: "Shows changes to a file",
-	Long: `Shows difference between a QtechNG file and a version of the file
+	Short: "Show changes to a file",
+	Long: `Shows the difference between a local qtechng file and its version
 in the repository.
 
 The format of this difference is unified output format (unidiff).
 (see: https://en.wikipedia.org/wiki/Diff)
 
-Give exactly one argument: the file to be examined.
-Take care that this file is a QtechNG file.
+This command takes exactly one argument: the file to be examined,
+which must be a qtechng file.
 
-In no version is specified, the version of the give file is taken.`,
+In no version is specified, the current version of the given file is taken.`,
 	Example: `qtechng file diff bcawedit.m --version=5.20`,
 	Args:    cobra.ExactArgs(1),
 	RunE:    fileDiff,
