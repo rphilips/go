@@ -290,7 +290,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 	release := source.Release()
 	fs, pyscript := release.SourcePlace(source.String())
 	pyscript, _ = fs.RealPath(pyscript)
-	py := qutil.GetPy(pyscript)
+	py := qutil.GetPy(pyscript, filepath.Dir(pyscript))
 	tmppy := tmplint(lintdir, source, buffer, true, false)
 	e := qpython.Compile(tmppy, py == "py3")
 	info = "OK"

@@ -27,6 +27,8 @@ func Check(scriptrst string, level string) error {
 		"menucall,issue,staff,fa",
 		"--ignore-directives",
 		"sample",
+		"--ignore-messages",
+		`(WARNING/2) Substitution definition .* empty or invalid`,
 		scriptrst,
 	}
 

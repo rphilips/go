@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	qfs "brocade.be/base/fs"
 	qerror "brocade.be/qtechng/lib/error"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -15,14 +14,17 @@ var sourcePyCmd = &cobra.Command{
 	Use:   "py",
 	Short: "Executes a python script in the repository",
 	Long: `Retrieves the content of the corresponding qtech repository
-			  in a temporary directory and executes the python script in this
-			  directory`,
+in a temporary directory and executes the python script in this
+directory.
+
+On workstations, use 'qtechng file py' 
+`,
 	Example: "qtechng source py /core/qtech/local.py",
 	Args:    cobra.MinimumNArgs(1),
 	RunE:    sourcePy,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
+
 	Annotations: map[string]string{
-		"remote-allowed": "yes",
+		"with-qtechtype": "BP",
 		"fill-version":   "yes",
 	},
 }
@@ -32,6 +34,7 @@ var Fpyonly bool = false
 
 func init() {
 	sourcePyCmd.Flags().BoolVar(&Fpyonly, "pyonly", false, "return python executable")
+	sourcePyCmd.Flags().StringVar(&Fpy, "py", "", "Python default executable (py2 | py3")
 	sourceCmd.AddCommand(sourcePyCmd)
 }
 
@@ -53,43 +56,24 @@ func sourcePy(cmd *cobra.Command, args []string) error {
 		e := &qerror.QError{
 			Ref:   []string{errRoot + "py"},
 			QPath: pyscript,
-			Msg:   []string{"Script should start with `/`"},
+			Msg:   []string{"Script is a qpath and should start with `/`"},
 		}
 		return e
 	}
-
-	executable, err := os.Executable()
-	prog := filepath.Base(os.Args[0])
-	if err != nil {
-		if prog == os.Args[0] {
-			executable, _ = exec.LookPath(prog)
-		} else {
-			executable = os.Args[0]
-		}
-	}
-
 	argums := []string{
-		prog,
 		"source",
 		"co",
 		pyscript,
 		"--neighbours",
 		"--tree",
 		"--version=" + Fversion,
-		"--silent",
 	}
-
-	qcmd := exec.Cmd{
-		Path: executable,
-		Args: argums,
-		Dir:  tmpdir,
-	}
-
-	qcmd.Run()
+	qutil.QtechNG(argums, nil, false, tmpdir)
 
 	parts := strings.SplitN(pyscript, "/", -1)
 	parts[0] = tmpdir
 	script := filepath.Join(parts...)
 	args[0] = script
+	//fmt.Println("errors:", err, stdout, stderr, argums, tmpdir, args)
 	return filePy(cmd, args)
 }
