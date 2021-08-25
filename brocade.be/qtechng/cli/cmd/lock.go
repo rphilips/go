@@ -7,7 +7,7 @@ import (
 var lockCmd = &cobra.Command{
 	Use:     "lock",
 	Short:   "Lock functions",
-	Long:    `All kind of lock (based on files) actions `,
+	Long:    `All kinds of lock actions for files`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng lock",
 }

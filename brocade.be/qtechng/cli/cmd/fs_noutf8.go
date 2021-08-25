@@ -20,8 +20,8 @@ import (
 
 var fsNoutf8Cmd = &cobra.Command{
 	Use:     "noutf8",
-	Short:   "Searches for non-UTF8 byte sequences",
-	Long:    `Searches for non-UTF8 byte sequences`,
+	Short:   "Search for non-UTF8 sequences",
+	Long:    `This command searches for non-UTF8 byte sequences`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs noutf8 *.m cwd=../catalografie`,
 	RunE:    fsNoutf8,
@@ -31,7 +31,7 @@ var fsNoutf8Cmd = &cobra.Command{
 }
 
 func init() {
-	fsNoutf8Cmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsNoutf8Cmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsNoutf8Cmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsNoutf8Cmd)
 }

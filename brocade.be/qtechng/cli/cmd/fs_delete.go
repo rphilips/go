@@ -15,10 +15,10 @@ import (
 
 var fsDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "deletes files",
-	Long: `The arguments are filenames or directory names. 
+	Short: "Delete files",
+	Long: `The arguments are filenames or directory names.
 If the argument is a directory name, all files in that directory are handled.
-Use the delete flag if the original files should be deleted
+Use the delete flag if the original files should be deleted.
 `,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs delete *.bak`,
@@ -29,7 +29,7 @@ Use the delete flag if the original files should be deleted
 }
 
 func init() {
-	fsDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsDeleteCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
 	fsDeleteCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsDeleteCmd)

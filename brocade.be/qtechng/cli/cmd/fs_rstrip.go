@@ -19,10 +19,10 @@ import (
 
 var fsRStripCmd = &cobra.Command{
 	Use:   "rstrip",
-	Short: "rstrips lines files",
-	Long: `Each line in the files is right-stripped and a end-of-line is added
-Default end-of-line conventions is UNIX-style,
-The arguments are filenames or directory names. 
+	Short: "Execute rstrip on file lines",
+	Long: `Each line in the files is right-stripped and an end-of-line is added.
+Default end-of-line conventions are UNIX-style,
+The arguments are filenames or directory names.
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs rstrip cwd=../catalografie`,
@@ -36,7 +36,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 var Fwineol bool
 
 func init() {
-	fsRStripCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsRStripCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsRStripCmd.Flags().BoolVar(&Fwineol, "wineol", false, "Apply MS-Windows end-of-line convention")
 	fsRStripCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsRStripCmd)

@@ -10,8 +10,8 @@ import (
 
 var fsStoreCmd = &cobra.Command{
 	Use:     "store",
-	Short:   "stores stdin to a file",
-	Long:    `Command which reads stdin and stores data to a file in the filesystem`,
+	Short:   "Store stdin to a file",
+	Long:    `This commands reads stdin and stores data to a file in the filesystem`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng fs store cwd=../catalografie`,
 	RunE:    fsStore,
