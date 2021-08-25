@@ -16,8 +16,8 @@ import (
 
 var lockDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Deletes a lock",
-	Long: `First argument is the name of a lock. 
+	Short: "Delete a lock",
+	Long: `First argument is the name of a lock that should be deleted.
 `,
 	Args:    cobra.ExactArgs(1),
 	Example: `qtechng lock delete mylock`,

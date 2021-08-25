@@ -6,8 +6,8 @@ import (
 
 var objectCmd = &cobra.Command{
 	Use:     "object",
-	Short:   "Object activities",
-	Long:    `Commands working on the objects in the repository`,
+	Short:   "Object functions",
+	Long:    `All kinds of actions on the repository objects`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng object",
 }

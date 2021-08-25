@@ -15,11 +15,11 @@ import (
 
 var lockSetCmd = &cobra.Command{
 	Use:   "set",
-	Short: "Sets a lock",
-	Long: `First argument is the name of a lock.
-Optional second argument is the number of seconds the lock remains valid.
-Without second argument (or value of '0') the lock is valid for eternity 
-If this lock is set, no command can run with this lock
+	Short: "Set a lock",
+	Long: `The first argument is the name of a lock.
+The ptional second argument is the number of seconds the lock remains valid.
+Without a second argument (or value of '0') the lock is valid for eternity.
+If this lock is set, no command can run with this lock.
 `,
 	Args: cobra.MinimumNArgs(1),
 	Example: `qtechng lock set mylock 3600

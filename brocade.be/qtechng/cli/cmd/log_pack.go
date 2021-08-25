@@ -9,11 +9,11 @@ import (
 var logPackCmd = &cobra.Command{
 	Use:   "pack",
 	Short: "Pack log files",
-	Long: `Pack log files
-All log files - earlier than today - are packed in one file 
+	Long: `This command Packs log files.
+All log files - earlier than today - are packed into one file
 in the logging directory.
 
-This operation runs automatically at the first qtechng action of the day.
+This operation runs automatically with the first qtechng action of the day.
 `,
 	Args:    cobra.NoArgs,
 	Example: "qtechng log pack",

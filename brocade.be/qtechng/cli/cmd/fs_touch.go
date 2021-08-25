@@ -15,8 +15,8 @@ import (
 
 var fsTouchCmd = &cobra.Command{
 	Use:   "touch",
-	Short: "Touches files",
-	Long: `The last modification time of all files is changed to the current moment.
+	Short: "Touch files",
+	Long: `The last modification time of the file(s) is changed to the current moment.
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs touch cwd=../catalografie`,
@@ -27,7 +27,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 }
 
 func init() {
-	fsTouchCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsTouchCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsTouchCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsTouchCmd)
 }

@@ -16,8 +16,8 @@ import (
 
 var logPanicCmd = &cobra.Command{
 	Use:   "panic",
-	Short: "Show panicks in log files",
-	Long:  `Show panicks in log files`,
+	Short: "Show panics in log files",
+	Long:  `This command shows panics in the qtechng log files`,
 	Args:  cobra.MaximumNArgs(1),
 	Example: `qtechng log panic
 qtechng log panic 2021-07-30`,

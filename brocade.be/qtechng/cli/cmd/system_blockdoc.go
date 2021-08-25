@@ -15,7 +15,7 @@ var systemBlockdocCmd = &cobra.Command{
 	Short: "Blocks documentation publishing",
 	Long: `
 Give a number of seconds during with the block applies.
-This action has to be initiated on the servers itself.
+This action has to be initiated on the server itself.
 
 Blocking with 0 sec., unblocks the server`,
 	Args: cobra.ExactArgs(1),

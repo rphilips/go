@@ -18,18 +18,18 @@ import (
 
 var objectRenameCmd = &cobra.Command{
 	Use:   "rename",
-	Short: "Renames an object",
-	Long: `Renames an object
-Argument 1 is the old (existing) name
-Argument 2 is the new name
+	Short: "Rename an object",
+	Long: `This command renames an object.
+The first argument is the old (existing) name.
+The second argument is the new name
 
 The different steps to replace an object with name OLD
-with an object with name NEW:
+with an object with name NEW are as follows:
 
-    - both NEW and OLD has to be defined in an appropriate source!
+    - Both NEW and OLD have to be defined in an appropriate source!
       (OLD and NEW can be in different files)
-	- OLD and NEW have to be of the same type (m4, i4, l4)
-	- if, after the renaming,  OLD has to be deleted, it is up
+	- OLD and NEW have to be of the same type (m4, i4, l4).
+	- If, after the renaming, OLD has to be deleted, it is up
 	  to the developer to do so.
 `,
 	Args:    cobra.ExactArgs(2),
@@ -90,7 +90,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	if pfnew != pfold {
-		err := fmt.Errorf("`%s` and `%s` ar eof different type", objnew, objold)
+		err := fmt.Errorf("`%s` and `%s` are of different type", objnew, objold)
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
@@ -126,7 +126,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	mapdepsnew := mapdepnew[objnew]
 	for _, dep := range mapdepsnew {
 		if dep == objold {
-			err := fmt.Errorf("`%s` is dependent on `%s`", objold, objnew)
+			err := fmt.Errorf("`%s` depends on `%s`", objold, objnew)
 			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 			return nil
 		}
@@ -149,7 +149,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	msources := make(map[string]bool)
 	for _, dep := range mapdeps {
 		if dep == objnew {
-			err := fmt.Errorf("`%s` is dependent on `%s`", objnew, objold)
+			err := fmt.Errorf("`%s` depends on `%s`", objnew, objold)
 			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 			return nil
 

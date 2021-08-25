@@ -18,10 +18,10 @@ import (
 
 var fsCopyCmd = &cobra.Command{
 	Use:   "copy",
-	Short: "copys files",
-	Long: `First argument is part of the absolute filepath that has to be copied
-Second argument is the replacement of that part
-The other arguments are filenames or directory names. 
+	Short: "Copy files",
+	Long: `The first argument is part of the absolute filepath that has to be copied.
+The second argument is the replacement of that part
+The other arguments are filenames or directory names.
 If the argument is a directory name, all files in that directory are handled.
 Use the delete flag if the original files should be deleted
 `,
@@ -41,7 +41,7 @@ var Fconfirm bool
 
 func init() {
 	fsCopyCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsCopyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsCopyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsCopyCmd.Flags().BoolVar(&Fdelete, "delete", false, "Delete original files")
 	fsCopyCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
 	fsCopyCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
