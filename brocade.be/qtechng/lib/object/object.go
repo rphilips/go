@@ -283,6 +283,9 @@ func GetEditFile(r string, objstr string) (source string) {
 	if !ok {
 		return ""
 	}
+	if obj == nil {
+		return ""
+	}
 	return obj.EditFile()
 }
 

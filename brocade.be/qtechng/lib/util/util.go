@@ -659,14 +659,11 @@ func Log(v ...interface{}) {
 }
 
 // GetPy find the suitable python executable
-func GetPy(pyscript string) string {
+func GetPy(pyscript string, cwd string) string {
 	if !strings.HasSuffix(pyscript, ".py") {
 		return ""
 	}
-	cwd, e := os.Getwd()
-	if e != nil {
-		return ""
-	}
+
 	pyscript = AbsPath(pyscript, cwd)
 	reader, err := os.Open(pyscript)
 	if err != nil {
@@ -929,7 +926,7 @@ func sdecomment(line []byte) (before []byte, dlm []byte, after []byte) {
 // Embrace creates a delimited string
 func Embrace(s string) string {
 	if s == "" {
-		return ""
+		return "«»"
 	}
 	delim := strings.Contains(s, "\n")
 	if !delim {

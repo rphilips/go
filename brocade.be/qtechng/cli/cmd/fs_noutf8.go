@@ -5,7 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -81,48 +84,40 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fnoutf8 := func(reader io.Reader) (result [][2]int, err error) {
+	fnoutf8 := func(reader io.Reader) (result int, err error) {
 		var breader *bufio.Reader
 		if reader == nil {
 			breader = bufio.NewReader(os.Stdin)
 		} else {
 			breader = bufio.NewReader(reader)
 		}
-		count := 0
-		repl := rune(65533)
-		for {
-			count++
-			line, e := breader.ReadBytes('\n')
-			if e != nil && e != io.EOF {
-				err = e
-				break
-			}
-			if utf8.Valid(line) && !bytes.ContainsRune(line, repl) {
-				if e == io.EOF {
-					break
-				}
+		data, err := ioutil.ReadAll(breader)
+		if err != nil {
+			return
+		}
+		if bytes.ContainsRune(data, 0) {
+			return 0, nil
+		}
+		if utf8.Valid(data) {
+			return -1, nil
+		}
+		if reader != nil {
+			return 1, nil
+		}
+		for i, line := range bytes.Split(data, []byte{10}) {
+			if utf8.Valid(line) {
 				continue
 			}
-
-			good := strings.ToValidUTF8(string(line), string(repl))
-			parts := strings.SplitN(good, string(repl), -1)
-
-			total := ""
-			for c, part := range parts {
-				if c == len(parts) {
-					break
-				}
-				total += part + "\n"
-				result = append(result, [2]int{count, len([]rune(total))})
-			}
+			return i, nil
 		}
-		return
+		return -1, nil
 	}
 
-	if len(args) == 2 && args[1] == "-" {
-		result, err := fnoutf8(nil)
-		if len(result) == 0 {
-			result = nil
+	if len(args) == 1 && args[0] == "-" {
+		r, err := fnoutf8(nil)
+		result := "Valid UTF-8"
+		if r > -1 {
+			result = fmt.Sprintf("Not valid UTF-8 (line: %d)", 1+r)
 		}
 		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
@@ -156,7 +151,13 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 	}
 	resultlist, errorlist := qparallel.NMap(len(files), -1, fn)
 	var errs []error
-	m := make(map[string][][2]int)
+	type rtt struct {
+		All []string            `json:"all"`
+		Ext map[string][]string `json:"ext"`
+	}
+	rt := rtt{}
+	rt.All = make([]string, 0)
+	rt.Ext = make(map[string][]string)
 	for i, r := range resultlist {
 		src := files[i]
 		if errorlist[i] != nil {
@@ -168,14 +169,30 @@ func fsNoutf8(cmd *cobra.Command, args []string) error {
 			errs = append(errs, e)
 			continue
 		}
-		m[src] = r.([][2]int)
+		if !r.(bool) {
+			continue
+		}
+		ext := path.Ext(src)
+		rt.All = append(rt.All, src)
+		lst := rt.Ext[ext]
+		if len(lst) == 0 {
+			lst = make([]string, 0)
+		}
+		lst = append(lst, src)
+		rt.Ext[ext] = lst
 	}
 	if len(errs) == 0 {
 		errs = nil
 	}
+	lst := rt.All
+	sort.Strings(lst)
+	rt.All = lst
 
-	msg := make(map[string]map[string][][2]int)
-	msg["noutf8"] = m
-	Fmsg = qreport.Report(msg, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	for ext, lst := range rt.Ext {
+		sort.Strings(lst)
+		rt.Ext[ext] = lst
+	}
+
+	Fmsg = qreport.Report(rt, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }

@@ -323,7 +323,7 @@ func installInstallsource(tdir string, batchid string, inso *Source) (err error)
 	if err != nil {
 		return
 	}
-	py := qutil.GetPy(place)
+	py := qutil.GetPy(place, filepath.Dir(place))
 	finso := filepath.Join(tdir, "install.py")
 
 	extra := []string{
@@ -380,7 +380,7 @@ func installReleasefiles(batchid string, projs []*qproject.Project, qsources map
 
 func installReleasesource(batchid string, reso *Source) (err error) {
 	freso := reso.Path()
-	py := qutil.GetPy(freso)
+	py := qutil.GetPy(freso, filepath.Dir(freso))
 	tdir := qregistry.Registry["scratch-dir"]
 
 	extra := []string{
