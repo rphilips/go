@@ -14,13 +14,15 @@ import (
 
 var fileRefreshCmd = &cobra.Command{
 	Use:   "refresh",
-	Short: "Checks out QtechNG files",
-	Long: `This command retrieves the local files with an appropriate (same version, same qpath)
-from the central repository and updates the local version.
+	Short: "Refresh qtechng files",
+	Long: `This command retrieves the local files with appropriate properties
+(same version, same qpath) from the remote repository and updates the local version.
 ` + Mfiles,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng file refresh --qpattern=/catalografie/application/bcawedit.m`,
-	RunE:    fileRefresh,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng file refresh ../application/bcawedit.m
+qtechng file refresh --qpattern=/catalografie/application/bcawedit.m
+qtechng file refresh`,
+	RunE: fileRefresh,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
@@ -28,7 +30,7 @@ from the central repository and updates the local version.
 }
 
 func init() {
-	fileRefreshCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileRefreshCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileRefreshCmd.Flags().BoolVar(&Fonlychanged, "changed", false, "Consider only modified files")
 	fileRefreshCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileRefreshCmd)

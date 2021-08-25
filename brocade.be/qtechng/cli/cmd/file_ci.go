@@ -20,13 +20,14 @@ import (
 )
 
 var fileCiCmd = &cobra.Command{
-	Use:     "ci",
-	Short:   "Check-in of QtechNG files",
-	Long:    `Stores local files in the QtechNG repository` + Mfiles,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng file ci application/bcawedit.m install.py cwd=../catalografie`,
-	RunE:    fileCi,
-	PreRun:  preCi,
+	Use:   "ci",
+	Short: "Check in qtechng files",
+	Long:  `Stores local files in the qtechng repository` + Mfiles,
+	Args:  cobra.MinimumNArgs(0),
+	Example: `qtechng file ci application/bcawedit.m install.py cwd=../catalografie
+qtechng file ci`,
+	RunE:   fileCi,
+	PreRun: preCi,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
@@ -35,7 +36,7 @@ var fileCiCmd = &cobra.Command{
 
 func init() {
 	fileCiCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
-	fileCiCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileCiCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileCiCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileCiCmd)
 }

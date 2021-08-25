@@ -7,7 +7,7 @@ import (
 
 var clipboardSetCmd = &cobra.Command{
 	Use:   "set text",
-	Short: "Sets the system clipboard",
+	Short: "Set the content of the system clipboard",
 	Long: `Stores text in the system clipboard.
 The text to be set is in the first argument.
 If this argument is missing, the clipboard is emptied.`,

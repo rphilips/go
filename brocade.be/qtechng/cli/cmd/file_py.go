@@ -20,11 +20,11 @@ var Fpysource = make([]string, 0)
 
 var filePyCmd = &cobra.Command{
 	Use:   "py",
-	Short: "Executes a python script in the local filesystem",
-	Long: `Executes the python script in the local filesystem.
+	Short: "Execute a Python script",
+	Long: `Executes a Python script in the local filesystem.
 
 The system tries to find the appropriate Python interpreter and executes the script.
-The first argument is the python script the other arguments are parameters for this
+The first argument is the Python script the other arguments are parameters for this
 script.
 `,
 	Example: "qtechng file py /home/rphilips/core/qtech/local.py",
@@ -40,7 +40,7 @@ script.
 var Fpy string
 
 func init() {
-	filePyCmd.Flags().BoolVar(&Fpyonly, "pyonly", false, "return python executable")
+	filePyCmd.Flags().BoolVar(&Fpyonly, "pyonly", false, "Return Python executable")
 	filePyCmd.Flags().StringVar(&Fpy, "py", "", "Python default executable (py2 | py3")
 	fileCmd.AddCommand(filePyCmd)
 }
@@ -67,7 +67,7 @@ func filePy(cmd *cobra.Command, args []string) error {
 		e := &qerror.QError{
 			Ref:  []string{"file2.py"},
 			File: pyscript,
-			Msg:  []string{"Cannot determine python executable associated with `" + pyscript + "`"},
+			Msg:  []string{"Cannot determine Python executable associated with `" + pyscript + "`"},
 		}
 		return e
 	}

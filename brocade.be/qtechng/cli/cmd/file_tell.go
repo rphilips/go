@@ -20,30 +20,30 @@ import (
 var Ftell = ""
 var fileTellCmd = &cobra.Command{
 	Use:   "tell",
-	Short: "Gives information about files",
+	Short: "Give information about files",
 	Long: `Gives information about files (to be used in shell scripts)
-	
+
 The '--tell' flag specifies which information has to be displayed.
 (without this flag, all information is given)
 
-'--tell' can have the values:
+'--tell' can have the following values:
 
     - ext: file extension
 	- basename: basename of the file
-	- dirname: dirname
+	- dirname: directory name
 	- abspath: complete file specification
-	- version: version
+	- version: repository version
 	- project: project
 	- qpath: qpath
-	- qdir: qdir
-	- python: python executable
+	- qdir: repository directory
+	- python: Python executable
 	- relpath: relative path of qpath versus project
 	- fileurl: URL with file scheme
 	- vcurl: URL in version control
 	- changed: true/false
-	
+
 Note: this information is retrieved locally and can be outdated.
-	
+
 	` + Mfiles,
 
 	Example: `  qtechng file tell bcawedit.m --cwd=../catalografie --ext
@@ -64,7 +64,7 @@ Note: this information is retrieved locally and can be outdated.
 
 func init() {
 	fileTellCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
-	fileTellCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileTellCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileTellCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileTellCmd.Flags().StringVar(&Ftell, "tell", "", "abspath/relpath/ext/dirname/basename/version/project/qpath/python")
 	fileCmd.AddCommand(fileTellCmd)

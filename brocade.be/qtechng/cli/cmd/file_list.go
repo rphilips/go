@@ -11,8 +11,8 @@ import (
 
 var fileListCmd = &cobra.Command{
 	Use:     "list",
-	Short:   "Lists QtechNG files",
-	Long:    `Lists local QtechNG files and their properties` + Mfiles,
+	Short:   "List qtechng files",
+	Long:    `Lists local qtechng files and their properties` + Mfiles,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng file list application/bcawedit.m install.py`,
 	RunE:    fileList,
@@ -28,7 +28,7 @@ var Fonlychanged bool
 
 func init() {
 	fileListCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
-	fileListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walks through directory and subdirectories")
+	fileListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileListCmd.Flags().BoolVar(&Fonlychanged, "changed", false, "Consider only modified files")
 	fileListCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileListCmd)

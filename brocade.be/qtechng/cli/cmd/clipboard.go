@@ -6,8 +6,8 @@ import (
 
 var clipboardCmd = &cobra.Command{
 	Use:   "clipboard",
-	Short: "Works with system clipboard",
-	Long:  `Works with system clipboard: both setting and retrieving text data`,
+	Short: "Manipulating the system clipboard",
+	Long:  `Manipulating the system clipboard: this commands allows both setting and retrieving text data`,
 }
 
 func init() {

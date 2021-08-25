@@ -20,26 +20,26 @@ import (
 //Ftell tells what kind of informatiom has to be returned
 var dirTellCmd = &cobra.Command{
 	Use:   "tell",
-	Short: "Gives information about the directory",
+	Short: "Give information about the directory",
 	Long: `Gives information about the directory (to be used in shell scripts)
-	
-The command works with one argument: the name of the directory
 
-Directories are not very important in QtechNG: all information is
-about files.
+The command works with one argument: the name of the directory.
+
+Directories are not very important in QtechNG: all data
+pertains to files.
 
 The '--tell' flag specifies which information has to be displayed.
 (without this flag, all information is given)
-	
-'--tell' can have the values:
-	
-	- dirname: dirname
-	- version: version
-	- qdir: qdir
 
-The information is infered from the available files in the directory or its
+'--tell' can have the values:
+
+	- dirname: directory name
+	- version: repository version
+	- qdir: repository directory
+
+The information is inferred from the available files in the directory or its
 place in the 'qtechng-work-dir'
-	
+
 `,
 	Example: `qtechng file tell application --cwd=../collections --ext
 qtechng dir tell application --cwd=../collections --tell=dirname
