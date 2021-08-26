@@ -14,8 +14,8 @@ import (
 
 var stdinMumpsCmd = &cobra.Command{
 	Use:   "mumps",
-	Short: "sends stdin to M",
-	Long:  `the lines, read from stdin, are M commands and they are sent to M`,
+	Short: "Send stdin to MUMPS",
+	Long:  `The lines read from stdin, are M commands and they are sent to MUMPS`,
 	Example: `
   qtechng stdin mumps`,
 	Args: cobra.MinimumNArgs(1),
@@ -26,15 +26,15 @@ var stdinMumpsCmd = &cobra.Command{
 	},
 }
 
-// Fmdb directory with the M database
+// Fmdb directory in the M database
 var Fmdb string
 
 // Fbulk send to M in bulk
 var Fbulk bool
 
 func init() {
-	stdinMumpsCmd.Flags().StringVar(&Fmdb, "mdb", "", "directory with the M database")
-	stdinMumpsCmd.Flags().BoolVar(&Fbulk, "bulk", false, "send to M in bulk")
+	stdinMumpsCmd.Flags().StringVar(&Fmdb, "mdb", "", "Directory in the M database")
+	stdinMumpsCmd.Flags().BoolVar(&Fbulk, "bulk", false, "Send to M in bulk")
 	stdinCmd.AddCommand(stdinMumpsCmd)
 }
 

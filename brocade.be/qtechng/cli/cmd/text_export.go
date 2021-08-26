@@ -22,18 +22,16 @@ import (
 var textExportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export lgcodes",
-	Long: `Command which export *lgcodes*.
-All lgcodes are checked (an lgcode stands for a term which can be translated) and,
-if appropriate, are written to a CSV file.
+	Long: `This command exports *lgcodes* (terms which can be translated).
+All lgcodes are checked and, if appropriate, are written to a CSV file.
 
-The arguments are the languages which should be exported. 
-If no arguments are given, the languages "eng", "fre", "dut"
-are taken.
+The arguments are the languages which should be exported.
+If no arguments are given, the languages "eng", "fre", "dut" are included.
 
-The flag '--emptyonly' selects only these lgcodes from which a translation is
+The flag '--emptyonly' selects only those lgcodes from which a translation is
 missing.
 
-The command leads to a file which is copied to the 'download' subdirectory of 
+The end result is a file which is copied to the 'download' subdirectory of
 'qtechng-work-dir'.
 `,
 	Args:    cobra.MaximumNArgs(0),

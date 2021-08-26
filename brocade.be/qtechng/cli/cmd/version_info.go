@@ -11,8 +11,8 @@ import (
 
 var versionInfoCmd = &cobra.Command{
 	Use:     "info",
-	Short:   "Information about a version",
-	Long:    `Command provides information about a version`,
+	Short:   "Provide information about a version",
+	Long:    `This command provides information about a version`,
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version info 5.10",
 	RunE:    versionInfo,

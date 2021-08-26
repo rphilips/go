@@ -9,8 +9,8 @@ import (
 
 var systemUnblockCmd = &cobra.Command{
 	Use:     "unblock",
-	Short:   "Unblock actions from a workstations",
-	Long:    `Unblock actions from a workstations: changes registry`,
+	Short:   "Unblock actions from workstations",
+	Long:    `This command unblock actions from workstations by changing the registry`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng system unblock",
 	RunE:    systemUnblock,

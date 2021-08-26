@@ -14,9 +14,10 @@ import (
 
 var versionBackupCmd = &cobra.Command{
 	Use:   "backup version",
-	Short: "Backup of version",
-	Long: `Backup is in tar format: it stores the content of *meta* en *source/data*
-	The result is always brocade-{version}-{timestamp}.tar in the current directory.`,
+	Short: "Back up a version",
+	Long: `This command backs up a version. The backup is in tar format.
+It stores the content of *meta* and *source/data*, and can be used to restore a version with *qtechng version restore*.
+The result is always brocade-{version}-{timestamp}.tar in the current directory.`,
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version backup 0.00",
 	RunE:    versionBackup,

@@ -18,15 +18,16 @@ import (
 
 var textDetectCmd = &cobra.Command{
 	Use:   "detect",
-	Short: "detect language",
-	Long: `Command which detects the language of a text.
+	Short: "Detect language",
+	Long: `This command detects the language of a text.
 The text is specified as the first and only argument.
 If there are no arguments, the text to be examined, is retrieved from stdin.
 
-If the '--isfile' flag is present, the argument is interpreted as a file with 
+If the '--isfile' flag is present, the argument is interpreted as a file with
 a JSON array. Every element of the array is examined.`,
-	Example: `qtechng text detect "Goede morgen"`,
-
+	Args: cobra.MaximumNArgs(1),
+	Example: `qtechng text detect "Goede morgen"
+qtechng text detect detectme.json --isfile`,
 	RunE:   textDetect,
 	PreRun: textDetectLocal,
 	Annotations: map[string]string{
@@ -37,7 +38,7 @@ a JSON array. Every element of the array is examined.`,
 }
 
 func init() {
-	textDetectCmd.Flags().BoolVar(&Fisfile, "isfile", false, "is het argument een JSON bestand")
+	textDetectCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is the argument a JSON file")
 	textCmd.AddCommand(textDetectCmd)
 }
 

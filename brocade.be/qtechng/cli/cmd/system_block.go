@@ -12,17 +12,15 @@ import (
 
 var systemBlockCmd = &cobra.Command{
 	Use:   "block sec",
-	Short: "Blocks actions on workstations",
-	Long: `
-Blocks workstations to act on the development machine.
-Give a number of seconds during with the block applies.
+	Short: "Block actions on workstations",
+	Long: `This command prevents workstations from acting on the development machine.
+Provide a number of seconds during with the block applies.
 This action has to be initiated on the development machine itself.
 
-Blocking with 0 sec., unblocks teh workstations`,
+Blocking with 0 seconds unblocks the workstations`,
 	Args: cobra.ExactArgs(1),
-	Example: `
-  qtechng system block 3600
-  qtechng system block 0`,
+	Example: `qtechng system block 3600
+qtechng system block 0`,
 
 	RunE: systemBlock,
 	Annotations: map[string]string{

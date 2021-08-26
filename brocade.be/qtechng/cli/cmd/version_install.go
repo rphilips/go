@@ -22,10 +22,9 @@ import (
 var versionInstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install a release",
-	Long: `The release matching the registry value in brocade-release
-is (re)installed.
+	Long: `This command (re)installs the release matching the registry value *brocade-release*.
 
-The registry value should be set with an appropriate value.`,
+The registry value should be set with an appropriate value (*qtechng version set*).`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng version install",
 	RunE:    versionInstall,

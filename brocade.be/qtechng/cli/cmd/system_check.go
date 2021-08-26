@@ -15,9 +15,9 @@ import (
 var systemCheckCmd = &cobra.Command{
 	Use:     "check",
 	Short:   "Check system configuration",
-	Long:    `Check system configuration`,
+	Long:    `This command checks the system configuration in the Brocade registry`,
 	Args:    cobra.NoArgs,
-	Example: "  qtechng system check",
+	Example: "qtechng system check",
 	RunE:    systemCheck,
 }
 

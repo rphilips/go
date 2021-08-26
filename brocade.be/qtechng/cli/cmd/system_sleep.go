@@ -8,12 +8,13 @@ import (
 )
 
 var systemSleepCmd = &cobra.Command{
-	Use:     "sleep",
-	Short:   "Sleep a number of seconds",
-	Long:    `Sleep a number of seconds`,
-	Args:    cobra.MaximumNArgs(1),
-	Example: `  qtechng system sleep`,
-	RunE:    systemSleep,
+	Use:   "sleep",
+	Short: "Sleep for a number of seconds",
+	Long:  `This command sets a sleep for a number of seconds`,
+	Args:  cobra.MaximumNArgs(1),
+	Example: `qtechng system sleep 10
+qtechng system sleep`,
+	RunE: systemSleep,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

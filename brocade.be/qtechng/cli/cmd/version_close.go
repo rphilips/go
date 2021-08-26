@@ -19,8 +19,8 @@ var Fnextversion string
 
 var versionCloseCmd = &cobra.Command{
 	Use:     "close",
-	Short:   "Closes a release",
-	Long:    `A release is closed and the repository is copied to the appropriate number`,
+	Short:   "Close a release",
+	Long:    `This command closes a release and copies the repository to the appropriate number`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng version close --nextversion=5.30",
 	RunE:    versionClose,
@@ -32,7 +32,7 @@ var versionCloseCmd = &cobra.Command{
 }
 
 func init() {
-	versionCloseCmd.PersistentFlags().StringVar(&Fnextversion, "nextversion", "", "next to develop version")
+	versionCloseCmd.PersistentFlags().StringVar(&Fnextversion, "nextversion", "", "Next version to develop")
 	versionCmd.AddCommand(versionCloseCmd)
 }
 

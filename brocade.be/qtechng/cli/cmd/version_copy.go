@@ -15,14 +15,16 @@ import (
 
 var versionCopyCmd = &cobra.Command{
 	Use:   "copy",
-	Short: "Retrieves a version form the development server",
-	Long: `Works only on a production server. 
-The command finds all changes committed to the given release
-(registry value brocade-release)
-and applies these changes`,
-	Args:    cobra.RangeArgs(1, 2),
-	Example: "qtechng version copy 5.40\nqtechng version copy 0.00 5.50",
-	RunE:    versionCopy,
+	Short: "Copy a version from the development server",
+	Long: `This command copies a source version from the development server
+to a target version on the production server.
+It finds all changes committed to the given release (registry value brocade-release)
+and applies these changes.
+Works only on a production server.`,
+	Args: cobra.RangeArgs(1, 2),
+	Example: `qtechng version copy 5.40
+qtechng version copy 0.00 5.50`,
+	RunE: versionCopy,
 	Annotations: map[string]string{
 		"with-qtechtype": "P",
 	},
@@ -70,7 +72,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 	if tversion == "0.00" {
 		err := &qerror.QError{
 			Ref: []string{"copy.dev.to000"},
-			Msg: []string{"cannot copy to version `0.00`"},
+			Msg: []string{"Cannot copy to version `0.00`"},
 		}
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil

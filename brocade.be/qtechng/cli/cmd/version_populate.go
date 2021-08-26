@@ -19,8 +19,8 @@ import (
 
 var versionPopulateCmd = &cobra.Command{
 	Use:     "populate",
-	Short:   "Populates version 0.00",
-	Long:    `Populates 0.00 with projects and files from the current working directory`,
+	Short:   "Populate version 0.00",
+	Long:    `This command populates version 0.00 with projects and files from the current working directory`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng version populate",
 	RunE:    versionPopulate,
