@@ -9,14 +9,14 @@ import (
 
 var systemCmd = &cobra.Command{
 	Use:     "system",
-	Short:   "System information",
-	Long:    `Command allows for  configuration/testing of setup`,
+	Short:   "System functions",
+	Long:    `All kinds of actions on the system`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng system",
 }
 
 func init() {
-	systemCmd.PersistentFlags().BoolVar(&Fremote, "remote", false, "execute on the remote server")
+	systemCmd.PersistentFlags().BoolVar(&Fremote, "remote", false, "Execute on the remote server")
 	rootCmd.AddCommand(systemCmd)
 }
 

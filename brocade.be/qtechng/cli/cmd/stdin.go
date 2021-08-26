@@ -6,7 +6,7 @@ import (
 
 var stdinCmd = &cobra.Command{
 	Use:     "stdin",
-	Short:   "stdin functions",
+	Short:   "Stdin functions",
 	Long:    `All kinds of actions on stdin stream`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng stdin",

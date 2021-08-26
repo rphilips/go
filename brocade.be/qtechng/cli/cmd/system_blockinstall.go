@@ -12,16 +12,15 @@ import (
 
 var systemBlockinstallCmd = &cobra.Command{
 	Use:   "blockinstall sec",
-	Short: "Blocks installation of software",
-	Long: `
-Give a number of seconds during with the block applies.
+	Short: "Block installation of software",
+	Long: `This command prevents software from being installed on a server.
+Provide the number of seconds during with the block applies.
 This action has to be initiated on the server itself.
 
-Blocking with 0 sec., unblocks the server`,
+Blocking with 0 seconds unblocks the server`,
 	Args: cobra.ExactArgs(1),
-	Example: `
-  qtechng system blockinstall 3600
-  qtechng system blockinstall 0`,
+	Example: `qtechng system blockinstall 3600
+qtechng system blockinstall 0`,
 
 	RunE: systemBlockinstall,
 	Annotations: map[string]string{

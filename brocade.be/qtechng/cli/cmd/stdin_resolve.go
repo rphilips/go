@@ -17,8 +17,8 @@ import (
 
 var stdinResolveCmd = &cobra.Command{
 	Use:   "resolve",
-	Short: "replace i4/r4/l4/m4 constructions",
-	Long:  `replace i4/r4/l4/m4 constructions`,
+	Short: "Resolve i4/r4/l4/m4 constructions",
+	Long:  `This command resolves the i4/r4/l4/m4 constructions in stdin`,
 	Example: `
   qtechng stdin resolve --csv=1,3,4
   qtechng stdin resolve "s x=m4_CO" --csv=1,3,4`,
@@ -36,8 +36,8 @@ var Fencoded bool
 
 func init() {
 	stdinResolveCmd.Flags().StringVar(&Fcsv, "csv", "", "qpath column,source column,target column,editfile column")
-	stdinResolveCmd.Flags().StringVar(&Frilm, "rilm", "", "specify the substitutions")
-	stdinResolveCmd.Flags().StringVar(&Fdelim, "delimiter", "", "specify the delimiter. Default is tab")
+	stdinResolveCmd.Flags().StringVar(&Frilm, "rilm", "", "Specify the substitutions")
+	stdinResolveCmd.Flags().StringVar(&Fdelim, "delimiter", "", "Specify the delimiter. Default is tab")
 	stdinResolveCmd.Flags().BoolVar(&Fencoded, "encode", false, "JSON encoded")
 	stdinCmd.AddCommand(stdinResolveCmd)
 }

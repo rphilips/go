@@ -16,7 +16,7 @@ import (
 var systemInfoCmd = &cobra.Command{
 	Use:     "info",
 	Short:   "List system information",
-	Long:    `List configuration of setup for use in qtechng`,
+	Long:    `This command lists system information and configuration for use by qtechng`,
 	Args:    cobra.NoArgs,
 	Example: "  qtechng system info",
 	RunE:    systemInfo,
