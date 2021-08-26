@@ -9,13 +9,14 @@ import (
 )
 
 var projectCoCmd = &cobra.Command{
-	Use:     "co",
-	Short:   "Checks out QtechNG files from projects",
-	Long:    `Command to retrieve files in a project from the QtechNG repository`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source co /catalografie/application`,
-	RunE:    projectCo,
-	PreRun:  preProjectCo,
+	Use:   "co",
+	Short: "Check out qtechng files from projects",
+	Long:  `This command retrieves files in a project from the qtechng repository`,
+	Args:  cobra.MinimumNArgs(0),
+	Example: `qtechng source co /catalografie/application/bcawedit.m
+qtechng source co /catalografie/application`,
+	RunE:   projectCo,
+	PreRun: preProjectCo,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
@@ -24,7 +25,7 @@ var projectCoCmd = &cobra.Command{
 }
 
 func init() {
-	projectCoCmd.Flags().BoolVar(&Fcopyonly, "copyonly", false, "Checks out without updating local repository information")
+	projectCoCmd.Flags().BoolVar(&Fcopyonly, "copyonly", false, "Check out without updating local repository information")
 	projectCmd.AddCommand(projectCoCmd)
 }
 

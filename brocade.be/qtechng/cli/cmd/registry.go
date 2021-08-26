@@ -17,7 +17,7 @@ import (
 
 var registryCmd = &cobra.Command{
 	Use:     "registry",
-	Short:   "registry functions",
+	Short:   "Registry functions",
 	Long:    `All kinds of actions on the registry`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng registry",

@@ -12,10 +12,10 @@ import (
 
 var projectListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List projects and its files",
-	Long: `Command lists all project matching a given pattern.
+	Short: "List projects",
+	Long: `This command lists all projects matching a given pattern.
 The projects are displayed in order of installation`,
-	Example: "qtechng project list /catalografie ",
+	Example: "qtechng project list /catalografie",
 	RunE:    projectList,
 	PreRun:  preProjectList,
 	Annotations: map[string]string{

@@ -12,8 +12,8 @@ import (
 
 var sourceListCmd = &cobra.Command{
 	Use:     "list",
-	Short:   "Lists sources in the repository",
-	Long:    `Lists sources in the repository according to patterns, nature and contents`,
+	Short:   "List sources in the repository",
+	Long:    `This command lists sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source list --qpattern=/application/*.m`,
 	RunE:    sourceList,

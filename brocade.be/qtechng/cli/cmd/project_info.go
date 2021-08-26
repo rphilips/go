@@ -9,8 +9,8 @@ import (
 
 var projectInfoCmd = &cobra.Command{
 	Use:     "info",
-	Short:   "Information about a project",
-	Long:    `Command provides information about a project`,
+	Short:   "Provide information about a project",
+	Long:    `This command provides information about a project`,
 	Example: "qtechng project info /stdlib/template",
 	RunE:    projectInfo,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },

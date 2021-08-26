@@ -11,9 +11,10 @@ import (
 )
 
 var sourceLintCmd = &cobra.Command{
-	Use:     "lint",
-	Short:   "Lints sources in the repository",
-	Long:    `Lints sources in the repository according to patterns, nature and contents`,
+	Use:   "lint",
+	Short: "Lint sources in the repository",
+	Long: `This command lints sources in the repository according to patterns, nature and contents,
+, i.e. it checks their well-formedness`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source lint --qpattern=/application/*.m`,
 	RunE:    sourceLint,

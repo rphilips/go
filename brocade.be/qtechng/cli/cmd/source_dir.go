@@ -11,8 +11,8 @@ import (
 
 var sourceDirCmd = &cobra.Command{
 	Use:     "dir",
-	Short:   "Returns dirname",
-	Long:    `Command to display dirname of source file`,
+	Short:   "Return dirname",
+	Long:    `Command to display the directory name of a source file`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng source dir /catalografie/application/bcawedit.m`,
 	RunE:    sourceDir,

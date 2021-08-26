@@ -24,7 +24,7 @@ var stderrHidden bool
 var sourceCmd = &cobra.Command{
 	Use:     "source",
 	Short:   "Source file functions",
-	Long:    `Commands working on the source files in the repository`,
+	Long:    `All kinds of actions on the source files in the repository`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng source",
 }
@@ -48,7 +48,7 @@ func init() {
 	sourceCmd.PersistentFlags().BoolVar(&Ffilesinproject, "neighbours", false, "Indicate if all files in project are selected")
 	sourceCmd.PersistentFlags().StringVar(&Fqdir, "qdir", "", "Qpath of a directory under a project")
 	sourceCmd.PersistentFlags().BoolVar(&Fperline, "perline", false, "Searches per line")
-	sourceCmd.PersistentFlags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
+	sourceCmd.PersistentFlags().BoolVar(&Frecurse, "recurse", false, "Recursively traves directory and subdirectories")
 	sourceCmd.PersistentFlags().BoolVar(&Fregexp, "regexp", false, "Searches as a regular expression")
 	sourceCmd.PersistentFlags().BoolVar(&Ftolower, "tolower", false, "Transforms to lowercase")
 	sourceCmd.PersistentFlags().BoolVar(&Fsmartcaseoff, "smartcaseoff", false, "Forbids smartcase transformation")
@@ -57,24 +57,22 @@ func init() {
 
 var Msources = `
 
-How are sources, in the QtechNG repository, specified:
+How are sources in the QtechNG repository specified?
 
 Sources are identified in two different (but related) ways:
 
-    - the (version, qpath) pair: 'qpath' is like a absolute path on Unix
+    - the (version, qpath) pair: 'qpath' is like an absolute path on Unix
 	  with the root in the base of the source tree
 	- the triple (version, qdir, basename): 'qdir' is the dirname of 'qpath'
 	  (qpath = qdir/basename)
 
 The version is determined by the '--version=...' flag.
 On 'P' servers this value is always 'brocade-release',
-Otherwise, most of the time this value is deduced by the contents of
+Otherwise, most of the time, this value is deduced by the contents of
 the current working directory: if all files in the directory
 (and checked out of the repository) are of the same version, this value is taken.
 Otherwise, on a 'B' machine, the value '0.00' is taken and on a 'W' workstation,
 the value of 'qtechng-version' is taken.
 
 The qpaths are calculated by the arguments.
-These lead to a list of qpaths which are filtered by a number of restrictions.
-
-`
+These lead to a list of qpaths which are filtered by a number of restrictions.`

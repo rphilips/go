@@ -14,16 +14,17 @@ import (
 
 var projectNewCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Creates a new project",
-	Long: `Command creates a new project on the development server.
-	With the treeprefix not empty, starting from the current working directory, all projects 
-	are installed. The name of the project is determied by the relative path of the directories 
-	and prefixed with the treeprefix.
-	`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: "qtechng project new /stdlib/template\nqtechng project new /stdlib/template  --version=5.10",
-	RunE:    projectNew,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
+	Short: "Create a new project",
+	Long: `This command creates a new project on the development server.
+If --treeprefix is not empty all projects, starting from the current working directory,
+are installed.
+The name of the project is determined by the relative path of the directories
+and prefixed with the treeprefix.`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng project new /stdlib/template
+qtechng project new /stdlib/template  --version=5.10`,
+	RunE:   projectNew,
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 		"always-remote":  "yes",

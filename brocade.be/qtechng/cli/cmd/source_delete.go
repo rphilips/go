@@ -9,19 +9,19 @@ import (
 
 var sourceDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Deletes sources in the repository",
-	Long: `Deletes sources in the repository. 
+	Short: "Delete sources in the repository",
+	Long: `This command deletes sources in the repository.
 The sources are specified by a combination of:
 
-- specific arguments
-- by one or more *--qpattern* flags
-- by the specification of the nature of the files with the *--nature* flag
-- by specification of *--needle* flags (text in the files)
-- by specification of *--cuser* flags (uid of the creator)
-- by specification of *--muser* flags (uid of the last modifier)
-- by specification of *--cafter* flags (uid of the last modifier)
+	- specific arguments
+	- one or more *--qpattern* flags
+	- the *--nature* flag (nature of files)
+	- the *--needle* flags (text in the files)
+	- the *--cuser* flags (uid of the creator)
+	- the *--muser* flags (uid of the last modifier)
+	- the *--cafter* flags (uid of the last modifier)
 
-Give with the *--number* flag the number of files to be deleted.`,
+Use the --number flag to indicate the number of files to be deleted.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source delete --qpattern=/application/*.m --number=12`,
 	RunE:    sourceDelete,

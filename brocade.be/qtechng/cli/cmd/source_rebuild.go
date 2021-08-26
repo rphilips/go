@@ -11,9 +11,10 @@ import (
 )
 
 var sourceRebuildCmd = &cobra.Command{
-	Use:     "rebuild",
-	Short:   "Rebuilds sources in the repository",
-	Long:    `Rebuilds sources in the repository according to patterns, nature and contents`,
+	Use:   "rebuild",
+	Short: "Rebuild sources in the repository",
+	Long: `This command rebuilds the proper Brocade objects (i4/l4/m4/r4/t4)
+from sources in the repository according to patterns, nature and contents.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source rebuild --qpattern=/application/*.m --version=0.00`,
 	RunE:    sourceRebuild,
@@ -26,7 +27,7 @@ var sourceRebuildCmd = &cobra.Command{
 }
 
 func init() {
-	sourceRebuildCmd.PersistentFlags().StringVar(&Frefname, "refname", "rebuild", "Reference to the rebuildation")
+	sourceRebuildCmd.PersistentFlags().StringVar(&Frefname, "refname", "rebuild", "Reference to the rebuild")
 	sourceCmd.AddCommand(sourceRebuildCmd)
 }
 

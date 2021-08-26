@@ -12,12 +12,11 @@ import (
 
 var sourcePyCmd = &cobra.Command{
 	Use:   "py",
-	Short: "Executes a python script in the repository",
-	Long: `Retrieves the content of the corresponding qtech repository
-in a temporary directory and executes the python script in this
-directory.
+	Short: "Execute a Python script in the repository",
+	Long: `This command retrieves the content of the corresponding qtechng source file
+in a temporary directory and executes the Python script in this directory.
 
-On workstations, use 'qtechng file py' 
+On workstations, use *qtechng file py*
 `,
 	Example: "qtechng source py /core/qtech/local.py",
 	Args:    cobra.MinimumNArgs(1),
@@ -33,7 +32,7 @@ On workstations, use 'qtechng file py'
 var Fpyonly bool = false
 
 func init() {
-	sourcePyCmd.Flags().BoolVar(&Fpyonly, "pyonly", false, "return python executable")
+	sourcePyCmd.Flags().BoolVar(&Fpyonly, "pyonly", false, "Return Python executable")
 	sourcePyCmd.Flags().StringVar(&Fpy, "py", "", "Python default executable (py2 | py3")
 	sourceCmd.AddCommand(sourcePyCmd)
 }
