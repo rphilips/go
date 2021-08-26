@@ -18,8 +18,8 @@ import (
 
 var sourceInstallCmd = &cobra.Command{
 	Use:     "install",
-	Short:   "Installs sources in the repository",
-	Long:    `Installs sources in the repository according to patterns, nature and contents`,
+	Short:   "Install sources in the repository",
+	Long:    `This command installs sources in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source install --qpattern=/application/*.m`,
 	RunE:    sourceInstall,

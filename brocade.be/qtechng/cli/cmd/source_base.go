@@ -11,8 +11,8 @@ import (
 
 var sourceBaseCmd = &cobra.Command{
 	Use:     "base",
-	Short:   "Returns basename",
-	Long:    `Command to display basename of source file`,
+	Short:   "Return basename",
+	Long:    `This comand diplays the basename of a source file`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng source base /catalografie/application/bcawedit.m`,
 	RunE:    sourceBase,

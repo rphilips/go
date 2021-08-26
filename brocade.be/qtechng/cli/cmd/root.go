@@ -121,7 +121,7 @@ var Funhex bool
 // Fcmpversion version to compare with
 var Fcmpversion string
 
-// Ffilesinproject geeft aan of de bestanden in het project ook dienen te worden  geslecteerd
+// Ffilesinproject indicates if files in the project need to be selected
 var Ffilesinproject bool
 
 // Fnature natures of the sources
@@ -160,7 +160,7 @@ var Ffiletype string
 // Frefname reference to the installation
 var Frefname string
 
-// Funquote unquutes JSON
+// Funquote unquotes JSON
 var Funquote bool
 
 // rootCmd represents the base command when called without any subcommands
@@ -183,14 +183,14 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&FUID, "uid", "", "User ID")
 	rootCmd.PersistentFlags().StringVar(&Fstdout, "stdout", "", "Filename containing the result")
 	rootCmd.PersistentFlags().BoolVar(&Ftransported, "transported", false, "Indicate if command is transported")
-	rootCmd.PersistentFlags().BoolVar(&Funquote, "unquote", false, "Removes JSON escapes in a string")
-	rootCmd.PersistentFlags().StringVar(&Fjoiner, "joiner", "", "Joins lists with unquote")
+	rootCmd.PersistentFlags().BoolVar(&Funquote, "unquote", false, "Remove JSON escapes in a string")
+	rootCmd.PersistentFlags().StringVar(&Fjoiner, "joiner", "", "Join lists with unquote")
 	rootCmd.PersistentFlags().MarkHidden("transported")
 	rootCmd.PersistentFlags().MarkHidden("uid")
 
 	rootCmd.PersistentFlags().StringVar(&Fcwd, "cwd", "", "Working directory")
 	rootCmd.PersistentFlags().BoolVar(&Funhex, "unhex", false, "Unhexify the arguments starting with `.`")
-	rootCmd.PersistentFlags().StringVar(&Feditor, "editor", "", "editor name")
+	rootCmd.PersistentFlags().StringVar(&Feditor, "editor", "", "Editor name")
 	rootCmd.PersistentFlags().StringSliceVar(&Fjq, "jsonpath", []string{}, "JSONpath")
 	rootCmd.PersistentFlags().BoolVar(&Fyaml, "yaml", false, "Convert to YAML")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")

@@ -14,13 +14,14 @@ import (
 var Fbatchid = "batchid"
 
 var sourceMumpsCmd = &cobra.Command{
-	Use:     "mumps",
-	Short:   "Retrieves the data sent to M",
-	Long:    `Retrieves the data sent to M`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng source mumps /catalografie/application/bcawedit.m`,
-	RunE:    sourceMumps,
-	PreRun:  preSourceMumps,
+	Use:   "mumps",
+	Short: "Display the data sent to MUMPS",
+	Long:  `This command displays the data and instructions sent by qtechng to MUMPS`,
+	Args:  cobra.MinimumNArgs(0),
+	Example: `qtechng source mumps /catalografie/application/bcawedit.m
+qtechng source mumps /catalografie/application/catsys.b`,
+	RunE:   sourceMumps,
+	PreRun: preSourceMumps,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",

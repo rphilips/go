@@ -12,16 +12,16 @@ import (
 var sourceRenameCmd = &cobra.Command{
 	Use:   "rename",
 	Short: "Renames sources in the repository",
-	Long: `Renames sources in the repository. 
+	Long: `Renames sources in the repository.
 The sources are specified by a combination of:
 
-- specific arguments
-- by one or more *--qpattern* flags
-- by the specification of the nature of the files with the *--nature* flag
-- by specification of *--needle* flags (text in the files)
-- by specification of *--cuser* flags (uid of the creator)
-- by specification of *--muser* flags (uid of the last modifier)
-- by specification of *--cafter* flags (uid of the last modifier)
+	- specific arguments
+	- one or more *--qpattern* flags
+	- the *--nature* flag (nature of files)
+	- the *--needle* flags (text in the files)
+	- the *--cuser* flags (uid of the creator)
+	- the *--muser* flags (uid of the last modifier)
+	- the *--cafter* flags (uid of the last modifier)
 
 Give with the *--number* flag the number of files to be deleted.`,
 	Args:    cobra.MinimumNArgs(0),

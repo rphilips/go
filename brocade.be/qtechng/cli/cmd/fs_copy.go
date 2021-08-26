@@ -20,10 +20,10 @@ var fsCopyCmd = &cobra.Command{
 	Use:   "copy",
 	Short: "Copy files",
 	Long: `The first argument is part of the absolute filepath that has to be copied.
-The second argument is the replacement of that part
+The second argument is the replacement of that part.
 The other arguments are filenames or directory names.
 If the argument is a directory name, all files in that directory are handled.
-Use the delete flag if the original files should be deleted
+Use the --delete flag if the original files should be deleted.
 `,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs copy cwd=../catalografie`,

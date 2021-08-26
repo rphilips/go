@@ -14,13 +14,11 @@ import (
 
 var registryGetCmd = &cobra.Command{
 	Use:   "get pattern",
-	Short: "Retrieves the registry values",
-	Long: `
-List all registry values, with the key matching a pattern, and writes on stdout`,
+	Short: "Retrieve registry values",
+	Long:  `List all registry values with a key matching a pattern`,
 	Example: `
   qtechng registry get scratch-dir
   qtechng registry get qtechng-*`,
-
 	Args:   cobra.ExactArgs(1),
 	RunE:   registryGet,
 	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },

@@ -658,7 +658,7 @@ func Log(v ...interface{}) {
 	fmt.Fprintln(f, "===")
 }
 
-// GetPy find the suitable python executable
+// GetPy find the suitable Python executable
 func GetPy(pyscript string, cwd string) string {
 	if !strings.HasSuffix(pyscript, ".py") {
 		return ""
