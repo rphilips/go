@@ -17,9 +17,10 @@ import (
 )
 
 var systemSupportCmd = &cobra.Command{
-	Use:     "support",
-	Short:   "Update qtechng-support-dir",
-	Long:    `Update the directory containing support files for QtechNG`,
+	Use:   "support",
+	Short: "Update qtechng-support-dir",
+	Long: `This commnd updates qtechng-support-dir, the directory containing support files for qtechng.
+If applicable, it also updates the Visual Studio Code extensions for qtechng.`,
 	Args:    cobra.MaximumNArgs(1),
 	Example: `qtechng system support`,
 	RunE:    systemSupport,

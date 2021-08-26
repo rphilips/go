@@ -13,9 +13,9 @@ import (
 
 var stdinJsonpathCmd = &cobra.Command{
 	Use:     "jsonpath",
-	Short:   "jsonpath selection",
-	Long:    `Filters stdin - as a JSON string - through jsonpath and writes on stdout`,
-	Example: "  qtechng stdin jsonpath '$.store.book[*].author'",
+	Short:   "Filter with jsonpath",
+	Long:    `This command filters a JSON string from stdin through jsonpath and writes on stdout`,
+	Example: "qtechng stdin jsonpath '$.store.book[*].author'",
 	Args:    cobra.MaximumNArgs(1),
 	RunE:    stdinJsonpath,
 }

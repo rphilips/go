@@ -11,13 +11,13 @@ import (
 
 func init() {
 	stdinCmd.AddCommand(stdinFormatCmd)
-	stdinFormatCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces stdin")
+	stdinFormatCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replace stdin")
 }
 
 var stdinFormatCmd = &cobra.Command{
 	Use:   "format",
-	Short: "Formats stdin",
-	Long: `Command formats stdin an writes result on stdout.
+	Short: "Format stdin",
+	Long: `This command formats stdin an writes result on stdout.
 
 The argument specifies the type of file: b | d | i | l | m | x
 `,

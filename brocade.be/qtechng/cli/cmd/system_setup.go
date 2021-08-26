@@ -19,9 +19,10 @@ import (
 
 var systemSetupCmd = &cobra.Command{
 	Use:   "setup",
-	Short: "Setup registry workstation",
-	Long:  `Setup the registry on your workstation`,
-	Args:  cobra.MaximumNArgs(1),
+	Short: "Setup the registry",
+	Long: `This command sets up basic registry values for qtechng.
+The (optional) argument provided is the *qtechng-user* value.`,
+	Args: cobra.MaximumNArgs(1),
 	Example: `  qtechng system setup
     qtechng system setup rphilips
 `,

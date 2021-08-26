@@ -10,7 +10,7 @@ import (
 var systemUnblockinstallCmd = &cobra.Command{
 	Use:     "unblockinstall",
 	Short:   "Unblock installation",
-	Long:    `Unblock installation: changes registry`,
+	Long:    `This command unblock installation of software by changing the registry`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng system unblockinstall",
 	RunE:    systemUnblockinstall,

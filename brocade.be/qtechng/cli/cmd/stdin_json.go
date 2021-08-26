@@ -14,12 +14,14 @@ import (
 )
 
 var stdinJSONCmd = &cobra.Command{
-	Use:     "json",
-	Short:   "Beautifies JSON input",
-	Long:    `Receives JSON on stdin, beautifies it and writes to stdout. Subscripts are sorted.`,
-	Example: `qtechng stdin json '{"b":"B", "a":"A"}'`,
-	Args:    cobra.MaximumNArgs(1),
-	RunE:    stdinJSON,
+	Use:   "json",
+	Short: "Beautify JSON input",
+	Long: `This command receives JSON on stdin, beautifies it and writes to stdout. Subscripts are sorted.
+You can also provide the JSON as an argument`,
+	Example: `echo '{"b":"B", "a":"A"}' | qtechng stdin json
+qtechng stdin json '{"b":"B", "a":"A"}'`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: stdinJSON,
 }
 
 func init() {

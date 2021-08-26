@@ -9,8 +9,8 @@ import (
 
 var systemDisableCmd = &cobra.Command{
 	Use:     "disable",
-	Short:   "Disable actions from a workstations",
-	Long:    `Disable actions from a workstations: changes registry`,
+	Short:   "Disable actions from workstations",
+	Long:    `This command disable actions from workstations by changing the registry`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng system disable",
 	RunE:    systemDisable,

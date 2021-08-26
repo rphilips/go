@@ -18,8 +18,8 @@ func init() {
 
 var stdinLintCmd = &cobra.Command{
 	Use:   "lint",
-	Short: "Lints stdin",
-	Long: `Command lints stdin an writes result on stdout.
+	Short: "Lint stdin",
+	Long: `This command lints stdin and writes the result on stdout.
 
 The argument specifies the type of file: b | d | i | l | m | x
 `,

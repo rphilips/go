@@ -9,8 +9,8 @@ import (
 
 var systemEnableCmd = &cobra.Command{
 	Use:     "enable",
-	Short:   "Enable actions from a workstations",
-	Long:    `Enable actions from a workstations: changes registry`,
+	Short:   "Enable actions from workstations",
+	Long:    `This command enables actions from workstations by changing the registry`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng system enable",
 	RunE:    systemEnable,

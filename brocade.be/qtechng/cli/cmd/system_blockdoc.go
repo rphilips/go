@@ -12,16 +12,15 @@ import (
 
 var systemBlockdocCmd = &cobra.Command{
 	Use:   "blockdoc sec",
-	Short: "Blocks documentation publishing",
-	Long: `
-Give a number of seconds during with the block applies.
+	Short: "Block documentation publishing",
+	Long: `This command prevents the documentation from being published.
+Provide the number of seconds during with the block applies.
 This action has to be initiated on the server itself.
 
-Blocking with 0 sec., unblocks the server`,
+Blocking with 0 seconds unblocks the server`,
 	Args: cobra.ExactArgs(1),
-	Example: `
-  qtechng system blockdoc 3600
-  qtechng system blockdoc 0`,
+	Example: `qtechng system blockdoc 3600
+qtechng system blockdoc 0`,
 
 	RunE: systemBlockdoc,
 	Annotations: map[string]string{

@@ -10,7 +10,7 @@ import (
 var systemUnblockdocCmd = &cobra.Command{
 	Use:     "unblockdoc",
 	Short:   "Unblock documentation",
-	Long:    `Unblock documentation: changes registry`,
+	Long:    `This command unblocks publishing documentation by changing the registry`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng system unblockdoc",
 	RunE:    systemUnblockdoc,
