@@ -290,7 +290,8 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 
 		objectmap := make(map[string]qobject.Object)
 		buf := new(bytes.Buffer)
-		err := qps.Resolve("rilm", objectmap, nil, buf, true)
+		decomment := qps.Natures()["auto"]
+		err := qps.Resolve("rilm", objectmap, nil, buf, decomment)
 		if err != nil {
 			return "", err
 		}

@@ -37,6 +37,9 @@ func init() {
 }
 
 func lockRun(cmd *cobra.Command, args []string) {
+}
+
+func LockRunner(args []string) {
 	lock := args[0]
 	until := args[1]
 	exe := args[2]
