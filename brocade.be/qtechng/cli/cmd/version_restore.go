@@ -10,9 +10,9 @@ import (
 
 var versionRestoreCmd = &cobra.Command{
 	Use:   "restore backup",
-	Short: "restore version from backup",
-	Long: `Backup restores the content of *meta* en *source/data* of a specific version.
-The last argument should be a tar file buit with th ebeackup command`,
+	Short: "Restore a version from backup",
+	Long: `This command restores the contents of *meta* en *source/data* of a specific version.
+The last argument should be a tar file built with the *qtechng version backup* command`,
 	Args:    cobra.ExactArgs(2),
 	Example: "qtechng version 0.00 backup.tar",
 	RunE:    versionRestore,

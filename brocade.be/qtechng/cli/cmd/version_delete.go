@@ -14,8 +14,8 @@ import (
 
 var versionDeleteCmd = &cobra.Command{
 	Use:     "delete",
-	Short:   "Deletes a release",
-	Long:    `A release is deleted from the repository`,
+	Short:   "Delete a release",
+	Long:    `This command deletes a version from the repository`,
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version delete 5.30",
 	RunE:    versionDelete,
