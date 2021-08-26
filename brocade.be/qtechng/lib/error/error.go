@@ -58,6 +58,8 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 
 	if qerr.Url != "" {
 		m["fileurl"] = qerr.Url
+	} else {
+		m["fileurl"] = ""
 	}
 	if qerr.Lineno > 0 {
 		m["lineno"] = strconv.Itoa(qerr.Lineno)

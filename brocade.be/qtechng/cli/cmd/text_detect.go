@@ -25,11 +25,10 @@ If there are no arguments, the text to be examined, is retrieved from stdin.
 
 If the '--isfile' flag is present, the argument is interpreted as a file with 
 a JSON array. Every element of the array is examined.`,
-	Args:    cobra.MaximumNArgs(1),
 	Example: `qtechng text detect "Goede morgen"`,
 
 	RunE:   textDetect,
-	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
+	PreRun: textDetectLocal,
 	Annotations: map[string]string{
 		"remote-allowed":    "yes",
 		"always-remote-onW": "yes",
@@ -47,8 +46,52 @@ type lgdetect struct {
 	Lgs  map[string]float32 `json:"languages"` // probabilities
 }
 
-func textDetect(cmd *cobra.Command, args []string) error {
+func textDetectLocal(cmd *cobra.Command, args []string) {
+	if strings.ContainsRune(qregistry.Registry["qtechng-type"], 'B') {
+		return
+	}
+	if len(args) == 0 {
+		btext, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return
+		}
+		text := strings.TrimSpace(string(btext))
+		if text != "" {
+			args = append(args, text)
+		}
+	}
+	if len(args) == 0 {
+		return
+	}
+	if Fisfile {
+		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
+		if err != nil {
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			return
+		}
+		err = json.Unmarshal(data, &args)
+		if err != nil {
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			return
+		}
+	}
+	if len(args) == 0 {
+		return
+	}
+	argums := make([]string, 0)
+	argums = append(argums, os.Args[0], os.Args[1], os.Args[2])
+	argums = append(argums, args...)
+	for _, a := range os.Args[3:] {
+		if strings.HasPrefix(a, "--isfile=") {
+			continue
+		}
+		argums = append(argums, a)
+	}
+	os.Args = argums
+	preSSH(cmd, nil)
+}
 
+func textDetect(cmd *cobra.Command, args []string) error {
 	text := ""
 	if len(args) == 0 {
 		btext, err := io.ReadAll(os.Stdin)
@@ -56,32 +99,32 @@ func textDetect(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		text = strings.TrimSpace(string(btext))
-	} else {
-		text = args[0]
+		args = append(args, text)
 	}
 
-	if text == "" {
+	if len(args) == 0 {
 		return nil
 	}
 
 	results := make([]lgdetect, 0)
 	errs := make([]error, 0)
 
-	texts := make([]string, 0)
 	if Fisfile {
-		data, err := qfs.Fetch(qutil.AbsPath(text, Fcwd))
+		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
 		if err != nil {
 			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		}
-		err = json.Unmarshal(data, &texts)
+		err = json.Unmarshal(data, &args)
 		if err != nil {
 			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		}
-	} else {
-		texts = append(texts, text)
 	}
 
-	for _, text := range texts {
+	if len(args) == 0 {
+		return nil
+	}
+
+	for _, text := range args {
 
 		lgs, err := detect(text)
 		if err == nil {
