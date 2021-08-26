@@ -12,15 +12,15 @@ import (
 
 var objectListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Lists objects in the repository",
-	Long: `Lists objects in the repository
+	Short: "List objects in the repository",
+	Long: `This command lists Brocade objects (i4/l4/m4/r4/t4) in the repository
 The objects can be specified:
     - as arguments
 	- as '--objpattern-...' flags.
-	
+
 Do not forget the appropriate prefix!`,
 	Args: cobra.MinimumNArgs(0),
-	Example: `qtechng object list m4_getCatIsbdTitles m4_CO
+	Example: `qtechng object list l4_loi l4_title
 qtechng object list --objpattern='m4_getCat*'
 	`,
 	RunE:   objectList,

@@ -19,26 +19,26 @@ import (
 
 var fsAWKCmd = &cobra.Command{
 	Use:   "awk",
-	Short: "Executes a AWK command",
-	Long: `Executes a AWK command on files.
+	Short: "Execute an AWK command",
+	Long: `Executes an AWK command on files.
 The first argument is an AWK command.
 See: https://en.wikipedia.org/wiki/AWK
 
 The files are given as input to the AWK statements.
 The result - what appears on stdout - replaces the original file!
-	
+
 Warning! This command is very powerful and can permanently alter your files.
 
 Some remarks:
 
-    - this command is executed only on files which are deemed valid UTF-8 files
-	- if the second argument is '-', the AWK program is applied to stdin
-	- if no arguments are given, the command asks for arguments
-	- the other arguments: at least one file or directory are to be specified.
-	  (give '.' to indicate the current working directory)
-	- if an argument is a directory, all files in that directory are taken.
-	- '--recurse' recurses in the subdirectories of the argument directories.
-	- the '--pattern' flag builds a list of acceptable patterns on the basenames`,
+    - This command is executed only on files which are deemed valid UTF-8 files.
+	- If the second argument is '-', the AWK program is applied to stdin.
+	- If no arguments are given, the command asks for arguments.
+	- The other arguments: at least one file or directory are to be specified.
+	  (use '.' to indicate the current working directory)
+	- If an argument is a directory, all files in that directory are taken.
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames`,
 
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs awk '{print $1}' . --cwd=../catalografie`,
@@ -49,8 +49,8 @@ Some remarks:
 }
 
 func init() {
-	fsAWKCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
-	fsAWKCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is dit een AWK file ?")
+	fsAWKCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
+	fsAWKCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is this an AWK file?")
 	fsAWKCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsAWKCmd)
 }

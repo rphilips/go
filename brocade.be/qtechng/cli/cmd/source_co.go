@@ -12,8 +12,8 @@ import (
 
 var sourceCoCmd = &cobra.Command{
 	Use:     "co",
-	Short:   "Checks out QtechNG files",
-	Long:    `Command to retrieve files from the QtechNG repository`,
+	Short:   "Check out qtechng source files",
+	Long:    `This command retrieve source files from the qtechng repository`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source co --qpattern=/catalografie/application/bcawedit.m`,
 	RunE:    sourceCo,
@@ -30,8 +30,8 @@ var Fclear bool
 var Fcopyonly bool
 
 func init() {
-	sourceCoCmd.Flags().BoolVar(&Fclear, "clear", false, "Clears visited directories, if in auto mode")
-	sourceCoCmd.Flags().BoolVar(&Fcopyonly, "copyonly", false, "Checks out without updating local repository information")
+	sourceCoCmd.Flags().BoolVar(&Fclear, "clear", false, "Clear visited directories, if in auto mode")
+	sourceCoCmd.Flags().BoolVar(&Fcopyonly, "copyonly", false, "Check out without updating local repository information")
 	sourceCmd.AddCommand(sourceCoCmd)
 }
 

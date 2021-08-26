@@ -17,15 +17,16 @@ import (
 
 var lockRunCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Runs an executable",
-	Long: `First argument is the name of a lock.
-Second argument is an estimation in seconds of the duration of this process
+	Short: "Run a program with a lock",
+	Long: `The first argument is the name of a lock for a program.
+The second argument is an estimation in seconds of the duration of this process.
 If this lock is set, the program does not run.
 If it is not set, the lock is set and the program runs.
 Afterwards, the lock is deleted.
+The third argument is the executable to run.
 `,
 	Args:    cobra.MinimumNArgs(3),
-	Example: `qtechng lock run 10 mylock docpublish -rebuild`,
+	Example: `qtechng lock run mylock 10 docpublish -rebuild`,
 	Run:     lockRun,
 	Annotations: map[string]string{
 		"remote-allowed": "no",

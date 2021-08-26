@@ -12,7 +12,7 @@ import (
 
 var fsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Lists files",
+	Short: "List files",
 	Long: `The last modification time of all files is changed to the current moment.
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
@@ -26,7 +26,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 var Fonlytext bool
 
 func init() {
-	fsListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsListCmd.Flags().BoolVar(&Fonlytext, "onlytext", false, "Only text files")
 	fsListCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsListCmd)

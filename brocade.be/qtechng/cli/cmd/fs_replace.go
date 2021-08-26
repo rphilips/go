@@ -19,11 +19,11 @@ import (
 
 var fsReplaceCmd = &cobra.Command{
 	Use:   "replace",
-	Short: "replaces a string to another string in files",
+	Short: "Replace a string with another one in files",
 	Long: `First argument is the string to search for, the second argument is the replacement.
 Replacement is done line per line.
 Take care: replacement is done over binary files as well!
-The other arguments are filenames or directory names. 
+The other arguments are filenames or directory names.
 If the argument is a directory name, all files in that directory are handled.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs replace cwd=../catalografie`,
@@ -35,7 +35,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 
 func init() {
 	fsReplaceCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsReplaceCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsReplaceCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsReplaceCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsReplaceCmd)
 }

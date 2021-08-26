@@ -18,8 +18,8 @@ import (
 
 var projectInstallCmd = &cobra.Command{
 	Use:     "install",
-	Short:   "Installs projects in the repository",
-	Long:    `Installs projects in the repository according to patterns, nature and contents`,
+	Short:   "Install projects in the repository",
+	Long:    `This command installs projects in the repository according to patterns, nature and contents`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng project install /catalografie/application`,
 	RunE:    projectInstall,

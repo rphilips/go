@@ -13,8 +13,8 @@ var Frilm string = ""
 
 var sourceResolveCmd = &cobra.Command{
 	Use:     "resolve",
-	Short:   "Resolves a sourcefile",
-	Long:    `Resolves the i4/r4/m4/l4 constructions in sources`,
+	Short:   "Resolve a sourcefile",
+	Long:    `This command resolves the i4/l4/m4/r4 constructions in sources`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source resolves --qpattern=/catalografie/application/bcawedit.m`,
 	RunE:    sourceResolve,

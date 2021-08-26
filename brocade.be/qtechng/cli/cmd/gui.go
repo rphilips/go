@@ -28,7 +28,7 @@ var guifs embed.FS
 var guiCmd = &cobra.Command{
 	Use:     "gui",
 	Short:   "GUI functions",
-	Long:    `All kinds of GUI functions`,
+	Long:    `All kinds of functions for the qtechng Graphical User Interface`,
 	Args:    cobra.MinimumNArgs(0),
 	RunE:    guiMenu,
 	Example: "qtechng gui",

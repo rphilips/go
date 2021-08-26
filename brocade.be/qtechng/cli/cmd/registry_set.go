@@ -12,9 +12,9 @@ import (
 
 var registrySetCmd = &cobra.Command{
 	Use:   "set [key [value]]",
-	Short: "Interactive setting",
-	Long: `With 2 arguments, sets the registry as key and value
-Without arguments, interactively asks for the values`,
+	Short: "Set registry keys",
+	Long: `With two arguments, this command sets a registry key and value.
+Without arguments, it interactively asks for the values`,
 	Example: `
   qtechng registry set scratch-dir /home/rphilips/tmp
   qtechng registry set`,

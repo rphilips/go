@@ -18,14 +18,14 @@ import (
 
 var fsGrepCmd = &cobra.Command{
 	Use:   "grep",
-	Short: "Searches for a string in files",
-	Long: `First argument is the string to search for, 
-Search is done line per line.
-Take care: search is done over binary files as well!
-The other arguments are filenames or directory names. 
-If the argument is a directory name, all files in that directory are handled.`,
+	Short: "Execute *grep* on files",
+	Long: `The first argument is the string to search for.
+Searching is done line per line.
+Take care: searching applies to binary files as well!
+The other arguments are filenames or directory names.
+If the argument is a directory name, all files in that directory are searched.`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs grep cwd=../catalografie`,
+	Example: `qtechng fs grep UDuser ../catalografie`,
 	RunE:    fsGrep,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -34,7 +34,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 
 func init() {
 	fsGrepCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsGrepCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsGrepCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsGrepCmd.Flags().BoolVar(&Ftolower, "tolower", false, "Lowercase before grepping")
 	fsGrepCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsGrepCmd)

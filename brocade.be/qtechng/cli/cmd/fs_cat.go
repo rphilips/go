@@ -14,9 +14,11 @@ import (
 
 var fsCatCmd = &cobra.Command{
 	Use:   "cat",
-	Short: "cat files to stdout",
-	Long: `The arguments are the names of the files.
-The contents of these files will be copied to stdout, one after the other.
+	Short: "Execute a *cat* command ",
+	Long: `Execute a *cat* command to render files on stdout.
+The arguments are the names of the files.
+The contents of these files will be copied to stdout,
+one after the other (*cat* < "concatenate")
 
 With the '--stdout=...' flag, the contents can be redirected to a file.
 

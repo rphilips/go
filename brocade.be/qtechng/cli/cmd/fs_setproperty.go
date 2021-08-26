@@ -17,8 +17,8 @@ import (
 
 var fsSetpropertyCmd = &cobra.Command{
 	Use:     "setproperty",
-	Short:   "zet de owner/permission bits of files",
-	Long:    `Zet de owner/permission bits of files and directories. Only the Brocade specific names are allowed`,
+	Short:   "Set owner/permission bits of files",
+	Long:    `This command sets the owner/permission bits of files and directories. Only the Brocade specific names are allowed`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs setproperty process *.pdf`,
 	RunE:    fsSetproperty,
@@ -28,7 +28,7 @@ var fsSetpropertyCmd = &cobra.Command{
 }
 
 func init() {
-	fsSetpropertyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recurse directories")
+	fsSetpropertyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsSetpropertyCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsSetpropertyCmd)
 }

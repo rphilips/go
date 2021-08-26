@@ -86,7 +86,7 @@ func Run(scriptpy string, py3 bool, args []string, extra []string, cwd string) (
 	return
 }
 
-// GetPython retrieves from the registry the right python executable
+// GetPython retrieves from the registry the right Python executable
 func GetPython(py3 bool) string {
 	pyexe := registry.Registry["python-exe"]
 	py3exe := registry.Registry["python3-exe"]

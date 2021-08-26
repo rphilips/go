@@ -23,8 +23,8 @@ import (
 
 var objectMoveCmd = &cobra.Command{
 	Use:   "move [objects]",
-	Short: "Moves objects to a source file",
-	Long: `Moves objects to a source file
+	Short: "Move objects to a source file",
+	Long: `This command moves objects to a source file
 The objects can be specified:
 
     - as arguments
