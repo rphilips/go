@@ -16,9 +16,18 @@ import (
 )
 
 var fsSetpropertyCmd = &cobra.Command{
-	Use:     "setproperty",
-	Short:   "Set owner/permission bits of files",
-	Long:    `This command sets the owner/permission bits of files and directories. Only the Brocade specific names are allowed`,
+	Use:   "setproperty",
+	Short: "Set owner/permission bits of files",
+	Long: `This command sets the owner/permission bits of files and directories.
+
+Only the Brocade specific names are allowed:
+	- naked
+	- process
+	- qtech
+	- script
+	- temp
+	- web
+	- webdav`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs setproperty process *.pdf`,
 	RunE:    fsSetproperty,

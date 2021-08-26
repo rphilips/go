@@ -28,9 +28,10 @@ It uses 'brocade.json' files in the directory of the script and its parent direc
 The first argument is the python script the other arguments are parameters for this
 script.
 `,
-	Example: "qtechng file py /home/rphilips/core/qtech/local.py",
-	Args:    cobra.MinimumNArgs(1),
-	RunE:    filePy,
+	Example: `qtechng file py /home/rphilips/core/qtech/local.py,
+qtechng file py install.py --py=py2`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: filePy,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"fill-version":   "no",

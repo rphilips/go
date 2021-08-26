@@ -21,9 +21,10 @@ Remember:
 
 
 ` + Mfiles,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng file delete application/bcawedit.m install.py cwd=../catalografie`,
-	RunE:    fileDelete,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng file delete application/bcawedit.m install.py cwd=../catalografie
+qtechng file delete test.rst --unlink`,
+	RunE: fileDelete,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BW",
