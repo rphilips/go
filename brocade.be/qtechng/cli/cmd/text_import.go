@@ -33,10 +33,10 @@ import (
 var textImportCmd = &cobra.Command{
 	Use:   "import",
 	Short: "Import lgcodes",
-	Long: `Command which import *lgcodes*.
+	Long: `This command imports *lgcodes*.
 There is only one argument: the name of the import file.
 This file should be created by a matching *export* command.
-Take care that this file is CSV file with UTF-8 encoding.
+Take care that this file is a CSV file with UTF-8 encoding!
 
 The entries are checked and, if valid, imported in the corresponding L-files.
 An extra column is added with a status message.
@@ -51,8 +51,8 @@ Different error messages (per lgcode):
 	- UNCHANGED: data is not changed
 	- OUTDATED: the translation is not valid (the original text is changed)
 
-The system makes a backup of the changed L-files: the return message tells
-where, on the development server, the backup is situated.
+The system makes a backup of the changed L-files: the return message indicates
+the location of the backup on the development server.
 `,
 	Args:    cobra.ExactArgs(1),
 	Example: `qtechng text import mytranslations.csv`,

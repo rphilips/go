@@ -15,8 +15,8 @@ import (
 
 var versionSetCmd = &cobra.Command{
 	Use:     "set",
-	Short:   "Sets version number",
-	Long:    `The required version numbers are set`,
+	Short:   "Set version number",
+	Long:    `This command sets the required version number in registry value *brocade-release*`,
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version set 5.40",
 	RunE:    versionSet,
@@ -34,7 +34,7 @@ func versionSet(cmd *cobra.Command, args []string) error {
 	version = qserver.Canon(version)
 
 	if strings.Contains(QtechType, "B") {
-		err := fmt.Errorf("on a development server, this command cannot be used")
+		err := fmt.Errorf("this command cannot be used on a development server")
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}

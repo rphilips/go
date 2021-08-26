@@ -6,8 +6,8 @@ import (
 
 var tempdirCmd = &cobra.Command{
 	Use:   "tempdir",
-	Short: "Creates temporary directories",
-	Long:  `Creates temporary directories`,
+	Short: "Temporary directories functions",
+	Long:  `All kinds of actions on temporary directories`,
 }
 
 func init() {

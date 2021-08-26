@@ -11,8 +11,8 @@ import (
 
 var versionNewCmd = &cobra.Command{
 	Use:     "new",
-	Short:   "Creates a new version",
-	Long:    `Command creates a new version on the development server`,
+	Short:   "Create a new version",
+	Long:    `This command creates a new repository version on the development server`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng version new",
 	RunE:    versionNew,

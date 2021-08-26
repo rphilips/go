@@ -14,21 +14,21 @@ var Fprefix = ""
 
 var tempdirGetCmd = &cobra.Command{
 	Use:   "get",
-	Short: "creates a temporary directory",
-	Long: `
-Creates and returns a temporary directory`,
-	Example: "  qtechng tempdir get\n  qtechng tempdir get --prefix=qtechng.",
-	Args:    cobra.NoArgs,
-	RunE:    tempdirGet,
-	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
+	Short: "Create a temporary directory",
+	Long:  `This command creates and returns a temporary directory`,
+	Example: `qtechng tempdir get
+qtechng tempdir get --prefix=qtechng.`,
+	Args:   cobra.NoArgs,
+	RunE:   tempdirGet,
+	PreRun: func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
 	Annotations: map[string]string{
 		"remote-allowed": "yes",
 	},
 }
 
 func init() {
-	tempdirGetCmd.Flags().StringVar(&Fprefix, "prefix", "", "prefix to append")
-	tempdirGetCmd.Flags().BoolVar(&Fremote, "remote", false, "execute on the remote server")
+	tempdirGetCmd.Flags().StringVar(&Fprefix, "prefix", "", "Prefix to append to the tempdir name")
+	tempdirGetCmd.Flags().BoolVar(&Fremote, "remote", false, "Execute on the remote server")
 	tempdirCmd.AddCommand(tempdirGetCmd)
 }
 
