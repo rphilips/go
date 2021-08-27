@@ -279,6 +279,14 @@ func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool
 		edata, _ := epilog.Fetch()
 		body = append(body, []byte("\n\n\n")...)
 		body = append(body, edata...)
+		qpath = "/doc/application/rstcheck.cfg"
+		cfg, _ := Source{}.New(r, qpath, true)
+		if cfg != nil {
+			cdata, _ := cfg.Fetch()
+			if len(cdata) != 0 {
+				qfs.Store(filepath.Join(lintdir, ".rstcheck.cfg"), cdata, "temp")
+			}
+		}
 	}
 
 	qfs.Store(tmp, body, "temp")

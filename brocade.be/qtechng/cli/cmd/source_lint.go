@@ -27,22 +27,29 @@ var sourceLintCmd = &cobra.Command{
 }
 
 var Fwarnings bool
+var Fonlybad bool
 
 func init() {
 	sourceCmd.AddCommand(sourceLintCmd)
 	sourceLintCmd.Flags().BoolVar(&Fwarnings, "warnings", false, "Include warnings")
+	sourceLintCmd.Flags().BoolVar(&Fonlybad, "onlybad", false, "Report only failing sources")
 }
 
 func sourceLint(cmd *cobra.Command, args []string) error {
 	_, result := lintTransport(Fcargo)
 	qps := make([]string, 0)
+	result2 := make([]linter, 0)
 	for _, r := range result {
+		if Fonlybad && r.Info == "OK" {
+			continue
+		}
 		if r.Info != "OK" {
 			qps = append(qps, r.QPath)
 		}
+		result2 = append(result2, r)
 	}
 	qutil.EditList(Flist, Ftransported, qps)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result2, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
 

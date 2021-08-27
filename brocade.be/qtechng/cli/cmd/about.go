@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"os"
 	"os/user"
 
@@ -12,9 +11,8 @@ import (
 var aboutCmd = &cobra.Command{
 	Use:   "about",
 	Short: "Information about `qtechng`",
-	Long: `Version and build time information about the qtechng executable.
-If arguments are given, they are shown in 'hexified' format.`,
-	Args: cobra.ArbitraryArgs,
+	Long:  `Version and build time information about the qtechng executable.`,
+	Args:  cobra.NoArgs,
 	Example: `qtechng about
 qtechng about --remote`,
 	RunE:   about,
@@ -44,11 +42,7 @@ func about(cmd *cobra.Command, args []string) error {
 		msg["!!user.name"] = user.Name
 		msg["!!user.username"] = user.Username
 	}
-	if len(args) != 0 {
-		for _, arg := range args {
-			msg["hexified "+arg] = hex.EncodeToString([]byte(arg))
-		}
-	}
+
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
