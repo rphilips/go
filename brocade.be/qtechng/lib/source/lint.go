@@ -300,7 +300,13 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 	pyscript, _ = fs.RealPath(pyscript)
 	py := qutil.GetPy(pyscript, filepath.Dir(pyscript))
 	tmppy := tmplint(lintdir, source, buffer, true, false)
-	e := qpython.Compile(tmppy, py == "py3")
+	project := source.Project()
+	config, _ := project.LoadConfig()
+	ignores := config.Python3Lint
+	if py != "py3" {
+		ignores = config.Python2Lint
+	}
+	e := qpython.Compile(tmppy, py == "py3", warnings, ignores)
 	info = "OK"
 	if e != nil {
 		info = e.Error() + " [" + py + "]"

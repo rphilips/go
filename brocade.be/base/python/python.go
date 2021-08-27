@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
+	"brocade.be/base/fs"
 	"brocade.be/base/registry"
 )
 
@@ -14,7 +16,7 @@ import (
 //    If the script does not exist: returns false
 //    If the script has syntax errors: returns false
 //    If the script has no syntax errors: returns true
-func Compile(scriptpy string, py3 bool) error {
+func Compile(scriptpy string, py3 bool, warnings bool, ignores []string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	tdir := registry.Registry["scratch-dir"]
@@ -36,10 +38,58 @@ func Compile(scriptpy string, py3 bool) error {
 	cmd.Run()
 
 	sout := stdout.String()
-	if strings.Contains(sout, "<compile ok>") {
+	if !strings.Contains(sout, "<compile ok>") {
+		return fmt.Errorf("compile `%s` with `%s`:\n%s", scriptpy, pyexe, stderr.String())
+	}
+	if !warnings || !py3 {
 		return nil
 	}
-	return fmt.Errorf("compile `%s` with `%s`:\n%s", scriptpy, pyexe, stderr.String())
+
+	if !strings.ContainsRune(registry.Registry["qtechng-type"], 'B') {
+		return nil
+	}
+
+	pylint, e := exec.LookPath("flake8")
+	if pylint == "" || e != nil {
+		return nil
+	}
+	cfg := filepath.Join(registry.Registry["scratch-dir"], "flake8.cfg")
+	if !fs.IsFile(cfg) {
+		qtechng, e := exec.LookPath("qtechng")
+		if qtechng == "" || e != nil {
+			return nil
+		}
+		cmd := exec.Cmd{
+			Path:   qtechng,
+			Args:   []string{"source", "co", "/tools/scrutiny/flake8.cfg"},
+			Dir:    registry.Registry["scratch-dir"],
+			Stdout: &stdout,
+			Stderr: &stderr,
+		}
+		cmd.Run()
+		if !fs.IsFile(cfg) {
+			return nil
+		}
+	}
+	args := make([]string, 0)
+	args = append(args, pylint)
+	if len(ignores) != 0 {
+		args = append(args, "--ignore="+strings.Join(ignores, ","))
+	}
+	args = append(args, "--config="+cfg, scriptpy)
+	cmd = exec.Cmd{
+		Path:   pylint,
+		Args:   args,
+		Dir:    tdir,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+	cmd.Run()
+	sout = stdout.String()
+	if strings.TrimSpace(sout) != "" {
+		return fmt.Errorf("lint `%s` with `%s`:\n%s", scriptpy, pylint, sout)
+	}
+	return nil
 }
 
 // Run a python script with arguments in a directory

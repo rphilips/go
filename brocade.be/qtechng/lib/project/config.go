@@ -29,6 +29,8 @@ type Config struct {
 	NoLint             []string            `json:"nolint"`
 	Comment            string              `json:"comment"`
 	Id                 string              `json:"$id"`
+	Python3Lint        []string            `json:"py3lint"`
+	Python2Lint        []string            `json:"py2lint"`
 	Schema             string              `json:"$schema"`
 }
 
@@ -56,6 +58,8 @@ func IsValidConfig(blob []byte) bool {
 		"passive":            true,
 		"priority":           true,
 		"py3":                true,
+		"py2lint":            true,
+		"py3lint":            true,
 		"roles":              true,
 		"versionlower":       true,
 		"versionupper":       true,
