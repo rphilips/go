@@ -49,45 +49,51 @@ func Compile(scriptpy string, py3 bool, warnings bool, ignores []string) error {
 		return nil
 	}
 
-	pylint, e := exec.LookPath("flake8")
-	if pylint == "" || e != nil {
-		return nil
-	}
 	cfg := filepath.Join(registry.Registry["scratch-dir"], "flake8.cfg")
 	if !fs.IsFile(cfg) {
-		qtechng, e := exec.LookPath("qtechng")
+		qtechng, e := exec.LookPath(registry.Registry["qtechng-exe"])
 		if qtechng == "" || e != nil {
 			return nil
 		}
+		var stdout3 bytes.Buffer
+		var stderr3 bytes.Buffer
 		cmd := exec.Cmd{
 			Path:   qtechng,
-			Args:   []string{"source", "co", "/tools/scrutiny/flake8.cfg"},
+			Args:   []string{"qtechng", "source", "co", "/tools/scrutiny/flake8.cfg"},
 			Dir:    registry.Registry["scratch-dir"],
-			Stdout: &stdout,
-			Stderr: &stderr,
+			Stdout: &stdout3,
+			Stderr: &stderr3,
 		}
-		cmd.Run()
+		e = cmd.Run()
+		if e != nil {
+			panic(e)
+		}
 		if !fs.IsFile(cfg) {
 			return nil
 		}
 	}
 	args := make([]string, 0)
-	args = append(args, pylint)
+	args = append(args, pyexe, "-m", "flake8")
 	if len(ignores) != 0 {
-		args = append(args, "--ignore="+strings.Join(ignores, ","))
+		args = append(args, "--extend-ignore="+strings.Join(ignores, ","))
 	}
 	args = append(args, "--config="+cfg, scriptpy)
+	var stdout2 bytes.Buffer
+	var stderr2 bytes.Buffer
 	cmd = exec.Cmd{
-		Path:   pylint,
+		Path:   pyexe,
 		Args:   args,
 		Dir:    tdir,
-		Stdout: &stdout,
-		Stderr: &stderr,
+		Stdout: &stdout2,
+		Stderr: &stderr2,
 	}
-	cmd.Run()
-	sout = stdout.String()
+	e := cmd.Run()
+	sout = stdout2.String()
+	if e != nil {
+		sout = e.Error() + "\n" + sout
+	}
 	if strings.TrimSpace(sout) != "" {
-		return fmt.Errorf("lint `%s` with `%s`:\n%s", scriptpy, pylint, sout)
+		return fmt.Errorf("lint `%s` with `flake8`:\n%s", scriptpy, sout)
 	}
 	return nil
 }
