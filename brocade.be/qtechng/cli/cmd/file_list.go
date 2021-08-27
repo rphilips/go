@@ -30,7 +30,7 @@ func init() {
 	fileListCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileListCmd.Flags().BoolVar(&Fonlychanged, "changed", false, "Consider only modified files")
-	fileListCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileListCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileListCmd)
 }
 

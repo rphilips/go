@@ -38,7 +38,7 @@ var Fwineol bool
 func init() {
 	fsRStripCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsRStripCmd.Flags().BoolVar(&Fwineol, "wineol", false, "Apply MS-Windows end-of-line convention")
-	fsRStripCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsRStripCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsRStripCmd)
 }
 

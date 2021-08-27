@@ -40,7 +40,7 @@ qtechng file lint /stdlib/strings/mymfile.d --version=5.10`,
 func init() {
 	fileLintCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileLintCmd.Flags().BoolVar(&Fforce, "force", false, "Lint even if the file is not in repository")
-	fileLintCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileLintCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileLintCmd.Flags().StringVar(&Frefname, "refname", "", "Reference name instead of actual filename")
 	fileCmd.AddCommand(fileLintCmd)
 }

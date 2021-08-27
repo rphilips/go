@@ -37,7 +37,7 @@ func init() {
 	fileDeleteCmd.Flags().BoolVar(&Funlink, "unlink", false, "Remove from filesystem")
 	fileDeleteCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
-	fileDeleteCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileDeleteCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileDeleteCmd)
 }
 

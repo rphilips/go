@@ -38,7 +38,7 @@ Only the Brocade specific names are allowed:
 
 func init() {
 	fsSetpropertyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsSetpropertyCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsSetpropertyCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsSetpropertyCmd)
 }
 

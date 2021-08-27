@@ -191,10 +191,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&Fcwd, "cwd", "", "Working directory")
 	rootCmd.PersistentFlags().BoolVar(&Funhex, "unhex", false, "Unhexify the arguments starting with `.`")
 	rootCmd.PersistentFlags().StringVar(&Feditor, "editor", "", "Editor name")
-	rootCmd.PersistentFlags().StringSliceVar(&Fjq, "jsonpath", []string{}, "JSONpath")
+	rootCmd.PersistentFlags().StringArrayVar(&Fjq, "jsonpath", []string{}, "JSONpath")
 	rootCmd.PersistentFlags().BoolVar(&Fyaml, "yaml", false, "Convert to YAML")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")
-	rootCmd.PersistentFlags().StringSliceVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
+	rootCmd.PersistentFlags().StringArrayVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
 
 }
 

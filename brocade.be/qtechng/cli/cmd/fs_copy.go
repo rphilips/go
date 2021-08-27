@@ -44,7 +44,7 @@ func init() {
 	fsCopyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsCopyCmd.Flags().BoolVar(&Fdelete, "delete", false, "Delete original files")
 	fsCopyCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
-	fsCopyCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsCopyCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsCopyCmd)
 }
 

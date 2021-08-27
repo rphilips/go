@@ -45,7 +45,7 @@ var fsSedCmd = &cobra.Command{
 
 func init() {
 	fsSedCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsSedCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsSedCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsSedCmd)
 }
 

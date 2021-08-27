@@ -28,7 +28,7 @@ var Fonlytext bool
 func init() {
 	fsListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsListCmd.Flags().BoolVar(&Fonlytext, "onlytext", false, "Only text files")
-	fsListCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsListCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsListCmd)
 }
 

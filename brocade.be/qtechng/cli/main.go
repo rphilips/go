@@ -36,6 +36,7 @@ var goVersion string
 var buildHost string
 
 func main() {
+
 	var payload *qclient.Payload
 	if len(os.Args) > 5 && os.Args[1] == "lock" && os.Args[2] == "run" {
 		args := os.Args[3:]

@@ -54,7 +54,7 @@ var Freceiver string
 
 func init() {
 	objectCmd.AddCommand(objectMoveCmd)
-	objectMoveCmd.PersistentFlags().StringSliceVar(&Fobjpattern, "objpattern", []string{}, "Posix glob pattern on object names")
+	objectMoveCmd.PersistentFlags().StringArrayVar(&Fobjpattern, "objpattern", []string{}, "Posix glob pattern on object names")
 	objectMoveCmd.PersistentFlags().StringVar(&Freceiver, "receiver", "", "receiving object file")
 }
 

@@ -31,7 +31,7 @@ Use the delete flag if the original files should be deleted.
 func init() {
 	fsDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsDeleteCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
-	fsDeleteCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsDeleteCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsDeleteCmd)
 }
 

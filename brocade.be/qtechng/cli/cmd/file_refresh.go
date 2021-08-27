@@ -32,7 +32,7 @@ qtechng file refresh`,
 func init() {
 	fileRefreshCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileRefreshCmd.Flags().BoolVar(&Fonlychanged, "changed", false, "Consider only modified files")
-	fileRefreshCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileRefreshCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileRefreshCmd)
 }
 

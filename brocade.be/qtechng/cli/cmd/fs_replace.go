@@ -36,7 +36,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 func init() {
 	fsReplaceCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
 	fsReplaceCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsReplaceCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsReplaceCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsReplaceCmd)
 }
 

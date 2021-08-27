@@ -37,7 +37,7 @@ qtechng file ci`,
 func init() {
 	fileCiCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileCiCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
-	fileCiCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileCiCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileCmd.AddCommand(fileCiCmd)
 }
 

@@ -28,7 +28,7 @@ If the argument is a directory name, all files in that directory are handled.`,
 
 func init() {
 	fsTouchCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsTouchCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsTouchCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsTouchCmd)
 }
 

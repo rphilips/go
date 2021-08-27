@@ -33,7 +33,7 @@ qtechng object list --objpattern='m4_getCat*'
 
 func init() {
 	objectCmd.AddCommand(objectListCmd)
-	objectListCmd.PersistentFlags().StringSliceVar(&Fobjpattern, "objpattern", []string{}, "Posix glob pattern on object names")
+	objectListCmd.PersistentFlags().StringArrayVar(&Fobjpattern, "objpattern", []string{}, "Posix glob pattern on object names")
 }
 
 func objectList(cmd *cobra.Command, args []string) error {

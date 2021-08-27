@@ -36,7 +36,7 @@ func init() {
 	fsGrepCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
 	fsGrepCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsGrepCmd.Flags().BoolVar(&Ftolower, "tolower", false, "Lowercase before grepping")
-	fsGrepCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsGrepCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsGrepCmd)
 }
 

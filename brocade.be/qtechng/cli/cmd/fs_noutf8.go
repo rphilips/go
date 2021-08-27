@@ -32,7 +32,7 @@ var fsNoutf8Cmd = &cobra.Command{
 
 func init() {
 	fsNoutf8Cmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsNoutf8Cmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsNoutf8Cmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsNoutf8Cmd)
 }
 

@@ -27,7 +27,7 @@ func init() {
 	fileFormatCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileFormatCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
 	fileFormatCmd.Flags().BoolVar(&Finplace, "inplace", false, "Replaces file")
-	fileFormatCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileFormatCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 
 }
 

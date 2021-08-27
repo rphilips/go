@@ -65,7 +65,7 @@ Note: this information is retrieved locally and can be outdated.
 func init() {
 	fileTellCmd.Flags().StringVar(&Fversion, "version", "", "Version to work with")
 	fileTellCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively walk through directory and subdirectories")
-	fileTellCmd.Flags().StringSliceVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
+	fileTellCmd.Flags().StringArrayVar(&Fqpattern, "qpattern", []string{}, "Posix glob pattern (multiple) on qpath")
 	fileTellCmd.Flags().StringVar(&Ftell, "tell", "", "abspath/relpath/ext/dirname/basename/version/project/qpath/python")
 	fileCmd.AddCommand(fileTellCmd)
 }

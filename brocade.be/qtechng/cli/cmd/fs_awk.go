@@ -51,7 +51,7 @@ Some remarks:
 func init() {
 	fsAWKCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsAWKCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is this an AWK file?")
-	fsAWKCmd.Flags().StringSliceVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsAWKCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsAWKCmd)
 }
 
