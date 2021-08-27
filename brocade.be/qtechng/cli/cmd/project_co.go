@@ -11,8 +11,11 @@ import (
 var projectCoCmd = &cobra.Command{
 	Use:   "co",
 	Short: "Check out qtechng files from projects",
-	Long:  `This command retrieves files in a project from the qtechng repository`,
-	Args:  cobra.MinimumNArgs(0),
+	Long: `This command retrieves files in a project from the qtechng repository.
+The --copyonly flag updates the local file contents, but does not affect its qtechng status.
+This can be used, for instance, to deliberately replace
+one repositority version of a file with another.`,
+	Args: cobra.MinimumNArgs(0),
 	Example: `qtechng source co /catalografie/application/bcawedit.m
 qtechng source co /catalografie/application`,
 	RunE:   projectCo,
