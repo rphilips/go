@@ -103,6 +103,7 @@ func (source *Source) Resolve(what string, objectmap map[string]qobject.Object, 
 	notreplace := source.NotReplace()
 
 	_, err = ResolveText(env, body, what, notreplace, objectmap, textmap, buffer, "", source.String())
+
 	if err != nil {
 		body, _ = source.Fetch()
 		buffer.Write(body)

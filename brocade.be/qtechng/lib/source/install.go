@@ -254,7 +254,7 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 	}
 	if len(errs) == 0 {
 		errs = nil
-		//qfs.Rmpath(tmpdir)
+		qfs.Rmpath(tmpdir)
 	}
 	return
 }
@@ -283,7 +283,6 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 		os.MkdirAll(subdir, 0770)
 		done[subdir] = true
 	}
-
 	fn := func(n int) (interface{}, error) {
 		qp := qpaths[n]
 		qps := qsources[qp]
@@ -298,10 +297,7 @@ func projcopy(proj *qproject.Project, qpaths []string, qsources map[string]*Sour
 
 		place := where[qp]
 
-		err = qfs.Store(place, buf, "process")
-		if err != nil {
-			return "", err
-		}
+		err = qfs.Store(place, buf, "temp")
 		return "", err
 	}
 	_, errorlist := qparallel.NMap(len(qpaths), -1, fn)
