@@ -21,7 +21,11 @@ The sources are specified by a combination of:
 	- the *--muser* flags (uid of the last modifier)
 	- the *--cafter* flags (uid of the last modifier)
 
-Use the --number flag to indicate the number of files to be deleted.`,
+Use the --number flag to indicate the number of files to be deleted.
+This is a safety measure that forces the user to carefully consider
+this destructive command.
+
+Without --number, no delete is performed!`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source delete --qpattern=/application/*.m --number=12`,
 	RunE:    sourceDelete,
@@ -37,7 +41,7 @@ Use the --number flag to indicate the number of files to be deleted.`,
 var Fnumber int
 
 func init() {
-	sourceDeleteCmd.PersistentFlags().IntVar(&Fnumber, "number", 0, "number of deletes")
+	sourceDeleteCmd.PersistentFlags().IntVar(&Fnumber, "number", 0, "Number of deletes")
 	sourceCmd.AddCommand(sourceDeleteCmd)
 }
 
