@@ -23,7 +23,11 @@ The sources are specified by a combination of:
 	- the *--muser* flags (uid of the last modifier)
 	- the *--cafter* flags (uid of the last modifier)
 
-Give with the *--number* flag the number of files to be renamed.`,
+Give with the *--number* flag the number of files to be renamed.
+This is a safety measure that forces the user to carefully consider
+this potentially destructive command.
+
+Without --number, no rename is performed!`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng source rename --qpattern=/application/*.m --number=12`,
 	RunE:    sourceRename,
