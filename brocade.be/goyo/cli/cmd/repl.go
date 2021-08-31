@@ -18,6 +18,9 @@ func init() {
 	rootCmd.AddCommand(replCmd)
 }
 
+var Fgloref string
+var Fvalue string
+
 func repl(cmd *cobra.Command, args []string) error {
 	shell := ishell.New()
 	if !Fsilent {
@@ -27,10 +30,16 @@ func repl(cmd *cobra.Command, args []string) error {
 
 	// handle "greet".
 	shell.AddCmd(&ishell.Cmd{
-		Name:    "greet",
-		Aliases: []string{"hello"},
-		Help:    "greet user",
-		Func:    greet,
+		Name: "greet",
+		Help: "greet user",
+		Func: greet,
+	})
+
+	// handle "set".
+	shell.AddCmd(&ishell.Cmd{
+		Name: "set",
+		Help: "set var",
+		Func: set,
 	})
 
 	// when started with "exit" as first argument, assume non-interactive execution

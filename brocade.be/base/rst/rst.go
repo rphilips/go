@@ -18,7 +18,7 @@ func Check(scriptrst string, level string) error {
 	rstexe, _ := exec.LookPath("rstcheck")
 
 	if level == "" {
-		level = "info"
+		level = "error"
 	}
 	argums := []string{
 		scriptrst,

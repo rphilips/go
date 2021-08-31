@@ -38,11 +38,6 @@ var buildHost string
 func main() {
 
 	var payload *qclient.Payload
-	if len(os.Args) > 5 && os.Args[1] == "lock" && os.Args[2] == "run" {
-		args := os.Args[3:]
-		cmd.LockRunner(args)
-		os.Exit(0)
-	}
 
 	if len(os.Args) > 2 && os.Args[1] == "arg" {
 		data := make([]byte, 0)
@@ -141,6 +136,13 @@ func main() {
 			os.Args = args
 		}
 	}
+
+	if len(os.Args) > 5 && os.Args[1] == "lock" && os.Args[2] == "run" {
+		args := os.Args[3:]
+		cmd.LockRunner(args)
+		os.Exit(0)
+	}
+
 	if len(os.Args) == 1 {
 		fi, _ := os.Stdin.Stat()
 		if (fi.Mode() & os.ModeCharDevice) == 0 {

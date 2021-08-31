@@ -458,6 +458,7 @@ func TestAbout08(t *testing.T) {
 	"""a b"""
 
 A
+https://anet.be
 B
 `)
 	expected := []byte(`
@@ -465,6 +466,7 @@ B
 //a b
 
 A
+https://anet.be
 B
 `)
 
@@ -892,4 +894,20 @@ func TestJoiner(t *testing.T) {
 		}
 	}
 
+}
+
+func TestDecomment(t *testing.T) {
+
+	x := "Hello https://world // en de rest"
+	buf := Decomment([]byte(x))
+	y := buf.String()
+	if y != "Hello https://world " {
+		t.Errorf(y)
+	}
+	x = `$$keygen: s RAkeyref("id")=$p(RDmtloi,":",3),RAkeyref("url")="https://dev.anet.be/desktop/"_RAkeyref("id")`
+	buf = Decomment([]byte(x))
+	y = buf.String()
+	if y != x {
+		t.Errorf(y)
+	}
 }

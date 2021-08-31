@@ -27,6 +27,7 @@ type Lgcode struct {
 	Source   string `json:"source"`   // Editfile
 	Line     string `json:"-"`        // Lijnnummer
 	Version  string `json:"-"`        // Version
+	Text     string `json:"text"`     // Text
 }
 
 // *Lgcode moet de Object interface ondersteunen.
@@ -50,6 +51,11 @@ func (lgcode *Lgcode) SetName(id string) {
 // Type of lgcode
 func (lgcode *Lgcode) Type() string {
 	return "l4"
+}
+
+// Text of lgcode
+func (lgcode *Lgcode) SetText(text string) {
+	lgcode.Text = text
 }
 
 // Release of lgcode

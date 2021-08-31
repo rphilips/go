@@ -37,6 +37,7 @@ type Macro struct {
 	Source   string   `json:"source"`   // Editfile
 	Line     string   `json:"-"`        // Lijnnummer
 	Version  string   `json:"-"`        // Version
+	Text     string   `json:"text"`     // Text
 }
 
 // LoadsGuard from blob
@@ -78,6 +79,11 @@ func (macro *Macro) Name() string {
 // SetName of macro
 func (macro *Macro) SetName(id string) {
 	macro.ID = id
+}
+
+// Text of macro
+func (macro *Macro) SetText(text string) {
+	macro.Text = text
 }
 
 // Type of macro

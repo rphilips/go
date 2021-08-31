@@ -14,6 +14,7 @@ type Include struct {
 	Source  string `json:"source"`  // Editfile
 	Line    string `json:"-"`       // Lijnnummer
 	Version string `json:"-"`       // Version
+	Text    string `json:"text"`    // Text
 }
 
 // *Include moet de Object interface ondersteunen.
@@ -32,6 +33,11 @@ func (include *Include) Name() string {
 // SetName of include
 func (include *Include) SetName(id string) {
 	include.ID = id
+}
+
+// Text of include
+func (include *Include) SetText(text string) {
+	include.Text = text
 }
 
 // Type of include

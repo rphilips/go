@@ -14,11 +14,11 @@ func TestParse01(t *testing.T) {
 loi c:
     $title: Catalografische beschrijving_loi
     $scope:
-    $resolver: $$%Resolve^bbibresv
+    $resolver: $$%Resolve^bbibresv 
     $data:
     $md5global: ^ZZAD("md5")
     $md5index: ^ZZAD("md5i")
-    $lookup: bibrec
+    $lookup: bibrec surl="http://w3c.org"
     $genattr:
     $exist: s z1=$p(RDloi,":",2),z2=$p(RDloi,":",3,4),RDloiIs=$s(z2="":0,z1="":0,1:$d(^BCAT(z1,z2))'<10) // hello
     $next: s RDnxloi=$$%Nxt^uglcloi("^BCAT",RDloi)
@@ -99,11 +99,11 @@ loi c:
 
 	// brob id
 	parts := strings.SplitN(brob.ID, " ", -1)
-	id := parts[0]
-	ty := parts[1]
+	id := parts[1]
+	ty := parts[0]
 
 	if id != "c" {
-		t.Errorf("ID1: `%s`", brob.ID)
+		t.Errorf("ID1: `%s` `%s`", brob.ID, id)
 		return
 	}
 
@@ -141,6 +141,12 @@ loi c:
 
 	key = "locktypes"
 	if !strings.HasSuffix(m[key], "hello") {
+		t.Errorf("%s: `%s`", key, m[key])
+		return
+	}
+
+	key = "lookup"
+	if !strings.HasSuffix(m[key], `bibrec surl="http://w3c.org"`) {
 		t.Errorf("%s: `%s`", key, m[key])
 		return
 	}

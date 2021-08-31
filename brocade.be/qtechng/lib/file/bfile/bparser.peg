@@ -85,6 +85,8 @@ CmtLine <- "//" [^\n\r]* (EOF / WS+) {
 }
 
 
+
+
 Body <- fields:Field+ {
     x := fields.([]interface{})
     flds := make([]*Field, len(x))
@@ -142,11 +144,10 @@ Value3 <- [^\n\r]* (EOL / EOF) {
     if k == 0 {
         return "", nil
     }
-    if k == -1 {
-
-    }
     if k != -1 {
-       return strings.TrimSpace(x[:k]), nil
+       b := qutil.Decomment(c.text)
+       //fmt.Println("TEST:", b.String())
+       return strings.TrimSpace(b.String()), nil
     }
     return strings.TrimSpace(x), nil
 }

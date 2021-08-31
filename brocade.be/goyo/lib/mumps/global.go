@@ -2,16 +2,21 @@ package mumps
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"lang.yottadb.com/go/yottadb"
 )
 
 func GlobalRef(glo string) (gloref string, subs []string, err error) {
 
 	glo = strings.TrimSpace(glo)
+	k := strings.IndexAny(glo, "/(")
+	if k != -1 && glo[k:k+1] == "(" && !strings.HasSuffix(glo, ")") {
+		glo += ")"
+	}
 	global := strings.HasPrefix(glo, "/") || strings.HasPrefix(glo, "^")
+
 	if global {
 		glo = strings.TrimPrefix(glo, "/")
 		glo = strings.TrimPrefix(glo, "^")
@@ -26,20 +31,19 @@ func GlobalRef(glo string) (gloref string, subs []string, err error) {
 	}
 
 	if strings.ContainsRune(glo, '\x01') {
-		return "", nil, errors.New("global reference contains \\x01 character")
+		return "", nil, errors.New("reference contains \\x01 character")
 	}
 
 	rex := regexp.MustCompile(`^[%A-Za-z][A-Za-z0-9]*\(`)
 	if rex.MatchString(glo) {
 		glo = splitGlo(glo)
 	}
-	glo = strings.ReplaceAll(glo, "\\\\", "\x00")
-	glo = strings.ReplaceAll(glo, "\\/", "\x01")
+	glo = Escape(glo)
 	subs = strings.SplitN(glo, "/", -1)
 	name := subs[0]
 	rex = regexp.MustCompile("^[%A-Za-z][A-Za-z0-9]*$")
 	if !rex.MatchString(name) {
-		return "", nil, errors.New("invalid global reference")
+		return "", nil, errors.New("invalid reference")
 	}
 	gloref = ""
 	if global {
@@ -51,9 +55,6 @@ func GlobalRef(glo string) (gloref string, subs []string, err error) {
 		return
 	}
 	gloref += "("
-	number1 := regexp.MustCompile(`^[+-]?(([0-9]+(\.[0-9]+)?)|(\.[0-9]+))(E[+-]?[0-9]+)$`)
-	number2 := regexp.MustCompile(`^[+-]?[0-9]+$`)
-	number3 := regexp.MustCompile(`^[+-]?[0-9]+E[+]?[0-9]+$`)
 	for i, sub := range subs {
 		if i == 0 {
 			continue
@@ -61,44 +62,18 @@ func GlobalRef(glo string) (gloref string, subs []string, err error) {
 		if i != 1 {
 			gloref += ","
 		}
-		switch {
-
-		case number3.MatchString(sub):
-			x := strings.SplitN(sub, "E", -1)
-			y := strings.ReplaceAll(x[len(x)-1], "+", "")
-			z, err := strconv.ParseInt(y, 10, 0)
-			if err != nil || z > 64 {
-				gloref += sub
-				continue
-			}
-			y = x[0] + strings.Repeat("0", int(z))
-			if _, err := strconv.ParseInt(y, 10, 64); err == nil {
-				gloref += y
-				subs[i] = y
-				continue
-			}
-		case number2.MatchString(sub):
-			if _, err := strconv.ParseInt(sub, 10, 64); err == nil {
-				gloref += sub
-				continue
-			}
-		case number1.MatchString(sub):
-			if x, err := strconv.ParseFloat(sub, 64); err == nil {
-				y := fmt.Sprintf("%f", x)
-				gloref += y
-				continue
-			}
-		default:
-			sub = strings.ReplaceAll(sub, "\x00", `\`)
-			sub = strings.ReplaceAll(sub, "\x01", `/`)
-		}
+		sub, n, _ := Nature(sub)
+		sub = Unescape(sub)
 		subs[i] = sub
-		sub = strings.ReplaceAll(sub, `"`, `""`)
-		gloref += `"` + sub + `"`
+		if n == "s" {
+			sub = strings.ReplaceAll(sub, `"`, `""`)
+			gloref += `"` + sub + `"`
+		} else {
+			gloref += subs[i]
+		}
 	}
 	gloref += ")"
 	return
-
 }
 
 func splitGlo(glo string) string {
@@ -137,4 +112,88 @@ func splitGlo(glo string) string {
 		}
 	}
 	return strings.Join(parts, "/")
+}
+
+func EditGlobal(glo string) (gloref string, value string, err error) {
+	if !strings.ContainsRune(glo, '=') {
+		value, err = getglo(glo)
+		if err != nil {
+			return glo, "", errors.New("contains no '='")
+		}
+		glo += "=" + value
+	}
+	k := strings.IndexAny(glo, "/(")
+	var parts []string
+	if k == -1 {
+		parts = strings.SplitN(glo, "=", 2)
+	} else {
+		var e error
+		if glo[k:k+1] == "/" {
+			parts, e = splits(glo)
+		} else {
+			parts, e = splitb(glo)
+		}
+		if e != nil {
+			return "", "", e
+		}
+	}
+	gloref = strings.TrimSpace(parts[0])
+	gloref, _, err = GlobalRef(gloref)
+	if err != nil {
+		return "", "", err
+	}
+	value, _, _ = Nature(parts[1])
+	return gloref, value, nil
+}
+
+func splits(glo string) (parts []string, e error) {
+	glo = Escape(glo)
+	if !strings.ContainsRune(glo, '=') {
+		value, err := getglo(glo)
+		if err != nil {
+			return nil, errors.New("contains no '='")
+		}
+		glo += "=" + Escape(value)
+	}
+	parts = strings.SplitN(glo, "=", 2)
+	parts[0] = Unescape(parts[0])
+	parts[1] = Unescape(parts[1])
+	return parts, nil
+}
+
+func splitb(glo string) (parts []string, e error) {
+	glo = Escape(glo)
+	if strings.HasPrefix(glo, "=") {
+		return nil, errors.New("contains no reference part")
+	}
+	offset := 0
+	for {
+		k := strings.IndexByte(glo[offset:], '=')
+		if k == -1 {
+			value, err := getglo(glo)
+			if err != nil {
+				return nil, errors.New("contains no '='")
+			}
+			glo += "=" + Escape(value)
+			continue
+		}
+		if k == 0 {
+			return nil, errors.New("contains no reference part")
+		}
+		before := glo[:offset+k]
+		if strings.Count(before, `"`)%2 == 0 {
+			parts = append(parts, Unescape(before), Unescape(glo[k+offset+1:]))
+			return parts, nil
+		}
+		offset = offset + k + 1
+	}
+}
+
+func getglo(glo string) (value string, err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return
+	}
+	value, err = yottadb.ValE(yottadb.NOTTP, nil, subs[0], subs[1:])
+	return
 }

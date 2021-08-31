@@ -18,6 +18,7 @@ type Brob struct {
 	Body    []*Field `json:"body"`   // Body
 	Line    string   `json:"-"`      // Lijnnummer
 	Version string   `json:"-"`      // Version
+	Text    string   `json:"text"`   // Text
 }
 
 // Field models a $-veld
@@ -93,6 +94,11 @@ func (brob *Brob) Name() string {
 // SetName of macro
 func (brob *Brob) SetName(id string) {
 	brob.ID = id
+}
+
+// Text of macro
+func (brob *Brob) SetText(text string) {
+	brob.Text = text
 }
 
 // Type of macro

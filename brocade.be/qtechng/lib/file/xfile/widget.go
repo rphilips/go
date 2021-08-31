@@ -23,6 +23,7 @@ type Widget struct {
 	Body    string `json:"body"`   // Body
 	Line    string `json:"-"`      // Lijnnummer
 	Version string `json:"-"`      // Version
+	Text    string `json:"text"`   // Text
 }
 
 // String
@@ -54,6 +55,11 @@ func (widget *Widget) Release() string {
 // SetRelease of macro
 func (widget *Widget) SetRelease(version string) {
 	widget.Version = version
+}
+
+// Text of widget
+func (widget *Widget) SetText(text string) {
+	widget.Text = text
 }
 
 // EditFile of macro

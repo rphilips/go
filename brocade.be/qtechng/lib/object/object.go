@@ -24,6 +24,7 @@ type Object interface {
 	SetRelease(release string)
 	EditFile() string
 	SetEditFile(editfile string)
+	SetText(text string)
 	Lineno() string
 	SetLineno(lineno string)
 	MarshalJSON() ([]byte, error)
@@ -39,6 +40,7 @@ type Object interface {
 type Uber struct {
 	ID      string `json:"id"`   // Identificatie
 	Body    []byte `json:"meta"` // Meta
+	Text    string `json:"text"` // Text
 	UsedBy  []string
 	Source  string `json:"source"` // Editfile
 	Line    string `json:"-"`      // Lijnnummer
@@ -58,6 +60,11 @@ func (uber *Uber) Name() string {
 // SetName of uber
 func (uber *Uber) SetName(id string) {
 	uber.ID = id
+}
+
+// SetName of uber
+func (uber *Uber) SetText(text string) {
+	uber.Text = text
 }
 
 // Type of uber
@@ -134,7 +141,7 @@ func (uber *Uber) Deps() []byte {
 	return nil
 }
 
-// Format fake
+// Format
 func (uber *Uber) Format() string {
 	return ""
 }
@@ -420,6 +427,7 @@ func Fetch(object Object) (err error) {
 		}
 		return qerror.QErrorTune(erro, e)
 	}
+
 	return nil
 }
 
@@ -519,6 +527,7 @@ func Store(object Object) (changed bool, err error) {
 		}
 		return false, qerror.QErrorTune(e, err)
 	}
+	object.SetText(object.Format())
 	changed, before, actual, err := rel.ObjectStore(name, object)
 
 	if err != nil {
