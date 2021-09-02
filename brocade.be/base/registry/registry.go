@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	fatomic "github.com/natefinch/atomic"
@@ -14,32 +13,39 @@ import (
 var Registry map[string]string
 
 func init() {
+	Registry = make(map[string]string)
 	registryFile := os.Getenv("BROCADE_REGISTRY")
 	if registryFile == "" {
-		log.Fatal("BROCADE_REGISTRY environment variable is not defined")
+		Registry["error"] = "BROCADE_REGISTRY environment variable is not defined"
+		return
 	}
 	info, err := os.Stat(registryFile)
 	if err == nil && info.IsDir() {
-		log.Fatal("BROCADE_REGISTRY points to a directory. It should be a file.")
+		Registry["error"] = fmt.Sprintf("BROCADE_REGISTRY `%s` points to a directory. It should be a file.", registryFile)
+		return
 	}
 	b := make([]byte, 0)
 	if !os.IsNotExist(err) {
 		b, err = os.ReadFile(registryFile)
 		if err != nil {
-			log.Fatal(fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)\n", registryFile), err)
+			Registry["error"] = fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
+			return
 		}
 	}
 	if len(b) == 0 {
 		b = []byte("{}")
 		err = fatomic.WriteFile(registryFile, bytes.NewReader(b))
 		if err != nil {
-			log.Fatal(fmt.Sprintf("Cannot initialise file '%s' (BROCADE_REGISTRY environment variable)\n", registryFile), err)
+			Registry["error"] = fmt.Sprintf("Cannot initialise file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
+			return
 		}
 	}
 	err = json.Unmarshal(b, &Registry)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("registry file '%s' does not contain valid JSON.\nUse http://jsonlint.com/\n", registryFile), err)
+		Registry["error"] = fmt.Sprintf("registry file '%s' does not contain valid JSON.\nUse http://jsonlint.com/", registryFile)
+		return
 	}
+	delete(Registry, "error")
 	if Registry["brocade-registry-file"] != registryFile {
 		Registry["brocade-registry-file"] = registryFile
 		SetRegistry("brocade-registry-file", Registry["brocade-registry-file"])

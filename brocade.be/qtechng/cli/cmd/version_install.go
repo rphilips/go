@@ -35,6 +35,7 @@ The registry value should be set with an appropriate value (*qtechng version set
 
 func init() {
 	versionInstallCmd.PersistentFlags().StringVar(&Frefname, "refname", "", "Reference to the installation")
+	versionInstallCmd.Flags().BoolVar(&Fwarnings, "warnings", false, "Include warnings")
 	versionCmd.AddCommand(versionInstallCmd)
 }
 
@@ -70,7 +71,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources, false, logme)
+	err := qsource.Install(Frefname, sources, Fwarnings, logme)
 	reportfile := filepath.Join(qregistry.Registry["scratch-dir"], Frefname+".json")
 	t1 := time.Now()
 	logme.Printf("Results also in `%s`", reportfile)

@@ -33,6 +33,7 @@ var sourceInstallCmd = &cobra.Command{
 
 func init() {
 	sourceInstallCmd.PersistentFlags().StringVar(&Frefname, "refname", "install", "Reference to the installation")
+	sourceInstallCmd.Flags().BoolVar(&Fwarnings, "warnings", false, "Include warnings")
 	sourceCmd.AddCommand(sourceInstallCmd)
 }
 
@@ -65,7 +66,7 @@ func sourceInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources, true, nil)
+	err := qsource.Install(Frefname, sources, Fwarnings, nil)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

@@ -2,8 +2,10 @@ package util
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -110,6 +112,16 @@ func VSCode(dir string) (err error) {
 		Stderr: &stderr,
 	}
 	err = cmd.Run()
-	return
 
+	// install tasks.json
+	tasks := filepath.Join(dir, "tasks.json")
+	if !qfs.Exists(tasks) {
+		return
+	}
+
+	workdir := qregistry.Registry["qtechng-work-dir"]
+	dotdir := filepath.Join(workdir, ".vscode")
+	os.MkdirAll(dotdir, 0755)
+	err = qfs.CopyFile(tasks, dotdir, "rw-rw-rw-", false)
+	return
 }

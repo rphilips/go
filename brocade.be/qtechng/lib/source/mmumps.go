@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 
+	qregistry "brocade.be/base/registry"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qobject "brocade.be/qtechng/lib/object"
 	qutil "brocade.be/qtechng/lib/util"
@@ -18,12 +19,13 @@ func (mfile *Source) MFileToMumps(batchid string, buf *bytes.Buffer) error {
 	}
 	bufnoc := new(bytes.Buffer)
 	qpath := mfile.String()
-	version := mfile.Release().String()
+	version := strings.TrimRight(qregistry.Registry["brocade-release"], "abcdefghijklmnopqrstuvwxyz- /")
 	_, base := qutil.QPartition(qpath)
 	ext := path.Ext(base)
 	root := strings.TrimSuffix(base, ext)
 	bufnoc.WriteString(root + " ;" + batchid + "\n")
 	bufnoc.WriteString(" ; version=" + version + "\n")
+	version = mfile.Release().String()
 
 	meta, err := qmeta.Meta{}.New(version, qpath)
 	if err == nil {

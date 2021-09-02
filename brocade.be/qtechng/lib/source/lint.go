@@ -150,7 +150,7 @@ func (source *Source) Lint(lintdir string, warnings bool) (info error, err error
 	natures := source.Natures()
 	nolint := natures["nolint"]
 	if nolint {
-		return errors.New("NOLINT"), nil
+		return errors.New("OK"), nil
 	}
 	body, err := source.Fetch()
 	if err != nil {

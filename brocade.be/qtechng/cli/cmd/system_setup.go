@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"archive/tar"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,7 +41,10 @@ func init() {
 }
 
 func systemSetup(cmd *cobra.Command, args []string) error {
-
+	if qregistry.Registry["error"] != "" {
+		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
 	qt := qregistry.Registry["qtechng-type"]
 	onW := qt == "" || qt == "W"
 	onB := strings.ContainsRune(qt, 'B')
@@ -192,6 +199,108 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
+	}
+
+	err = systemSupport()
+	r := ""
+	if err == nil {
+		r = "QtechNG installed. Check with `qtechng about`"
+	}
+	Fmsg = qreport.Report(r, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	return nil
+}
+
+// Untar untars a tarball and writes the files to a target path
+// Source: https://golangdocs.com/tar-gzip-in-golang
+func Untar(tarball, target string) error {
+	reader, err := os.Open(tarball)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	tarReader := tar.NewReader(reader)
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		path := filepath.Join(target, header.Name)
+		info := header.FileInfo()
+		if info.IsDir() {
+			if err = os.MkdirAll(path, info.Mode()); err != nil {
+				return err
+			}
+			continue
+		}
+
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(file, tarReader)
+		if err != nil {
+			return err
+		}
+		file.Close()
+	}
+	return nil
+}
+
+func systemSupport() error {
+
+	qt := qregistry.Registry["qtechng-type"]
+	onW := strings.ContainsRune(qt, 'W')
+	onB := strings.ContainsRune(qt, 'B')
+	onP := strings.ContainsRune(qt, 'P')
+	if !onW || onB || onP {
+		return nil
+	}
+
+	supportDir := qregistry.Registry["qtechng-support-dir"]
+	if supportDir == "" {
+		return errors.New("installation support: registry qtechng-support-dir is empty or missing")
+	}
+
+	qtechngURL := qregistry.Registry["qtechng-url"]
+	if qtechngURL == "" {
+		return errors.New("installation support: registry qtechng-url is empty or missing")
+	}
+
+	qSegments := strings.Split(qtechngURL, "/")
+	binary := qSegments[len(qSegments)-1]
+	qtechngSubDomain := strings.TrimRight(qtechngURL, binary)
+	tarURL := strings.Join([]string{qtechngSubDomain, "support.tar"}, "")
+
+	fileURL, err := url.Parse(tarURL)
+	if err != nil {
+		return errors.New("installation support: parsing of `" + tarURL + "` fails: " + err.Error())
+	}
+	path := fileURL.Path
+	fileSegments := strings.Split(path, "/")
+	tarPath := filepath.Join(supportDir, fileSegments[len(fileSegments)-1])
+	err = qfs.GetURL(tarURL, tarPath, "tempfile")
+	if err != nil {
+		return errors.New("installation support: retrieval of `" + tarURL + "` fails: " + err.Error())
+	}
+
+	// Untar file
+	err = Untar(tarPath, supportDir)
+	if err != nil {
+		return errors.New("installation support: untar-ing of `" + tarPath + "` fails: " + err.Error())
+	}
+	os.Remove(tarPath)
+
+	// install vsix for vscode
+
+	dir := filepath.Join(supportDir, "vscode")
+	err = qutil.VSCode(dir)
+	if err != nil {
+		return errors.New("installation support: unpacking of vscode extensions fails: " + err.Error())
 	}
 	return nil
 }

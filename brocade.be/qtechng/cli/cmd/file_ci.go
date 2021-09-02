@@ -56,7 +56,6 @@ func fileCi(cmd *cobra.Command, args []string) error {
 		QPath   string `json:"qpath"`
 		File    string `json:"file"`
 		Url     string `json:"fileurl"`
-		Changed bool   `json:"changed"`
 		Time    string `json:"time"`
 		Digest  string `json:"digest"`
 		Cu      string `json:"cu"`

@@ -38,8 +38,36 @@ func repl(cmd *cobra.Command, args []string) error {
 	// handle "set".
 	shell.AddCmd(&ishell.Cmd{
 		Name: "set",
-		Help: "set var",
+		Help: "set var or global",
 		Func: set,
+	})
+
+	// handle "cd".
+	shell.AddCmd(&ishell.Cmd{
+		Name: "cd",
+		Help: "cd directory (~ = home)",
+		Func: cd,
+	})
+
+	// handle "load".
+	shell.AddCmd(&ishell.Cmd{
+		Name: "load",
+		Help: "load file into database",
+		Func: load,
+	})
+
+	// handle "extract".
+	shell.AddCmd(&ishell.Cmd{
+		Name: "extract",
+		Help: "extract global",
+		Func: extract,
+	})
+
+	// handle "walk".
+	shell.AddCmd(&ishell.Cmd{
+		Name: "walk",
+		Help: "walk global",
+		Func: walk,
 	})
 
 	// when started with "exit" as first argument, assume non-interactive execution

@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"errors"
 	"os"
 	"os/user"
 
+	qregistry "brocade.be/base/registry"
 	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +32,10 @@ func init() {
 }
 
 func about(cmd *cobra.Command, args []string) error {
+	if qregistry.Registry["error"] != "" {
+		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
 
 	msg := map[string]string{"!BuildTime": BuildTime, "!BuildHost": BuildHost, "!BuildWith": GoVersion}
 	host, e := os.Hostname()
@@ -42,7 +48,7 @@ func about(cmd *cobra.Command, args []string) error {
 		msg["!!user.name"] = user.Name
 		msg["!!user.username"] = user.Username
 	}
-
+	msg["BROCADE_REGISTRY"] = os.Getenv("BROCADE_REGISTRY")
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }

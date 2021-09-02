@@ -8,10 +8,23 @@ import (
 	"lang.yottadb.com/go/yottadb"
 )
 
+func GlobalDefined(glo string) int {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return -1
+	}
+	d, err := yottadb.DataE(yottadb.NOTTP, nil, subs[0], subs[1:])
+	if err != nil {
+		return -1
+	}
+	return int(d)
+}
+
 func GlobalRef(glo string) (gloref string, subs []string, err error) {
 
 	glo = strings.TrimSpace(glo)
 	k := strings.IndexAny(glo, "/(")
+
 	if k != -1 && glo[k:k+1] == "(" && !strings.HasSuffix(glo, ")") {
 		glo += ")"
 	}
@@ -116,7 +129,7 @@ func splitGlo(glo string) string {
 
 func EditGlobal(glo string) (gloref string, value string, err error) {
 	if !strings.ContainsRune(glo, '=') {
-		value, err = getglo(glo)
+		value, err = GlobalValue(glo)
 		if err != nil {
 			return glo, "", errors.New("contains no '='")
 		}
@@ -149,7 +162,7 @@ func EditGlobal(glo string) (gloref string, value string, err error) {
 func splits(glo string) (parts []string, e error) {
 	glo = Escape(glo)
 	if !strings.ContainsRune(glo, '=') {
-		value, err := getglo(glo)
+		value, err := GlobalValue(glo)
 		if err != nil {
 			return nil, errors.New("contains no '='")
 		}
@@ -170,7 +183,7 @@ func splitb(glo string) (parts []string, e error) {
 	for {
 		k := strings.IndexByte(glo[offset:], '=')
 		if k == -1 {
-			value, err := getglo(glo)
+			value, err := GlobalValue(glo)
 			if err != nil {
 				return nil, errors.New("contains no '='")
 			}
@@ -189,11 +202,96 @@ func splitb(glo string) (parts []string, e error) {
 	}
 }
 
-func getglo(glo string) (value string, err error) {
+func GlobalValue(glo string) (value string, err error) {
 	_, subs, err := GlobalRef(glo)
 	if err != nil {
 		return
 	}
 	value, err = yottadb.ValE(yottadb.NOTTP, nil, subs[0], subs[1:])
 	return
+}
+
+func MakeGlobal(subs []string) (glo string) {
+	switch len(subs) {
+	case 0:
+		return ""
+	case 1:
+		return subs[0]
+	default:
+		argums := make([]string, len(subs)-1)
+		for i, sub := range subs {
+			if i == 0 {
+				continue
+			}
+			argums[i-1] = `"` + strings.ReplaceAll(sub, `"`, `""`) + `"`
+		}
+		return subs[0] + `(` + strings.Join(argums, `,`) + `)`
+	}
+}
+
+func GlobalNext(glo string) (value string, err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return
+	}
+	z, e := yottadb.SubNextE(yottadb.NOTTP, nil, subs[0], subs[1:])
+	if e != nil {
+		z = ""
+	}
+	subs[len(subs)-1] = z
+	return MakeGlobal(subs), nil
+}
+
+func GlobalPrev(glo string) (value string, err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return
+	}
+	z, e := yottadb.SubPrevE(yottadb.NOTTP, nil, subs[0], subs[1:])
+	if e != nil {
+		z = ""
+	}
+	subs[len(subs)-1] = z
+	return MakeGlobal(subs), nil
+}
+
+func GlobalRight(glo string) (value string, err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return glo, err
+	}
+	if len(subs) > 1 && subs[len(subs)-1] == "" {
+		return glo, err
+	}
+	subs = append(subs, "")
+	return MakeGlobal(subs), nil
+}
+func GlobalLeft(glo string) (value string, err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return glo, err
+	}
+	if len(subs) < 2 {
+		return glo, err
+	}
+	subs = subs[:len(subs)-1]
+	return MakeGlobal(subs), nil
+}
+
+func GlobalKillk(glo string) (err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return err
+	}
+	err = yottadb.DeleteE(yottadb.NOTTP, nil, yottadb.YDB_DEL_NODE, subs[0], subs[1:])
+	return err
+}
+
+func GlobalKillK(glo string) (err error) {
+	_, subs, err := GlobalRef(glo)
+	if err != nil {
+		return err
+	}
+	err = yottadb.DeleteE(yottadb.NOTTP, nil, yottadb.YDB_DEL_TREE, subs[0], subs[1:])
+	return err
 }
