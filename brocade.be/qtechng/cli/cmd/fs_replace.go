@@ -25,9 +25,10 @@ Replacement is done line per line.
 Take care: replacement is done over binary files as well!
 The other arguments are filenames or directory names.
 If the argument is a directory name, all files in that directory are handled.`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs replace cwd=../catalografie`,
-	RunE:    fsReplace,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs replace cwd=../catalografie
+	qtechng fs replace aap noot /home/tdeneire/tmp --pattern=*.txt`,
+	RunE: fsReplace,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
