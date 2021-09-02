@@ -11,7 +11,7 @@ import (
 
 var versionRebuildCmd = &cobra.Command{
 	Use:   "rebuild version",
-	Short: "Rbuild the underlying infrastructure of a version",
+	Short: "Rebuild the underlying infrastructure of a version",
 	Long: `This command reconstructs the underlying infrastructure of a version,
 i.e. the uniqueness of basenames and the Brocade objects (i4/l4/m4/r4/t4)
 in *{qtechng-repository-dir}/{version}/objects*.
