@@ -15,7 +15,8 @@ var versionRebuildCmd = &cobra.Command{
 	Long: `This command reconstructs the underlying infrastructure of a version,
 i.e. the uniqueness of basenames and the Brocade objects (i4/l4/m4/r4/t4)
 in *{qtechng-repository-dir}/{version}/objects*.
-Note that there is no installation!`,
+Note that there is no installation!
+Source files and their meta information is not touched.`,
 	Args:    cobra.ExactArgs(1),
 	Example: "qtechng version rebuild 0.00",
 	RunE:    versionRebuild,
