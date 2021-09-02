@@ -345,7 +345,32 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 	if err != nil {
 		return nmeta, false, chobjs, err
 	}
+	var objfile qobject.OFile
 	ok := natures["objectfile"]
+	if ok {
+		switch {
+		case natures["dfile"]:
+			objfile = new(qofile.DFile)
+		case natures["ifile"]:
+			objfile = new(qofile.IFile)
+		case natures["lfile"]:
+			objfile = new(qofile.LFile)
+		}
+		objfile.SetEditFile(source.String())
+		objfile.SetRelease(version.String())
+		err = qobject.Loads(objfile, fdata, true)
+		if err != nil {
+			e := &qerror.QError{
+				Ref:     []string{"source.store.load.object"},
+				Version: version.String(),
+				QPath:   source.String(),
+				Msg:     []string{"Cannot load objects"},
+			}
+			err = qerror.QErrorTune(err, e)
+			return
+		}
+	}
+
 	var content []byte
 	if ok {
 		content, err = source.Fetch()
@@ -473,28 +498,6 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 	// create maps
 
 	// objects
-	var objfile qobject.OFile
-	switch {
-	case natures["dfile"]:
-		objfile = new(qofile.DFile)
-	case natures["ifile"]:
-		objfile = new(qofile.IFile)
-	case natures["lfile"]:
-		objfile = new(qofile.LFile)
-	}
-	objfile.SetEditFile(source.String())
-	objfile.SetRelease(version.String())
-	err = qobject.Loads(objfile, after, true)
-	if err != nil {
-		e := &qerror.QError{
-			Ref:     []string{"source.store.load.object"},
-			Version: version.String(),
-			QPath:   source.String(),
-			Msg:     []string{"Cannot load objects"},
-		}
-		err = qerror.QErrorTune(err, e)
-		return
-	}
 
 	objectlist := objfile.Objects()
 
@@ -1201,20 +1204,22 @@ func (source *Source) checkOrphanObjects(olddata []byte, newdata []byte) (notdel
 	}
 	objfile.SetObjects(nil)
 	err = qobject.Loads(objfile, olddata, true)
-	if err != nil {
-		e := &qerror.QError{
-			Ref:     []string{"source.store.load2.object"},
-			Version: version.String(),
-			QPath:   source.String(),
-			Msg:     []string{"Cannot load objects"},
-		}
-		err = qerror.QErrorTune(err, e)
-		return
-	}
+	// if err != nil {
+	// 	e := &qerror.QError{
+	// 		Ref:     []string{"source.store.load2.object"},
+	// 		Version: version.String(),
+	// 		QPath:   source.String(),
+	// 		Msg:     []string{"Cannot load objects"},
+	// 	}
+	// 	err = qerror.QErrorTune(err, e)
+	// 	return
+	// }
 	listold := objfile.Objects()
 	mapold := make(map[string]bool)
-	for _, obj := range listold {
-		mapold[obj.String()] = true
+	if err != nil {
+		for _, obj := range listold {
+			mapold[obj.String()] = true
+		}
 	}
 
 	notadd = make(map[string]string)
