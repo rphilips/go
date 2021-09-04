@@ -335,6 +335,29 @@ func installData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 	}
 }
 
+func checkData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, warnings bool, batchid string, logme *log.Logger) {
+	query := ppayload.Query.Copy()
+	psources := query.Run()
+	if batchid == "" {
+		batchid = "check"
+	}
+	errs := qsource.Check(batchid, psources, warnings, logme)
+	switch err := errs.(type) {
+	case qerror.ErrorSlice:
+		if len(err) == 0 {
+			pcargo.Error = nil
+		} else {
+			pcargo.Error = err
+		}
+	default:
+		if err == nil {
+			pcargo.Error = nil
+		} else {
+			pcargo.Error = err
+		}
+	}
+}
+
 func rebuildData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, batchid string) {
 	query := ppayload.Query.Copy()
 	psources := query.Run()

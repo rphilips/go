@@ -61,7 +61,16 @@ func LintList(version string, paths []string, warnings bool) (infos []error, met
 	err = qfs.MkdirAll(lintdir, "qtech")
 	if err != nil {
 		err := &qerror.QError{
-			Ref:     []string{"source.lintlist.dir"},
+			Ref:     []string{"source.lintlist.dir1"},
+			Version: release.String(),
+			Msg:     []string{err.Error()},
+		}
+		return nil, nil, err
+	}
+	lintdir, err = qfs.TempDir(lintdir, "")
+	if err != nil {
+		err := &qerror.QError{
+			Ref:     []string{"source.lintlist.dir2"},
 			Version: release.String(),
 			Msg:     []string{err.Error()},
 		}
@@ -206,7 +215,8 @@ func (source *Source) Lint(lintdir string, warnings bool) (info error, err error
 	}
 	if natures["mfile"] {
 		err = source.MFileToMumps("lint", buffer)
-	} else {
+	}
+	if !natures["mfile"] {
 		err = source.Resolve("rilm", nil, nil, buffer, false)
 	}
 	if err != nil {
@@ -492,12 +502,14 @@ func (source *Source) LintL(buffer *bytes.Buffer, warnings bool, lintdir string)
 	lfile.Source = source.String()
 	lfile.Version = source.Release().String()
 	preamble, objs, e := lfile.Parse(buffer.Bytes(), true)
+
 	info = "OK"
 	if e != nil {
 		info = e.Error()
 		if info == "" {
 			info = "OK"
 		}
+		//qfs.Store(filepath.Join(qregistry.Registry["scratch-dir"], "lint.txt"), buffer.Bytes(), "qtech") // RPh
 	}
 	if info == "OK" {
 		info = handleObjects(objs)

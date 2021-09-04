@@ -74,7 +74,7 @@ Prefix <- prefix:("Alias" / "Nature" / "Encoding" / [NEFDU]) {
 	return string(c.text), nil
 }
 
-Text <- text:((TS1 CHARS1 TE1) / (TS2 CHARS2 TE2) / CHARS3 ){
+Text <- text:((TS1 CHARS1 TE1) / (TS2 CHARS2 TE2) / CHARS3 ) WS* {
 	return qutil.Fix(string(c.text)), nil
 }
 

@@ -19,6 +19,7 @@ func init() {
 }
 
 var Fgloref string
+var Fexec string
 var Fvalue string
 
 func repl(cmd *cobra.Command, args []string) error {
@@ -68,6 +69,13 @@ func repl(cmd *cobra.Command, args []string) error {
 		Name: "walk",
 		Help: "walk global",
 		Func: walk,
+	})
+
+	// handle "exec".
+	shell.AddCmd(&ishell.Cmd{
+		Name: "exec",
+		Help: "exec statement",
+		Func: exec,
 	})
 
 	// when started with "exit" as first argument, assume non-interactive execution

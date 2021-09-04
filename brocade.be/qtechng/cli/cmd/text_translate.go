@@ -73,6 +73,7 @@ func textTranslateLocal(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		return
 	}
+	omit := args[0]
 	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
 		if err != nil {
@@ -93,6 +94,9 @@ func textTranslateLocal(cmd *cobra.Command, args []string) {
 	argums = append(argums, args...)
 	for _, a := range os.Args[3:] {
 		if strings.HasPrefix(a, "--isfile=") {
+			continue
+		}
+		if a == omit {
 			continue
 		}
 		argums = append(argums, a)
