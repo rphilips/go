@@ -192,13 +192,10 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if ml["!BuildTime"] != mr["!BuildTime"] {
-		err := qutil.RefreshBinary()
-		if err != nil {
-			Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-			return nil
-		}
-
+	err = qutil.RefreshBinary(ml["!BuildTime"] != mr["!BuildTime"])
+	if err != nil {
+		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
 	}
 
 	err = systemSupport()

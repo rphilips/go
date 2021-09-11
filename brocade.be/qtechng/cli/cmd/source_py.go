@@ -74,5 +74,6 @@ func sourcePy(cmd *cobra.Command, args []string) error {
 	script := filepath.Join(parts...)
 	args[0] = script
 	//fmt.Println("errors:", err, stdout, stderr, argums, tmpdir, args)
+	Fcwd = tmpdir
 	return filePy(cmd, args)
 }

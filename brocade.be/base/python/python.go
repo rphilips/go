@@ -113,6 +113,9 @@ func Run(scriptpy string, py3 bool, args []string, extra []string, cwd string) (
 	argums = append(argums, strings.Join(extra, "; "))
 	argums = append(argums, args...)
 
+	// a, _ := json.MarshalIndent(argums, "", "    ")
+	// fmt.Println(string(a))
+
 	if cwd == "" {
 		c, e := os.Getwd()
 		if e != nil {

@@ -36,7 +36,7 @@ func preProjectList(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatal("cmd/project_list/1:\n", err)
 		}
-	}
+	} 
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
 		addData(Fpayload, Fcargo, false, false, "")

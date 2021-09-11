@@ -996,3 +996,18 @@ func init() {
 	NullReader = new(reader)
 	NullWriter = ioutil.Discard
 }
+
+func Log(v ...interface{}) {
+	filename := qregistry.Registry["qtechng-log"]
+	if filename == "" {
+		return
+	}
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	fmt.Fprintln(f, v...)
+	fmt.Fprintln(f, "===")
+}

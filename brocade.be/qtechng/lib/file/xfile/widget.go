@@ -394,6 +394,7 @@ func x4extract(ty string, body string, hull string) (x4s []X4, rest string, err 
 	}
 	args, until, err := qutil.BuildArgs(rest)
 	if err != "" {
+
 		x4s = append(x4s, X4{
 			mode: "-",
 			text: body,
@@ -404,6 +405,9 @@ func x4extract(ty string, body string, hull string) (x4s []X4, rest string, err 
 		err += " > " + verb + ": " + rest
 		rest = ""
 		return
+	}
+	for i, arg := range args {
+		args[i] = strings.ReplaceAll(strings.ReplaceAll(arg, "«", ""), "»", "")
 	}
 
 	rest = rest[len(until):]
