@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"brocade.be/goyo/cli/cmd"
-	"lang.yottadb.com/go/yottadb"
+	qyottadb "brocade.be/goyo/lib/yottadb"
 )
 
 var buildTime string
@@ -149,6 +149,6 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
-	defer yottadb.Exit()
+	defer qyottadb.Exit()
 	cmd.Execute(buildTime, goVersion, buildHost, os.Args)
 }

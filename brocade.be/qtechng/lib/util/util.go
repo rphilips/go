@@ -1191,3 +1191,15 @@ func Timestamp(rnd bool) string {
 	}
 	return t
 }
+
+func Uniqify(sources []string) (result []string) {
+	check := make(map[string]bool)
+	for _, source := range sources {
+		if check[source] {
+			continue
+		}
+		check[source] = true
+		result = append(result, source)
+	}
+	return
+}

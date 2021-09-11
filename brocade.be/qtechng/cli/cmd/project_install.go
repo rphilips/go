@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"log"
 	"sort"
 	"strings"
 
 	qregistry "brocade.be/base/registry"
-	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
@@ -25,7 +23,7 @@ var projectInstallCmd = &cobra.Command{
 	RunE:    projectInstall,
 	PreRun:  preProjectInstall,
 	Annotations: map[string]string{
-		"with-qtechtype": "BP",
+		"with-qtechtype": "BPW",
 		"fill-version":   "yes",
 	},
 }
@@ -48,10 +46,6 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 	}
 	if Frefname == "" {
 		Frefname = "projectinstall-" + qutil.Timestamp(true)
-	}
-
-	if !strings.Contains(QtechType, "B") {
-		qsync.Sync("", "", true)
 	}
 
 	patterns := make([]string, len(args))
@@ -87,23 +81,14 @@ func projectInstall(cmd *cobra.Command, args []string) error {
 }
 
 func preProjectInstall(cmd *cobra.Command, args []string) {
-	if !Ftransported {
-		var err error
-		Fcargo, err = fetchData(args, true, nil, false)
-		if err != nil {
-			log.Fatal("cmd/project_install/1:\n", err)
-		}
+	if Frefname == "" {
+		Frefname = "projectinstall-" + qutil.Timestamp(true)
+	}
+	if strings.Contains(QtechType, "P") {
+		qsync.Sync("", "", true)
 	}
 
-	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		installData(Fpayload, Fcargo, false, true, "", nil)
-	}
-
-	if Ftransported {
-		err := qclient.SendCargo(Fcargo)
-		if err != nil {
-			log.Fatal("cmd/project_install/2:\n", err)
-		}
-		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
+	if !strings.ContainsAny(QtechType, "BP") {
+		preSSH(cmd, nil)
 	}
 }

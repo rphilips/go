@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"log"
 	"sort"
 	"strings"
 
 	qregistry "brocade.be/base/registry"
-	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
@@ -86,23 +84,15 @@ func sourceInstall(cmd *cobra.Command, args []string) error {
 }
 
 func preSourceInstall(cmd *cobra.Command, args []string) {
-	if !Ftransported {
-		var err error
-		Fcargo, err = fetchData(args, Ffilesinproject, nil, false)
-		if err != nil {
-			log.Fatal("cmd/source_install/1:\n", err)
-		}
+	if Frefname == "" {
+		Frefname = "sourceinstall-" + qutil.Timestamp(true)
+	}
+	if strings.Contains(QtechType, "P") {
+		qsync.Sync("", "", true)
 	}
 
-	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
-		installData(Fpayload, Fcargo, false, true, "", nil)
+	if !strings.ContainsAny(QtechType, "BP") {
+		preSSH(cmd, nil)
 	}
 
-	if Ftransported {
-		err := qclient.SendCargo(Fcargo)
-		if err != nil {
-			log.Fatal("cmd/source_install/2:\n", err)
-		}
-		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
-	}
 }

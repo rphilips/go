@@ -151,6 +151,7 @@ func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger
 
 	allfiles := append(mfiles, ofiles...)
 	allfiles = append(allfiles, zfiles...)
+	allfiles = qutil.Uniqify(allfiles)
 	if len(allfiles) > 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'B') {
 		infos, _, lerrs := LintList(r, allfiles, warnings)
 		if lerrs != nil {

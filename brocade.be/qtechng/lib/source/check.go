@@ -145,7 +145,7 @@ func checkfiles(batchid string, projs []*qproject.Project, logme *log.Logger) (c
 				qfs.Store(filepath.Join(projplace, "__checkerror__"), err.Error(), "qtech")
 			}
 			if logme != nil {
-				logme.Printf("Error in installing `%s`\n", inso)
+				logme.Printf("Error in checking `%s`\n", inso)
 				logme.Printf("    see: %s\n", filepath.Join(projplace, "__checkerror__"))
 			}
 		} else {
@@ -181,6 +181,10 @@ func checksource(tdir string, batchid string, inso *Source) (err error) {
 	sout = strings.TrimSpace(sout)
 	serr = string(qutil.Ignore([]byte(serr)))
 	serr = strings.TrimSpace(serr)
+	if !strings.Contains(strings.ToUpper(serr), "ERROR") && !strings.Contains(strings.ToUpper(sout), "ERROR") && !strings.Contains(strings.ToUpper(serr), "FAIL") && !strings.Contains(strings.ToUpper(sout), "FAIL") {
+		serr = ""
+		sout = ""
+	}
 	if serr == "" && sout == "" {
 
 		return nil

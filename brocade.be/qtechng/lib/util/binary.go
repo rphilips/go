@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"path"
@@ -13,7 +14,7 @@ import (
 	qregistry "brocade.be/base/registry"
 )
 
-func RefreshBinary() (err error) {
+func RefreshBinary(alsoqtechng bool) (err error) {
 	exe := qregistry.Registry["qtechng-exe"]
 	if exe == "" {
 		return
@@ -26,13 +27,15 @@ func RefreshBinary() (err error) {
 	if err != nil {
 		return err
 	}
-	err = qfs.GetURL(qregistry.Registry["qtechng-url"], tmp, "scriptfile")
-	if err != nil {
-		return err
-	}
-	err = qfs.RefreshEXE(pexe, tmp)
-	if err != nil {
-		return err
+	if alsoqtechng {
+		err = qfs.GetURL(qregistry.Registry["qtechng-url"], tmp, "scriptfile")
+		if err != nil {
+			return err
+		}
+		err = qfs.RefreshEXE(pexe, tmp)
+		if err != nil {
+			return err
+		}
 	}
 	//qfs.Rmpath(tmp)
 
@@ -48,17 +51,18 @@ func RefreshBinary() (err error) {
 			return nil
 		}
 		url := u[:k+1] + "qtechngw-windows-amd64"
-		err = qfs.GetURL(url, tmp, "tempfile")
-		if err != nil {
-			return err
+		pexe = strings.ReplaceAll(pexe, "qtechng", "qtechngw")
+		if !qfs.IsFile(pexe) {
+			err = qfs.GetURL(url, tmp, "tempfile")
+			if err != nil {
+				return err
+			}
+			err = qfs.CopyFile(tmp, pexe, "script", false)
+			if err != nil {
+				return errors.New("copying `" + tmp + "` to `" + pexe + "`: " + err.Error())
+			}
 		}
-		pexe = strings.ReplaceAll(pexe, "qtechng.exe", "qtechngw.exe")
-		err = qfs.RefreshEXE(pexe, tmp)
-		if err != nil {
-			return err
-		}
-		//qfs.Rmpath(tmp)
-
+		qfs.Rmpath(tmp)
 	}
 
 	return nil
