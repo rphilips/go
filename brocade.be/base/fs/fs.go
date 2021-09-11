@@ -332,7 +332,7 @@ func MkdirAll(dirname string, pathmode string) (err error) {
 	return nil
 }
 
-// Rmpath removes a file or a dirctory tree except root
+// Rmpath removes a file or a directory tree except root
 func Rmpath(dirname string) (err error) {
 	dirname, err = AbsPath(dirname)
 	if err == nil {
