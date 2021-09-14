@@ -14,10 +14,10 @@ var projectCoCmd = &cobra.Command{
 	Long: `This command retrieves files in a project from the qtechng repository.
 The --copyonly flag updates the local file contents, but does not affect its qtechng status.
 This can be used, for instance, to deliberately replace
-one repositority version of a file with another.`,
+one repository version of a file with another.`,
 	Args: cobra.MinimumNArgs(0),
-	Example: `qtechng source co /catalografie/application/bcawedit.m
-qtechng source co /catalografie/application`,
+	Example: `qtechng project co /catalografie
+qtechng project co /catalografie/oai3`,
 	RunE:   projectCo,
 	PreRun: preProjectCo,
 	Annotations: map[string]string{

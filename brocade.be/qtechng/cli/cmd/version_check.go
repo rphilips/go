@@ -21,8 +21,8 @@ import (
 
 var versionCheckCmd = &cobra.Command{
 	Use:   "check",
-	Short: "check a release",
-	Long: `This command executes check.py.
+	Short: "Check a release",
+	Long: `This command executes check.py throughout all projects of the current version.
 
 The registry value should be set with an appropriate value (*qtechng version set*).`,
 	Args:    cobra.NoArgs,
