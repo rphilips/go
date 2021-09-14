@@ -901,11 +901,11 @@ func sdecomment(line []byte) (before []byte, dlm []byte, after []byte) {
 		if nra1 != nra2 {
 			continue
 		}
-		nra1 = bytes.Count(line[start:], []byte(`«`))
-		nra2 = bytes.Count(line[start:], []byte(`»`))
-		if nra1 != nra2 {
-			continue
-		}
+		// nra1 = bytes.Count(line[start:], []byte(`«`))
+		// nra2 = bytes.Count(line[start:], []byte(`»`))
+		// if nra1 != nra2 {
+		// 	continue
+		// }
 
 		nra1 = bytes.Count(line[:k], []byte(`⟦`))
 		nra2 = bytes.Count(line[:k], []byte(`⟧`))
@@ -913,11 +913,11 @@ func sdecomment(line []byte) (before []byte, dlm []byte, after []byte) {
 			continue
 		}
 
-		nra1 = bytes.Count(line[:start], []byte(`⟦`))
-		nra2 = bytes.Count(line[:start], []byte(`⟧`))
-		if nra1 != nra2 {
-			continue
-		}
+		// nra1 = bytes.Count(line[:start], []byte(`⟦`))
+		// nra2 = bytes.Count(line[:start], []byte(`⟧`))
+		// if nra1 != nra2 {
+		// 	continue
+		// }
 
 		return line[:k], cmt, line[start:]
 	}
