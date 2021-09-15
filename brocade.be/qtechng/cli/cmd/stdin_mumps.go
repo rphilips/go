@@ -54,10 +54,10 @@ func stdinMumps(cmd *cobra.Command, args []string) (err error) {
 		}
 		buffer := bytes.NewBuffer(data)
 		err = qmumps.PipeTo(Fmdb, []*bytes.Buffer{buffer})
-
 		return err
 	}
 	// send line per line
 	err = qmumps.PipeLineTo(Fmdb, reader)
+
 	return err
 }
