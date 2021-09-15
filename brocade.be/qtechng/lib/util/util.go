@@ -27,6 +27,8 @@ import (
 	guuid "github.com/google/uuid"
 )
 
+var listex regexp.Regexp = *regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
+
 // EMatch extende match
 func EMatch(pattern string, qpath string) bool {
 	if pattern == "" || pattern == "/" || pattern == "*" {
@@ -1202,4 +1204,44 @@ func Uniqify(sources []string) (result []string) {
 		result = append(result, source)
 	}
 	return
+}
+
+func ListTest(list string) bool {
+	return listex.MatchString(list)
+}
+
+func GetLists(args []string) map[string]map[string]bool {
+	support := qregistry.Registry["qtechng-support-dir"]
+	if support == "" {
+		return nil
+	}
+	listdir := filepath.Join(support, "lists")
+	patterns := make([]string, len(args))
+	for i, arg := range args {
+		patterns[i] = arg + ".lst"
+	}
+	matches, _ := qfs.Find(listdir, patterns, false, true, false)
+
+	result := make(map[string]map[string]bool)
+	for _, m := range matches {
+		basename := filepath.Base(m)
+		basename = strings.TrimSuffix(basename, ".lst")
+		_, ok := result[basename]
+		if ok {
+			continue
+		}
+		one := make(map[string]bool)
+		data, err := qfs.Fetch(m)
+		if err != nil {
+			continue
+		}
+		lines := strings.SplitN(string(data), "\n", -1)
+		for _, line := range lines {
+			if strings.HasPrefix(line, "/") {
+				one[line] = true
+			}
+		}
+		result[basename] = one
+	}
+	return result
 }
