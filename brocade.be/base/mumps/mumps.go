@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -169,7 +170,13 @@ func PipeTo(mdb string, buffers []*bytes.Buffer) (err error) {
 		}
 		io.WriteString(stdin, "\n\nq\nh\n")
 	}()
-	_, e = cmd.CombinedOutput()
+	out, e := cmd.CombinedOutput()
+	if e != nil {
+		eurl := getErrorURL(out)
+		if eurl != "" {
+			e = errors.New(e.Error() + ": see " + eurl)
+		}
+	}
 	return e
 }
 
@@ -189,8 +196,47 @@ func PipeLineTo(mdb string, reader *bufio.Reader) (err error) {
 		io.Copy(stdin, reader)
 		io.WriteString(stdin, "\n\nq\nh\n")
 	}()
-	_, e = cmd.CombinedOutput()
+	out, e := cmd.CombinedOutput()
+	if e != nil {
+		eurl := getErrorURL(out)
+		if eurl != "" {
+			e = errors.New(e.Error() + ": see " + eurl)
+		}
+	}
 	return e
+}
+
+func getErrorURL(b []byte) (eurl string) {
+	s := string(b)
+
+	if !strings.Contains(s, "<error>") {
+		return ""
+	}
+	s = strings.SplitN(s, "<error>", 2)[1]
+	if !strings.Contains(s, "</error>") {
+		return ""
+	}
+	s = strings.SplitN(s, "</error>", 2)[0]
+	if s == "" {
+		return s
+	}
+	u := qregistry.Registry["qtechng-url"]
+	if u == "" {
+		return s
+	}
+	urlobj, err := url.Parse(u)
+	if err != nil {
+		return ""
+	}
+	if urlobj.Scheme == "" {
+		urlobj.Scheme = "https"
+	}
+	port := urlobj.Port()
+	if port != "" {
+		port = ":" + port
+	}
+	return urlobj.Scheme + "://" + urlobj.Hostname() + port + s
+
 }
 
 func newMCMD(mdb string) (cmd *exec.Cmd, err error) {

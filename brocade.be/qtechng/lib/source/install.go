@@ -574,7 +574,7 @@ func installAutosources(batchid string, files []string, qsources map[string]*Sou
 	if e != nil {
 		e := &qerror.QError{
 			Ref: []string{"source.install.auto.exec"},
-			Msg: []string{"Exec problem with m-import-auto-exe: `" + e.Error() + "`"},
+			Msg: []string{"Exec problem with m-import-auto-exe: `" + e.Error() + "`: " + batchid + ": " + strings.Join(files, ", ")},
 		}
 		errs = append(errs, e)
 		return

@@ -196,7 +196,8 @@ func (brob *Brob) Format() string {
 	lines := make([]string, 0)
 	lines = append(lines, brob.ID+":")
 	for _, field := range brob.Body {
-		value := qutil.Embrace(field.value)
+		v := qutil.Decomment([]byte(field.value))
+		value := qutil.Embrace(v.String())
 		if value != "" {
 			value = " " + value
 		}
