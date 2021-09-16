@@ -21,10 +21,9 @@ to a target version on the production server.
 It finds all changes committed to the given release (registry value brocade-release)
 and applies these changes.
 Works only on a production server.`,
-	Args: cobra.RangeArgs(1, 2),
-	Example: `qtechng version copy 5.40
-qtechng version copy 0.00 5.50`,
-	RunE: versionCopy,
+	Args:    cobra.RangeArgs(1, 2),
+	Example: `qtechng version copy 0.00 5.50`,
+	RunE:    versionCopy,
 	Annotations: map[string]string{
 		"with-qtechtype": "P",
 	},
@@ -107,7 +106,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 	msg := make(map[string][]string)
 	if len(changed) != 0 {
 		sort.Strings(changed)
-		msg["copyed"] = changed
+		msg["copied"] = changed
 	}
 	if len(deleted) != 0 {
 		sort.Strings(deleted)
