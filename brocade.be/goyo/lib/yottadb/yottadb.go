@@ -37,27 +37,57 @@ func QS(glvn string) (subs []string) {
 	if glvn == "" {
 		return nil
 	}
-	part := ""
-	for {
-		k := strings.Index(glvn, ",")
-		if k == -1 {
-			part += glvn
-			glvn = ""
-			part = strings.TrimSpace(part)
-			subs = append(subs, part)
-			part = ""
-			break
-		} else {
-			part += glvn[:k]
-			glvn = glvn[k+1:]
-			if strings.Count(part, `"`)%2 == 1 {
-				part += ","
+	level := 0
+	sub := ""
+	even := true
+	for _, r := range glvn {
+		if r < 32 || r > 127 {
+			sub += string(r)
+			continue
+		}
+		switch r {
+		case '"':
+			even = !even
+			sub += string(r)
+			continue
+		case '(':
+			if even {
+				level++
+			}
+			sub += string(r)
+			continue
+		case ')':
+			if even {
+				level--
+			}
+			sub += string(r)
+			continue
+		case ' ':
+			if !even {
+				sub += string(r)
+			}
+			continue
+		case ',':
+			if !even || level != 0 {
+				sub += string(r)
 				continue
 			}
-			part = strings.TrimSpace(part)
-			subs = append(subs, part)
-			part = ""
+			subs = append(subs, sub)
+			sub = ""
+			continue
+		default:
+			sub += string(r)
+			continue
 		}
+	}
+	if sub != "" {
+		if strings.Count(sub, `"`)%2 == 1 {
+			sub += `"`
+		}
+		if level != 0 {
+			sub += strings.Repeat(")", level)
+		}
+		subs = append(subs, sub)
 	}
 	return
 }

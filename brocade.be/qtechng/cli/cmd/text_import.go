@@ -186,11 +186,28 @@ func handleCSV(version string, csvfile string) (filename string, numbers map[str
 	if err != nil {
 		return
 	}
+	_, nonutf8, err := qutil.NoUTF8(f)
+	if err != nil {
+		f.Close()
+		return
+	}
+	if len(nonutf8) != 0 {
+		f.Close()
+		err = errors.New("spreadsheet is not UTF-8")
+		return
+	}
+	f.Close()
+	f, err = os.Open(csvfile)
+	if err != nil {
+		return
+	}
+
 	first, err := bufio.NewReader(f).ReadString('\n')
 	f.Close()
 	if err != nil && err != io.EOF {
 		return
 	}
+	first = strings.TrimLeft(first, "\xef\xbb\xbf")
 	if strings.TrimSpace(first) == "" {
 		err = errors.New("missing first line")
 		return
@@ -203,6 +220,7 @@ func handleCSV(version string, csvfile string) (filename string, numbers map[str
 	}
 	crlf := strings.ContainsRune(first, '\r')
 	first = strings.TrimRight(first, "\r\n")
+
 	pieces := strings.SplitN(first, string(delim), -1)
 	if len(pieces) < 5 {
 		err = errors.New("first line should have at least 5 fields")
@@ -220,7 +238,7 @@ func handleCSV(version string, csvfile string) (filename string, numbers map[str
 	lgs := make([]string, 0)
 	baselg := ""
 	m := make(map[string]bool)
-	for i := 2; i < len-1; i++ {
+	for i := 2; i < len; i++ {
 		code := pieces[i]
 		if m[code] {
 			err = fmt.Errorf("`%s`: twice in the header", code)
@@ -267,7 +285,7 @@ func handleCSV(version string, csvfile string) (filename string, numbers map[str
 
 	filename, numbers, backupdir, errs := rewriteCVS(version, records, baselg, lgs, crlf, delim)
 	if errs == nil {
-		return csvfile, numbers, backupdir, nil
+		return filename, numbers, backupdir, nil
 	}
 	return filename, numbers, backupdir, qerror.ErrorSlice(errs)
 }
@@ -295,6 +313,9 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 
 	fn := func(n int) (interface{}, error) {
 		record := records[n]
+		for len(record) < index+1 {
+			record = append(record, "")
+		}
 		if n == 0 {
 			record[index] = "status"
 			return record, nil
@@ -390,6 +411,7 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 	}
 	stamp = strings.ReplaceAll(stamp, ":", "")
 	stamp = strings.ReplaceAll(stamp, "-", "")
+	stamp = strings.ReplaceAll(stamp, "+", "")
 
 	// backup lfiles
 	if len(lfiles) != 0 {
@@ -482,6 +504,7 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 		numbers[status] += 1
 	}
 	csvfile := qutil.AbsPath("brocade-"+v+"-"+stamp+".csv", qregistry.Registry["scratch-dir"])
+
 	f, err := os.Create(csvfile)
 	if err != nil {
 		return "", numbers, backupdir, []error{err}

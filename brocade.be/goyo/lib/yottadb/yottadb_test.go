@@ -38,6 +38,19 @@ func TestQS(t *testing.T) {
 			glvn: `^ABC("ab""c,")`,
 			subs: []string{"^ABC", `"ab""c,"`},
 		},
+		{
+			glvn: `^ABC( "ab""c"   `,
+			subs: []string{"^ABC", `"ab""c"`},
+		},
+
+		{
+			glvn: `^ABC( "a b""c"   `,
+			subs: []string{"^ABC", `"a b""c"`},
+		},
+		{
+			glvn: `^ABC("abc",XYZ("A", "B"`,
+			subs: []string{"^ABC", `"abc"`, `XYZ("A","B")`},
+		},
 	}
 
 	for _, mytest := range tests {
