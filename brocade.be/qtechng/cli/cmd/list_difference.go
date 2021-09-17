@@ -10,9 +10,10 @@ import (
 )
 
 var listDifferenceCmd = &cobra.Command{
-	Use:     "difference",
-	Short:   "difference of Brocade lists",
-	Long:    `Constructs a new list out of the difference of existing lists`,
+	Use:   "difference",
+	Short: "Difference of QtechNG lists",
+	Long: `Constructs a new list out of the difference of existing QtechNG lists
+(see lists folder in qtechng-support-dir)`,
 	Args:    cobra.MinimumNArgs(2),
 	Example: `qtechng list difference mylist1 mylist2 --list=elementinlist1andnotinlist2`,
 	RunE:    listDifference,
