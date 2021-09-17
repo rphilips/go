@@ -19,7 +19,9 @@ var versionSyncCmd = &cobra.Command{
 with the most recent version of that release on the development server.
 The command finds all changes committed to the current release
 (registry value brocade-release) and applies these changes.
-Works only on a production server.`,
+Works only on a production server.
+Depending on the underlying instruction (registry value qtechng-sync-exe)
+it may be necessary to run this command as root!`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng version sync",
 	RunE:    versionSync,
