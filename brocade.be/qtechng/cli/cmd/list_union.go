@@ -10,9 +10,10 @@ import (
 )
 
 var listUnionCmd = &cobra.Command{
-	Use:     "union",
-	Short:   "union of Brocade lists",
-	Long:    `Constructs a new list out of the union of existing lists`,
+	Use:   "union",
+	Short: "Union of QtechNG lists",
+	Long: `Constructs a new list out of the union of existing QtechNG lists
+(see lists folder in qtechng-support-dir)`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng list union mylist1 mylist2 --list=unionof1and2`,
 	RunE:    listUnion,

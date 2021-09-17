@@ -10,9 +10,10 @@ import (
 )
 
 var listIntersectionCmd = &cobra.Command{
-	Use:     "intersection",
-	Short:   "intersection of Brocade lists",
-	Long:    `Constructs a new list out of the intersection of existing lists`,
+	Use:   "intersection",
+	Short: "Intersection of QtechNG lists",
+	Long: `Constructs a new list out of the intersection of existing Qtechng lists
+(see lists folder in qtechng-support-dir)`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng list intersection mylist1 mylist2 --list=instersectionof1and2`,
 	RunE:    listIntersection,

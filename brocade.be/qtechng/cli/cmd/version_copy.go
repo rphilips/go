@@ -20,7 +20,9 @@ var versionCopyCmd = &cobra.Command{
 to a target version on the production server.
 It finds all changes committed to the given release (registry value brocade-release)
 and applies these changes.
-Works only on a production server.`,
+Works only on a production server.
+Depending on the underlying instruction (registry value qtechng-copy-exe)
+it may be necessary to run this command as root!`,
 	Args:    cobra.RangeArgs(1, 2),
 	Example: `qtechng version copy 0.00 5.50`,
 	RunE:    versionCopy,
