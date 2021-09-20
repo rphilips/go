@@ -114,3 +114,59 @@ func TestLgcode05(t *testing.T) {
 		t.Errorf("Error: %s", result)
 	}
 }
+
+func TestLgcode06(t *testing.T) {
+	type td struct {
+		source string
+		target string
+	}
+	testdata := []td{
+
+		{
+			source: "",
+			target: "",
+		},
+		{
+			source: `&"'<>`,
+			target: `&"'<>`,
+		},
+		{
+			source: `&amp;`,
+			target: `&#38;`,
+		},
+		{
+			source: `&#38;`,
+			target: `&#38;`,
+		},
+		{
+			source: `Hello World`,
+			target: `Hello World`,
+		},
+		{
+			source: `Hello&nbsp;World`,
+			target: `Hello&#160;World`,
+		},
+		{
+			source: `<newline/>a<newline/><newline/>b<newline/>`,
+			target: "\na\n\nb\n",
+		},
+		{
+			source: `<newline/>a<newline/><newline/>b<newline/>`,
+			target: "\na\n\nb\n",
+		},
+		{
+			source: "&aacute;&amp;á&amp;&#225;&amp;&#xE1;",
+			target: "á&#38;á&#38;á&#38;á",
+		},
+	}
+
+	for _, d := range testdata {
+		source := d.source
+		target := d.target
+		calc := aquo(source)
+		if calc != target {
+			t.Errorf("Error: \nsource: %s\ntarget: %s\ncalc  : %s\n", source, target, calc)
+		}
+	}
+
+}

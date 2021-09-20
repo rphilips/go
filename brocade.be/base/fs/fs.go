@@ -113,28 +113,28 @@ func Properties(pathmode string) (prop Property, err error) {
 		sgid = parts[1]
 	} else {
 		if len(mode) == 9 {
-			perm = calcPerm(mode)
+			perm = CalcPerm(mode)
 			return Property{nil, nil, perm}, nil
 		}
 
 	}
 	switch pathmode {
 	case "webdir", "webdavdir", "scriptdir", "daemondir":
-		perm = calcPerm("rwxr-x---")
+		perm = CalcPerm("rwxr-x---")
 	case "webfile":
-		perm = calcPerm("rwxr-----")
+		perm = CalcPerm("rwxr-----")
 	case "webdavfile":
-		perm = calcPerm("rw-rw----")
+		perm = CalcPerm("rw-rw----")
 	case "scriptfile", "daemonfile":
-		perm = calcPerm("rwxr-x---")
+		perm = CalcPerm("rwxr-x---")
 	case "processdir", "tempdir", "qtechdir":
-		perm = calcPerm("rwxrwx---")
+		perm = CalcPerm("rwxrwx---")
 	case "qtechfile", "processfile", "tempfile":
-		perm = calcPerm("rw-rw----")
+		perm = CalcPerm("rw-rw----")
 	case "nakeddir":
-		perm = calcPerm("rwxrwxrwx")
+		perm = CalcPerm("rwxrwxrwx")
 	case "nakedfile":
-		perm = calcPerm("rw-rw-rw-")
+		perm = CalcPerm("rw-rw-rw-")
 	default:
 		err = ErrNotPathMode
 		return
@@ -153,7 +153,7 @@ func Properties(pathmode string) (prop Property, err error) {
 	return Property{uid, gid, perm}, err
 }
 
-func calcPerm(nine string) os.FileMode {
+func CalcPerm(nine string) os.FileMode {
 	var perm os.FileMode = 0
 	var plus os.FileMode = 0
 	for i, c := range nine {
@@ -197,13 +197,7 @@ func SetPathmode(pth string, pathmode string) (err error) {
 }
 
 func QSetPathMode() bool {
-	if runtime.GOOS == "windows" {
-		return false
-	}
-	// if qregistry.Registry["qtechng-type"] == "W" {
-	// 	return false
-	// }
-	return true
+	return runtime.GOOS != "windows"
 }
 
 // Store writes a file contents atomically

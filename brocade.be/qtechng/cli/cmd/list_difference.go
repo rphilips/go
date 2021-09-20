@@ -13,7 +13,12 @@ var listDifferenceCmd = &cobra.Command{
 	Use:   "difference",
 	Short: "Difference of QtechNG lists",
 	Long: `Constructs a new list out of the difference of existing QtechNG lists
-(see lists folder in qtechng-support-dir)`,
+(see lists folder in qtechng-support-dir)
+
+The result is kept in a list identified by the value of the '--list=...' flag.
+Note that the contents of this (new) list will be overwritten.
+
+`,
 	Args:    cobra.MinimumNArgs(2),
 	Example: `qtechng list difference mylist1 mylist2 --list=elementinlist1andnotinlist2`,
 	RunE:    listDifference,

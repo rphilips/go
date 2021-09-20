@@ -66,6 +66,7 @@ func preSourceLint(cmd *cobra.Command, args []string) {
 		if Fbatchid == "" {
 			Fbatchid = "lint"
 		}
+		Fbatchid = qutil.Reference(Fbatchid)
 		if Fwarnings {
 			Fbatchid = "w:" + Fbatchid
 		}

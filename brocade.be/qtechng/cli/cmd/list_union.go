@@ -13,7 +13,13 @@ var listUnionCmd = &cobra.Command{
 	Use:   "union",
 	Short: "Union of QtechNG lists",
 	Long: `Constructs a new list out of the union of existing QtechNG lists
-(see lists folder in qtechng-support-dir)`,
+(see lists folder in qtechng-support-dir).
+
+The result is kept in a list identified by the value of the '--list=...' flag.
+Note that the contents of this (new) list will be overwritten.
+
+The 'union' can also be used to copy lists.
+`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `qtechng list union mylist1 mylist2 --list=unionof1and2`,
 	RunE:    listUnion,

@@ -9,7 +9,9 @@ import (
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qsource "brocade.be/qtechng/lib/source"
 	qsync "brocade.be/qtechng/lib/sync"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var versionSyncCmd = &cobra.Command{
@@ -35,6 +37,13 @@ func init() {
 }
 
 func versionSync(cmd *cobra.Command, args []string) error {
+	// if runtime.GOOS == "linux" {
+	// 	user, _ := user.Current()
+	// 	if user.Username != "root" {
+	// 		fmt.Println("\nTry:\nsudo qtechng version sync")
+	// 		return nil
+	// 	}
+	// }
 
 	qtechType := qregistry.Registry["qtechng-type"]
 	if strings.Contains(qtechType, "B") && strings.Contains(qtechType, "P") {
@@ -71,6 +80,24 @@ func versionSync(cmd *cobra.Command, args []string) error {
 		sort.Strings(deleted)
 		msg["deleted"] = deleted
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+
+	if err != nil {
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
+
+	work := make([]string, 0)
+	work = append(work, changed...)
+	work = append(work, deleted...)
+
+	query := &qsource.Query{
+		Release:  current,
+		Patterns: work,
+	}
+	sources := query.Run()
+	refname := qutil.Reference("synced")
+	err = qsource.Install(refname, sources, false, nil)
+
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }

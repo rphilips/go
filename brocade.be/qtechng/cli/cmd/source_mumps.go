@@ -44,9 +44,7 @@ func sourceMumps(cmd *cobra.Command, args []string) error {
 }
 
 func preSourceMumps(cmd *cobra.Command, args []string) {
-	if Fbatchid == "" {
-		Fbatchid = qutil.GenUUID()
-	}
+	Fbatchid = qutil.Reference(Fbatchid)
 	if !Ftransported {
 		var err error
 		Fcargo, err = fetchData(args, Ffilesinproject, nil, true)

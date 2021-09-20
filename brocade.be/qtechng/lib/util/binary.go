@@ -27,6 +27,10 @@ func RefreshBinary(alsoqtechng bool) (err error) {
 	if err != nil {
 		return err
 	}
+
+	if err != nil {
+		return
+	}
 	if alsoqtechng {
 		err = qfs.GetURL(qregistry.Registry["qtechng-url"], tmp, "scriptfile")
 		if err != nil {
@@ -36,8 +40,19 @@ func RefreshBinary(alsoqtechng bool) (err error) {
 		if err != nil {
 			return err
 		}
+		if runtime.GOOS == "linux" && strings.ContainsAny(qregistry.Registry["qtechng-type"], "BP") {
+			err = qfs.SetPathmode(pexe, "scriptfile")
+			if err != nil {
+				return err
+			}
+			perm := qfs.CalcPerm("rwxrwxr-x")
+			err = os.Chmod(pexe, perm|os.ModeSetuid|os.ModeSetgid)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	//qfs.Rmpath(tmp)
+	qfs.Rmpath(tmp)
 
 	if runtime.GOOS == "windows" {
 

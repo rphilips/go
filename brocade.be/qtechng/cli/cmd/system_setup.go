@@ -89,10 +89,10 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if onB {
-		// err := qutil.RefreshBinary()
-		// if err != nil {
-		// 	Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
-		// }
+		err := qutil.RefreshBinary(true)
+		if err != nil {
+			Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		}
 		return nil
 	}
 
@@ -192,7 +192,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	err = qutil.RefreshBinary(ml["!BuildTime"] != mr["!BuildTime"])
+	err = qutil.RefreshBinary(ml["!BuildTime"] != mr["!BuildTime"] || strings.ContainsAny(qregistry.Registry["qtechng-type"], "BP"))
 	if err != nil {
 		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil

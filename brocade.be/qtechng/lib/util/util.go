@@ -1194,6 +1194,20 @@ func Timestamp(rnd bool) string {
 	return t
 }
 
+func Reference(ref string) string {
+	if strings.Count(ref, "-") > 1 {
+		return ref
+	}
+	h := time.Now()
+	t := h.Format(time.RFC3339Nano)
+	t = strings.ReplaceAll(t, ":", ".")
+	t = strings.ReplaceAll(t, "+", ".")
+	r := strconv.Itoa(rand.Intn(1000000))
+	t += "-" + r
+	ref = ref + "-" + t
+	return strings.Trim(ref, "-. ")
+}
+
 func Uniqify(sources []string) (result []string) {
 	check := make(map[string]bool)
 	for _, source := range sources {

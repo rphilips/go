@@ -25,7 +25,7 @@ func init() {
 
 func systemUnblockinstall(cmd *cobra.Command, args []string) error {
 
-	err := qregistry.SetRegistry("qtechng-blocked-install", "0")
+	err := qregistry.SetRegistry("qtechng-block-install", "0")
 	msg := "Installation is unblocked!"
 	if err != nil {
 		msg = ""

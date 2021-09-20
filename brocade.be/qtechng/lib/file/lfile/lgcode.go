@@ -3,11 +3,15 @@ package lfile
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"html"
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	qmumps "brocade.be/base/mumps"
+	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qobject "brocade.be/qtechng/lib/object"
 	qutil "brocade.be/qtechng/lib/util"
@@ -125,9 +129,8 @@ func (lgcode *Lgcode) Loads(blob []byte) error {
 
 // Mumps genereert een M structuur
 func (lgcode *Lgcode) Mumps(batchid string) (mumps qmumps.MUMPS) {
-	alias := lgcode.Alias
 	lgco := lgcode.AliasResolve()
-	alias = lgcode.Alias
+	alias := lgcode.Alias
 	if alias != "" {
 		lgco.ID = alias
 		qobject.Fetch(&lgco)
@@ -252,7 +255,18 @@ func aquo(s string) string {
 		return ""
 	}
 	s = strings.ReplaceAll(s, "&laquo;", string([]rune{171}))
+	s = strings.ReplaceAll(s, "<newline/>", "\n")
 	s = strings.ReplaceAll(s, "&raquo;", string([]rune{187}))
+	for _, x := range []string{"amp", "quot", "lt", "gt", "apos", "nbsp"} {
+		y := "&" + x + ";"
+		r, _ := utf8.DecodeRuneInString(html.UnescapeString(y))
+		result := "&amp;" + fmt.Sprintf("#%d;", r)
+		s = strings.ReplaceAll(s, y, result)
+		s = strings.ReplaceAll(s, fmt.Sprintf("&#%d;", r), result)
+		s = strings.ReplaceAll(s, fmt.Sprintf("&#x%x;", r), result)
+		s = strings.ReplaceAll(s, fmt.Sprintf("&#X%x;", r), result)
+	}
+	s = html.UnescapeString(s)
 	return s
 }
 
@@ -451,20 +465,20 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 			errslice = append(errslice, err)
 		}
 	}
-	if alias == "" {
-		y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U
-		if testempty && strings.TrimSpace(y) == "" {
-			err := &qerror.QError{
-				Ref:    []string{"lgcode.lint.notalias.empty"},
-				File:   fname,
-				Lineno: lineno,
-				Object: name,
-				Type:   "Error",
-				Msg:    []string{"`" + id + "` should have translations"},
-			}
-			errslice = append(errslice, err)
-		}
-	}
+	// if alias == "" {
+	// 	y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U
+	// 	if testempty && strings.TrimSpace(y) == "" {
+	// 		err := &qerror.QError{
+	// 			Ref:    []string{"lgcode.lint.notalias.empty"},
+	// 			File:   fname,
+	// 			Lineno: lineno,
+	// 			Object: name,
+	// 			Type:   "Error",
+	// 			Msg:    []string{"`" + id + "` should have translations"},
+	// 		}
+	// 		errslice = append(errslice, err)
+	// 	}
+	// }
 	if len(errslice) == 0 {
 		return nil
 	}
@@ -477,24 +491,31 @@ func (lgcode *Lgcode) Format() string {
 
 	// header
 	lines := []string{"lgcode " + lgcode.ID + ":"}
+	lgdefault := qregistry.Registry["language-default"]
+	if lgdefault == "" {
+		lgdefault = "N"
+	}
+	if lgcode.Alias != "" {
+		lgdefault = ""
+	}
 	ok := false
-	if lgcode.N != "" {
+	if lgcode.N != "" || lgdefault == "N" {
 		lines = append(lines, "    N: "+qutil.Embrace(lgcode.N))
 		ok = true
 	}
-	if lgcode.E != "" {
+	if lgcode.E != "" || lgdefault == "E" {
 		lines = append(lines, "    E: "+qutil.Embrace(lgcode.E))
 		ok = true
 	}
-	if lgcode.F != "" {
+	if lgcode.F != "" || lgdefault == "F" {
 		lines = append(lines, "    F: "+qutil.Embrace(lgcode.F))
 		ok = true
 	}
-	if lgcode.D != "" {
+	if lgcode.D != "" || lgdefault == "D" {
 		lines = append(lines, "    D: "+qutil.Embrace(lgcode.D))
 		ok = true
 	}
-	if lgcode.U != "" {
+	if lgcode.U != "" || lgdefault == "U" {
 		lines = append(lines, "    U: "+qutil.Embrace(lgcode.U))
 		ok = true
 	}

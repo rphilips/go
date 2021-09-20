@@ -25,7 +25,7 @@ func init() {
 
 func systemUnblock(cmd *cobra.Command, args []string) error {
 
-	err := qregistry.SetRegistry("qtechng-blocked-qtechng", "0")
+	err := qregistry.SetRegistry("qtechng-block-qtechng", "0")
 	msg := "QtechNG unblocked!"
 	if err != nil {
 		msg = ""

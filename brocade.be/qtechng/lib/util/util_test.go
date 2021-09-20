@@ -9,8 +9,10 @@ import (
 
 func TestTime01(t *testing.T) {
 	x := Time("2020 . 07 . 08")
-	if x != "2020-07-08T00:00:00" {
+	y := Timestamp(true)
+	if x != "2020-07-08T00:00:00" || y != "" {
 		t.Errorf("Error: `%s`", x)
+		t.Errorf("Errory: `%s`", y)
 	}
 }
 
@@ -26,7 +28,7 @@ func TestInfo01(t *testing.T) {
 
 func TestInfo11(t *testing.T) {
 	data := `    $synopsis:
-Lijn 1 
+Lijn 1
 
 `
 
@@ -38,8 +40,8 @@ Lijn 1
 }
 
 func TestInfo02(t *testing.T) {
-	data := `    $Synopsis   
-: Lijn 1 
+	data := `    $Synopsis
+: Lijn 1
 
 `
 
@@ -53,8 +55,8 @@ func TestInfo02(t *testing.T) {
 func TestBM01(t *testing.T) {
 	data := `// -*- coding: utf-8 -*-
 	// About: Copieren van een catalografisch beschrijving
-	
-	
+
+
 	def %Copy(PDcloi, PDreg, PAopt):
 	 n x,y,z,return,RDloi,ins,RAoptc,RAispat,lm,archive,UDcaCode,error,user,RDcloi
 	 s return=""
@@ -132,7 +134,7 @@ func TestBM01(t *testing.T) {
 	 m4_userCatList(RDloi,UDuser)
 	 q return
 	 ;
-	
+
 	def LM(PDsource, PDtarget):
 	 n x,y,z
 	 n RAlm,lm,ZAoptc
@@ -144,13 +146,13 @@ func TestBM01(t *testing.T) {
 	 . q
 	 m4_setCatIsbdMemberships(RAlm,PDtarget)
 	 q
-	
+
 	def IN(PDsource, PDtarget):
 	 n x,y,z,RAin
 	 m4_getCatIsbdFullTexts(RAin,PDsource)
 	 m4_setCatIsbdFullTexts(RAin,PDtarget)
 	 q
-	
+
 	def DR(PDsource, PDtarget):
 	 n x,y,z
 	 n RAdr
@@ -158,7 +160,7 @@ func TestBM01(t *testing.T) {
 	 m4_setCatIsbdCarriers(RAdr,PDtarget)
 	 q
 	 ;
-	
+
 	def LG(PDsource, PDtarget):
 	 n x,y,z
 	 n RAlg
@@ -166,7 +168,7 @@ func TestBM01(t *testing.T) {
 	 m4_setCatIsbdLanguages(RAlg,PDtarget)
 	 q
 	 ;
-	
+
 	def TI(PDsource, PDtarget):
 	 n x,y,z
 	 n RAti
@@ -174,55 +176,55 @@ func TestBM01(t *testing.T) {
 	 m4_setCatIsbdTitles(RAti,PDtarget,keywords="copy")
 	 q
 	 ;
-	
+
 	def AU(PDsource, PDtarget):
 	 n x,y,z
 	 n RAau
 	 m4_getCatIsbdAuthors(RAau,PDsource)
 	 m4_setCatIsbdAuthors(RAau,PDtarget)
 	 q
-	
+
 	def CA(PDsource, PDtarget):
 	 n x,y,z
 	 n RAca
 	 m4_getCatIsbdCorporateAuthors(RAca,PDsource)
 	 m4_setCatIsbdCorporateAuthors(RAca,PDtarget)
 	 q
-	
+
 	def ED(PDsource, PDtarget):
 	 n x,y,z
 	 n RAed
 	 m4_getCatIsbdEditions(RAed,PDsource)
 	 m4_setCatIsbdEditions(RAed,PDtarget)
 	 q
-	
+
 	def IM(PDsource, PDtarget):
 	 n x,y,z
 	 n RAim
 	 m4_getCatIsbdImpressums(RAim,PDsource)
 	 m4_setCatIsbdImpressums(RAim,PDtarget)
 	 q
-	
+
 	def CO(PDsource, PDtarget):
 	 n x,y,z
 	 n RAco
 	 m4_getCatIsbdCollations(RAco,PDsource)
 	 m4_setCatIsbdCollations(RAco,PDtarget)
 	 q
-	
+
 	def NT(PDsource, PDtarget):
 	 n x,y,z
 	 n RAnt
 	 m4_getCatIsbdNotes(RAnt,PDsource)
 	 m4_setCatIsbdNotes(RAnt,PDtarget)
 	 q
-	
+
 	def IF(PDsource, PDtarget):
 	 n x,y,z,RAif
 	 m4_getCatGenInfo(RAif,PDsource)
 	 m4_setCatGenInfo(RAif,PDtarget)
 	 q
-	
+
 	def NR(PDsource, PDtarget, PAopt):
 	 n x,y,z
 	 n RAnr
@@ -237,14 +239,14 @@ func TestBM01(t *testing.T) {
 	 . q
 	 m4_setCatIsbdNumbers(RAnr,PDtarget)
 	 q
-	
+
 	def SU(PDsource, PDtarget):
 	 n x,y,z
 	 n RAow
 	 m4_getCatContSubjects(RAow,PDsource)
 	 m4_setCatContSubjects(RAow,PDtarget)
 	 q
-	
+
 	def RL(PDsource, PDtarget):
 	 n x,y,z,RAold,RAnew,rec,sc,ty
 	 s RAold("ty")="",RAold("sc")="",RAold("rec")=""
@@ -263,7 +265,7 @@ func TestBM01(t *testing.T) {
 	 .. m4_addCatRelation(PDtarget,ty,sc,rec)
 	 .. q
 	 q
-	
+
 	def %cpHol(PDploi, PDcloi, PDins):
 	 n x,y,z,return,fromins,fromcloi,fromploi,RAhols1,RAhols,acq,toins,tocloi
 	 s return=""
@@ -284,7 +286,7 @@ func TestBM01(t *testing.T) {
 	 m4_setCatPkHolding(acq,RAhols1,tocloi,toins,"")
 	 s return=$g(RAhols1("pkn"))
 	 q return
-	
+
 	def cpHolIs(PDcloif, PDcloit, PDins, PAispat):
 	 n x,y,z,RAlib,RAholf,ploif,ploin,match
 	 s match=0
@@ -299,7 +301,7 @@ func TestBM01(t *testing.T) {
 	 . q
 	 q
 	 ;
-	
+
 	def cpHolAll(PDcloif, PDcloit, PAispat):
 	 n x,y,z,RAlib,RAholf,ploif,ploin,match,ins
 	 m4_getCatPkLibraries(RAlib,PDcloif)
@@ -356,7 +358,7 @@ c
 
 func TestAbout03(t *testing.T) {
 	data := []byte(`
-	
+
 """
 b
 c

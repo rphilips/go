@@ -181,7 +181,7 @@ func TestCalcPerm(t *testing.T) {
 
 	for _, test := range tests {
 		expected := test.number
-		calc := calcPerm(test.readable)
+		calc := CalcPerm(test.readable)
 		if expected == calc {
 			continue
 		}

@@ -25,7 +25,7 @@ func init() {
 
 func systemUnblockdoc(cmd *cobra.Command, args []string) error {
 
-	err := qregistry.SetRegistry("qtechng-blocked-doc", "0")
+	err := qregistry.SetRegistry("qtechng-block-doc", "0")
 	msg := "Documentation publishing is unblocked!"
 	if err != nil {
 		msg = ""

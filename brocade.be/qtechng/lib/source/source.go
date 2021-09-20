@@ -662,6 +662,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 	if batchid == "" {
 		batchid = "install"
 	}
+	batchid = qutil.Reference(batchid)
 
 	if len(paths) == 0 {
 		return

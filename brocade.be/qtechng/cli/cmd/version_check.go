@@ -17,6 +17,7 @@ import (
 	qserver "brocade.be/qtechng/lib/server"
 	qsource "brocade.be/qtechng/lib/source"
 	qsync "brocade.be/qtechng/lib/sync"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var versionCheckCmd = &cobra.Command{
@@ -52,6 +53,7 @@ func versionCheck(cmd *cobra.Command, args []string) error {
 	if Frefname == "" {
 		Frefname = "check-" + current
 	}
+	Frefname = qutil.Reference(Frefname)
 
 	logme := log.New(os.Stderr, Frefname+" ", log.LstdFlags)
 	t0 := time.Now()

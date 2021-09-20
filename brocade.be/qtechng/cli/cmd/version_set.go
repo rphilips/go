@@ -81,5 +81,9 @@ func versionSet(cmd *cobra.Command, args []string) error {
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
+	msg := make(map[string]string)
+	msg["brocade-release"] = qregistry.Registry["brocade-release"]
+	msg["brocade-release-say"] = qregistry.Registry["brocade-releas-say"]
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }

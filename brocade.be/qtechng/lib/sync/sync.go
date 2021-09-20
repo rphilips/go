@@ -147,6 +147,7 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		}
 		return
 	}
+	cmd = qutil.Credential(cmd)
 	err = cmd.Start()
 	if err != nil {
 		err = &qerror.QError{

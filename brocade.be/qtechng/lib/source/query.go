@@ -329,7 +329,7 @@ func (query *Query) Harmonise() {
 	}
 
 	// meta
-	if query.CtAfter != "" || query.MtBefore != "" || query.MtAfter != "" || len(query.Cu) != 0 || len(query.Mu) != 0 {
+	if query.CtBefore != "" || query.CtAfter != "" || query.MtBefore != "" || query.MtAfter != "" || len(query.Cu) != 0 || len(query.Mu) != 0 {
 		f := func(source *Source) bool {
 			version := source.Release()
 			sversion := version.String()
@@ -338,15 +338,11 @@ func (query *Query) Harmonise() {
 			if err != nil {
 				return false
 			}
-			if len(query.Cu) != 0 {
-				if !query.cuid[meta.Cu] {
-					return false
-				}
+			if len(query.Cu) != 0 && !query.cuid[meta.Cu] {
+				return false
 			}
-			if len(query.Mu) != 0 {
-				if !query.muid[meta.Cu] {
-					return false
-				}
+			if len(query.Mu) != 0 && !query.muid[meta.Mu] {
+				return false
 			}
 			if query.CtBefore != "" && strings.Compare(query.CtBefore, meta.Ct) != 1 {
 				return false
