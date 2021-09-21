@@ -853,21 +853,24 @@ func x4lookupinitscreen(args []string, ty string, hull string) (result X4, err s
 	v0 := mexpr(args[0], true)
 	v1 := mexpr(args[1], true)
 	v2 := `""`
-	v3 := ``
+	v3 := `""`
 	v4 := `""`
 	switch len(args) {
 	case 5:
 		v2 = mexpr(args[2], true)
-		v3 = mexpr(args[3], false)
+		v3 = mexpr(args[3], true)
 		v4 = mexpr(args[4], true)
 	case 4:
 		v2 = mexpr(args[2], true)
-		v3 = mexpr(args[3], false)
+		v3 = mexpr(args[3], true)
 	case 3:
 		v2 = mexpr(args[2], true)
 	}
 	result.mode = "X"
 	result.text = fmt.Sprintf(`d %%Entry^uluwake(%s,%s,%s,$$Runtime^uwwwscr(%s),%s)`, v0, v1, v2, v3, v4)
+	if v3 == `""` {
+		result.text = fmt.Sprintf(`d %%Entry^uluwake(%s,%s,%s,%s,%s)`, v0, v1, v2, v3, v4)
+	}
 	return
 }
 func x4lookupinitformat(args []string, ty string, hull string) (result X4, err string) {
