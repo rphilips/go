@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	qcredential "brocade.be/base/credential"
 	"brocade.be/base/fs"
 	"brocade.be/base/registry"
 )
@@ -34,7 +35,7 @@ func Compile(scriptpy string, py3 bool, warnings bool, ignores []string) error {
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}
-
+	qcredential.Credential(&cmd)
 	cmd.Run()
 
 	sout := stdout.String()
@@ -87,6 +88,7 @@ func Compile(scriptpy string, py3 bool, warnings bool, ignores []string) error {
 		Stdout: &stdout2,
 		Stderr: &stderr2,
 	}
+	qcredential.Credential(&cmd)
 	e := cmd.Run()
 	sout = stdout2.String()
 	if e != nil {
@@ -135,6 +137,7 @@ func Run(scriptpy string, py3 bool, args []string, extra []string, cwd string) (
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}
+	qcredential.Credential(&cmd)
 
 	err := cmd.Run()
 	sout = stdout.String()

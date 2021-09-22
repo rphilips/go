@@ -46,9 +46,7 @@ func objectList(cmd *cobra.Command, args []string) error {
 }
 
 func preObjectList(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
-		args = []string{"*"}
-	}
+
 	if !Ftransported {
 		var err error
 		Fcargo, err = fetchObjectData(args)

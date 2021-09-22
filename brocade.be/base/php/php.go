@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
+	qcredential "brocade.be/base/credential"
 	"brocade.be/base/registry"
 )
 
@@ -30,6 +31,7 @@ func Compile(scriptphp string) error {
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}
+	qcredential.Credential(&cmd)
 
 	cmd.Run()
 

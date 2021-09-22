@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	qcredential "brocade.be/base/credential"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qserver "brocade.be/qtechng/lib/server"
@@ -147,7 +148,7 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		}
 		return
 	}
-	cmd = qutil.Credential(cmd)
+	cmd = qcredential.Credential(cmd)
 	err = cmd.Start()
 	if err != nil {
 		err = &qerror.QError{

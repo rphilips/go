@@ -153,12 +153,12 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 
 	if len(args) != 0 {
-		if len(Fqpattern) == 0 {
-			Fqpattern = args
+		if len(Fobjpattern) == 0 {
+			Fobjpattern = args
 		} else {
 			for _, arg := range args {
-				ok := len(Fqpattern) == 0
-				for _, p := range Fqpattern {
+				ok := len(Fobjpattern) == 0
+				for _, p := range Fobjpattern {
 					if p == arg {
 						ok = true
 						break
@@ -169,7 +169,7 @@ func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 					}
 				}
 				if ok {
-					Fqpattern = append(Fqpattern, arg)
+					Fobjpattern = append(Fobjpattern, arg)
 				}
 			}
 		}
@@ -177,7 +177,7 @@ func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 
 	squery := qsource.SQuery{
 		Release: Fversion,
-		Objects: Fqpattern,
+		Objects: Fobjpattern,
 	}
 	Fpayload = &qclient.Payload{
 		ID:     "Once",

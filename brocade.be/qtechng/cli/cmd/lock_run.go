@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	qcredential "brocade.be/base/credential"
 	qreport "brocade.be/qtechng/lib/report"
-	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -74,7 +74,7 @@ func LockRunner(args []string) {
 	rcmd.Stdout = os.Stdout
 	rcmd.Stderr = os.Stderr
 	rcmd.Dir = Fcwd
-	rcmd = qutil.Credential(rcmd)
+	rcmd = qcredential.Credential(rcmd)
 	err := rcmd.Run()
 	unlock(nil, 0)
 	if err != nil {
