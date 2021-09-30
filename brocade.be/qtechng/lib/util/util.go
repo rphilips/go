@@ -346,7 +346,7 @@ func Canon(s string) string {
 	if !strings.HasPrefix(s, "/") {
 		s = "/" + s
 	}
-	return s
+	return strings.ReplaceAll(s, "//", "/")
 }
 
 // MakeBytes maakt een []byte van een stuk data
@@ -628,9 +628,12 @@ func RStrip(s string) string {
 
 // QPartition splits a qpath
 func QPartition(qpath string) (dir string, base string) {
+	qpath = strings.ReplaceAll(qpath, "//", "/")
+	qpath = strings.TrimRight(qpath, "/")
 	if qpath == "" {
 		return "/", ""
 	}
+
 	k := strings.LastIndex(qpath, "/")
 	switch {
 	case k < 0:
@@ -1258,4 +1261,37 @@ func GetLists(args []string) map[string]map[string]bool {
 		result[basename] = one
 	}
 	return result
+}
+
+func FlattenInterface(i interface{}) interface{} {
+	switch v := i.(type) {
+	case []interface{}:
+		if len(v) == 0 {
+			return nil
+		}
+		if len(v) == 1 {
+			return FlattenInterface(v[0])
+		}
+		return i
+	case map[string]interface{}:
+		for k, r := range v {
+			v[k] = FlattenInterface(r)
+		}
+		return v
+	case string:
+		v = RStrip(v)
+		if !strings.ContainsRune(v, '\n') {
+			return v
+		}
+		return strings.SplitN(v, "\n", -1)
+	case []byte:
+		s := RStrip(string(v))
+		if !strings.ContainsRune(s, '\n') {
+			return s
+		}
+		return strings.SplitN(s, "\n", -1)
+
+	default:
+		return i
+	}
 }

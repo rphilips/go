@@ -8,6 +8,34 @@ import (
 	qutil "brocade.be/qtechng/lib/util"
 )
 
+type StringError struct {
+	Msg []byte
+}
+
+func (err StringError) Error() string {
+	return err.String()
+}
+
+func (perr *StringError) String() (result string) {
+	r, _ := json.Marshal(perr)
+	result = string(r)
+	return
+}
+
+func (err StringError) MarshalJSON() ([]byte, error) {
+	var r []interface{}
+	e := json.Unmarshal(err.Msg, &r)
+	if e == nil {
+		return json.Marshal(r)
+	}
+	var r2 interface{}
+	e = json.Unmarshal(err.Msg, &r2)
+	if e == nil {
+		return json.Marshal(r2)
+	}
+	return err.Msg, nil
+}
+
 type QError struct {
 	Type    string   `json:"type"`
 	Ref     []string `json:"ref"`
@@ -18,8 +46,7 @@ type QError struct {
 	Url     string   `json:"fileurl"`
 	Lineno  int      `json:"lineno"`
 	Object  string   `json:"object"`
-
-	Msg []string `json:"message"`
+	Msg     []string `json:"message"`
 }
 
 func (qerr QError) Error() string {
@@ -81,29 +108,39 @@ func (qerr QError) MarshalJSON() ([]byte, error) {
 			if strings.TrimSpace(msg) == "" {
 				continue
 			}
-			if !strings.HasPrefix(msg, "{") {
-				message = append(message, msg)
+			var i interface{}
+			e := json.Unmarshal([]byte(msg), &i)
+			if e == nil {
+				message = append(message, i)
 				continue
 			}
-			mmsg := make(map[string]interface{})
-			e := json.Unmarshal([]byte(msg), &mmsg)
-			if e != nil {
-				message = append(message, msg)
-				continue
-			}
-			mers, ok := mmsg["error"]
-			if ok {
-				lmers := make([]string, 0)
-				e := json.Unmarshal([]byte(mers.(string)), &lmers)
-				if e == nil {
-					mmsg["error"] = lmers
-				}
-			}
-
-			message = append(message, mmsg)
+			message = append(message, msg)
 		}
 		m["message"] = message
 	}
+
+	// 	if !strings.HasPrefix(msg, "{") {
+	// 		message = append(message, msg)
+	// 		continue
+	// 	}
+	// 	mmsg := make(map[string]interface{})
+	// 	e := json.Unmarshal([]byte(msg), &mmsg)
+	// 	if e != nil {
+	// 		message = append(message, msg)
+	// 		continue
+	// 	}
+	// 	mers, ok := mmsg["error"]
+	// 	if ok {
+	// 		lmers := make([]string, 0)
+	// 		e := json.Unmarshal([]byte(mers.(string)), &lmers)
+	// 		if e == nil {
+	// 			mmsg["error"] = lmers
+	// 		}
+	// 	}
+
+	// 	message = append(message, mmsg)
+	// }
+	// m["message"] = message
 
 	return json.MarshalIndent(m, "", "    ")
 }
@@ -195,9 +232,18 @@ func FlattenErrors(err interface{}) []error {
 	if err == nil {
 		return nil
 	}
-
 	errs := make([]error, 0)
 	switch v := err.(type) {
+	case []byte:
+		if len(v) == 0 {
+			return nil
+		}
+		errs = append(errs, StringError{v})
+	case string:
+		if v == "" {
+			return nil
+		}
+		errs = append(errs, StringError{[]byte(v)})
 	case []error:
 		if len(v) == 0 {
 			return nil

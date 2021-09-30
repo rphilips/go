@@ -51,7 +51,7 @@ func init() {
 	sourceCmd.PersistentFlags().BoolVar(&Frecurse, "recurse", false, "Recursively traves directory and subdirectories")
 	sourceCmd.PersistentFlags().BoolVar(&Fregexp, "regexp", false, "Searches as a regular expression")
 	sourceCmd.PersistentFlags().BoolVar(&Ftolower, "tolower", false, "Transforms to lowercase")
-	sourceCmd.PersistentFlags().BoolVar(&Fsmartcaseoff, "smartcaseoff", false, "Forbids smartcase transformation")
+	sourceCmd.PersistentFlags().BoolVar(&Fsmartcase, "smartcase", false, "Enables smartcase transformation")
 	sourceCoCmd.Flags().StringVar(&Flist, "list", "", "List with qpaths, if in auto mode")
 }
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	qmumps "brocade.be/base/mumps"
+	qutil "brocade.be/qtechng/lib/util"
 	//qsource "brocade.be/qtechng/lib/source"
 )
 
@@ -163,7 +164,7 @@ func TestLgcode06(t *testing.T) {
 	for _, d := range testdata {
 		source := d.source
 		target := d.target
-		calc := aquo(source)
+		calc := qutil.Simplify(source, true)
 		if calc != target {
 			t.Errorf("Error: \nsource: %s\ntarget: %s\ncalc  : %s\n", source, target, calc)
 		}

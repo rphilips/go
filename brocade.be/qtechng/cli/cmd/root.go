@@ -89,8 +89,8 @@ var Fregexp bool // regexp ?
 //Ftolower lowercase strings
 var Ftolower bool
 
-//Fsmartcaseoff smartcase in search staat off
-var Fsmartcaseoff bool
+//Fsmartcase smartcase in search staat off
+var Fsmartcase bool
 
 // Fneedle needles to search for
 var Fneedle []string

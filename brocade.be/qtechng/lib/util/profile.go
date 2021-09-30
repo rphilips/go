@@ -58,7 +58,7 @@ func FileCreate(fname string, hint string) error {
 	blob, err = qfs.Fetch(filepath.Join(qregistry.Registry["qtechng-support-dir"], "profiles", model))
 
 	if err != nil {
-		return err
+		blob = make([]byte, 0)
 	}
 
 	filler := make(map[string]string)

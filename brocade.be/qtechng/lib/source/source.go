@@ -792,6 +792,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 	// installation
 
 	if !release.IsInstallable() {
+
 		return
 	}
 
@@ -837,7 +838,6 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 		errslice = append(errslice, e)
 		errs = qerror.ErrorSlice(errslice)
 	}
-
 	return
 }
 

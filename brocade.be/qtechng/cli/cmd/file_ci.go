@@ -109,7 +109,6 @@ func fileCi(cmd *cobra.Command, args []string) error {
 			d.Add(locfiles...)
 		}
 	}
-
 	if Fmsg == "" {
 		Fmsg = qreport.Report(result, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	}
@@ -141,6 +140,7 @@ func preCi(cmd *cobra.Command, args []string) {
 			whowhere = qregistry.Registry["qtechng-user"] + "@" + whowhere
 		}
 		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
+
 		if err != nil {
 			log.Fatal("cmd/file_ci/preCi/1:\n", err)
 		}
@@ -282,11 +282,7 @@ func storeRep(payload *qclient.Payload) (pcargo *qclient.Cargo) {
 
 		}
 	}
-	if len(errlist) == 0 {
-		pcargo.Error = nil
-	} else {
-		pcargo.Error = qerror.ErrorSlice(errlist)
-	}
+	pcargo.AddError(qerror.ErrorSlice(errlist))
 	pcargo.Transports = stored
 	return pcargo
 }

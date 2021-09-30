@@ -3,12 +3,9 @@ package lfile
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	qmumps "brocade.be/base/mumps"
 	qregistry "brocade.be/base/registry"
@@ -184,35 +181,35 @@ func (lgcode *Lgcode) Mumps(batchid string) (mumps qmumps.MUMPS) {
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "dut"},
-		Value:  aquo(lgco.N),
+		Value:  qutil.Simplify(lgco.N, true),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "eng"},
-		Value:  aquo(lgco.E),
+		Value:  qutil.Simplify(lgco.E, true),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "fre"},
-		Value:  aquo(lgco.F),
+		Value:  qutil.Simplify(lgco.F, true),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "ger"},
-		Value:  aquo(lgco.D),
+		Value:  qutil.Simplify(lgco.D, true),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
 
 	m = qmumps.M{
 		Subs:   []string{"ZA", "data", "unv"},
-		Value:  aquo(lgco.U),
+		Value:  qutil.Simplify(lgco.U, true),
 		Action: "set",
 	}
 	mumps = append(mumps, m)
@@ -248,26 +245,6 @@ func (lgcode *Lgcode) Mumps(batchid string) (mumps qmumps.MUMPS) {
 	mumps = append(mumps, m)
 
 	return
-}
-
-func aquo(s string) string {
-	if s == "" {
-		return ""
-	}
-	s = strings.ReplaceAll(s, "&laquo;", string([]rune{171}))
-	s = strings.ReplaceAll(s, "<newline/>", "\n")
-	s = strings.ReplaceAll(s, "&raquo;", string([]rune{187}))
-	for _, x := range []string{"amp", "quot", "lt", "gt", "apos", "nbsp"} {
-		y := "&" + x + ";"
-		r, _ := utf8.DecodeRuneInString(html.UnescapeString(y))
-		result := "&amp;" + fmt.Sprintf("#%d;", r)
-		s = strings.ReplaceAll(s, y, result)
-		s = strings.ReplaceAll(s, fmt.Sprintf("&#%d;", r), result)
-		s = strings.ReplaceAll(s, fmt.Sprintf("&#x%x;", r), result)
-		s = strings.ReplaceAll(s, fmt.Sprintf("&#X%x;", r), result)
-	}
-	s = html.UnescapeString(s)
-	return s
 }
 
 func replaceit(lgcode *Lgcode) {

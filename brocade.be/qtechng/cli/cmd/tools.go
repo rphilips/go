@@ -111,7 +111,7 @@ func buildSQuery(args []string, filesinproject bool, qdirs []string, mumps bool)
 		ToLower:        Ftolower,
 		Regexp:         Fregexp,
 		PerLine:        Fperline,
-		SmartCase:      !Fsmartcaseoff,
+		SmartCase:      Fsmartcase,
 		Contains:       Fneedle,
 		Mumps:          mumps,
 	}
@@ -276,7 +276,7 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		}
 		if batchid != "" && strings.HasPrefix(batchid, "r:") {
 			err := psource.Resolve(batchid, nil, nil, buffer, false)
-			pcargo.Error = err
+			pcargo.AddError(err)
 		}
 
 	}
@@ -286,20 +286,7 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 	}
 	pcargo.Transports = transports
 	if withcontent || withlint {
-		switch err := errs.(type) {
-		case qerror.ErrorSlice:
-			if len(err) == 0 {
-				pcargo.Error = nil
-			} else {
-				pcargo.Error = err
-			}
-		default:
-			if err == nil {
-				pcargo.Error = nil
-			} else {
-				pcargo.Error = err
-			}
-		}
+		pcargo.AddError(errs)
 	}
 }
 
@@ -326,20 +313,7 @@ func rebuildData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent b
 		qpaths[i] = psource.String()
 	}
 	errs := qsource.Rebuild(batchid, version, qpaths)
-	switch err := errs.(type) {
-	case qerror.ErrorSlice:
-		if len(err) == 0 {
-			pcargo.Error = nil
-		} else {
-			pcargo.Error = err
-		}
-	default:
-		if err == nil {
-			pcargo.Error = nil
-		} else {
-			pcargo.Error = err
-		}
-	}
+	pcargo.AddError(errs)
 }
 
 // func delData(ppayload *qclient.Payload, pcargo *qclient.Cargo) (errs error) {
@@ -649,17 +623,13 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 		return oklocfils, qerror.ErrorSlice(errlist)
 	}
 	resultlist, errorlist := qparallel.NMap(len(idirs), -1, fn)
-	errs := Fcargo.Error
-
-	if errs != nil {
-		errlist = append(errlist, errs)
-	}
 	if len(errorlist) != 0 {
 		for _, e := range errorlist {
 			if e == nil {
 				continue
 			}
 			errlist = append(errlist, e)
+			Fcargo.AddError(e)
 		}
 	}
 

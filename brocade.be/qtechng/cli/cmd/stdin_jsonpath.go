@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
@@ -16,7 +15,7 @@ var stdinJsonpathCmd = &cobra.Command{
 	Short:   "Filter with jsonpath",
 	Long:    `This command filters a JSON string from stdin through jsonpath and writes on stdout`,
 	Example: "qtechng stdin jsonpath '$.store.book[*].author'",
-	Args:    cobra.MaximumNArgs(1),
+	Args:    cobra.NoArgs,
 	RunE:    stdinJsonpath,
 }
 
@@ -25,12 +24,7 @@ func init() {
 }
 
 func stdinJsonpath(cmd *cobra.Command, args []string) (err error) {
-	var reader *bufio.Reader
-	if len(args) == 1 {
-		reader = bufio.NewReader(os.Stdin)
-	} else {
-		reader = bufio.NewReader(strings.NewReader(args[0]))
-	}
+	reader := bufio.NewReader(os.Stdin)
 
 	data, err := io.ReadAll(reader)
 	if err != nil {

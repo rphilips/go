@@ -43,7 +43,57 @@ type Transport struct {
 type Cargo struct {
 	Transports []Transport
 	Data       []byte
-	Error      error
+	Error      []byte
+}
+
+func (cargo *Cargo) AddError(e error) {
+	if e == nil {
+		return
+	}
+	b := cargo.Error
+	var r []interface{}
+	if len(b) != 0 {
+		var any []interface{}
+		er := json.Unmarshal(b, &any)
+		if er != nil {
+			r = append(r, string(b))
+		} else {
+			r = append(r, any)
+		}
+	}
+	switch v := e.(type) {
+	case qerror.ErrorSlice:
+		if len(v) == 0 {
+			break
+		}
+		for _, e := range v {
+			if e == nil {
+				continue
+			}
+			var any interface{}
+			s := e.Error()
+			er := json.Unmarshal([]byte(s), &any)
+			if er == nil {
+				r = append(r, any)
+			} else {
+				r = append(r, s)
+			}
+		}
+	default:
+		var any interface{}
+		s := e.Error()
+		er := json.Unmarshal([]byte(s), &any)
+		if er == nil {
+			r = append(r, any)
+		} else {
+			r = append(r, s)
+		}
+	}
+	if len(r) == 0 {
+		cargo.Error = nil
+	} else {
+		cargo.Error, _ = json.Marshal(r)
+	}
 }
 
 // Payload simple instructions
@@ -92,6 +142,7 @@ func SendCargo(cargo *Cargo) error {
 	gob.Register(qerror.QError{})
 	enc := gob.NewEncoder(os.Stdout)
 	err := enc.Encode(cargo)
+
 	return err
 
 }

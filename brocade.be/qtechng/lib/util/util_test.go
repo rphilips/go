@@ -7,6 +7,19 @@ import (
 	"testing"
 )
 
+func TestJSON(t *testing.T) {
+	s := `{"a": "A", "b": "B"}`
+	var any interface{}
+	e := json.Unmarshal([]byte(s), &any)
+	if e != nil {
+		t.Errorf("Error1: `%s`", e.Error())
+	}
+	_, e = json.MarshalIndent(any, "", "   ")
+	if e != nil {
+		t.Errorf("Error2: `%s`", e.Error())
+	}
+}
+
 func TestTime01(t *testing.T) {
 	x := Time("2020 . 07 . 08")
 	y := Timestamp(true)

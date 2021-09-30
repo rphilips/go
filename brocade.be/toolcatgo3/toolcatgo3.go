@@ -40,8 +40,11 @@ func main() {
 		Stdin:  os.Stdin,
 		Stderr: os.Stderr,
 	}
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(os.Geteuid()), Gid: uint32(os.Getegid())}
 
 	err := cmd.Run()
+
 	if err != nil {
 		log.Fatal(err)
 	}

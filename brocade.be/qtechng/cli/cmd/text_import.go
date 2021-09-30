@@ -359,7 +359,7 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 		}
 
 		base := m[baselg]
-		if record[indexlg] != base {
+		if qutil.Simplify(record[indexlg], false) != qutil.Simplify(base, false) {
 			record[index] = "OUTDATED:" + base
 			return record, nil
 		}
@@ -367,7 +367,7 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 		ok = true
 		for _, lg := range lgs {
 			i := lgmap[lg]
-			if record[i] != m[lg] {
+			if qutil.Simplify(record[i], false) != qutil.Simplify(m[lg], false) {
 				ok = false
 				break
 			}
@@ -457,7 +457,7 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 			record := records[inx]
 			for _, lg := range lgs {
 				j := lgmap[lg]
-				newtr := record[j]
+				newtr := qutil.Simplify(record[j], false)
 				switch lg {
 				case "dut":
 					lgcode.N = newtr

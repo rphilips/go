@@ -29,6 +29,7 @@ import (
 
 	qregistry "brocade.be/base/registry"
 	qclient "brocade.be/qtechng/lib/client"
+	qutil "brocade.be/qtechng/lib/util"
 )
 
 var buildTime string
@@ -36,7 +37,7 @@ var goVersion string
 var buildHost string
 
 func main() {
-
+	qutil.Setuid()
 	var payload *qclient.Payload
 
 	if len(os.Args) > 2 && os.Args[1] == "arg" {

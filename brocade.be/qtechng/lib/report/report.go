@@ -21,7 +21,7 @@ type header struct {
 type report struct {
 	Header header      `json:"ABOUT" yaml:"ABOUT"`
 	Result interface{} `json:"DATA" yaml:"DATA"`
-	Errors []error     `json:"ERRORS" yaml:"ERRORS"`
+	Errors interface{} `json:"ERRORS" yaml:"ERRORS"`
 }
 
 func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, joiner string, silent bool, file string) string {
@@ -69,8 +69,28 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 	show.Result = r
 
 	// Errors
-	show.Errors = qerror.FlattenErrors(e)
 
+	errs := qerror.FlattenErrors(e)
+	if len(errs) == 0 {
+		show.Errors = nil
+	} else {
+		b, e := json.Marshal(errs)
+		if e == nil {
+			var i []interface{}
+			json.Unmarshal(b, &i)
+			show.Errors = qutil.FlattenInterface(i)
+			switch v := show.Errors.(type) {
+			case []interface{}:
+				if len(v) == 0 {
+					show.Errors = nil
+				}
+			default:
+				show.Errors = []interface{}{v}
+			}
+		} else {
+			show.Errors = errs
+		}
+	}
 	// to JSON
 
 	b, _ := json.MarshalIndent(show, "", "    ")
@@ -119,6 +139,7 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 				return withfile(strings.Join(z, qutil.Joiner(joiner)))
 			}
 		}
+
 		return withfile(s)
 	}
 
