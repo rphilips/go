@@ -9,7 +9,7 @@ import (
 	qutil "brocade.be/goyo/lib/util"
 )
 
-func Cd(text string) {
+func Cd(text string) string {
 
 	home, _ := os.UserHomeDir()
 	dir := ""
@@ -34,7 +34,9 @@ func Cd(text string) {
 	if err == nil {
 		cwd, _ := os.Getwd()
 		fmt.Println(cwd)
+		return "cd " + cwd
 	} else {
 		qutil.Error(err)
+		return ""
 	}
 }

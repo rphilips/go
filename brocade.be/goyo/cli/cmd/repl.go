@@ -3,10 +3,14 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"log"
+	"strings"
 
 	qaction "brocade.be/goyo/action"
+	qcompleter "brocade.be/goyo/lib/completer"
+	qhistory "brocade.be/goyo/lib/history"
 	qutil "brocade.be/goyo/lib/util"
-	qprompt "github.com/manifoldco/promptui"
+	qliner "github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
 
@@ -26,69 +30,60 @@ func init() {
 	rootCmd.AddCommand(replCmd)
 }
 
-func finish() {
+func finish(line *qliner.State) {
+	qhistory.SaveHistory(line)
+	line.Close()
 	fmt.Println("Bye!")
-	// rawModeOff := exec.Command("/bin/stty", "-raw", "echo")
-	// rawModeOff.Stdin = os.Stdin
-	// _ = rawModeOff.Run()
-	// rawModeOff.Wait()
-	return
 }
 
 var Fgloref string
 var Fexec string
 var Fvalue string
-var Fexit bool
+var Fline *qliner.State
 
 func repl(cmd *cobra.Command, args []string) error {
-	defer finish()
-	validate := func(input string) error {
-		return nil
-	}
-	Fexit = false
-	keyword := ""
-	text := ""
+	Fline := qliner.NewLiner()
+	qhistory.LoadHistory(Fline)
+	qcompleter.SetCompleter(Fline)
+	Fline.SetCtrlCAborts(true)
+	defer finish(Fline)
 	fmt.Println("Please use `exit` to exit this program.")
-	prompt := qprompt.Prompt{
-		Label:    Defaults["prompt-repl"],
-		Validate: validate,
-		Default:  "",
-	}
 
-	for !Fexit {
-		todo, err := prompt.Run()
+	for {
+		action, err := Fline.Prompt("> ")
 
-		if err != nil {
-			Fexit = true
-			continue
+		if err == qliner.ErrPromptAborted {
+			log.Print("Aborted")
+			break
 		}
 		if err == io.EOF {
-			err = nil
-			todo = "quit"
+			break
 		}
-		if keyword == "" {
-			keyword, text = qutil.KeyText(todo)
-			if keyword == "" {
-				continue
-			}
+		if err != nil {
+			log.Print("Error reading line: ", err)
+			continue
 		}
-		switch keyword {
-		case "exit":
-			keyword = ""
-			Fexit = true
+		if action == "" {
+			continue
+		}
 
-		case "about":
-			keyword = ""
-			fmt.Println(AboutText())
-		case "cd":
-			keyword = ""
-			qaction.Cd(text)
-		case "set":
-			keyword = ""
-			qaction.Set(text)
-		default:
-			fmt.Printf("Unknown input: [%s] [%s]\n", keyword, text)
-
+		key, text := qutil.KeyText(action)
+		key = strings.ToLower(key)
+		if key == "bye" || key == "exit" || key == "quit" {
+			break
+		}
+		if key == "#" {
+			Fline.AppendHistory(action)
+			continue
+		}
+		if !qcompleter.IsAction(key) {
+			Fline.AppendHistory(action)
+			fmt.Println("?")
+			continue
+		}
+		history := qaction.RunAction(key, text)
+		if history != "" {
+			Fline.AppendHistory(history)
 		}
 	}
 	return nil
