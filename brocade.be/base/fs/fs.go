@@ -447,6 +447,16 @@ func GetSize(path string) (size int64, err error) {
 	return
 }
 
+// GetPerm returns the access permissions
+func GetPerm(path string) (perm fs.FileMode, err error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	perm = fi.Mode()
+	return
+}
+
 // GetMTime returns the last modification time of a path
 func GetMTime(path string) (mtime time.Time, err error) {
 	fi, err := os.Stat(path)

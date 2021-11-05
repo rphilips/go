@@ -26,11 +26,20 @@ The result is always brocade-{version}-{timestamp}.tar in the current directory.
 	},
 }
 
+var Ftar = false
+var Fsqlite = false
+
 func init() {
 	versionCmd.AddCommand(versionBackupCmd)
+	versionBackupCmd.PersistentFlags().BoolVar(&Ftar, "tar", false, "Backup in tar format")
+	versionBackupCmd.PersistentFlags().BoolVar(&Fsqlite, "sqlite", false, "Backup in sqlite format")
 }
 
 func versionBackup(cmd *cobra.Command, args []string) error {
+	if !Ftar && !Fsqlite {
+		Ftar = true
+		Fsqlite = true
+	}
 	h := time.Now()
 	t := h.Format(time.RFC3339)[:19]
 	t = strings.ReplaceAll(t, ":", "")
@@ -47,14 +56,28 @@ func versionBackup(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	tarfile := qutil.AbsPath("brocade-"+r+"-"+t+".tar", Fcwd)
-	err := release.Backup(tarfile)
+	tarfile := ""
+	sqlitefile := ""
+	var err error = nil
+	if Ftar {
+		tarfile = qutil.AbsPath("brocade-"+r+"-"+t+".tar", Fcwd)
+		err = release.TarBackup(tarfile)
+	}
+	if err == nil && Fsqlite {
+		sqlitefile = qutil.AbsPath("brocade-"+r+"-"+t+".sqlite", Fcwd)
+		err = release.SqliteBackup(sqlitefile)
+	}
 
 	msg := make(map[string]string)
 	msg["status"] = "Backup FAILED"
 	if err == nil {
 		msg["status"] = "Backup SUCCESS to `" + tarfile + "`"
-		msg["backupfile"] = tarfile
+		if tarfile != "" {
+			msg["backupfile"] = tarfile
+		}
+		if sqlitefile != "" {
+			msg["sqlitefile"] = sqlitefile
+		}
 	}
 	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return err

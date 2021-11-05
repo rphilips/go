@@ -13,7 +13,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -193,7 +192,7 @@ func (p *interp) callBuiltin(op Token, argExprs []Expr) (value, error) {
 			return null(), newError("can't call system() due to NoExec")
 		}
 		cmdline := p.toString(args[0])
-		cmd := exec.Command("sh", "-c", cmdline)
+		cmd := p.execShell(cmdline)
 		cmd.Stdout = p.output
 		cmd.Stderr = p.errorOutput
 		err := cmd.Start()
@@ -204,12 +203,8 @@ func (p *interp) callBuiltin(op Token, argExprs []Expr) (value, error) {
 		err = cmd.Wait()
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-					return num(float64(status.ExitStatus())), nil
-				} else {
-					fmt.Fprintf(p.errorOutput, "couldn't get exit status for %q: %v\n", cmdline, err)
-					return num(-1), nil
-				}
+				code := exitErr.ProcessState.ExitCode()
+				return num(float64(code)), nil
 			} else {
 				fmt.Fprintf(p.errorOutput, "unexpected error running command %q: %v\n", cmdline, err)
 				return num(-1), nil
@@ -264,6 +259,15 @@ func (p *interp) callBuiltin(op Token, argExprs []Expr) (value, error) {
 		// Shouldn't happen
 		panic(fmt.Sprintf("unexpected function: %s", op))
 	}
+}
+
+// Executes code using configured system shell
+func (p *interp) execShell(code string) *exec.Cmd {
+	executable := p.shellCommand[0]
+	args := p.shellCommand[1:]
+	args = append(args, code)
+	cmd := exec.Command(executable, args...)
+	return cmd
 }
 
 // Call user-defined function with given index and arguments, return
@@ -326,10 +330,10 @@ func (p *interp) callUser(index int, args []Expr) (value, error) {
 }
 
 // Call native-defined function with given name and arguments, return
-// return value (or null value if it doesn't return anything).
+// its return value (or null value if it doesn't return anything).
 func (p *interp) callNative(index int, args []Expr) (value, error) {
 	f := p.nativeFuncs[index]
-	minIn := len(f.in) // Mininum number of args we should pass
+	minIn := len(f.in) // Minimum number of args we should pass
 	var variadicType reflect.Type
 	if f.isVariadic {
 		variadicType = f.in[len(f.in)-1].Elem()
