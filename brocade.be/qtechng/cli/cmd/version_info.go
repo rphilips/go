@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -13,7 +14,7 @@ var versionInfoCmd = &cobra.Command{
 	Use:     "info",
 	Short:   "Provide information about a version",
 	Long:    `This command provides information about a version`,
-	Args:    cobra.ExactArgs(1),
+	Args:    cobra.MinimumNArgs(1),
 	Example: "qtechng version info 5.10",
 	RunE:    versionInfo,
 	PreRun:  func(cmd *cobra.Command, args []string) { preSSH(cmd, nil) },
@@ -57,9 +58,26 @@ func versionInfo(cmd *cobra.Command, args []string) error {
 	msg["sourcedir"], _ = fs.RealPath("/")
 	msg["version"] = release.String()
 
-	msg["objects"] = release.ObjectCount()
-	msg["projects"] = release.ProjectCount()
-	msg["sources"] = release.SourceCount()
+	if len(args) == 1 {
+		msg["objects"] = release.ObjectCount()
+		msg["projects"] = release.ProjectCount()
+		msg["sources"] = release.SourceCount()
+	}
+
+	if len(args) > 1 {
+		arg := args[1]
+		if strings.HasPrefix(arg, "/") {
+			msg["qpath"] = arg
+			fs, place := release.SourcePlace(arg)
+			msg["qpath-place"], _ = fs.RealPath(place)
+			fs, place = release.MetaPlace(arg)
+			msg["meta-place"], _ = fs.RealPath(place)
+		} else {
+			fs, place := release.ObjectPlace(arg)
+			msg["object"] = arg
+			msg["object-place"], _ = fs.RealPath(place)
+		}
+	}
 
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
