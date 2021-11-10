@@ -13,7 +13,8 @@ var clipboardGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get the content of the system clipboard",
 	Long: `Retrieves the content of the system clipboard and writes on stdout.
-Works only with text.`,
+    - Works only with text
+	- Note that there is no EOL added tot the content`,
 	Example: "qtechng clipboard get",
 	Args:    cobra.NoArgs,
 	RunE:    clipboardGet,

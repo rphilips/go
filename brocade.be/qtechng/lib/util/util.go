@@ -3,6 +3,7 @@ package util
 import (
 	"bufio"
 	"bytes"
+	"compress/flate"
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
@@ -1294,4 +1295,13 @@ func FlattenInterface(i interface{}) interface{} {
 	default:
 		return i
 	}
+}
+
+// Compresses een byte slice
+func Deflate(data []byte) []byte {
+	var b bytes.Buffer
+	w, _ := flate.NewWriter(&b, 9)
+	w.Write(data)
+	w.Close()
+	return b.Bytes()
 }

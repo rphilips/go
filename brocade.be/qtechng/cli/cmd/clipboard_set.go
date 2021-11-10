@@ -10,7 +10,10 @@ var clipboardSetCmd = &cobra.Command{
 	Short: "Set the content of the system clipboard",
 	Long: `Stores text in the system clipboard.
 The text to be set is in the first argument.
-If this argument is missing, the clipboard is emptied.`,
+If this argument is missing, the clipboard is emptied.
+On Linux, either 'xsel' or 'xclip' has to be installed with the
+command in de PATH.
+`,
 	Example: `qtechng clipboard set \"Hello World\"
 qtechng clipboard set`,
 	Args: cobra.MaximumNArgs(1),

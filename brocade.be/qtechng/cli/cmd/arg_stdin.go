@@ -12,6 +12,7 @@ var argStdinCmd = &cobra.Command{
 If the first non-whitespace character is a *[*, the contents should be a JSON array.
 
 If the input is *NOT* a JSON array, the following restrictions apply:
+    - The first line should always be *qtechng*
 	- Arguments are read line-by-line from *stdin*
 	- Whitespace is stripped at the beginning and the end of each line
 	- Empty lines are skipped

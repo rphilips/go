@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"log"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -113,7 +112,6 @@ func (release Release) Init() (err error) {
 		return err
 	}
 
-	qtechType := qregistry.Registry["qtechng-type"]
 	repository := qregistry.Registry["qtechng-repository-dir"]
 	if repository == "" {
 		err = &qerror.QError{
@@ -128,31 +126,7 @@ func (release Release) Init() (err error) {
 		fs.MkdirAll(dir, 0o770)
 	}
 
-	if !strings.ContainsRune(qtechType, 'B') {
-		return nil
-	}
-
-	if qregistry.Registry["qtechng-git-enable"] != "1" {
-		return nil
-	}
-
-	if release.String() != "0.00" {
-		return nil
-	}
-
-	// initialises mercurial repository
-	cmd := exec.Command("git", "init", "--quiet")
-	sourcedir, _ := release.FS("").RealPath("/source")
-	cmd.Dir = sourcedir
-	cmd.Run()
-
-	cmd = exec.Command("git", "add", "--all")
-	cmd.Dir = sourcedir
-	cmd.Run()
-
-	cmd = exec.Command("git", "commit", "--quiet", "--message", "Init")
-	cmd.Dir = sourcedir
-	cmd.Run()
+	release.InitGit()
 
 	return err
 }
@@ -223,47 +197,12 @@ func (release Release) SourceCount() map[string]int {
 	return stat
 }
 
-func (release *Release) SourcePlace(qpath string) (*qvfs.QFs, string) {
-	fs := release.FS()
-	return &fs, qpath
-}
 
-func (release *Release) ObjectPlace(objname string) (*qvfs.QFs, string) {
-	if objname == "" {
-		fs := release.FS("object", "")
-		return &fs, ""
-	}
-	if !strings.ContainsRune(objname, '_') {
-		fs := release.FS("object", objname)
-		return &fs, ""
-	}
-	ty := strings.SplitN(objname, "_", 2)[0]
-	objname, _ = qutil.DeNEDFU(objname)
-	fs := release.FS("object", ty)
-	h := qutil.Digest([]byte(objname))
-	dirname := "/" + h[0:2] + "/" + h[2:]
-	return &fs, dirname + "/obj.json"
-}
 
-func (release *Release) ObjectDepPlace(objname string, fname string) (*qvfs.QFs, string) {
-	fs, place := release.ObjectPlace(objname)
-	digest := qutil.Digest([]byte(fname))
-	place = strings.TrimSuffix(place, "obj.json") + digest[:2] + "/" + digest[2:] + ".dep"
-	return fs, place
-}
 
 func (release *Release) ObjectStore(objname string, obj json.Marshaler) (changed bool, before []byte, after []byte, err error) {
 	fs, place := release.ObjectPlace(objname)
 	return fs.Store(place, obj, "")
-}
-
-func (release *Release) UniquePlace(qpath string) (*qvfs.QFs, string) {
-	_, base := qutil.QPartition(qpath)
-	digest := qutil.Digest([]byte(base))
-	ndigest := qutil.Digest([]byte(qpath))
-	fs := release.FS("/unique")
-	fname := "/" + digest[:2] + "/" + digest[2:] + "/" + ndigest
-	return &fs, fname
 }
 
 func (release *Release) UniqueStore(qpath string) error {
@@ -278,12 +217,6 @@ func (release *Release) UniqueUnlink(qpath string) {
 	fs.Waste(place)
 }
 
-func (release *Release) MetaPlace(qpath string) (*qvfs.QFs, string) {
-	fs := release.FS("/meta")
-	digest := qutil.Digest([]byte(qpath))
-	place := "/" + digest[0:2] + "/" + digest[2:] + ".json"
-	return &fs, place
-}
 
 func (release Release) ReInit() error {
 	fs := release.FS("/")

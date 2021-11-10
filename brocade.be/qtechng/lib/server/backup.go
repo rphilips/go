@@ -63,6 +63,14 @@ func (release Release) SqliteBackup(sqlitefile string) error {
 		return err
 	}
 
+	if _, err = db.Exec(`
+		CREATE TABLE registry (
+			label TEXT PRIMARY KEY,
+			value TEXT
+		);`); err != nil {
+		return err
+	}
+
 	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, sz, data) Values($1,$2,$3,$4,$5)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert1: %v", err)
@@ -77,16 +85,22 @@ func (release Release) SqliteBackup(sqlitefile string) error {
 
 	stmt3, err := db.Prepare("INSERT INTO info (label, value) Values($1,$2)")
 	if err != nil {
-		return fmt.Errorf("cannot prepare insert2: %v", err)
+		return fmt.Errorf("cannot prepare insert3: %v", err)
+	}
+	defer stmt3.Close()
+
+	stmt4, err := db.Prepare("INSERT INTO registry (label, value) Values($1,$2)")
+	if err != nil {
+		return fmt.Errorf("cannot prepare insert4: %v", err)
 	}
 	defer stmt3.Close()
 
 	rfs := release.FS("/")
 
-	stmt3.Exec("system-name", qregistry.Registry["system-name"])
-	stmt3.Exec("dns-name", qregistry.Registry["dns-name"])
+	stmt3.Exec(".backup-system-name", qregistry.Registry["system-name"])
+	stmt3.Exec(".backup-dns-name", qregistry.Registry["dns-name"])
 	h := time.Now()
-	stmt3.Exec("begin-time", h.Format(time.RFC3339))
+	stmt3.Exec(".backup-begin-time", h.Format(time.RFC3339))
 
 	for _, dir := range []string{"/source/data"} {
 		source, err := rfs.RealPath(dir)
@@ -107,6 +121,7 @@ func (release Release) SqliteBackup(sqlitefile string) error {
 
 			// archive
 			data, err := qfs.Fetch(name)
+
 			if err != nil {
 				return fmt.Errorf("cannot get content of `%s`: %v", name, err)
 			}
@@ -149,7 +164,11 @@ func (release Release) SqliteBackup(sqlitefile string) error {
 
 	}
 	h = time.Now()
-	stmt3.Exec("end-time", h.Format(time.RFC3339))
+	stmt3.Exec(".backup-end-time", h.Format(time.RFC3339))
+
+	for key, value := range qregistry.Registry {
+		stmt4.Exec(key, value)
+	}
 	return nil
 }
 

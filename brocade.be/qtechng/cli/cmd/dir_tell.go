@@ -25,8 +25,9 @@ var dirTellCmd = &cobra.Command{
 
 The command works with one argument: the name of the directory.
 
-Directories are not very important in QtechNG: all data
-pertains to files.
+Although directories are not very important in QtechNG (all data
+pertains to files), it is sometimes handy to retrieve data
+about the directories, especially for use in shell scripts.
 
 The '--tell' flag specifies which information has to be displayed.
 (without this flag, all information is given)
@@ -38,8 +39,7 @@ The '--tell' flag specifies which information has to be displayed.
 	- qdir: repository directory
 
 The information is inferred from the available files in the directory or its
-place in the 'qtechng-work-dir'
-
+place in the 'qtechng-work-dir' directory.
 `,
 	Example: `qtechng file tell application --cwd=../collections --ext
 qtechng dir tell application --cwd=../collections --tell=dirname

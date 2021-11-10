@@ -13,8 +13,10 @@ import (
 var aboutCmd = &cobra.Command{
 	Use:   "about",
 	Short: "Information about `qtechng`",
-	Long:  `Version and build time information about the qtechng executable.`,
-	Args:  cobra.NoArgs,
+	Long: `Version and build time information about the qtechng executable.
+
+The '--remote' flag can be used to give information about the 'qtechng' executable on the development server.`,
+	Args: cobra.NoArgs,
 	Example: `qtechng about
 qtechng about --remote`,
 	RunE:   about,
