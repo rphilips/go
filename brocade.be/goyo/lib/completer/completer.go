@@ -22,6 +22,10 @@ var actions = map[string]bool{
 	"kill":     true,
 	"killtree": true,
 	"killnode": true,
+	"get":      true,
+	"zwr":      true,
+	"def":      true,
+	"defined":  true,
 }
 
 func SetCompleter(line *qliner.State) {

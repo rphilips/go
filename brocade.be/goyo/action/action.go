@@ -16,6 +16,8 @@ func RunAction(key string, text string) []string {
 		return Kill(text, true)
 	case "killnode":
 		return Kill(text, false)
+	case "get":
+		return Get(text)
 	}
 	return nil
 }
