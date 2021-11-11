@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
@@ -49,16 +50,10 @@ func FileCreate(fname string, hint string) error {
 			break
 		}
 	}
-
-	if model == "" {
-		err = qfs.Store(fname, "", "process")
-		return err
-	}
-
-	blob, err = qfs.Fetch(filepath.Join(qregistry.Registry["qtechng-support-dir"], "profiles", model))
-
-	if err != nil {
-		blob = make([]byte, 0)
+	fmt.Println("model:", model)
+	blob = []byte("")
+	if model != "" {
+		blob, _ = qfs.Fetch(filepath.Join(qregistry.Registry["qtechng-support-dir"], "profiles", model))
 	}
 
 	filler := make(map[string]string)
@@ -78,8 +73,6 @@ func FileCreate(fname string, hint string) error {
 		value = strings.ToUpper(value)
 		sblob = strings.ReplaceAll(sblob, "{"+key+"}", value)
 	}
-
-	err = qfs.Store(fname, sblob, "process")
+	err = qfs.Store(fname, sblob, "qtech")
 	return err
-
 }

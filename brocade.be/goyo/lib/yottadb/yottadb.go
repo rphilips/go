@@ -47,24 +47,19 @@ func QS(glvn string) (subs []string) {
 		}
 		switch r {
 		case '"':
-			even = !even
 			sub += string(r)
+			even = !even
 			continue
 		case '(':
+			sub += string(r)
 			if even {
 				level++
 			}
-			sub += string(r)
 			continue
 		case ')':
+			sub += string(r)
 			if even {
 				level--
-			}
-			sub += string(r)
-			continue
-		case ' ':
-			if !even {
-				sub += string(r)
 			}
 			continue
 		case ',':
@@ -73,6 +68,8 @@ func QS(glvn string) (subs []string) {
 				continue
 			}
 			subs = append(subs, sub)
+			level = 0
+			even = true
 			sub = ""
 			continue
 		default:
@@ -80,19 +77,48 @@ func QS(glvn string) (subs []string) {
 			continue
 		}
 	}
+
 	if sub != "" {
 		if strings.Count(sub, `"`)%2 == 1 {
 			sub += `"`
 		}
-		if level != 0 {
+		if level > 0 {
 			sub += strings.Repeat(")", level)
 		}
 		subs = append(subs, sub)
+	}
+	for i, sub := range subs {
+		sub = strings.TrimSpace(sub)
+		if !strings.HasPrefix(sub, `"`) && strings.Contains(sub, "(") {
+			subsubs := QS(sub)
+			sub = UnQS(subsubs)
+		}
+		subs[i] = sub
 	}
 	return
 }
 
 func UnQS(subs []string) (glvn string) {
+	switch len(subs) {
+	case 0:
+		return ""
+	case 1:
+		return subs[0]
+	default:
+		return subs[0] + `(` + strings.Join(subs[1:], ",") + `)`
+	}
+}
+
+func N(glvn string) string {
+	exec := `s %qzxy0=$NA(` + glvn + `)`
+	r, err := Calc(exec, `%qzxy0`)
+	if r == "" || err != nil {
+		return glvn
+	}
+	return r
+}
+
+func EUnQS(subs []string) (glvn string) {
 	switch len(subs) {
 	case 0:
 		return ""
@@ -122,6 +148,7 @@ func UnQS(subs []string) (glvn string) {
 }
 
 func Glvn(ref string) (glvn string) {
+
 	oref := ref
 	if ref == "" {
 		return oref
@@ -212,9 +239,10 @@ func D(glvn string) int {
 func G(glvn string) (value string, err error) {
 	subs := QS(glvn)
 	if len(subs) == 0 {
-		return "", errors.New("invaid reference")
+		return "", errors.New("invalid reference")
 	}
-	value, err = yottadb.ValE(yottadb.NOTTP, nil, subs[0], subs[1:])
+	exec := "s %QwERTY=" + UnQS(subs)
+	value, err = Calc(exec, "%QwERTY")
 	return
 }
 
@@ -222,9 +250,10 @@ func G(glvn string) (value string, err error) {
 func Set(glvn string, value string) (err error) {
 	subs := QS(glvn)
 	if len(subs) == 0 {
-		return errors.New("invaid reference")
+		return errors.New("invalid reference")
 	}
-	return yottadb.SetValE(yottadb.NOTTP, nil, value, subs[0], subs[1:])
+	exec := "s " + UnQS(subs) + "=" + `"` + strings.ReplaceAll(value, `"`, `""`) + `"`
+	return Exec(exec)
 }
 
 // SetArg decompses an argument for the set command 's glvn=arg'
@@ -326,23 +355,34 @@ func Left(glvn string) (rglvn string, err error) {
 	return UnQS(subs), nil
 }
 
-func KillN(glvn string) (err error) {
-	glvn = Glvn(glvn)
+func Kill(glvn string, tree bool) (err error) {
+	glvn = N(glvn)
 	subs := QS(glvn)
 	if len(subs) == 0 {
 		return errors.New("cannot determine node")
 	}
-	err = yottadb.DeleteE(yottadb.NOTTP, nil, yottadb.YDB_DEL_NODE, subs[0], subs[1:])
-	return err
-}
-
-func KillT(glvn string) (err error) {
-	glvn = Glvn(glvn)
-	subs := QS(glvn)
-	if len(subs) == 0 {
-		return errors.New("cannot determine tree")
+	argums := make([]string, len(subs)-1)
+	for i := 1; i < len(subs); i++ {
+		sub := subs[i]
+		if !strings.HasPrefix(sub, `"`) {
+			argums[i-1] = sub
+			continue
+		}
+		if len(sub) < 2 {
+			argums[i-1] = sub
+			continue
+		}
+		if !strings.HasSuffix(sub, `"`) {
+			argums[i-1] = sub
+			continue
+		}
+		argums[i-1] = strings.ReplaceAll(sub[1:len(sub)-1], `""`, `"`)
 	}
-	err = yottadb.DeleteE(yottadb.NOTTP, nil, yottadb.YDB_DEL_TREE, subs[0], subs[1:])
+	kway := yottadb.YDB_DEL_TREE
+	if !tree {
+		kway = yottadb.YDB_DEL_NODE
+	}
+	err = yottadb.DeleteE(yottadb.NOTTP, nil, kway, subs[0], argums)
 	return err
 }
 
@@ -407,12 +447,13 @@ func Exec(text string) error {
 	return nil
 }
 
-func Calc(text string, glvn string) (string, error) {
-	err := Exec(text)
+func Calc(text string, lvar string) (value string, err error) {
+	err = Exec(text)
 	if err != nil {
 		return "", err
 	}
-	return G(glvn)
+	value, err = yottadb.ValE(yottadb.NOTTP, nil, lvar, nil)
+	return
 }
 
 func isliteral(term string) bool {

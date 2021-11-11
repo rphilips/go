@@ -590,8 +590,8 @@ func handleObjects(objs []qobject.Object) string {
 		editfile := object.EditFile()
 		qobject.Fetch(object)
 		editfile2 := object.EditFile()
-		if editfile2 != "" && editfile2 != editfile {
-			return fmt.Sprintf("Object `%s` is also defined in `%s`", object.String(), editfile2), nil
+		if editfile != "" && editfile2 != editfile {
+			return fmt.Sprintf("Object `%s` is also defined in `%s`", object.String(), editfile), nil
 		}
 		return "", nil
 	}

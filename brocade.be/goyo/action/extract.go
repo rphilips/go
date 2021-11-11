@@ -10,7 +10,7 @@ import (
 	qliner "github.com/peterh/liner"
 )
 
-func Extract(text string) string {
+func Extract(text string) []string {
 	ask := true
 	history := ""
 	line := qliner.NewLiner()
@@ -79,6 +79,6 @@ func Extract(text string) string {
 		text = textn
 		continue
 	}
-	return history
+	return []string{history}
 
 }

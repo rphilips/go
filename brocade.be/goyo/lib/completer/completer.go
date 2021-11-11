@@ -7,18 +7,21 @@ import (
 )
 
 var actions = map[string]bool{
-	"bye":     true,
-	"cd":      true,
-	"echo":    true,
-	"exec":    true,
-	"exit":    true,
-	"extract": true,
-	"greet":   true,
-	"load":    true,
-	"quit":    true,
-	"repl":    true,
-	"set":     true,
-	"walk":    true,
+	"bye":      true,
+	"cd":       true,
+	"echo":     true,
+	"exec":     true,
+	"exit":     true,
+	"extract":  true,
+	"greet":    true,
+	"load":     true,
+	"quit":     true,
+	"repl":     true,
+	"set":      true,
+	"walk":     true,
+	"kill":     true,
+	"killtree": true,
+	"killnode": true,
 }
 
 func SetCompleter(line *qliner.State) {

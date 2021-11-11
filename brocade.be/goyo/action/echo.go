@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-func Echo(text string) string {
+func Echo(text string) []string {
 	fmt.Println(text)
 	if text != "" {
-		return "echo " + text
+		return []string{"echo " + text}
 	} else {
-		return "echo"
+		return []string{"echo"}
 	}
 }

@@ -1,6 +1,6 @@
 package action
 
-func RunAction(key string, text string) string {
+func RunAction(key string, text string) []string {
 	switch key {
 	case "cd":
 		return Cd(text)
@@ -10,6 +10,12 @@ func RunAction(key string, text string) string {
 		return Load(text)
 	case "extract":
 		return Extract(text)
+	case "set":
+		return Set(text)
+	case "kill", "killtree":
+		return Kill(text, true)
+	case "killnode":
+		return Kill(text, false)
 	}
-	return ""
+	return nil
 }

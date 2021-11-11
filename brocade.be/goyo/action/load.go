@@ -10,7 +10,7 @@ import (
 	qliner "github.com/peterh/liner"
 )
 
-func Load(text string) string {
+func Load(text string) []string {
 	ask := true
 	history := ""
 	line := qliner.NewLiner()
@@ -63,6 +63,6 @@ func Load(text string) string {
 		text = textn
 		continue
 	}
-	return history
+	return []string{history}
 
 }

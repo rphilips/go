@@ -373,16 +373,11 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 
 	var content []byte
 	if ok {
-		content, err = source.Fetch()
-		if err != nil {
-			ok = false
-		}
-		if len(content) == 0 {
-			ok = false
-		}
+		content, _ = source.Fetch()
 	}
 
 	if ok {
+
 		notdel, notadd, err1 := source.checkOrphanObjects(content, fdata)
 		if err1 != nil {
 			e := &qerror.QError{

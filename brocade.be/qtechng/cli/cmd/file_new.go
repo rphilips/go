@@ -192,16 +192,13 @@ func fileNew(cmd *cobra.Command, args []string) error {
 			qfs.Mkdir(dir, "qtech")
 		}
 		if !qfs.IsFile(arg) {
-			e := qfs.Store(arg, "", "qtech")
-			if e != nil {
-				err := &qerror.QError{
-					Ref:  []string{"file.add.create"},
-					Type: "Error",
-					Msg:  []string{"Cannot create file: `" + arg + "`"},
-				}
-				errorlist = append(errorlist, err)
-				continue
+			err := &qerror.QError{
+				Ref:  []string{"file.add.create"},
+				Type: "Error",
+				Msg:  []string{"Cannot create file: `" + arg + "`"},
 			}
+			errorlist = append(errorlist, err)
+			continue
 		}
 		rel, _ := filepath.Rel(Fcwd, arg)
 		rel = filepath.ToSlash(rel)

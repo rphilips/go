@@ -82,9 +82,12 @@ func repl(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		history := qaction.RunAction(key, text)
-		if history != "" {
-			Fline.AppendHistory(history)
+		for _, h := range history {
+			if h != "" {
+				Fline.AppendHistory(h)
+			}
 		}
+		fmt.Println()
 	}
 	return nil
 }
