@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	qcompleter "brocade.be/goyo/lib/completer"
 	qutil "brocade.be/goyo/lib/util"
 	qliner "github.com/peterh/liner"
 )
@@ -67,9 +66,7 @@ func SaveHistory(line *qliner.State) {
 		if key == "bye" || key == "exit" || key == "quit" {
 			continue
 		}
-		if qcompleter.IsAction(key) {
-			lins = append(lins, action)
-		}
+		lins = append(lins, action)
 	}
 	i := 0
 	if len(lins) > maxlen {

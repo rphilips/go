@@ -54,7 +54,7 @@ func SplitRefValue(text string) (ref string, value string) {
 		k := strings.Index(text[start:], "=")
 		if k < 0 {
 			ref = qyottadb.UnQS(qyottadb.QS(text))
-			value, _ = qyottadb.G(ref)
+			value, _ = qyottadb.G(ref, false)
 			break
 		}
 		k = start + k

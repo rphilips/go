@@ -9,7 +9,7 @@ import (
 
 func Get(text string) []string {
 	gloref, _ := SplitRefValue(text)
-	value, err := qyottadb.G(gloref)
+	value, err := qyottadb.G(gloref, false)
 	if err != nil {
 		qutil.Error(err)
 		return nil

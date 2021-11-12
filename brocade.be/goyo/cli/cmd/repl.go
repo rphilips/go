@@ -47,7 +47,7 @@ func repl(cmd *cobra.Command, args []string) error {
 	qcompleter.SetCompleter(Fline)
 	Fline.SetCtrlCAborts(true)
 	defer finish(Fline)
-	fmt.Println("Please use `exit` to exit this program.")
+	fmt.Println("Please use `exit` to exit this program\nand `help` to get information on actions")
 
 	for {
 		action, err := Fline.Prompt("> ")
@@ -69,17 +69,16 @@ func repl(cmd *cobra.Command, args []string) error {
 
 		key, text := qutil.KeyText(action)
 		key = strings.ToLower(key)
-		if key == "bye" || key == "exit" || key == "quit" {
+		if key == "bye" || key == "exit" || key == "quit" || key == "h" || key == "halt" {
 			break
 		}
 		if key == "#" {
 			Fline.AppendHistory(action)
 			continue
 		}
-		if !qcompleter.IsAction(key) {
-			Fline.AppendHistory(action)
-			fmt.Println("?")
-			continue
+		if _, ok := qaction.Actions[key]; !ok {
+			text = action
+			key = "exec"
 		}
 		history := qaction.RunAction(key, text)
 		for _, h := range history {
@@ -91,81 +90,3 @@ func repl(cmd *cobra.Command, args []string) error {
 	}
 	return nil
 }
-
-// }
-// func completer(d prompt.Document) []prompt.Suggest {
-// 	s := []prompt.Suggest{
-
-// 		{Text: "users", Description: "Store the username and age"},
-// 		{Text: "articles", Description: "Store the article text posted by user"},
-// 		{Text: "comments", Description: "Store the text commented to articles"},
-// 	}
-// 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
-// }
-
-// 	func main() {
-// 		fmt.Println("Please select table.")
-// 		t := prompt.Input("> ", completer)
-// 		fmt.Println("You selected " + t)
-// 	}
-// 	// handle "greet".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "greet",
-// 		Help: "greet user",
-// 		Func: greet,
-// 	})
-
-// 	// handle "set".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "set",
-// 		Help: "set var or global",
-// 		Func: set,
-// 	})
-
-// 	// handle "cd".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "cd",
-// 		Help: "cd directory (~ = home)",
-// 		Func: cd,
-// 	})
-
-// 	// handle "load".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "load",
-// 		Help: "load file into database",
-// 		Func: load,
-// 	})
-
-// 	// handle "extract".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "extract",
-// 		Help: "extract global",
-// 		Func: extract,
-// 	})
-
-// 	// handle "walk".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "walk",
-// 		Help: "walk global",
-// 		Func: walk,
-// 	})
-
-// 	// handle "exec".
-// 	shell.AddCmd(&ishell.Cmd{
-// 		Name: "exec",
-// 		Help: "exec statement",
-// 		Func: exec,
-// 	})
-
-// 	// when started with "exit" as first argument, assume non-interactive execution
-// 	if len(args) > 0 && args[1] == "exit" {
-// 		shell.Process(args[1:]...)
-// 	} else {
-// 		// start shell
-// 		shell.Run()
-// 		// teardown
-// 		shell.Close()
-// 	}
-
-// 	return nil
-// }

@@ -21,7 +21,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/net v0.0.0-20211101193420-4a448f8816b3 // indirect
 	golang.org/x/oauth2 v0.0.0-20211028175245-ba495a64dcb5 // indirect
-	golang.org/x/sys v0.0.0-20211102192858-4dd72447c267 // indirect
+	golang.org/x/sys v0.0.0-20211110154304-99a53858aa08 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.60.0 // indirect
 	google.golang.org/genproto v0.0.0-20211102202547-e9cf271f7f2c
@@ -46,6 +46,7 @@ require (
 
 require (
 	cloud.google.com/go/translate v1.0.0
+	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807
 	modernc.org/sqlite v1.13.3
 )
 

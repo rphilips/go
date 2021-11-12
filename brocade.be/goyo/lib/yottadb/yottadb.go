@@ -125,25 +125,12 @@ func EUnQS(subs []string) (glvn string) {
 	case 1:
 		return subs[0]
 	default:
-		args := make([]string, len(subs)-1)
-		for i, sub := range subs {
-			if i != 0 {
-				if !isliteral(sub) {
-					exec := `s %qzxy0=` + sub
-					r, err := Calc(exec, `%qzxy0`)
-					if err == nil {
-						sub = r
-						if !isNumber(sub) {
-							sub = `"` + strings.ReplaceAll(sub, `"`, `""`) + `"`
-						}
-					} else {
-						sub = err.Error()
-					}
-				}
-				args[i-1] = sub
-			}
+		args := make([]string, len(subs))
+		args[0] = subs[0]
+		for i := 1; i < len(subs); i++ {
+			args[i] = MakeArg(subs[i])
 		}
-		return subs[0] + `(` + strings.Join(args, ",") + `)`
+		return UnQS(args)
 	}
 }
 
@@ -223,23 +210,31 @@ func Glvn(ref string) (glvn string) {
 }
 
 // D return $D() of reference, (value of -1 for iinvalid reference)
-func D(glvn string) int {
+func D(glvn string) (value int, err error) {
+	glvn = N(glvn)
 	subs := QS(glvn)
-	if len(subs) == 0 {
-		return -1
+	argums := MArgs(subs)
+	if len(argums) == 0 {
+		return -1, nil
 	}
-	d, err := yottadb.DataE(yottadb.NOTTP, nil, subs[0], subs[1:])
+
+	d, err := yottadb.DataE(yottadb.NOTTP, nil, argums[0], argums[1:])
 	if err != nil {
-		return -1
+		return -1, err
 	}
-	return int(d)
+	return int(d), nil
 }
 
 // G return $G() of reference, but returns an error
-func G(glvn string) (value string, err error) {
+func G(glvn string, simple bool) (value string, err error) {
 	subs := QS(glvn)
 	if len(subs) == 0 {
 		return "", errors.New("invalid reference")
+	}
+	if simple {
+		argums := MArgs(subs)
+		value, err = yottadb.ValE(yottadb.NOTTP, nil, argums[0], argums[1:])
+		return
 	}
 	exec := "s %QwERTY=" + UnQS(subs)
 	value, err = Calc(exec, "%QwERTY")
@@ -260,7 +255,7 @@ func Set(glvn string, value string) (err error) {
 func SetArg(arg string) (glvn string, value string, err error) {
 	if !strings.ContainsRune(arg, '=') {
 		arg = Glvn(arg)
-		value, err = G(arg)
+		value, err = G(arg, false)
 		if err != nil {
 			return arg, "", errors.New("contains no '='")
 		}
@@ -296,63 +291,96 @@ func SetArg(arg string) (glvn string, value string, err error) {
 
 }
 
+func MakeArg(s string) string {
+	if isNumber(s) {
+		return s
+	}
+	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`
+}
+
 // Next = $Next
 func Next(glvn string) (nglvn, next string, err error) {
-	glvn = Glvn(glvn)
-	subs := QS(glvn)
-	if len(subs) == 0 {
-		return "", "", errors.New("cannot determine next")
+	subs := MArgs(QS(glvn))
+	if len(subs) < 2 {
+		return glvn, "", errors.New("cannot determine next")
 	}
 	z, e := yottadb.SubNextE(yottadb.NOTTP, nil, subs[0], subs[1:])
 	if e != nil {
 		z = ""
-		return "", "", errors.New("cannot determine next")
+		if e.Error() == "NODEEND" {
+			e = nil
+		}
+		return glvn, "", e
 	}
 	subs[len(subs)-1] = z
-	return UnQS(subs), z, nil
+	return EUnQS(subs), z, nil
 }
 
 // Prev = $Next(-1)
 func Prev(glvn string) (pglvn string, value string, err error) {
-	glvn = Glvn(glvn)
-	subs := QS(glvn)
-	if len(subs) == 0 {
-		return "", "", errors.New("cannot determine prev")
+	subs := MArgs(QS(glvn))
+	if len(subs) < 2 {
+		return glvn, "", errors.New("cannot determine prev")
 	}
 	z, e := yottadb.SubPrevE(yottadb.NOTTP, nil, subs[0], subs[1:])
 	if e != nil {
 		z = ""
-		return "", "", errors.New("cannot determine prev")
+		if e.Error() == "NODEEND" {
+			e = nil
+		}
+		return glvn, "", e
 	}
 	subs[len(subs)-1] = z
-	return UnQS(subs), z, nil
+	return EUnQS(subs), z, nil
 }
 
 func Right(glvn string) (rglvn string, err error) {
-	glvn = Glvn(glvn)
-	subs := QS(glvn)
+	subs := MArgs(QS(glvn))
 	if len(subs) == 0 {
-		return "", errors.New("cannot determine right")
+		return glvn, errors.New("cannot determine right")
 	}
-
 	if len(subs) > 1 && subs[len(subs)-1] == "" {
 		return glvn, err
 	}
 	subs = append(subs, "")
-	return UnQS(subs), nil
+	return EUnQS(subs), nil
 }
 
 func Left(glvn string) (rglvn string, err error) {
-	glvn = Glvn(glvn)
-	subs := QS(glvn)
-	if len(subs) == 0 {
-		return "", errors.New("cannot determine left")
-	}
-	if len(subs) == 1 {
-		return glvn, nil
+	subs := MArgs(QS(glvn))
+	if len(subs) < 2 {
+		return glvn, errors.New("cannot determine left")
 	}
 	subs = subs[:len(subs)-1]
-	return UnQS(subs), nil
+	return EUnQS(subs), nil
+}
+
+func MArgs(subs []string) []string {
+	if len(subs) == 0 {
+		return subs
+	}
+	argums := make([]string, len(subs))
+	for i := 0; i < len(subs); i++ {
+		sub := subs[i]
+		if i == 0 {
+			argums[i] = sub
+			continue
+		}
+		if !strings.HasPrefix(sub, `"`) {
+			argums[i] = sub
+			continue
+		}
+		if len(sub) < 2 {
+			argums[i] = sub
+			continue
+		}
+		if !strings.HasSuffix(sub, `"`) {
+			argums[i] = sub
+			continue
+		}
+		argums[i] = strings.ReplaceAll(sub[1:len(sub)-1], `""`, `"`)
+	}
+	return argums
 }
 
 func Kill(glvn string, tree bool) (err error) {
@@ -361,35 +389,19 @@ func Kill(glvn string, tree bool) (err error) {
 	if len(subs) == 0 {
 		return errors.New("cannot determine node")
 	}
-	argums := make([]string, len(subs)-1)
-	for i := 1; i < len(subs); i++ {
-		sub := subs[i]
-		if !strings.HasPrefix(sub, `"`) {
-			argums[i-1] = sub
-			continue
-		}
-		if len(sub) < 2 {
-			argums[i-1] = sub
-			continue
-		}
-		if !strings.HasSuffix(sub, `"`) {
-			argums[i-1] = sub
-			continue
-		}
-		argums[i-1] = strings.ReplaceAll(sub[1:len(sub)-1], `""`, `"`)
-	}
+	argums := MArgs(subs)
 	kway := yottadb.YDB_DEL_TREE
 	if !tree {
 		kway = yottadb.YDB_DEL_NODE
 	}
-	err = yottadb.DeleteE(yottadb.NOTTP, nil, kway, subs[0], argums)
+	err = yottadb.DeleteE(yottadb.NOTTP, nil, kway, argums[0], argums[1:])
 	return err
 }
 
 func splits(glvn string) (parts []string, e error) {
 	glvn = qutil.Escape(glvn)
 	if !strings.ContainsRune(glvn, '=') {
-		value, err := G(glvn)
+		value, err := G(glvn, false)
 		if err != nil {
 			return nil, errors.New("contains no '='")
 		}
@@ -410,7 +422,7 @@ func splitb(glvn string) (parts []string, e error) {
 		k := strings.IndexByte(glvn[offset:], '=')
 		if k == -1 {
 			g := Glvn(glvn)
-			value, err := G(glvn)
+			value, err := G(glvn, false)
 			if err != nil {
 				return nil, errors.New("contains no '='")
 			}
@@ -486,4 +498,92 @@ func isNumber(term string) bool {
 		return true
 	}
 	return false
+}
+
+type VarReport struct {
+	Gloref string
+	Value  string
+	Err    error
+}
+
+func ZWR(gloref string, report chan VarReport, needle string) {
+	rex := new(regexp.Regexp)
+	var err error
+	if needle != "" {
+		rex, err = regexp.Compile(needle)
+		if err != nil {
+			rex = nil
+		}
+	}
+	gloref = N(gloref)
+	d, err := D(gloref)
+	if d == 0 {
+		err = fmt.Errorf("`%s` does not exist", gloref)
+	}
+	if err != nil {
+		report <- VarReport{
+			Gloref: "",
+			Value:  "",
+			Err:    err,
+		}
+		close(report)
+		return
+	}
+	if needle == "" && (d == 1 || d == 11) {
+		value, _ := G(gloref, true)
+		report <- VarReport{
+			Gloref: gloref,
+			Value:  value,
+			Err:    err,
+		}
+	}
+
+	last := strings.TrimRight(gloref, "(),")
+	for {
+		exec := "s %nExt=$Q(" + gloref + ")"
+		next, err := Calc(exec, "%nExt")
+
+		if !strings.HasPrefix(next, last) {
+			next = ""
+		}
+		if next != "" {
+			x := strings.SplitN(next, last, 2)[0]
+			if strings.IndexAny(x, "(),") == 0 {
+				next = ""
+			}
+
+		}
+		if err != nil || next == "" {
+			report <- VarReport{
+				Gloref: "",
+				Value:  "",
+				Err:    err,
+			}
+			close(report)
+			return
+		}
+		gloref = next
+		value, _ := G(gloref, true)
+		if needle != "" {
+			pair := gloref + "=" + value
+			found := strings.Contains(pair, needle)
+			if !found && rex != nil {
+				found = rex.FindStringIndex(pair) != nil
+			}
+			if !found {
+				continue
+			}
+		}
+
+		report <- VarReport{
+			Gloref: gloref,
+			Value:  value,
+			Err:    err,
+		}
+		if needle != "" {
+			close(report)
+			return
+		}
+	}
+
 }

@@ -67,7 +67,7 @@ func AboutText() string {
 	h := time.Now()
 	now := h.Format(time.RFC3339)
 	qyottadb.Set("/zgoya/last/"+user.Name, now)
-	dbnow, _ := qyottadb.G("/zgoya/last/" + user.Name)
+	dbnow, _ := qyottadb.G("/zgoya/last/"+user.Name, false)
 	if now == dbnow {
 		msg["status"] = "Connected successfully to YottaDB!"
 	} else {
