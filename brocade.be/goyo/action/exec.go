@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 
+	qhistory "brocade.be/goyo/lib/history"
 	qutil "brocade.be/goyo/lib/util"
 	qyottadb "brocade.be/goyo/lib/yottadb"
 	qliner "github.com/peterh/liner"
@@ -22,7 +23,7 @@ func Exec(text string) []string {
 	setter.SetCtrlCAborts(true)
 	defer setter.Close()
 	deflt := ""
-	history := make([]string, 0)
+	qhistory.LoadHistory(setter, "exec")
 	for {
 		text, err := setter.PromptWithSuggestion("$ ", deflt, -1)
 		if err == qliner.ErrPromptAborted {
@@ -45,8 +46,10 @@ func Exec(text string) []string {
 			qutil.Error(err)
 			deflt = text
 		} else {
-			history = append(history, text)
+			setter.AppendHistory(text)
 		}
 	}
-	return history
+	qhistory.SaveHistory(setter, "exec")
+	setter.Close()
+	return nil
 }

@@ -11,7 +11,7 @@ import (
 	qliner "github.com/peterh/liner"
 )
 
-func historyfile() string {
+func historyfile(name string) string {
 	dir := ""
 	dirname, err := os.UserHomeDir()
 	if err == nil && dirname != "" {
@@ -20,20 +20,20 @@ func historyfile() string {
 	if dir == "" {
 		dir = os.TempDir()
 	}
-	dir = filepath.Join(dir, ".config", "goyo")
+	dir = filepath.Join(dir, ".config", name)
 	os.MkdirAll(dir, os.ModePerm)
 	return filepath.Join(dir, "history")
 }
 
-func LoadHistory(line *qliner.State) {
-	if f, err := os.Open(historyfile()); err == nil {
+func LoadHistory(line *qliner.State, name string) {
+	if f, err := os.Open(historyfile(name)); err == nil {
 		line.ReadHistory(f)
 		f.Close()
 	}
 }
 
-func SaveHistory(line *qliner.State) {
-	fname := historyfile()
+func SaveHistory(line *qliner.State, name string) {
+	fname := historyfile(name)
 	if f, err := os.Create(fname); err != nil {
 		log.Print("Error writing history file: ", err)
 		return

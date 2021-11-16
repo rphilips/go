@@ -1,0 +1,33 @@
+#!/bin/bash
+
+export package=iiiftool
+
+
+export IIIFTOOL_BUILDTIME=$(date +%Y.%m.%d-%H:%M:%S)
+export IIIFTOOL_GOVERSION=$(go version | cut -d " " -f 3)
+export IIIFTOOL_BUILDHOST=$(hostname)
+export BASEDIR="$(dirname "${PWD}")"
+export BASEDIR="$(dirname "${BASEDIR}")"
+export BASEDIR=$BASEDIR/brocade.be
+
+platforms=("linux/amd64")
+
+for platform in "${platforms[@]}"
+do
+    IFS='/' read -ra platform_split <<< "$platform"
+    GOOS=${platform_split[0]}
+    GOARCH=${platform_split[1]}
+    basename=$package'-'$GOOS'-'$GOARCH
+    echo $basename
+    BINARY=$BASEDIR/$package/cli/$basename
+    cd $BASEDIR/base
+    env GOOS=$GOOS GOARCH=$GOARCH go install ./...
+    cd $BASEDIR/$package/cli
+    env IIIFTOOL_BUILDTIME=$IIIFTOOL_BUILDTIME IIIFTOOL_GOVERSION=$IIIFTOOL_GOVERSION GOOS=$GOOS GOARCH=$GOARCH IIIFTOOL_BUILDHOST=$IIIFTOOL_BUILDHOST go build -o $BINARY -ldflags "-X main.buildTime=$IIIFTOOL_BUILDTIME -X main.buildHost=$IIIFTOOL_BUILDHOST -X main.goVersion=$IIIFTOOL_GOVERSION" .
+    echo $BINARY
+done
+
+export BINDIR=$(qtechng registry get bindir)
+mv $BINARY $BINDIR/iiiftool
+chmod a+x $BINDIR/iiiftool
+iiiftool about

@@ -30,10 +30,12 @@ func init() {
 	rootCmd.AddCommand(replCmd)
 }
 
-func finish(line *qliner.State) {
-	qhistory.SaveHistory(line)
+func finish(line *qliner.State, name string) {
+	qhistory.SaveHistory(line, name)
 	line.Close()
-	fmt.Println("Bye!")
+	if name == "goyo" {
+		fmt.Println("Bye!")
+	}
 }
 
 var Fgloref string
@@ -43,10 +45,10 @@ var Fline *qliner.State
 
 func repl(cmd *cobra.Command, args []string) error {
 	Fline := qliner.NewLiner()
-	qhistory.LoadHistory(Fline)
+	qhistory.LoadHistory(Fline, "goyo")
 	qcompleter.SetCompleter(Fline)
 	Fline.SetCtrlCAborts(true)
-	defer finish(Fline)
+	defer finish(Fline, "goyo")
 	fmt.Println("Please use `exit` to exit this program\nand `help` to get information on actions")
 
 	for {

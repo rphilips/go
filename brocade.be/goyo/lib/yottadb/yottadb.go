@@ -454,7 +454,7 @@ func Exec(text string) error {
 	_, err := yottadb.CallMT(yottadb.NOTTP, nil, 0, "xecute", text, &out)
 	qutil.RestoreEnvvars(&envvarSave, "ydb_ci", "ydb_routines")
 	if err != nil {
-		return fmt.Errorf("Exec error: %s", err.Error())
+		return err
 	}
 	return nil
 }
