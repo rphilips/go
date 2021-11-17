@@ -22,7 +22,7 @@ import (
 
 /// Backup
 
-// TarBackup makes a backup of the sources and the meta information
+// SqliteBackup makes a backup of the sources and the meta information
 func (release Release) SqliteBackup(sqlitefile string) error {
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
