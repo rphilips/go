@@ -43,9 +43,3 @@ func (id Identifier) Decode() string {
 	}
 	return string(dec)
 }
-
-// basedir ansible, groupid db, backup -> Luc
-// basedir/2char of hex van SH1 enkel lowercase/omgevormde identifier/omgevormde identifier.sqlite3
-
-// metadata steken in identifier
-// omvorming naar jpk2 ook in iiiftool

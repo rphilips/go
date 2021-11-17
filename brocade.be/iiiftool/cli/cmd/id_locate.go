@@ -12,9 +12,7 @@ import (
 var idLocateCmd = &cobra.Command{
 	Use:   "locate",
 	Short: "Locate a IIIF identifier",
-	Long: `Given a IIIF identifier locate the appropriate SQLite filepath
-	`,
-
+	Long: "Given a IIIF identifier locate the appropriate SQLite filepath",
 	Args:    cobra.ExactArgs(1),
 	Example: `iiiftool id locate dg:ua:1`,
 	RunE:    idLocate,
