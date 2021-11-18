@@ -49,7 +49,7 @@ func (id Identifier) Encode() string {
 	return base32.StdEncoding.EncodeToString([]byte(id))
 }
 
-// Decode from base32url
+// Decode from base32
 func (id Identifier) Decode() string {
 	dec, err := base32.StdEncoding.DecodeString(id.String())
 	if err != nil {

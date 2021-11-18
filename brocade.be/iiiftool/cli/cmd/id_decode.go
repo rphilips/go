@@ -12,8 +12,8 @@ import (
 var idDecodeCmd = &cobra.Command{
 	Use:   "decode",
 	Short: "Decode a IIIF identifier",
-	Long: `Decode a IIIF identifier using Base 64 encoding with URL and filename safe alphabet.
-	Specification in RFC4648 (https://datatracker.ietf.org/doc/html/rfc4648#page-7)
+	Long: `Decode a IIIF identifier using Base 32 encoding with URL and filename safe alphabet.
+	Specification in RFC3548.
 	`,
 
 	Args:    cobra.ExactArgs(1),
