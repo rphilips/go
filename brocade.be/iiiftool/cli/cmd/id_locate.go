@@ -18,11 +18,11 @@ var idLocateCmd = &cobra.Command{
 	RunE:    idLocate,
 }
 
-var reverse bool
+var Freverse bool
 
 func init() {
 	idCmd.AddCommand(idLocateCmd)
-	idLocateCmd.PersistentFlags().BoolVar(&reverse, "reverse", false, "Reconstruct the IIIF identifier from the filepath")
+	idLocateCmd.PersistentFlags().BoolVar(&Freverse, "reverse", false, "Reconstruct the IIIF identifier from the filepath")
 }
 
 func idLocate(cmd *cobra.Command, args []string) error {
@@ -31,7 +31,7 @@ func idLocate(cmd *cobra.Command, args []string) error {
 	if id.String() == "" {
 		return errors.New("argument is empty")
 	}
-	if !reverse {
+	if !Freverse {
 		fmt.Println(id.Location())
 	} else {
 		fmt.Println(identifier.ReverseLocation(args[0]))
