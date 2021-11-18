@@ -9,7 +9,11 @@ export IIIFTOOL_BUILDHOST=$(hostname)
 export BASEDIR="$(dirname "${PWD}")"
 export BASEDIR="$(dirname "${BASEDIR}")"
 export BASEDIR=$BASEDIR/brocade.be
-
+export QTECHDIR=$(qtechng registry get qtechng-work-dir)
+export QTECHDIR=$QTECHDIR/iiif/iiiftool
+if [ ! -d "$QTECHDIR/" ]; then
+    qtechng source co /iiif/iiiftool --auto
+fi
 platforms=("linux/amd64")
 
 for platform in "${platforms[@]}"
@@ -25,9 +29,14 @@ do
     cd $BASEDIR/$package/cli
     env IIIFTOOL_BUILDTIME=$IIIFTOOL_BUILDTIME IIIFTOOL_GOVERSION=$IIIFTOOL_GOVERSION GOOS=$GOOS GOARCH=$GOARCH IIIFTOOL_BUILDHOST=$IIIFTOOL_BUILDHOST go build -o $BINARY -ldflags "-X main.buildTime=$IIIFTOOL_BUILDTIME -X main.buildHost=$IIIFTOOL_BUILDHOST -X main.goVersion=$IIIFTOOL_GOVERSION" .
     echo $BINARY
+    cp $BINARY $QTECHDIR
 done
 
 export BINDIR=$(qtechng registry get bindir)
+
 mv $BINARY $BINDIR/iiiftool
 chmod a+x $BINDIR/iiiftool
 iiiftool about
+echo
+echo
+echo "qtechng file ci --cwd=$QTECHDIR"
