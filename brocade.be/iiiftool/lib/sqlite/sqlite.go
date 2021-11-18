@@ -16,16 +16,15 @@ import (
 )
 
 var osSep = registry.Registry["os-sep"]
+var user = registry.Registry["user-default"]
 
 // Given a IIIF identifier and some files
 // store the files in the appropriate SQLite archive
 func Store(id identifier.Identifier, files []string) error {
 	sqlitefile := id.Location()
 
-	if fs.Exists(sqlitefile) {
-		return errors.New("location already has data")
-		// to do: provide append mode?
-	}
+	append := fs.Exists(sqlitefile)
+
 	for _, file := range files {
 		if !fs.IsFile(file) {
 			return errors.New("file is not valid:\n" + file)
@@ -47,39 +46,49 @@ func Store(id identifier.Identifier, files []string) error {
 	}
 	defer db.Close()
 
-	if _, err = db.Exec(`
+	if !append {
+
+		if _, err = db.Exec(`
 		CREATE TABLE sqlar (
 			name TEXT PRIMARY KEY,
 			mode INT,
   			mtime INT,
+			utime TEXT,
   			sz INT,
   			data BLOB
 		);`); err != nil {
-		return err
-	}
+			return err
+		}
 
-	if _, err = db.Exec(`
+		if _, err = db.Exec(`
 		CREATE TABLE info (
-			label TEXT PRIMARY KEY,
-			value TEXT
+			value TEXT PRIMARY KEY,
+			label TEXT,
+			user TEXT
 		);`); err != nil {
-		return err
+			return err
+		}
 	}
 
-	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, sz, data) Values($1,$2,$3,$4,$5)")
+	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, utime, sz, data) Values($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert1: %v", err)
 	}
 	defer stmt1.Close()
 
-	stmt2, err := db.Prepare("INSERT INTO info (label, value) Values($1,$2)")
+	stmt2, err := db.Prepare("INSERT INTO info (value, label, user) Values($1,$2,$3)")
 	if err != nil {
-		return fmt.Errorf("cannot prepare insert3: %v", err)
+		return fmt.Errorf("cannot prepare insert2: %v", err)
 	}
 	defer stmt2.Close()
 
+	if !append {
+		h := time.Now()
+		stmt2.Exec(h.Format(time.RFC3339), "created", user)
+		stmt2.Exec(id.String(), "identifier", user)
+	}
 	h := time.Now()
-	stmt2.Exec(".begin-time", h.Format(time.RFC3339))
+	stmt2.Exec(h.Format(time.RFC3339), "modified", user)
 
 	sqlar := func(name string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -98,6 +107,7 @@ func Store(id identifier.Identifier, files []string) error {
 		if err != nil {
 			return fmt.Errorf("cannot get mtime of `%s`: %v", name, err)
 		}
+		utime := time.Now().Format(time.RFC3339)
 		sz, err := fs.GetSize(name)
 		if err != nil {
 			return fmt.Errorf("cannot get size of `%s`: %v", name, err)
@@ -107,8 +117,9 @@ func Store(id identifier.Identifier, files []string) error {
 			return fmt.Errorf("cannot get access permissions of `%s`: %v", name, err)
 		}
 		mtime := mt.Unix()
-		_, err = stmt1.Exec(name, uint32(mode), mtime, sz, data)
+		_, err = stmt1.Exec(name, uint32(mode), mtime, utime, sz, data)
 		if err != nil {
+			fmt.Println(err)
 			return fmt.Errorf("cannot exec: %v", err)
 		}
 
@@ -119,9 +130,6 @@ func Store(id identifier.Identifier, files []string) error {
 		info, err := os.Stat(file)
 		sqlar(file, info, err)
 	}
-
-	h = time.Now()
-	stmt2.Exec(".end-time", h.Format(time.RFC3339))
 
 	return nil
 }
