@@ -19,6 +19,16 @@ import (
 var osSep = registry.Registry["os-sep"]
 var user = registry.Registry["user-default"]
 
+// https://pkg.go.dev/database/sql#example-DB.QueryContext
+func readRow(row *sql.Row) string {
+	data := ""
+	err := row.Scan(&data)
+	if err != nil {
+		return data
+	}
+	return data
+}
+
 // Given a IIIF identifier and some files
 // store the files in the appropriate SQLite archive
 func Store(id identifier.Identifier, files []string) error {
@@ -91,14 +101,21 @@ func Store(id identifier.Identifier, files []string) error {
 
 	sqlar := func(name string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil
+			return fmt.Errorf("error opening file1: %v", err)
 		}
 		if info.IsDir() {
-			return nil
+			return fmt.Errorf("error opening file2: %v", err)
 		}
 
-		// rows, err := db.QueryContext(ctx, "SELECT * FROM sqlar WHERE name =?", name)
-		// fmt.Println(result)
+		row := db.QueryRow("SELECT name FROM sqlar WHERE name =?", name)
+		if err != nil {
+			return fmt.Errorf("cannot check whether file exists in archive: %v", err)
+		}
+
+		update := readRow(row)
+		if update != "" {
+			db.Exec("DELETE FROM sqlar WHERE name=?", name)
+		}
 
 		data, err := fs.Fetch(name)
 
