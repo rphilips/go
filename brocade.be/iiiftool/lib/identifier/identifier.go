@@ -13,8 +13,7 @@ import (
 
 type Identifier string
 
-// var iifBaseDir = registry.Registry("iiif-base-dir")
-var iifBaseDir = registry.Registry["scratch-dir"]
+var iifBaseDir = registry.Registry["iiif-base-dir"]
 
 var osSep = registry.Registry["os-sep"]
 
@@ -39,8 +38,8 @@ func (id Identifier) Location() string {
 // -- regardless of whether this location is an existing filepath or not.
 func ReverseLocation(location string) string {
 	parts := strings.Split(location, osSep)
-	id := parts[(len(parts) - 1)]
-	id = strings.ReplaceAll(id, ".sqlite", "")
+	basename := parts[(len(parts) - 1)]
+	id := strings.ReplaceAll(basename, ".sqlite", "")
 	id = strings.ToUpper(id)
 	id = strings.ReplaceAll(id, "8", "=")
 	return Identifier(id).Decode()
