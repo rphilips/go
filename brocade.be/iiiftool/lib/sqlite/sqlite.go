@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -37,7 +36,7 @@ func Store(id identifier.Identifier, files []string) error {
 
 	for _, file := range files {
 		if !fs.IsFile(file) {
-			return errors.New("file is not valid:\n" + file)
+			return fmt.Errorf("file is not valid: %v", file)
 		}
 	}
 
@@ -45,7 +44,7 @@ func Store(id identifier.Identifier, files []string) error {
 	dirname := strings.Join(path[0:(len(path)-1)], osSep)
 	err := fs.Mkdir(dirname, "process")
 	if err != nil {
-		return errors.New("cannot make dir")
+		return fmt.Errorf("cannot make dir")
 	}
 
 	db, err := sql.Open("sqlite", sqlitefile)

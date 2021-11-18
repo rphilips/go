@@ -31,12 +31,12 @@ func fileStore(cmd *cobra.Command, args []string) error {
 	id := identifier.Identifier(args[0])
 
 	if id.String() == "" {
-		log.Fatalf("identifier is missing")
+		log.Fatalf("iiiftool ERROR: identifier is missing")
 	}
 
 	err := sqlite.Store(id, args[1:])
 	if err != nil {
-		log.Fatalf("cannot store: %s", err)
+		log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
 	}
 
 	return nil
