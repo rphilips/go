@@ -139,7 +139,7 @@ func Store(id identifier.Identifier, files []string) error {
 		mtime := mt.Unix()
 		_, err = stmt1.Exec(name, uint32(mode), mtime, utime, sz, data)
 		if err != nil {
-			return fmt.Errorf("cannot exec: %v", err)
+			return fmt.Errorf("cannot exec stmt1: %v", err)
 		}
 
 		return nil
