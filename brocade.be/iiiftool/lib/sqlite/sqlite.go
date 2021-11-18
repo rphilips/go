@@ -1,8 +1,6 @@
 package sqlite
 
 import (
-	"fmt"
-
 	identifier "brocade.be/iiiftool/lib/identifier"
 )
 
@@ -10,6 +8,7 @@ import (
 // store the files in the appropriate SQLite archive
 func Store(id identifier.Identifier, files []string) error {
 	path := id.Location()
-	fmt.Println(path, files)
+	// is path valid?
+
 	return nil
 }
