@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"errors"
+	"log"
 
 	identifier "brocade.be/iiiftool/lib/identifier"
 	sqlite "brocade.be/iiiftool/lib/sqlite"
@@ -15,6 +15,8 @@ var fileStoreCmd = &cobra.Command{
 	Long: `Store files for IIIF in an SQLite archive.
 	The first argument is the IIIF identifier,
 	the other arguments are the files to store.
+	If an SQLite archive for the identifier already exists,
+	the files are appended.
 `,
 	Args:    cobra.MinimumNArgs(2),
 	Example: `iiiftool file store dg:ua:1 1.jp2 2.jp2 dg_ua_1.json`,
@@ -29,10 +31,13 @@ func fileStore(cmd *cobra.Command, args []string) error {
 	id := identifier.Identifier(args[0])
 
 	if id.String() == "" {
-		return errors.New("identifier is missing")
+		log.Fatalf("identifier is missing")
 	}
 
-	_ = sqlite.Store(id, args[1:])
+	err := sqlite.Store(id, args[1:])
+	if err != nil {
+		log.Fatalf("cannot store: %s", err)
+	}
 
 	return nil
 }
