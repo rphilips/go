@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"brocade.be/base/fs"
+	"brocade.be/iiiftool/lib/convert"
 	"github.com/spf13/cobra"
 )
 
@@ -23,10 +24,15 @@ func init() {
 }
 
 func fileConvert(cmd *cobra.Command, args []string) error {
-	for _, file := range args {
+	files := args
+	for _, file := range files {
 		if !fs.IsFile(file) {
 			log.Fatalf("iiiftool ERROR: file is not valid: %v", file)
 		}
+	}
+	err := convert.Run(files)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: error converting: %v", err)
 	}
 
 	return nil
