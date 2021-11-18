@@ -183,8 +183,9 @@ func (project Project) Init(meta qmeta.Meta) (err error) {
 	}
 
 	data := `{
-	"$schema": "https://dev.anet.be/brocade/schema/qtechng.schema.json",
-	"py3": true
+	"$id": "https://dev.anet.be/brocade/schema/qtechng.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "py3": true
 }`
 	fs.Store(fname, data, "")
 
