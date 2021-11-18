@@ -15,6 +15,8 @@ var fileStoreCmd = &cobra.Command{
 	Long: `Store files for IIIF in an SQLite archive.
 	The first argument is the IIIF identifier,
 	the other arguments are the files to store.
+	If an SQLite archive for the identifier already exists,
+	the files are appended.
 `,
 	Args:    cobra.MinimumNArgs(2),
 	Example: `iiiftool file store dg:ua:1 1.jp2 2.jp2 dg_ua_1.json`,
