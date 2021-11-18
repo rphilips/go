@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -35,13 +36,11 @@ func Store(id identifier.Identifier, files []string) error {
 	dirname := strings.Join(path[0:(len(path)-1)], osSep)
 	err := fs.Mkdir(dirname, "process")
 	if err != nil {
-		fmt.Println(err)
 		return errors.New("cannot make dir")
 	}
 
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
-		fmt.Println(err)
 		return fmt.Errorf("cannot open file: %v", err)
 	}
 	defer db.Close()
@@ -98,6 +97,9 @@ func Store(id identifier.Identifier, files []string) error {
 			return nil
 		}
 
+		// rows, err := db.QueryContext(ctx, "SELECT * FROM sqlar WHERE name =?", name)
+		// fmt.Println(result)
+
 		data, err := fs.Fetch(name)
 
 		if err != nil {
@@ -119,7 +121,6 @@ func Store(id identifier.Identifier, files []string) error {
 		mtime := mt.Unix()
 		_, err = stmt1.Exec(name, uint32(mode), mtime, utime, sz, data)
 		if err != nil {
-			fmt.Println(err)
 			return fmt.Errorf("cannot exec: %v", err)
 		}
 
@@ -128,7 +129,8 @@ func Store(id identifier.Identifier, files []string) error {
 
 	for _, file := range files {
 		info, err := os.Stat(file)
-		sqlar(file, info, err)
+		basename := filepath.Base(file)
+		sqlar(basename, info, err)
 	}
 
 	return nil

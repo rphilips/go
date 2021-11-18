@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"log"
 
 	identifier "brocade.be/iiiftool/lib/identifier"
 
@@ -29,7 +29,7 @@ func idDecode(cmd *cobra.Command, args []string) error {
 	id := identifier.Identifier(args[0])
 
 	if id.String() == "" {
-		return errors.New("argument is empty")
+		log.Fatalf("argument is empty")
 	}
 
 	fmt.Println(id.Decode())
