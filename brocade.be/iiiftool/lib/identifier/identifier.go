@@ -30,6 +30,7 @@ func (id Identifier) Location() string {
 	folder = strings.ToLower(folder)
 	folder = util.StrReverse(folder)
 	basename := strings.ToLower(idEnc) + ".sqlite"
+	basename = strings.ReplaceAll(basename, "=", "8")
 	location := filepath.Join(iifBaseDir, folder[0:2], folder, basename)
 	return location
 }
@@ -41,6 +42,7 @@ func ReverseLocation(location string) string {
 	id := parts[(len(parts) - 1)]
 	id = strings.ReplaceAll(id, ".sqlite", "")
 	id = strings.ToUpper(id)
+	id = strings.ReplaceAll(id, "8", "=")
 	return Identifier(id).Decode()
 }
 

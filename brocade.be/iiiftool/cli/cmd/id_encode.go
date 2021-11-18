@@ -13,7 +13,7 @@ var idEncodeCmd = &cobra.Command{
 	Use:   "encode",
 	Short: "Encode a IIIF identifier",
 	Long: `Encode a IIIF identifier using Base 32 encoding with URL and filename safe alphabet.
-	Specification in RFC3548.
+	Specification in RFC3548 (https://rfc-editor.org/rfc/rfc4648.html).
 	`,
 
 	Args:    cobra.ExactArgs(1),
