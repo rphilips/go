@@ -19,7 +19,6 @@ import (
 var osSep = registry.Registry["os-sep"]
 var user = registry.Registry["user-default"]
 
-// https://pkg.go.dev/database/sql#example-DB.QueryContext
 func readRow(row *sql.Row) string {
 	data := ""
 	err := row.Scan(&data)
@@ -66,7 +65,7 @@ func Store(id identifier.Identifier, files []string) error {
   			sz INT,
   			data BLOB
 		);`); err != nil {
-			return err
+			return fmt.Errorf("cannot create table sqlar: %v", err)
 		}
 
 		if _, err = db.Exec(`
@@ -75,7 +74,7 @@ func Store(id identifier.Identifier, files []string) error {
 			label TEXT,
 			user TEXT
 		);`); err != nil {
-			return err
+			return fmt.Errorf("cannot create table info: %v", err)
 		}
 	}
 
@@ -109,12 +108,15 @@ func Store(id identifier.Identifier, files []string) error {
 
 		row := db.QueryRow("SELECT name FROM sqlar WHERE name =?", name)
 		if err != nil {
-			return fmt.Errorf("cannot check whether file exists in archive: %v", err)
+			return fmt.Errorf("cannot check whether file already exists in archive: %v", err)
 		}
 
 		update := readRow(row)
 		if update != "" {
-			db.Exec("DELETE FROM sqlar WHERE name=?", name)
+			_, err = db.Exec("DELETE FROM sqlar WHERE name=?", name)
+			if err != nil {
+				return fmt.Errorf("cannot delete file from archive: %v", err)
+			}
 		}
 
 		data, err := fs.Fetch(name)
