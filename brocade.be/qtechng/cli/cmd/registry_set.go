@@ -75,8 +75,8 @@ func registrySet(cmd *cobra.Command, args []string) (err error) {
 
 	if changed {
 		for k, v := range setme {
-			qregistry.Registry[k] = v
 			qregistry.SetRegistry(k, v)
+			qregistry.Registry[k] = v
 		}
 	}
 
