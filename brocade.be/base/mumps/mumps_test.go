@@ -1,6 +1,7 @@
 package mumps
 
 import (
+	"io"
 	"strings"
 	"testing"
 )
@@ -157,4 +158,19 @@ func TestME01(t *testing.T) {
 		t.Errorf("expect: %s %d", expect, len(expect))
 		return
 	}
+}
+
+func TestReader(t *testing.T) {
+	action := "Heloo World"
+	payload := make(map[string]string)
+	reader, _, err := Reader(action, payload)
+	if err != nil {
+		t.Errorf("error: %v", err)
+		return
+	}
+	sb, err := io.ReadAll(reader)
+	s := string(sb)
+
+	t.Errorf("output: %v %v", s, err)
+
 }
