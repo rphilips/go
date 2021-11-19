@@ -35,7 +35,7 @@ func ConvertImageToJP2K(files []string, quality int, tile int) []error {
 		args = append(args, "-define jp2:tilewidth="+stile, "-define jp2:tileheight="+stile)
 		args = append(args, oldFile, newFile)
 
-		cmd := exec.Command("echo", args...)
+		cmd := exec.Command("gm", args...)
 		out, err := cmd.Output()
 		return out, err
 	}
