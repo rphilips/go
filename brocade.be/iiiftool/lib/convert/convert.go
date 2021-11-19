@@ -2,26 +2,44 @@ package convert
 
 import (
 	"fmt"
-	"sync"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	parallel "brocade.be/base/parallel"
 )
 
-func convert(file string, wg *sync.WaitGroup, errors *[]error) {
-	defer wg.Done()
-	// converteer een file en capteer error
-	*errors = append(*errors, fmt.Errorf(file+": error"))
-}
+var formatsAllowed = map[string]bool{".jpg": true, ".jpeg": true, ".tif": true}
 
-// Wrapper for file conversion
-func Run(files []string) error {
-	var errors []error
-	var wg sync.WaitGroup
-	for _, file := range files {
-		wg.Add(1)
-		go convert(file, &wg, &errors)
+// Convert files for IIIF in parallel using `gm` (GraphicsMagick)
+// gm convert -flatten -quality 70 -define jp2:prg=rlcp -define jp2:numrlvls=7
+// -define jp2:tilewidth=256 -define jp2:tileheight=256 s.tif o.jp2
+func ConvertImageToJP2K(files []string, quality int, tile int) []error {
+
+	fn := func(n int) (interface{}, error) {
+		oldFile := files[n]
+		ext := filepath.Ext(oldFile)
+		_, found := formatsAllowed[ext]
+		if !found {
+			return nil, fmt.Errorf("file is not a valid image format: %v", oldFile)
+		}
+
+		newFile := filepath.Base(oldFile)
+		newFile = strings.Replace(newFile, ext, ".jp2", 1)
+		squality := strconv.Itoa(quality)
+		stile := strconv.Itoa(tile)
+
+		args := []string{"convert", "-flatten", "-quality", squality}
+		args = append(args, "-define jp2:prg=rlcp", "-define jp2:numrlvls=7")
+		args = append(args, "-define jp2:tilewidth="+stile, "-define jp2:tileheight="+stile)
+		args = append(args, oldFile, newFile)
+
+		cmd := exec.Command("echo", args...)
+		out, err := cmd.Output()
+		return out, err
 	}
-	wg.Wait()
-	if len(errors) > 0 {
-		return fmt.Errorf("error converting file(s) %s", errors)
-	}
-	return nil
+
+	_, errorlist := parallel.NMap(len(files), -1, fn)
+	return errorlist
 }
