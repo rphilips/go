@@ -7,7 +7,7 @@ import (
 
 func convert(file string, wg *sync.WaitGroup, errors *[]error) {
 	defer wg.Done()
-	// converteer de files en geef errors terug
+	// converteer een file en capteer error
 	*errors = append(*errors, fmt.Errorf(file+": error"))
 }
 
