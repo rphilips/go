@@ -19,6 +19,7 @@ var fileConvertCmd = &cobra.Command{
 	RunE:    fileConvert,
 }
 
+// to do: flags voor conversie parameters
 func init() {
 	fileCmd.AddCommand(fileConvertCmd)
 }
