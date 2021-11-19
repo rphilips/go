@@ -97,7 +97,8 @@ func Store(id identifier.Identifier, files []string) error {
 	h := time.Now()
 	stmt2.Exec(h.Format(time.RFC3339), "modified", user)
 
-	sqlar := func(name string, info os.FileInfo, err error) error {
+	sqlar := func(file string, info os.FileInfo, err error) error {
+		name := filepath.Base(file)
 		if err != nil {
 			return fmt.Errorf("error opening file1: %v", err)
 		}
@@ -118,28 +119,28 @@ func Store(id identifier.Identifier, files []string) error {
 			}
 		}
 
-		data, err := fs.Fetch(name)
+		data, err := fs.Fetch(file)
 
 		if err != nil {
-			return fmt.Errorf("cannot get content of `%s`: %v", name, err)
+			return fmt.Errorf("cannot get content of `%s`: %v", file, err)
 		}
-		mt, err := fs.GetMTime(name)
+		mt, err := fs.GetMTime(file)
 		if err != nil {
-			return fmt.Errorf("cannot get mtime of `%s`: %v", name, err)
+			return fmt.Errorf("cannot get mtime of `%s`: %v", file, err)
 		}
 		utime := time.Now().Format(time.RFC3339)
-		sz, err := fs.GetSize(name)
+		sz, err := fs.GetSize(file)
 		if err != nil {
-			return fmt.Errorf("cannot get size of `%s`: %v", name, err)
+			return fmt.Errorf("cannot get size of `%s`: %v", file, err)
 		}
-		mode, err := fs.GetPerm(name)
+		mode, err := fs.GetPerm(file)
 		if err != nil {
-			return fmt.Errorf("cannot get access permissions of `%s`: %v", name, err)
+			return fmt.Errorf("cannot get access permissions of `%s`: %v", file, err)
 		}
 		mtime := mt.Unix()
 		_, err = stmt1.Exec(name, uint32(mode), mtime, utime, sz, data)
 		if err != nil {
-			return fmt.Errorf("cannot exec: %v", err)
+			return fmt.Errorf("cannot exec stmt1: %v", err)
 		}
 
 		return nil
@@ -147,8 +148,7 @@ func Store(id identifier.Identifier, files []string) error {
 
 	for _, file := range files {
 		info, err := os.Stat(file)
-		basename := filepath.Base(file)
-		sqlar(basename, info, err)
+		sqlar(file, info, err)
 	}
 
 	return nil
