@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"log"
-	"runtime"
 
-	"brocade.be/base/fs"
-	"brocade.be/iiiftool/lib/convert"
+	fs "brocade.be/base/fs"
+	convert "brocade.be/iiiftool/lib/convert"
 	"github.com/spf13/cobra"
 )
 
@@ -20,22 +19,27 @@ var fileConvertCmd = &cobra.Command{
 	RunE:    fileConvert,
 }
 
-// to do: flags voor conversie parameters
+var Fquality int
+var Ftile int
+
 func init() {
 	fileCmd.AddCommand(fileConvertCmd)
+	fileCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
+	fileCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
 
 func fileConvert(cmd *cobra.Command, args []string) error {
 	files := args
-	runtime.GOMAXPROCS(-1)
 	for _, file := range files {
 		if !fs.IsFile(file) {
 			log.Fatalf("iiiftool ERROR: file is not valid: %v", file)
 		}
 	}
-	err := convert.Run(files)
-	if err != nil {
-		log.Fatalf("iiiftool ERROR: error converting: %v", err)
+	err := convert.ConvertImageToJP2K(files, Fquality, Ftile)
+	for _, e := range err {
+		if e != nil {
+			log.Fatalf("iiiftool ERROR: error converting: %v", e)
+		}
 	}
 
 	return nil
