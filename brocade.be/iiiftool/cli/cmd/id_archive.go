@@ -97,7 +97,10 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		path := docman.DocmanID(id)
 		paths[i] = path.Location()
 	}
-	sqlite.Store(id, paths, Fcwd)
+	err = sqlite.Store(id, paths, Fcwd)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
+	}
 
 	return nil
 }
