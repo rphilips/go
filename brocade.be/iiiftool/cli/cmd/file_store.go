@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -45,7 +44,7 @@ func fileStore(cmd *cobra.Command, args []string) error {
 		name := filepath.Base(file)
 		reader, err := os.Open(file)
 		if err != nil {
-			return fmt.Errorf("file is not valid: %v", file)
+			log.Fatalf("iiiftool ERROR: file is not valid: %v", file)
 		}
 		files[name] = reader
 	}
