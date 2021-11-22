@@ -1,8 +1,12 @@
 package docman
 
 import (
+	"bufio"
 	"crypto/md5"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -103,4 +107,41 @@ func getFile(file string) (place string) {
 		return ""
 	}
 	return matches[0]
+}
+
+func (id DocmanID) Reader() (io.Reader, error) {
+	ids := string(id)
+	if strings.HasPrefix(ids, "/docman/") {
+		ids = ids[7:]
+	}
+	location := id.Location()
+	if location != "" {
+		if qfs.IsFile(location) {
+			file, err := os.Open(location)
+			if err == nil {
+				return bufio.NewReader(file), err
+			}
+			if qregistry.Registry["docman-secondary-url"] == "" {
+				return nil, err
+			}
+		}
+	}
+	baseurl := qregistry.Registry["docman-secondary-url"]
+
+	if baseurl == "" {
+		return nil, fmt.Errorf("cannot find docman `%s`", ids)
+	}
+	baseurl = strings.TrimRight(baseurl, "/")
+	if !strings.Contains(baseurl, "://") {
+		baseurl = "https://" + baseurl
+	}
+	url := baseurl + "/docman" + ids
+
+	response, err := http.Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Body, nil
 }
