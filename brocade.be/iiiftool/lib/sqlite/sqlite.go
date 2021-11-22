@@ -29,10 +29,8 @@ func readRow(row *sql.Row) string {
 
 // Given a IIIF identifier and some files
 // store the files in the appropriate SQLite archive
-func Store(id identifier.Identifier, files []string) error {
+func Store(id identifier.Identifier, files []string, cwd bool) error {
 	sqlitefile := id.Location()
-
-	append := fs.Exists(sqlitefile)
 
 	for _, file := range files {
 		if !fs.IsFile(file) {
@@ -40,11 +38,15 @@ func Store(id identifier.Identifier, files []string) error {
 		}
 	}
 
-	path := strings.Split(sqlitefile, osSep)
-	dirname := strings.Join(path[0:(len(path)-1)], osSep)
-	err := fs.Mkdir(dirname, "process")
-	if err != nil {
-		return fmt.Errorf("cannot make dir")
+	if !cwd {
+		path := strings.Split(sqlitefile, osSep)
+		dirname := strings.Join(path[0:(len(path)-1)], osSep)
+		err := fs.Mkdir(dirname, "process")
+		if err != nil {
+			return fmt.Errorf("cannot make dir")
+		}
+	} else {
+		sqlitefile = filepath.Base(sqlitefile)
 	}
 
 	db, err := sql.Open("sqlite", sqlitefile)
@@ -53,6 +55,7 @@ func Store(id identifier.Identifier, files []string) error {
 	}
 	defer db.Close()
 
+	append := fs.Exists(sqlitefile)
 	if !append {
 
 		if _, err = db.Exec(`

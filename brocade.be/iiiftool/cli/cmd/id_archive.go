@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"log"
 	"strings"
 
 	docman "brocade.be/base/docman"
+	mumps "brocade.be/base/mumps"
 	identifier "brocade.be/iiiftool/lib/identifier"
+	sqlite "brocade.be/iiiftool/lib/sqlite"
 
 	"github.com/spf13/cobra"
 )
@@ -30,13 +32,13 @@ var Furlty = ""
 var Fimgty = ""
 var Faccess = ""
 var Fmime = ""
-var qArgs = []string{"mumps", "stream"}
-var paths []string
 
-type mPayload struct {
+type mResponse struct {
 	Identifier string
 	Images     []string
 }
+
+// puur resultaat in --cwd
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
@@ -60,42 +62,42 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 	case "tg":
 		if Fimgty == "" {
-			log.Fatalf("iiiftool ERROR: c-loi requires --urlty flag")
+			log.Fatalf("iiiftool ERROR: tg-loi requires --imgty flag")
 		}
 	}
 
-	qArgs = append(qArgs, "loi="+id.String())
+	payload := make(map[string]string)
+	payload["loi"] = id.String()
 	switch loiType {
 	case "c", "o":
-		qArgs = append(qArgs, "urlty="+Furlty)
+		payload["urlty"] = Furlty
 	case "tg":
-		qArgs = append(qArgs, "imgty="+Fimgty)
+		payload["imgty"] = Fimgty
 	}
 	if Faccess != "" {
-		qArgs = append(qArgs, "access="+Faccess)
+		payload["access"] = Faccess
 	}
 	if Fmime != "" {
-		qArgs = append(qArgs, "mime="+Fmime)
+		payload["mime"] = Fmime
 	}
-	qArgs = append(qArgs, "--action=d %Action^iiisori(.RApayload)")
 
-	// qcmd := exec.Command("qtechng", qArgs...)
-	// out, err := qcmd.Output()
-	// if err != nil {
-	// 	log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
-	// }
-	fmt.Println(qArgs)
-	out := []byte(`{"identifier": "dg:ua:201", "images":["/uact/255909/1.tif","/uact/b6199c/2.tif","/uact/1fed6c/3.tif"]}`)
-	var result mPayload
-	json.Unmarshal([]byte(out), &result)
+	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
+	}
+	out, err := ioutil.ReadAll(oreader)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
+	}
+	var result mResponse
+	json.Unmarshal(out, &result)
+	paths := make([]string, len(result.Images))
 
-	for _, id := range result.Images {
+	for i, id := range result.Images {
 		path := docman.DocmanID(id)
-		paths = append(paths, path.Location())
+		paths[i] = path.Location()
 	}
-	fmt.Println(paths)
-	// iterate over map: get filepath from docman ids, put filepaths in slice
-	// store files in archive
+	sqlite.Store(id, paths, Fcwd)
 
 	return nil
 }

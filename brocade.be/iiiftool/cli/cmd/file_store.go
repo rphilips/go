@@ -25,6 +25,7 @@ var fileStoreCmd = &cobra.Command{
 
 func init() {
 	fileCmd.AddCommand(fileStoreCmd)
+	idArchiveCmd.PersistentFlags().BoolVar(&Fcwd, "cwd", false, "Put result in current work directory")
 }
 
 func fileStore(cmd *cobra.Command, args []string) error {
@@ -34,7 +35,7 @@ func fileStore(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: identifier is missing")
 	}
 
-	err := sqlite.Store(id, args[1:])
+	err := sqlite.Store(id, args[1:], Fcwd)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
 	}
