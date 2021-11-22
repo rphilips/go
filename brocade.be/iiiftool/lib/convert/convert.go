@@ -13,9 +13,8 @@ import (
 var formatsAllowed = map[string]bool{".jpg": true, ".jpeg": true, ".tif": true}
 
 // Convert files for IIIF in parallel using `gm` (GraphicsMagick)
-// gm convert -flatten -quality 70 -define jp2:prg=rlcp -define jp2:numrlvls=7
-// -define jp2:tilewidth=256 -define jp2:tileheight=256 s.tif o.jp2
-func ConvertImageToJP2K(files []string, quality int, tile int) []error {
+// gm convert -flatten -quality 70 -define jp2:prg=rlcp -define jp2:numrlvls=7 -define jp2:tilewidth=256 -define jp2:tileheight=256 s.tif o.jp2
+func ConvertImageToJP2K(files []string, quality int, tile int, cwd string) []error {
 
 	fn := func(n int) (interface{}, error) {
 		oldFile := files[n]
@@ -33,6 +32,9 @@ func ConvertImageToJP2K(files []string, quality int, tile int) []error {
 		args := []string{"convert", "-flatten", "-quality", squality}
 		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
 		args = append(args, "-define", "jp2:tilewidth="+stile, "-define", "jp2:tileheight="+stile)
+		if cwd != "" {
+			newFile = filepath.Join(cwd, newFile)
+		}
 		args = append(args, oldFile, newFile)
 
 		cmd := exec.Command("gm", args...)
@@ -40,6 +42,6 @@ func ConvertImageToJP2K(files []string, quality int, tile int) []error {
 		return newFile, err
 	}
 
-	_, errorlist := parallel.NMap(len(files), -1, fn)
-	return errorlist
+	_, errors := parallel.NMap(len(files), -1, fn)
+	return errors
 }

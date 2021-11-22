@@ -2,14 +2,18 @@ package cmd
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
-	docman "brocade.be/base/docman"
-	mumps "brocade.be/base/mumps"
+	"brocade.be/base/docman"
+	"brocade.be/base/mumps"
+	"brocade.be/base/parallel"
 	identifier "brocade.be/iiiftool/lib/identifier"
-	sqlite "brocade.be/iiiftool/lib/sqlite"
+	"brocade.be/iiiftool/lib/sqlite"
 
 	"github.com/spf13/cobra"
 )
@@ -91,13 +95,71 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 	var result mResponse
 	json.Unmarshal(out, &result)
-	paths := make([]string, len(result.Images))
+	originalStream := make([]io.Reader, len(result.Images))
+	originalfNames := make([]string, len(result.Images))
 
+	empty := true
 	for i, id := range result.Images {
-		path := docman.DocmanID(id)
-		paths[i] = path.Location()
+		docid := docman.DocmanID(id)
+		reader, err := docid.Reader()
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
+		}
+		empty = false
+		originalStream[i] = reader
+		originalfNames[i] = filepath.Base(id)
 	}
-	err = sqlite.Store(id, paths, Fcwd)
+	if empty {
+		log.Fatalf("iiiftool ERROR: no docman images found")
+	}
+
+	convertedStream := make([]io.Reader, len(originalStream))
+	convertedfNames := make([]string, len(originalStream))
+
+	fn := func(n int) (interface{}, error) {
+		old := originalStream[n]
+		// to do: parameters as flags?
+		args := []string{"convert", "-flatten", "-quality", "70"}
+		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
+		args = append(args, "-define", "jp2:tilewidth=256", "-define", "jp2:tileheight=256")
+		// Specify input_file as - for standard input, output_file as - for standard output.
+		// https://www.math.arizona.edu/~swig/documentation/ImgCvt/ImageMagick/www/convert.html
+		args = append(args, "-", "-")
+
+		cmd := exec.Command("gm", args...)
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return nil, err
+		}
+		out, err := cmd.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+		_, err = cmd.StderrPipe()
+		if err != nil {
+			return nil, err
+		}
+		cmd.Start()
+
+		go func() {
+			defer stdin.Close()
+			io.Copy(stdin, old)
+		}()
+		convertedStream[n] = out
+		ext := filepath.Ext(originalfNames[n])
+		convertedfNames[n] = strings.TrimSuffix(originalfNames[n], ext) + ".jp2"
+		return out, nil
+	}
+
+	parallel.NMap(len(originalStream), -1, fn)
+
+	files := make(map[string]io.Reader, len(convertedStream))
+
+	for i, file := range convertedfNames {
+		files[file] = convertedStream[i]
+	}
+
+	err = sqlite.Store(id, files, Fcwd)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 	}
