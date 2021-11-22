@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	fs "brocade.be/base/fs"
 	identifier "brocade.be/iiiftool/lib/identifier"
 	"brocade.be/iiiftool/lib/sqlite"
 
@@ -42,12 +41,13 @@ func fileStore(cmd *cobra.Command, args []string) error {
 
 	files := make(map[string]io.Reader, len(args[1:]))
 
-	for i, file := range args[1:] {
-		if !fs.IsFile(file) {
+	for _, file := range args[1:] {
+		name := filepath.Base(file)
+		reader, err := os.Open(file)
+		if err != nil {
 			return fmt.Errorf("file is not valid: %v", file)
 		}
-		name := filepath.Base(file)
-		files[name] = os.Open(file)
+		files[name] = reader
 	}
 
 	err := sqlite.Store(id, files, Fcwd)
