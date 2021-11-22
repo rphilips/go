@@ -1,7 +1,10 @@
 package docman
 
 import (
+	"io"
 	"testing"
+
+	qfs "brocade.be/base/fs"
 )
 
 func TestD1(t *testing.T) {
@@ -35,4 +38,29 @@ func TestD3(t *testing.T) {
 		t.Errorf("id %s\ncalc   %s\nexpect %s", id, calc, expect)
 		return
 	}
+}
+
+func TestS1(t *testing.T) {
+	ids := "/uakaga/104722/1.pdf"
+	id := DocmanID(ids)
+	calc := id.Location()
+	expect := ""
+	if calc != expect {
+		t.Errorf("id %s\ncalc   %s\nexpect %s", id, calc, expect)
+		return
+	}
+
+	reader, err := id.Reader()
+	if reader != nil {
+		x, _ := io.ReadAll(reader)
+		qfs.Store("/home/rphilips/Desktop/test.pdf", x, "qtech")
+		t.Errorf("found: %v", x)
+	}
+	if err != nil {
+		if err.Error() != "cannot find docman `/uakaga/104722/1.pdf`" {
+			t.Errorf("err: %v", err)
+			return
+		}
+	}
+
 }
