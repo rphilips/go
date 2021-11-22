@@ -2,12 +2,18 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
-	docman "brocade.be/base/docman"
+	"brocade.be/base/docman"
+	"brocade.be/base/mumps"
+	"brocade.be/base/parallel"
 	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/sqlite"
 
 	"github.com/spf13/cobra"
 )
@@ -30,13 +36,13 @@ var Furlty = ""
 var Fimgty = ""
 var Faccess = ""
 var Fmime = ""
-var qArgs = []string{"mumps", "stream"}
-var paths []string
 
-type mPayload struct {
+type mResponse struct {
 	Identifier string
 	Images     []string
 }
+
+// puur resultaat in --cwd
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
@@ -60,42 +66,103 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 	case "tg":
 		if Fimgty == "" {
-			log.Fatalf("iiiftool ERROR: c-loi requires --urlty flag")
+			log.Fatalf("iiiftool ERROR: tg-loi requires --imgty flag")
 		}
 	}
 
-	qArgs = append(qArgs, "loi="+id.String())
+	payload := make(map[string]string)
+	payload["loi"] = id.String()
 	switch loiType {
 	case "c", "o":
-		qArgs = append(qArgs, "urlty="+Furlty)
+		payload["urlty"] = Furlty
 	case "tg":
-		qArgs = append(qArgs, "imgty="+Fimgty)
+		payload["imgty"] = Fimgty
 	}
 	if Faccess != "" {
-		qArgs = append(qArgs, "access="+Faccess)
+		payload["access"] = Faccess
 	}
 	if Fmime != "" {
-		qArgs = append(qArgs, "mime="+Fmime)
+		payload["mime"] = Fmime
 	}
-	qArgs = append(qArgs, "--action=d %Action^iiisori(.RApayload)")
 
-	// qcmd := exec.Command("qtechng", qArgs...)
-	// out, err := qcmd.Output()
-	// if err != nil {
-	// 	log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
-	// }
-	fmt.Println(qArgs)
-	out := []byte(`{"identifier": "dg:ua:201", "images":["/uact/255909/1.tif","/uact/b6199c/2.tif","/uact/1fed6c/3.tif"]}`)
-	var result mPayload
-	json.Unmarshal([]byte(out), &result)
-
-	for _, id := range result.Images {
-		path := docman.DocmanID(id)
-		paths = append(paths, path.Location())
+	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
 	}
-	fmt.Println(paths)
-	// iterate over map: get filepath from docman ids, put filepaths in slice
-	// store files in archive
+	out, err := ioutil.ReadAll(oreader)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
+	}
+	var result mResponse
+	json.Unmarshal(out, &result)
+	originalStream := make([]io.Reader, len(result.Images))
+	originalfNames := make([]string, len(result.Images))
+
+	empty := true
+	for i, id := range result.Images {
+		docid := docman.DocmanID(id)
+		reader, err := docid.Reader()
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
+		}
+		empty = false
+		originalStream[i] = reader
+		originalfNames[i] = filepath.Base(id)
+	}
+	if empty {
+		log.Fatalf("iiiftool ERROR: no docman images found")
+	}
+
+	convertedStream := make([]io.Reader, len(originalStream))
+	convertedfNames := make([]string, len(originalStream))
+
+	fn := func(n int) (interface{}, error) {
+		old := originalStream[n]
+		// to do: parameters as flags?
+		args := []string{"convert", "-flatten", "-quality", "70"}
+		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
+		args = append(args, "-define", "jp2:tilewidth=256", "-define", "jp2:tileheight=256")
+		// Specify input_file as - for standard input, output_file as - for standard output.
+		// https://www.math.arizona.edu/~swig/documentation/ImgCvt/ImageMagick/www/convert.html
+		args = append(args, "-", "-")
+
+		cmd := exec.Command("gm", args...)
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return nil, err
+		}
+		out, err := cmd.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+		_, err = cmd.StderrPipe()
+		if err != nil {
+			return nil, err
+		}
+		cmd.Start()
+
+		go func() {
+			defer stdin.Close()
+			io.Copy(stdin, old)
+		}()
+		convertedStream[n] = out
+		ext := filepath.Ext(originalfNames[n])
+		convertedfNames[n] = strings.TrimSuffix(originalfNames[n], ext) + ".jp2"
+		return out, nil
+	}
+
+	parallel.NMap(len(originalStream), -1, fn)
+
+	files := make(map[string]io.Reader, len(convertedStream))
+
+	for i, file := range convertedfNames {
+		files[file] = convertedStream[i]
+	}
+
+	err = sqlite.Store(id, files, Fcwd)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
+	}
 
 	return nil
 }

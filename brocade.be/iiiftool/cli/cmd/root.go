@@ -37,6 +37,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&Funhex, "unhex", false, "Unhexify the arguments starting with `.`")
+	rootCmd.PersistentFlags().StringVar(&Fcwd, "cwd", "", "Working directory")
 }
 
 //Fenv environment variables
@@ -47,6 +48,9 @@ var Fsilent bool
 
 // Funhex decides if the args are to be unhexed (if starting with `.`)
 var Funhex bool
+
+// Fcwd is the working directory for the command
+var Fcwd string
 
 func preRun(cmd *cobra.Command, args []string) (err error) {
 

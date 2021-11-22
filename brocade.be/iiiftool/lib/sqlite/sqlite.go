@@ -3,7 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"os"
+	"io"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
@@ -27,24 +28,23 @@ func readRow(row *sql.Row) string {
 	return data
 }
 
-// Given a IIIF identifier and some files
-// store the files in the appropriate SQLite archive
-func Store(id identifier.Identifier, files []string) error {
+// Given a IIIF identifier and some io.Readers
+// store the contents in the appropriate SQLite archive
+func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) error {
 	sqlitefile := id.Location()
 
-	append := fs.Exists(sqlitefile)
-
-	for _, file := range files {
-		if !fs.IsFile(file) {
-			return fmt.Errorf("file is not valid: %v", file)
+	if cwd == "" {
+		path := strings.Split(sqlitefile, osSep)
+		dirname := strings.Join(path[0:(len(path)-1)], osSep)
+		err := fs.Mkdir(dirname, "process")
+		if err != nil {
+			return fmt.Errorf("cannot make dir")
 		}
-	}
-
-	path := strings.Split(sqlitefile, osSep)
-	dirname := strings.Join(path[0:(len(path)-1)], osSep)
-	err := fs.Mkdir(dirname, "process")
-	if err != nil {
-		return fmt.Errorf("cannot make dir")
+	} else {
+		if !fs.IsDir(cwd) {
+			return fmt.Errorf("cwd is not valied")
+		}
+		sqlitefile = filepath.Join(cwd, filepath.Base(sqlitefile))
 	}
 
 	db, err := sql.Open("sqlite", sqlitefile)
@@ -53,6 +53,7 @@ func Store(id identifier.Identifier, files []string) error {
 	}
 	defer db.Close()
 
+	append := fs.Exists(sqlitefile)
 	if !append {
 
 		if _, err = db.Exec(`
@@ -97,15 +98,7 @@ func Store(id identifier.Identifier, files []string) error {
 	h := time.Now()
 	stmt2.Exec(h.Format(time.RFC3339), "modified", user)
 
-	sqlar := func(file string, info os.FileInfo, err error) error {
-		name := filepath.Base(file)
-		if err != nil {
-			return fmt.Errorf("error opening file1: %v", err)
-		}
-		if info.IsDir() {
-			return fmt.Errorf("error opening file2: %v", err)
-		}
-
+	sqlar := func(name string, filestream io.Reader) error {
 		row := db.QueryRow("SELECT name FROM sqlar WHERE name =?", name)
 		if err != nil {
 			return fmt.Errorf("cannot check whether file already exists in archive: %v", err)
@@ -119,26 +112,23 @@ func Store(id identifier.Identifier, files []string) error {
 			}
 		}
 
-		data, err := fs.Fetch(file)
+		data, _ := ioutil.ReadAll(filestream)
 
-		if err != nil {
-			return fmt.Errorf("cannot get content of `%s`: %v", file, err)
-		}
-		mt, err := fs.GetMTime(file)
-		if err != nil {
-			return fmt.Errorf("cannot get mtime of `%s`: %v", file, err)
-		}
-		utime := time.Now().Format(time.RFC3339)
-		sz, err := fs.GetSize(file)
-		if err != nil {
-			return fmt.Errorf("cannot get size of `%s`: %v", file, err)
-		}
-		mode, err := fs.GetPerm(file)
-		if err != nil {
-			return fmt.Errorf("cannot get access permissions of `%s`: %v", file, err)
-		}
-		mtime := mt.Unix()
-		_, err = stmt1.Exec(name, uint32(mode), mtime, utime, sz, data)
+		// mt, err := fs.GetMTime(file)
+		// if err != nil {
+		// 	return fmt.Errorf("cannot get mtime of `%s`: %v", file, err)
+		// }
+		// utime := time.Now().Format(time.RFC3339)
+		// sz, err := fs.GetSize(file)
+		// if err != nil {
+		// 	return fmt.Errorf("cannot get size of `%s`: %v", file, err)
+		// }
+		// mode, err := fs.GetPerm(file)
+		// if err != nil {
+		// 	return fmt.Errorf("cannot get access permissions of `%s`: %v", file, err)
+		// }
+		// mtime := mt.Unix()
+		_, err = stmt1.Exec(name, 1, 2, "test", 1, data)
 		if err != nil {
 			return fmt.Errorf("cannot exec stmt1: %v", err)
 		}
@@ -146,9 +136,8 @@ func Store(id identifier.Identifier, files []string) error {
 		return nil
 	}
 
-	for _, file := range files {
-		info, err := os.Stat(file)
-		sqlar(file, info, err)
+	for name, filestream := range files {
+		sqlar(name, filestream)
 	}
 
 	return nil
