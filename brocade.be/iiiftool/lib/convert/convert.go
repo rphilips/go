@@ -26,18 +26,18 @@ func ConvertImageToJP2K(files []string, quality int, tile int) []error {
 		}
 
 		newFile := filepath.Base(oldFile)
-		newFile = strings.Replace(newFile, ext, ".jp2", 1)
+		newFile = strings.TrimSuffix(newFile, ext) + ".jp2"
 		squality := strconv.Itoa(quality)
 		stile := strconv.Itoa(tile)
 
 		args := []string{"convert", "-flatten", "-quality", squality}
-		args = append(args, "-define jp2:prg=rlcp", "-define jp2:numrlvls=7")
-		args = append(args, "-define jp2:tilewidth="+stile, "-define jp2:tileheight="+stile)
+		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
+		args = append(args, "-define", "jp2:tilewidth="+stile, "-define", "jp2:tileheight="+stile)
 		args = append(args, oldFile, newFile)
 
 		cmd := exec.Command("gm", args...)
-		out, err := cmd.Output()
-		return out, err
+		_, err := cmd.Output()
+		return newFile, err
 	}
 
 	_, errorlist := parallel.NMap(len(files), -1, fn)

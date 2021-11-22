@@ -27,10 +27,10 @@ func init() {
 
 func idLocate(cmd *cobra.Command, args []string) error {
 	id := identifier.Identifier(args[0])
-
 	if id.String() == "" {
-		log.Fatalf("argument is empty")
+		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
+
 	if !Freverse {
 		fmt.Println(id.Location())
 	} else {

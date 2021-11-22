@@ -99,7 +99,6 @@ func getFile(file string) (place string) {
 	}
 	pattern := file + ".*"
 	matches, _ := filepath.Glob(pattern)
-	fmt.Println(matches)
 	if len(matches) == 0 {
 		return ""
 	}
