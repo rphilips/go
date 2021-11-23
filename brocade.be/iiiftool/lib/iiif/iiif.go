@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"brocade.be/base/mumps"
-	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/identifier"
 )
 
 type mResponse struct {

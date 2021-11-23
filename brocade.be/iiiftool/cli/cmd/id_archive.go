@@ -9,7 +9,7 @@ import (
 
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
-	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/identifier"
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
@@ -35,11 +35,6 @@ var Furlty = ""
 var Fimgty = ""
 var Faccess = ""
 var Fmime = ""
-
-type mResponse struct {
-	Identifier string
-	Images     []string
-}
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)

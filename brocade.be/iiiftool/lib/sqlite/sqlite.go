@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	fs "brocade.be/base/fs"
-	registry "brocade.be/base/registry"
-	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/base/fs"
+	"brocade.be/base/registry"
+	"brocade.be/iiiftool/lib/identifier"
 	"brocade.be/iiiftool/lib/util"
 
 	_ "modernc.org/sqlite"

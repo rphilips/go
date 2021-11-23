@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	parallel "brocade.be/base/parallel"
+	"brocade.be/base/parallel"
 )
 
 var formatsAllowed = map[string]bool{".jpg": true, ".jpeg": true, ".tif": true}
