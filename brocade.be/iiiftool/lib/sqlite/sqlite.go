@@ -12,21 +12,13 @@ import (
 	fs "brocade.be/base/fs"
 	registry "brocade.be/base/registry"
 	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/util"
 
 	_ "modernc.org/sqlite"
 )
 
 var osSep = registry.Registry["os-sep"]
 var user = registry.Registry["user-default"]
-
-func readRow(row *sql.Row) string {
-	data := ""
-	err := row.Scan(&data)
-	if err != nil {
-		return data
-	}
-	return data
-}
 
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
@@ -103,7 +95,7 @@ func Store(id identifier.Identifier, filestream map[string]io.Reader, cwd string
 			return fmt.Errorf("cannot check whether file already exists in archive: %v", err)
 		}
 
-		update := readRow(row)
+		update := util.ReadRow(row)
 		if update != "" {
 			_, err = db.Exec("DELETE FROM sqlar WHERE name=?", name)
 			if err != nil {

@@ -1,6 +1,9 @@
 package util
 
-import "strconv"
+import (
+	"database/sql"
+	"strconv"
+)
 
 // Function that takes a string as argument
 // and returns the reverse of string.
@@ -22,4 +25,14 @@ func GmConvertArgs(quality int, tile int) []string {
 	// https://www.math.arizona.edu/~swig/documentation/ImgCvt/ImageMagick/www/convert.html
 	args = append(args, "-", "-")
 	return args
+}
+
+// Function that reads a sql.Row
+func ReadRow(row *sql.Row) string {
+	data := ""
+	err := row.Scan(&data)
+	if err != nil {
+		return data
+	}
+	return data
 }
