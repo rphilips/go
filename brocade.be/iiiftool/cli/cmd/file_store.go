@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"io"
 	"log"
+	"os"
+	"path/filepath"
 
 	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/sqlite"
 
 	"github.com/spf13/cobra"
 )
@@ -34,15 +38,21 @@ func fileStore(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: identifier is missing")
 	}
 
-	// err := sqlite.Store(id, args[1:], Fcwd)
-	// for _, file := range files {
-	// 	if !fs.IsFile(file) {
-	// 		return fmt.Errorf("file is not valid: %v", file)
-	// 	}
-	// }
-	// if err != nil {
-	// 	log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
-	// }
+	files := make(map[string]io.Reader, len(args[1:]))
+
+	for _, file := range args[1:] {
+		name := filepath.Base(file)
+		reader, err := os.Open(file)
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: file is not valid: %v", file)
+		}
+		files[name] = reader
+	}
+
+	err := sqlite.Store(id, files, Fcwd)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
+	}
 
 	return nil
 }
