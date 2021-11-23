@@ -21,8 +21,8 @@ var fileConvertCmd = &cobra.Command{
 
 func init() {
 	fileCmd.AddCommand(fileConvertCmd)
-	fileCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
-	fileCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
+	fileConvertCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
+	fileConvertCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
 
 func fileConvert(cmd *cobra.Command, args []string) error {

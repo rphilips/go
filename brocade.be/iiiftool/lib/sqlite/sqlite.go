@@ -30,7 +30,7 @@ func readRow(row *sql.Row) string {
 
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
-func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) error {
+func Store(id identifier.Identifier, filestream map[string]io.Reader, cwd string) error {
 	sqlitefile := id.Location()
 
 	if cwd == "" {
@@ -97,7 +97,7 @@ func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) err
 	h := time.Now()
 	stmt2.Exec(h.Format(time.RFC3339), "modified", user)
 
-	sqlar := func(name string, filestream io.Reader) error {
+	sqlar := func(name string, stream io.Reader) error {
 		row := db.QueryRow("SELECT name FROM sqlar WHERE name =?", name)
 		if err != nil {
 			return fmt.Errorf("cannot check whether file already exists in archive: %v", err)
@@ -111,7 +111,7 @@ func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) err
 			}
 		}
 
-		data, _ := ioutil.ReadAll(filestream)
+		data, _ := ioutil.ReadAll(stream)
 		mtime := time.Now().Unix()
 		mode := 0777
 		_, err := stmt1.Exec(name, mode, mtime, len(data), data)
@@ -121,8 +121,8 @@ func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) err
 		return nil
 	}
 
-	for name, filestream := range files {
-		err = sqlar(name, filestream)
+	for name, stream := range filestream {
+		err = sqlar(name, stream)
 		if err != nil {
 			return err
 		}
