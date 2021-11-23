@@ -19,9 +19,6 @@ var fileConvertCmd = &cobra.Command{
 	RunE:    fileConvert,
 }
 
-var Fquality int
-var Ftile int
-
 func init() {
 	fileCmd.AddCommand(fileConvertCmd)
 	fileCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")

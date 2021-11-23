@@ -7,6 +7,7 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"brocade.be/base/docman"
@@ -50,6 +51,8 @@ func init() {
 	idArchiveCmd.PersistentFlags().StringVar(&Fimgty, "imgty", "", "Image type")
 	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
+	fileCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
+	fileCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
@@ -118,10 +121,11 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	fn := func(n int) (interface{}, error) {
 		old := originalStream[n]
-		// to do: parameters as flags?
-		args := []string{"convert", "-flatten", "-quality", "70"}
+		squality := strconv.Itoa(Fquality)
+		stile := strconv.Itoa(Ftile)
+		args := []string{"convert", "-flatten", "-quality", squality}
 		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
-		args = append(args, "-define", "jp2:tilewidth=256", "-define", "jp2:tileheight=256")
+		args = append(args, "-define", "jp2:tilewidth="+stile, "-define", "jp2:tileheight="+stile)
 		// Specify input_file as - for standard input, output_file as - for standard output.
 		// https://www.math.arizona.edu/~swig/documentation/ImgCvt/ImageMagick/www/convert.html
 		args = append(args, "-", "-")

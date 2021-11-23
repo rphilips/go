@@ -52,6 +52,12 @@ var Funhex bool
 // Fcwd is the working directory for the command
 var Fcwd string
 
+// Fquality is the quality parameter for image conversion
+var Fquality int
+
+// Ftile is the tiling parameter for image conversion
+var Ftile int
+
 func preRun(cmd *cobra.Command, args []string) (err error) {
 
 	if len(Fenv) != 0 {
