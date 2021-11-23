@@ -60,8 +60,7 @@ func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) err
 		CREATE TABLE sqlar (
 			name TEXT PRIMARY KEY,
 			mode INT,
-  			mtime INT,
-			utime TEXT,
+			mtime INT,
   			sz INT,
   			data BLOB
 		);`); err != nil {
@@ -78,7 +77,7 @@ func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) err
 		}
 	}
 
-	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, utime, sz, data) Values($1,$2,$3,$4,$5,$6)")
+	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, sz, data) Values($1,$2,$3,$4,$5)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert1: %v", err)
 	}
@@ -113,31 +112,20 @@ func Store(id identifier.Identifier, files map[string]io.Reader, cwd string) err
 		}
 
 		data, _ := ioutil.ReadAll(filestream)
-
-		// mt, err := fs.GetMTime(file)
-		// if err != nil {
-		// 	return fmt.Errorf("cannot get mtime of `%s`: %v", file, err)
-		// }
-		// utime := time.Now().Format(time.RFC3339)
-		// sz, err := fs.GetSize(file)
-		// if err != nil {
-		// 	return fmt.Errorf("cannot get size of `%s`: %v", file, err)
-		// }
-		// mode, err := fs.GetPerm(file)
-		// if err != nil {
-		// 	return fmt.Errorf("cannot get access permissions of `%s`: %v", file, err)
-		// }
-		// mtime := mt.Unix()
-		_, err = stmt1.Exec(name, 1, 2, "test", 1, data)
+		mtime := time.Now().Unix()
+		mode := 0777
+		_, err := stmt1.Exec(name, mode, mtime, len(data), data)
 		if err != nil {
 			return fmt.Errorf("cannot exec stmt1: %v", err)
 		}
-
 		return nil
 	}
 
 	for name, filestream := range files {
-		sqlar(name, filestream)
+		err = sqlar(name, filestream)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
