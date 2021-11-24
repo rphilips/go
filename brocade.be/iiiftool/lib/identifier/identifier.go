@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	util "brocade.be/iiiftool/lib/util"
+	"brocade.be/iiiftool/lib/util"
 
-	registry "brocade.be/base/registry"
+	"brocade.be/base/registry"
 )
 
 type Identifier string

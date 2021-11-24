@@ -1,19 +1,18 @@
 package cmd
 
 import (
-	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"brocade.be/base/docman"
-	"brocade.be/base/mumps"
 	"brocade.be/base/parallel"
-	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/sqlite"
+	"brocade.be/iiiftool/lib/util"
 
 	"github.com/spf13/cobra"
 )
@@ -37,22 +36,18 @@ var Fimgty = ""
 var Faccess = ""
 var Fmime = ""
 
-type mResponse struct {
-	Identifier string
-	Images     []string
-}
-
-// puur resultaat in --cwd
-
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
 	idArchiveCmd.PersistentFlags().StringVar(&Furlty, "urlty", "", "URL type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fimgty, "imgty", "", "Image type")
 	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
+	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
+	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
+	// verify input
 	id := identifier.Identifier(args[0])
 	if id.String() == "" {
 		log.Fatalf("iiiftool ERROR: argument is empty")
@@ -70,31 +65,13 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	payload := make(map[string]string)
-	payload["loi"] = id.String()
-	switch loiType {
-	case "c", "o":
-		payload["urlty"] = Furlty
-	case "tg":
-		payload["imgty"] = Fimgty
-	}
-	if Faccess != "" {
-		payload["access"] = Faccess
-	}
-	if Fmime != "" {
-		payload["mime"] = Fmime
+	// harvest IIIF metadata from MUMPS
+	result, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
-	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
-	if err != nil {
-		log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
-	}
-	out, err := ioutil.ReadAll(oreader)
-	if err != nil {
-		log.Fatalf("iiiftool ERROR: mumps error:\n%s", err)
-	}
-	var result mResponse
-	json.Unmarshal(out, &result)
+	// get file contents from docman ids
 	originalStream := make([]io.Reader, len(result.Images))
 	originalfNames := make([]string, len(result.Images))
 
@@ -113,19 +90,13 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: no docman images found")
 	}
 
+	// convert file contents from TIFF/JPG to JP2K
 	convertedStream := make([]io.Reader, len(originalStream))
 	convertedfNames := make([]string, len(originalStream))
 
 	fn := func(n int) (interface{}, error) {
 		old := originalStream[n]
-		// to do: parameters as flags?
-		args := []string{"convert", "-flatten", "-quality", "70"}
-		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
-		args = append(args, "-define", "jp2:tilewidth=256", "-define", "jp2:tileheight=256")
-		// Specify input_file as - for standard input, output_file as - for standard output.
-		// https://www.math.arizona.edu/~swig/documentation/ImgCvt/ImageMagick/www/convert.html
-		args = append(args, "-", "-")
-
+		args := util.GmConvertArgs(Fquality, Ftile)
 		cmd := exec.Command("gm", args...)
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
@@ -153,13 +124,13 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	parallel.NMap(len(originalStream), -1, fn)
 
-	files := make(map[string]io.Reader, len(convertedStream))
-
+	// store file contents in SQLite archive
+	filestream := make(map[string]io.Reader, len(convertedStream))
 	for i, file := range convertedfNames {
-		files[file] = convertedStream[i]
+		filestream[file] = convertedStream[i]
 	}
 
-	err = sqlite.Store(id, files, Fcwd)
+	err = sqlite.Store(id, filestream, Fcwd)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 	}
