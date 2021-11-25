@@ -50,18 +50,20 @@ func ReadRows(rows *sql.Rows) ([]interface{}, error) {
 	}
 
 	for rows.Next() {
-		data := make([]interface{}, len(columns))
 
-		for i := range columns {
-			var empty interface{}
-			data[i] = &empty
-		}
-		err := rows.Scan(data...)
+		data := make([]*interface{}, len(columns))
+		err := rows.Scan(&data[0], &data[1], &data[2])
 		if err != nil {
 			return result, err
 		}
 
-		result = append(result, data)
+		values := make([]interface{}, 0)
+
+		for _, item := range data {
+			values = append(values, *item)
+		}
+
+		result = append(result, values)
 	}
 	if err := rows.Err(); err != nil {
 		return result, err
