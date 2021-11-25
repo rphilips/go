@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -172,7 +173,7 @@ func Store(sqlitefile string,
 }
 
 // Given a SQLite archive and a table name show the contents of that table
-func Inspect(sqlitefile string, table string) ([]interface{}, error) {
+func Inspect2(sqlitefile string, table string) ([]interface{}, error) {
 
 	result := make([]interface{}, 0)
 	db, err := sql.Open("sqlite", sqlitefile)
@@ -187,8 +188,27 @@ func Inspect(sqlitefile string, table string) ([]interface{}, error) {
 	}
 	defer rows.Close()
 	if err != nil {
-		return result, fmt.Errorf("cannot open file: %v", err)
+		return result, fmt.Errorf("cannot inspect file: %v", err)
 	}
 
 	return util.ReadRows(rows)
+}
+
+// Given a SQLite archive and a table name show the contents of that table
+// version with sqlite3
+func Inspect(sqlitefile string, table string) (interface{}, error) {
+
+	query := "SELECT * FROM " + table
+	if table == "sqlar" {
+		query = "SELECT name, mode, mtime, sz FROM sqlar"
+	}
+
+	cmd := exec.Command("sqlite3", sqlitefile, query, "-header")
+	out, err := cmd.Output()
+
+	if err != nil {
+		return "", fmt.Errorf("cannot inspect file %v: %s", sqlitefile, err)
+	}
+
+	return string(out), nil
 }
