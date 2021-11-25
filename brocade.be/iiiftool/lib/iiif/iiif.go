@@ -10,6 +10,8 @@ import (
 )
 
 type mResponse struct {
+	Digest     string
+	Test       string
 	Identifier string
 	Images     []string
 }

@@ -130,7 +130,9 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		filestream[file] = convertedStream[i]
 	}
 
-	err = sqlite.Store(id, filestream, Fcwd)
+	sqlitefile := id.Location(result.Digest)
+
+	err = sqlite.Store(id, sqlitefile, filestream, Fcwd)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 	}

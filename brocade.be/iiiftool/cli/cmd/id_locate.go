@@ -10,19 +10,19 @@ import (
 )
 
 var idLocateCmd = &cobra.Command{
-	Use:     "locate",
-	Short:   "Locate a IIIF identifier",
-	Long:    "Given a IIIF identifier locate the appropriate SQLite filepath",
-	Args:    cobra.ExactArgs(1),
-	Example: `iiiftool id locate dg:ua:1`,
-	RunE:    idLocate,
+	Use:   "locate",
+	Short: "Locate a IIIF identifier",
+	Long: `Given a IIIF identifier formulate an appropriate SQLite filepath.
+	You can choose a digest to use for generating the path,
+	or have the system generate it from scratch`,
+	Args: cobra.MinimumNArgs(1),
+	Example: `iiiftool id locate dg:ua:1
+	iiiftool id locate dg:ua:1 a42f98d253ea3dd019de07870862cbdc62d6077c`,
+	RunE: idLocate,
 }
-
-var Freverse bool
 
 func init() {
 	idCmd.AddCommand(idLocateCmd)
-	idLocateCmd.PersistentFlags().BoolVar(&Freverse, "reverse", false, "Reconstruct the IIIF identifier from the filepath")
 }
 
 func idLocate(cmd *cobra.Command, args []string) error {
@@ -31,10 +31,11 @@ func idLocate(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
 
-	if !Freverse {
-		fmt.Println(id.Location())
-	} else {
-		fmt.Println(identifier.ReverseLocation(args[0]))
+	if len(args) < 2 {
+		args = append(args, "")
 	}
+	digest := args[1]
+
+	fmt.Println(id.Location(digest))
 	return nil
 }
