@@ -66,17 +66,17 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 
 	// harvest IIIF metadata from MUMPS
-	result, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime)
+	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
 	// get file contents from docman ids
-	originalStream := make([]io.Reader, len(result.Images))
-	originalfNames := make([]string, len(result.Images))
+	originalStream := make([]io.Reader, len(mResponse.Images))
+	originalfNames := make([]string, len(mResponse.Images))
 
 	empty := true
-	for i, id := range result.Images {
+	for i, id := range mResponse.Images {
 		docid := docman.DocmanID(id)
 		reader, err := docid.Reader()
 		if err != nil {
@@ -130,9 +130,11 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		filestream[file] = convertedStream[i]
 	}
 
-	sqlitefile := id.Location(result.Digest)
+	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
-	err = sqlite.Store(id, sqlitefile, filestream, Fcwd)
+	// to do: identifier vanuit de MUMPS ook in sqlite zetten!
+
+	err = sqlite.Store(sqlitefile, filestream, Fcwd, mResponse)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 	}

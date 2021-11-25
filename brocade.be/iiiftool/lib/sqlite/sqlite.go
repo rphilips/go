@@ -11,9 +11,8 @@ import (
 
 	"brocade.be/base/fs"
 	"brocade.be/base/registry"
-	"brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/util"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -22,7 +21,10 @@ var user = registry.Registry["qtechng-user"]
 
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
-func Store(id identifier.Identifier, sqlitefile string, filestream map[string]io.Reader, cwd string) error {
+func Store(sqlitefile string,
+	filestream map[string]io.Reader,
+	cwd string,
+	mResponse iiif.MResponse) error {
 
 	if cwd == "" {
 		path := strings.Split(sqlitefile, osSep)
@@ -59,12 +61,13 @@ func Store(id identifier.Identifier, sqlitefile string, filestream map[string]io
 		}
 
 		if _, err = db.Exec(`
-		CREATE TABLE info (
-			value TEXT PRIMARY KEY,
-			label TEXT,
+		CREATE TABLE admin (
+			key INTEGER PRIMARY KEY AUTOINCREMENT,
+			time TEXT,
+			action TEXT,
 			user TEXT
 		);`); err != nil {
-			return fmt.Errorf("cannot create table info: %v", err)
+			return fmt.Errorf("cannot create table admin: %v", err)
 		}
 
 		if _, err = db.Exec(`
@@ -73,7 +76,17 @@ func Store(id identifier.Identifier, sqlitefile string, filestream map[string]io
 			original_name TEXT,
 			name TEXT
 		);`); err != nil {
-			return fmt.Errorf("cannot create table file: %v", err)
+			return fmt.Errorf("cannot create table files: %v", err)
+		}
+
+		if _, err = db.Exec(`
+		CREATE TABLE meta (
+			key INTEGER PRIMARY KEY AUTOINCREMENT,
+			identifier TEXT,
+			imgloi TEXT,
+			iiifsys TEXT
+		);`); err != nil {
+			return fmt.Errorf("cannot create table meta: %v", err)
 		}
 	}
 
@@ -83,7 +96,7 @@ func Store(id identifier.Identifier, sqlitefile string, filestream map[string]io
 	}
 	defer stmt1.Close()
 
-	stmt2, err := db.Prepare("INSERT INTO info (value, label, user) Values($1,$2,$3)")
+	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert2: %v", err)
 	}
@@ -91,17 +104,24 @@ func Store(id identifier.Identifier, sqlitefile string, filestream map[string]io
 
 	if !append {
 		h := time.Now()
-		stmt2.Exec(h.Format(time.RFC3339), "created", user)
-		stmt2.Exec(id.String(), "identifier", user)
+		_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user)
 	}
 	h := time.Now()
-	stmt2.Exec(h.Format(time.RFC3339), "modified", user)
+	stmt2.Exec(nil, h.Format(time.RFC3339), "modified", user)
 
 	stmt3, err := db.Prepare("INSERT INTO files (key, original_name, name) Values($1,$2,$3)")
 	if err != nil {
-		return fmt.Errorf("cannot prepare insert2: %v", err)
+		return fmt.Errorf("cannot prepare insert3: %v", err)
 	}
 	defer stmt3.Close()
+
+	stmt4, err := db.Prepare("INSERT INTO meta (key, identifier, iiifsys, imgloi) Values($1,$2,$3)")
+	if err != nil {
+		return fmt.Errorf("cannot prepare insert4: %v", err)
+	}
+	defer stmt4.Close()
+
+	stmt4.Exec(nil, mResponse.Identifier, mResponse.Iiifsys, mResponse.Imgloi)
 
 	sqlar := func(originalName string, name string, stream io.Reader) error {
 
