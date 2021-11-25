@@ -18,7 +18,7 @@ import (
 )
 
 var osSep = registry.Registry["os-sep"]
-var user = registry.Registry["user-default"]
+var user = registry.Registry["qtechng-user"]
 
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
