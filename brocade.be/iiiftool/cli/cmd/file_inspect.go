@@ -13,7 +13,11 @@ var fileInspectCmd = &cobra.Command{
 	Use:   "inspect",
 	Short: "Inspect files for IIIF",
 	Long: `Inspect a SQLite archive.
-	The first argument is the SQLite archive, the second is the table to inspect`,
+	The first argument is the SQLite archive, the second is the table to inspect:
+	- admin (administrative info)
+	- sqlar (archive)
+	- files (file info)
+	- meta (IIIF meta information)`,
 	Args:    cobra.MinimumNArgs(2),
 	Example: `iiiftool file inspect mydb.sqlite sqlar`,
 	RunE:    fileInspect,
