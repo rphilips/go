@@ -10,8 +10,8 @@ import (
 
 var digestLocateCmd = &cobra.Command{
 	Use:   "locate",
-	Short: "Locate a IIIF digestentifier",
-	Long: `Given a IIIF digestentifier formulate an appropriate SQLite filepath.
+	Short: "Locate a IIIF digest",
+	Long: `Given a IIIF digest formulate an appropriate SQLite filepath.
 	You can choose a digest to use for generating the path,
 	or have the system generate it from scratch`,
 	Args:    cobra.MinimumNArgs(1),
