@@ -29,9 +29,9 @@ func GmConvertArgs(quality int, tile int) []string {
 	return args
 }
 
-// Function that reads a single sql.Row
-func ReadRow(row *sql.Row) string {
-	data := ""
+// Function that reads a single string data sql.Row
+func ReadStringRow(row *sql.Row) string {
+	var data string
 	err := row.Scan(&data)
 	if err != nil {
 		return data

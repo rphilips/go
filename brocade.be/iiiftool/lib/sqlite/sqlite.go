@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"io"
@@ -127,11 +128,8 @@ func Store(sqlitefile string,
 	sqlar := func(originalName string, name string, stream io.Reader) error {
 
 		row := db.QueryRow("SELECT name FROM sqlar WHERE name =?", name)
-		if err != nil {
-			return fmt.Errorf("cannot check whether file already exists in archive: %v", err)
-		}
 
-		update := !(util.ReadRow(row) == "")
+		update := !(util.ReadStringRow(row) == "")
 		if update {
 			_, err = db.Exec("DELETE FROM sqlar WHERE name=?", name)
 			if err != nil {
@@ -142,7 +140,7 @@ func Store(sqlitefile string,
 		data, _ := ioutil.ReadAll(stream)
 		mtime := time.Now().Unix()
 		mode := 0777
-		_, err := stmt1.Exec(name, mode, mtime, len(data), data)
+		_, err = stmt1.Exec(name, mode, mtime, len(data), data)
 		if err != nil {
 			return fmt.Errorf("cannot exec stmt1: %v", err)
 		}
@@ -211,4 +209,46 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 	}
 
 	return string(out), nil
+}
+
+type Sqlar struct {
+	Name   string
+	Mode   int
+	Mtime  int
+	Sz     int
+	Reader io.Reader
+}
+
+// Function that reads a single sqlar row sql.Row
+func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
+	var data []byte
+	err := row.Scan(&sqlar.Name, &sqlar.Mode, &sqlar.Mtime, &sqlar.Sz, &data)
+	if err != nil {
+		return err
+	}
+	sqlar.Reader = bytes.NewReader(data)
+	return nil
+}
+
+// Given a IIIF harvest code, i.e. digest with filepath,
+// e.g. a42f98d253ea3dd019de07870862cbdc62d6077c00000001.jp2
+// return that filename as a stream
+func Harvest(harvestcode string, sqlar *Sqlar) error {
+
+	digest := harvestcode[0:40]
+	sqlitefile := iiif.Digest2Location(digest)
+	file := harvestcode[40:]
+	db, err := sql.Open("sqlite", sqlitefile)
+	if err != nil {
+		return fmt.Errorf("cannot open file: %v", err)
+	}
+	defer db.Close()
+
+	row := db.QueryRow("SELECT * FROM sqlar WHERE name =?", file)
+	err = readSqlarRow(row, sqlar)
+	if err != nil {
+		return fmt.Errorf("cannot read file contents from archive: %v", err)
+	}
+
+	return nil
 }
