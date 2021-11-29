@@ -18,8 +18,17 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// CONSTANTS
 var osSep = registry.Registry["os-sep"]
 var user = registry.Registry["qtechng-user"]
+
+type Sqlar struct {
+	Name   string
+	Mode   int
+	Mtime  int
+	Sz     int
+	Reader io.Reader
+}
 
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
@@ -209,14 +218,6 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 	}
 
 	return string(out), nil
-}
-
-type Sqlar struct {
-	Name   string
-	Mode   int
-	Mtime  int
-	Sz     int
-	Reader io.Reader
 }
 
 // Function that reads a single sqlar row sql.Row

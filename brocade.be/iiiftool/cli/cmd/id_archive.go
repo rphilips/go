@@ -77,6 +77,9 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	empty := true
 	for i, id := range mResponse.Images {
+		if id == "" {
+			continue
+		}
 		docid := docman.DocmanID(id)
 		reader, err := docid.Reader()
 		if err != nil {
