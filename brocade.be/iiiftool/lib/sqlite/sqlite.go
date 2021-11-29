@@ -24,10 +24,10 @@ var user = registry.Registry["qtechng-user"]
 
 type Sqlar struct {
 	Name   string
-	Mode   int
-	Mtime  int
-	Sz     int
-	Reader io.Reader
+	Mode   int64
+	Mtime  int64
+	Sz     int64
+	Reader *bytes.Reader
 }
 
 // Given a IIIF identifier and some io.Readers
@@ -224,10 +224,10 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	var data []byte
 	err := row.Scan(&sqlar.Name, &sqlar.Mode, &sqlar.Mtime, &sqlar.Sz, &data)
+	sqlar.Reader = bytes.NewReader(data)
 	if err != nil {
 		return err
 	}
-	sqlar.Reader = bytes.NewReader(data)
 	return nil
 }
 
