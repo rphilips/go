@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	identifier "brocade.be/iiiftool/lib/identifier"
+	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/sqlite"
 
 	"github.com/spf13/cobra"
@@ -16,14 +16,13 @@ var fileStoreCmd = &cobra.Command{
 	Use:   "store",
 	Short: "Store files for IIIF",
 	Long: `Store files for IIIF in an SQLite archive.
-	The first argument is the IIIF identifier,
+	The first argument is the SQLite archive,
 	the other arguments are the files to store.
-	If an SQLite archive for the identifier already exists,
-	the files are appended.
-	If --cwd is used, the archive is created in the specified working directory.
+	If the files append already exist in the archive,
+	they are appended.
 `,
 	Args:    cobra.MinimumNArgs(2),
-	Example: `iiiftool file store dg:ua:1 1.jp2 2.jp2 dg_ua_1.json`,
+	Example: `iiiftool file store mydb.sqlite 1.jp2 2.jp2 dg_ua_1.json`,
 	RunE:    fileStore,
 }
 
@@ -32,10 +31,10 @@ func init() {
 }
 
 func fileStore(cmd *cobra.Command, args []string) error {
-	id := identifier.Identifier(args[0])
+	sqlitefile := args[0]
 
-	if id.String() == "" {
-		log.Fatalf("iiiftool ERROR: identifier is missing")
+	if sqlitefile == "" {
+		log.Fatalf("iiiftool ERROR: SQLite archive is missing")
 	}
 
 	files := make(map[string]io.Reader, len(args[1:]))
@@ -49,7 +48,8 @@ func fileStore(cmd *cobra.Command, args []string) error {
 		files[name] = reader
 	}
 
-	err := sqlite.Store(id, files, Fcwd)
+	var empty iiif.MResponse
+	err := sqlite.Store(sqlitefile, files, Fcwd, empty)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
 	}

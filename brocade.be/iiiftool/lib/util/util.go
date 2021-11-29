@@ -2,6 +2,8 @@ package util
 
 import (
 	"database/sql"
+	"fmt"
+	"path/filepath"
 	"strconv"
 )
 
@@ -27,7 +29,7 @@ func GmConvertArgs(quality int, tile int) []string {
 	return args
 }
 
-// Function that reads a sql.Row
+// Function that reads a single sql.Row
 func ReadRow(row *sql.Row) string {
 	data := ""
 	err := row.Scan(&data)
@@ -35,4 +37,43 @@ func ReadRow(row *sql.Row) string {
 		return data
 	}
 	return data
+}
+
+// Function that reads multiple sql.Rows
+func ReadRows(rows *sql.Rows) ([]interface{}, error) {
+
+	result := make([]interface{}, 0)
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return result, err
+	}
+
+	for rows.Next() {
+
+		data := make([]*interface{}, len(columns))
+		err := rows.Scan(&data[0], &data[1], &data[2])
+		if err != nil {
+			return result, err
+		}
+
+		values := make([]interface{}, 0)
+
+		for _, item := range data {
+			values = append(values, *item)
+		}
+
+		result = append(result, values)
+	}
+	if err := rows.Err(); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// Function that standardizes image filenames
+func ImageName(name string, index int) string {
+	ext := filepath.Ext(name)
+	base := fmt.Sprintf("%08d", index)
+	return base + ext
 }
