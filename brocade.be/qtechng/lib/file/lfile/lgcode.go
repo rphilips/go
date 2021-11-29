@@ -313,7 +313,7 @@ func replaceInString(s string, lg string, r string) string {
 	return strings.Join(pieces, "")
 }
 
-// AliasResolve geeft eem Lgcode terug die uiteeindelijk geen alias bevat
+// AliasResolve geeft eem Lgcode terug die uiteindelijk geen alias bevat
 func (lgcode *Lgcode) AliasResolve() Lgcode {
 	alias := lgcode.Alias
 	if alias == "" {
@@ -391,7 +391,8 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 	}
 
 	// check on alias
-	lreg := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z][a-zA-Z0-9]*$`)
+	lregid := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z][a-zA-Z0-9.]*$`)
+	lregalias := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*$`)
 	alias := lgcode.Alias
 	if alias != "" {
 		y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U + lgcode.Encoding
@@ -407,55 +408,32 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 			errslice = append(errslice, err)
 		}
 
-		if isscope {
-			err := &qerror.QError{
-				Ref:    []string{"lgcode.lint.alias.scope1"},
-				File:   fname,
-				Lineno: lineno,
-				Object: name,
-				Type:   "Error",
-				Msg:    []string{"`" + id + "`: only aliases of type ns.text are allowed"},
-			}
-			errslice = append(errslice, err)
-		}
-		if isscope {
-			err := &qerror.QError{
-				Ref:    []string{"lgcode.lint.alias.scope2"},
-				File:   fname,
-				Lineno: lineno,
-				Object: name,
-				Type:   "Error",
-				Msg:    []string{"`" + id + "`: only textfragments of type ns.text should have an alias"},
-			}
-			errslice = append(errslice, err)
-		}
-		matched := lreg.MatchString(x)
+		matched := lregid.MatchString(id)
 		if !matched {
 			err := &qerror.QError{
-				Ref:    []string{"lgcode.lint.alias.form"},
+				Ref:    []string{"lgcode.lint.alias.id"},
 				File:   fname,
 				Lineno: lineno,
 				Object: name,
 				Type:   "Error",
-				Msg:    []string{"`" + id + "` refers to an alias which is not of a suitable form"},
+				Msg:    []string{"`" + id + "` is not of the suitable form xxx.yyy to refer to an alias"},
+			}
+			errslice = append(errslice, err)
+		}
+		matched = lregalias.MatchString(alias)
+		if !matched {
+			err := &qerror.QError{
+				Ref:    []string{"lgcode.lint.alias.alias"},
+				File:   fname,
+				Lineno: lineno,
+				Object: name,
+				Type:   "Error",
+				Msg:    []string{"`" + alias + "` refers to an alias which is not of a suitable form"},
 			}
 			errslice = append(errslice, err)
 		}
 	}
-	// if alias == "" {
-	// 	y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U
-	// 	if testempty && strings.TrimSpace(y) == "" {
-	// 		err := &qerror.QError{
-	// 			Ref:    []string{"lgcode.lint.notalias.empty"},
-	// 			File:   fname,
-	// 			Lineno: lineno,
-	// 			Object: name,
-	// 			Type:   "Error",
-	// 			Msg:    []string{"`" + id + "` should have translations"},
-	// 		}
-	// 		errslice = append(errslice, err)
-	// 	}
-	// }
+
 	if len(errslice) == 0 {
 		return nil
 	}

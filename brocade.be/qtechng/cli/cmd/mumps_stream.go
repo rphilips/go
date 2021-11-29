@@ -18,9 +18,10 @@ var mumpsStreamCmd = &cobra.Command{
 
 The arguments are of the form key=value
 The '--action' flag is mandatory and is an M expression`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng mumps stream loi=dg:ua:201 --action="d %Action^iiisori(.RApayload)"`,
-	RunE:    mumpsStream,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng mumps stream loi=dg:ua:201 --action="d %Action^iiisori(.RApayload)"
+qtechng mumps stream loi=c:stcv:3101797 iiifsys=test --action="d %Action^iiisori(.RApayload)"`,
+	RunE: mumpsStream,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BP",
