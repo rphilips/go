@@ -205,6 +205,12 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 	if table == "sqlar" {
 		query = "SELECT name, mode, mtime, sz FROM sqlar"
 	}
+	if table == "" {
+		query = `SELECT m.name as tables, group_concat(p.name,';') as columns FROM sqlite_master AS m
+		JOIN pragma_table_info(m.name) AS p
+		GROUP BY m.name
+		ORDER BY m.name, p.cid`
+	}
 
 	cmd := exec.Command("sqlite3", sqlitefile, query, "-header")
 	out, err := cmd.Output()
