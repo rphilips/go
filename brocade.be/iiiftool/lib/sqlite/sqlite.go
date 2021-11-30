@@ -3,6 +3,7 @@ package sqlite
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,15 +12,34 @@ import (
 	"strings"
 	"time"
 
-	"brocade.be/base/fs"
+	basefs "brocade.be/base/fs"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/util"
 	_ "modernc.org/sqlite"
 )
 
+// CONSTANTS
 var osSep = registry.Registry["os-sep"]
 var user = registry.Registry["qtechng-user"]
+
+type Sqlar struct {
+	Name   string
+	Mode   int64
+	Mtime  int64
+	Sz     int64
+	Reader *bytes.Reader
+}
+
+type Meta struct {
+	Key        string
+	Digest     string
+	Identifier string
+	Indexes    string
+	Imgloi     string
+	Iiifsys    string
+	Manifest   string
+}
 
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
@@ -31,12 +51,12 @@ func Store(sqlitefile string,
 	if cwd == "" {
 		path := strings.Split(sqlitefile, osSep)
 		dirname := strings.Join(path[0:(len(path)-1)], osSep)
-		err := fs.Mkdir(dirname, "process")
+		err := basefs.Mkdir(dirname, "process")
 		if err != nil {
 			return fmt.Errorf("cannot make dir")
 		}
 	} else {
-		if !fs.IsDir(cwd) {
+		if !basefs.IsDir(cwd) {
 			return fmt.Errorf("cwd is not valied")
 		}
 		sqlitefile = filepath.Join(cwd, filepath.Base(sqlitefile))
@@ -48,7 +68,7 @@ func Store(sqlitefile string,
 	}
 	defer db.Close()
 
-	append := fs.Exists(sqlitefile)
+	append := basefs.Exists(sqlitefile)
 	if !append {
 
 		if _, err = db.Exec(`
@@ -75,7 +95,7 @@ func Store(sqlitefile string,
 		if _, err = db.Exec(`
 		CREATE TABLE files (
 			key INTEGER PRIMARY KEY AUTOINCREMENT,
-			original_name TEXT,
+			docman TEXT,
 			name TEXT
 		);`); err != nil {
 			return fmt.Errorf("cannot create table files: %v", err)
@@ -84,9 +104,12 @@ func Store(sqlitefile string,
 		if _, err = db.Exec(`
 		CREATE TABLE meta (
 			key INTEGER PRIMARY KEY AUTOINCREMENT,
+			digest TEXT,
 			identifier TEXT,
+			indexes TEXT,
 			imgloi TEXT,
-			iiifsys TEXT
+			iiifsys TEXT,
+			manifest TEXT
 		);`); err != nil {
 			return fmt.Errorf("cannot create table meta: %v", err)
 		}
@@ -111,21 +134,26 @@ func Store(sqlitefile string,
 	h := time.Now()
 	stmt2.Exec(nil, h.Format(time.RFC3339), "modified", user)
 
-	stmt3, err := db.Prepare("INSERT INTO files (key, original_name, name) Values($1,$2,$3)")
+	stmt3, err := db.Prepare("INSERT INTO files (key, docman, name) Values($1,$2,$3)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert3: %v", err)
 	}
 	defer stmt3.Close()
 
-	stmt4, err := db.Prepare("INSERT INTO meta (key, identifier, iiifsys, imgloi) Values($1,$2,$3)")
+	stmt4, err := db.Prepare("INSERT INTO meta (key, digest, identifier, indexes, iiifsys, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert4: %v", err)
 	}
 	defer stmt4.Close()
 
-	stmt4.Exec(nil, mResponse.Identifier, mResponse.Iiifsys, mResponse.Imgloi)
+	manifest, err := json.Marshal(mResponse.Manifest)
+	index := strings.Join(mResponse.Index, "^")
+	_, err = stmt4.Exec(nil, mResponse.Digest, mResponse.Identifier, index, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
+	if err != nil {
+		return fmt.Errorf("cannot exec stmt4: %v", err)
+	}
 
-	sqlar := func(originalName string, name string, stream io.Reader) error {
+	sqlar := func(docman string, name string, stream io.Reader) error {
 
 		row := db.QueryRow("SELECT name FROM sqlar WHERE name =?", name)
 
@@ -139,13 +167,15 @@ func Store(sqlitefile string,
 
 		data, _ := ioutil.ReadAll(stream)
 		mtime := time.Now().Unix()
-		mode := 0777
-		_, err = stmt1.Exec(name, mode, mtime, len(data), data)
+		// mode := basefs.CalcPerm("rw-rw-rw-")
+		mode := int64(33204)
+		sz := int64(len(data))
+		_, err = stmt1.Exec(name, mode, mtime, sz, data)
 		if err != nil {
 			return fmt.Errorf("cannot exec stmt1: %v", err)
 		}
 		if !update {
-			_, err = stmt3.Exec(nil, originalName, name)
+			_, err = stmt3.Exec(nil, docman, name)
 			if err != nil {
 				return fmt.Errorf("cannot exec stmt3: %v", err)
 			}
@@ -153,18 +183,17 @@ func Store(sqlitefile string,
 		return nil
 	}
 
-	imageIndex := 0
+	count := 0
 	for name, stream := range filestream {
-		originalName := name
-		ext := filepath.Ext(name)
-		if ext != ".json" {
-			imageIndex++
-			name = util.ImageName(name, imageIndex)
+		docman := ""
+		if len(mResponse.Images) != 0 {
+			docman = mResponse.Images[count]["loc"]
 		}
-		err = sqlar(originalName, name, stream)
+		err = sqlar(docman, name, stream)
 		if err != nil {
 			return err
 		}
+		count++
 	}
 
 	return nil
@@ -211,22 +240,35 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 	return string(out), nil
 }
 
-type Sqlar struct {
-	Name   string
-	Mode   int
-	Mtime  int
-	Sz     int
-	Reader io.Reader
-}
-
 // Function that reads a single sqlar row sql.Row
 func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	var data []byte
-	err := row.Scan(&sqlar.Name, &sqlar.Mode, &sqlar.Mtime, &sqlar.Sz, &data)
+	err := row.Scan(
+		&sqlar.Name,
+		&sqlar.Mode,
+		&sqlar.Mtime,
+		&sqlar.Sz,
+		&data)
+	sqlar.Reader = bytes.NewReader(data)
 	if err != nil {
 		return err
 	}
-	sqlar.Reader = bytes.NewReader(data)
+	return nil
+}
+
+// Function that reads a single meta row sql.Row
+func ReadMetaRow(row *sql.Row, meta *Meta) error {
+	err := row.Scan(
+		&meta.Key,
+		&meta.Digest,
+		&meta.Identifier,
+		&meta.Indexes,
+		&meta.Imgloi,
+		&meta.Iiifsys,
+		&meta.Manifest)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

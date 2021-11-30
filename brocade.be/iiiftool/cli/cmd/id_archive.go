@@ -4,7 +4,6 @@ import (
 	"io"
 	"log"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"brocade.be/base/docman"
@@ -31,10 +30,11 @@ Various additional parameters are in use and sometimes required:
 	RunE:    idArchive,
 }
 
-var Furlty = ""
-var Fimgty = ""
-var Faccess = ""
-var Fmime = ""
+var Furlty string
+var Fimgty string
+var Faccess string
+var Fmime string
+var Fiiifsys string
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
@@ -42,6 +42,7 @@ func init() {
 	idArchiveCmd.PersistentFlags().StringVar(&Fimgty, "imgty", "", "Image type")
 	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
+	idArchiveCmd.PersistentFlags().StringVar(&Fiiifsys, "iiif", "test", "IIIF system")
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
@@ -66,33 +67,33 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 
 	// harvest IIIF metadata from MUMPS
-	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime)
+	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
 	// get file contents from docman ids
-	originalStream := make([]io.Reader, len(mResponse.Images))
-	originalfNames := make([]string, len(mResponse.Images))
+	imgLen := len(mResponse.Images)
+	originalStream := make([]io.Reader, imgLen)
+	convertedfNames := make([]string, imgLen)
 
 	empty := true
-	for i, id := range mResponse.Images {
-		docid := docman.DocmanID(id)
+	for i, image := range mResponse.Images {
+		docid := docman.DocmanID(image["loc"])
 		reader, err := docid.Reader()
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
 		}
 		empty = false
 		originalStream[i] = reader
-		originalfNames[i] = filepath.Base(id)
+		convertedfNames[i] = image["name"]
 	}
 	if empty {
 		log.Fatalf("iiiftool ERROR: no docman images found")
 	}
 
 	// convert file contents from TIFF/JPG to JP2K
-	convertedStream := make([]io.Reader, len(originalStream))
-	convertedfNames := make([]string, len(originalStream))
+	convertedStream := make([]io.Reader, imgLen)
 
 	fn := func(n int) (interface{}, error) {
 		old := originalStream[n]
@@ -117,8 +118,6 @@ func idArchive(cmd *cobra.Command, args []string) error {
 			io.Copy(stdin, old)
 		}()
 		convertedStream[n] = out
-		ext := filepath.Ext(originalfNames[n])
-		convertedfNames[n] = strings.TrimSuffix(originalfNames[n], ext) + ".jp2"
 		return out, nil
 	}
 
@@ -131,8 +130,6 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
-
-	// to do: identifier vanuit de MUMPS ook in sqlite zetten!
 
 	err = sqlite.Store(sqlitefile, filestream, Fcwd, mResponse)
 	if err != nil {

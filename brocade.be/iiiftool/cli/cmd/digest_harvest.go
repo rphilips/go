@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"strconv"
 
 	fs "brocade.be/base/fs"
 	"brocade.be/iiiftool/lib/sqlite"
@@ -21,6 +20,7 @@ var digestHarvestCmd = &cobra.Command{
 
 func init() {
 	digestCmd.AddCommand(digestHarvestCmd)
+	// to do --raw voor PHP gewoon de bytes op stdout spuwen
 }
 
 func digestHarvest(cmd *cobra.Command, args []string) error {
@@ -40,7 +40,7 @@ func digestHarvest(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: file cannot be harvested\n%s", err)
 	}
 
-	err = fs.Store(file, sqlar.Reader, strconv.Itoa(sqlar.Mode))
+	err = fs.Store(file, sqlar.Reader, "rw-rw-rw-")
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: file cannot be created\n%s", err)
 	}
