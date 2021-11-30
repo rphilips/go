@@ -74,7 +74,6 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	// get file contents from docman ids
 	imgLen := len(mResponse.Images)
 	originalStream := make([]io.Reader, imgLen)
-	convertedfNames := make([]string, imgLen)
 
 	empty := true
 	for i, image := range mResponse.Images {
@@ -85,7 +84,6 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 		empty = false
 		originalStream[i] = reader
-		convertedfNames[i] = image["name"]
 	}
 	if empty {
 		log.Fatalf("iiiftool ERROR: no docman images found")
@@ -120,17 +118,18 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		return out, nil
 	}
 
-	parallel.NMap(len(originalStream), -1, fn)
+	_, mapErr := parallel.NMap(len(originalStream), -1, fn)
+	for _, e := range mapErr {
+		if e != nil {
+			log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
+		}
+	}
 
 	// store file contents in SQLite archive
-	filestream := make(map[string]io.Reader, len(convertedStream))
-	for i, file := range convertedfNames {
-		filestream[file] = convertedStream[i]
-	}
 
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
-	err = sqlite.Store(sqlitefile, filestream, Fcwd, mResponse)
+	err = sqlite.Store(sqlitefile, convertedStream, Fcwd, mResponse)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 	}

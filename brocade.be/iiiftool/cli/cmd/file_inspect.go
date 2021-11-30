@@ -29,7 +29,13 @@ func init() {
 
 func fileInspect(cmd *cobra.Command, args []string) error {
 
-	result, err := sqlite.Inspect(args[0], args[1])
+	sqliteFile := args[0]
+	if sqliteFile == "" {
+		log.Fatalf("iiiftool ERROR: argument 1 is missing")
+	}
+	table := args[1]
+
+	result, err := sqlite.Inspect(sqliteFile, table)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot inspect:\n%s", err)
 	}

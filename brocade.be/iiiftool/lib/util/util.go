@@ -23,9 +23,10 @@ func GmConvertArgs(quality int, tile int) []string {
 	args := []string{"convert", "-flatten", "-quality", squality}
 	args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
 	args = append(args, "-define", "jp2:tilewidth="+stile, "-define", "jp2:tileheight="+stile)
-	// Specify input_file as - for standard input, output_file as - for standard output.
-	// https://www.math.arizona.edu/~swig/documentation/ImgCvt/ImageMagick/www/convert.html
-	args = append(args, "-", "-")
+	// "Specify input_file as - for standard input, output_file as - for standard output",
+	// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
+	// but it needs to be "- jp2:-"!
+	args = append(args, "-", "jp2:-")
 	return args
 }
 
