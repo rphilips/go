@@ -95,6 +95,10 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	fn := func(n int) (interface{}, error) {
 		old := originalStream[n]
 		args := util.GmConvertArgs(Fquality, Ftile)
+		// "Specify input_file as - for standard input, output_file as - for standard output",
+		// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
+		// but it needs to be "- jp2:-"!
+		args = append(args, "-", "jp2:-")
 		cmd := exec.Command("gm", args...)
 		stdin, err := cmd.StdinPipe()
 		if err != nil {

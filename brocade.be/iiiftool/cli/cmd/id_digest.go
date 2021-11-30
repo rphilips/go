@@ -32,6 +32,7 @@ func idDigest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: error looking up digest:%s", err)
 	}
+
 	fmt.Println(digest)
 
 	return nil

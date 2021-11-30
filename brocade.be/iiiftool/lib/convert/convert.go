@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"brocade.be/base/parallel"
+	"brocade.be/iiiftool/lib/util"
 )
 
 var formatsAllowed = map[string]bool{".jpg": true, ".jpeg": true, ".tif": true}
@@ -26,12 +26,7 @@ func ConvertImageToJP2K(files []string, quality int, tile int, cwd string) []err
 
 		newFile := filepath.Base(oldFile)
 		newFile = strings.TrimSuffix(newFile, ext) + ".jp2"
-		squality := strconv.Itoa(quality)
-		stile := strconv.Itoa(tile)
-
-		args := []string{"convert", "-flatten", "-quality", squality}
-		args = append(args, "-define", "jp2:prg=rlcp", "-define", "jp2:numrlvls=7")
-		args = append(args, "-define", "jp2:tilewidth="+stile, "-define", "jp2:tileheight="+stile)
+		args := util.GmConvertArgs(quality, tile)
 		if cwd != "" {
 			newFile = filepath.Join(cwd, newFile)
 		}
