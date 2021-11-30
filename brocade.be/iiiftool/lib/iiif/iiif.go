@@ -8,7 +8,6 @@ import (
 
 	"brocade.be/base/mumps"
 	"brocade.be/base/registry"
-	"brocade.be/iiiftool/lib/identifier"
 	"brocade.be/iiiftool/lib/util"
 )
 
@@ -26,7 +25,7 @@ type MResponse struct {
 
 // Harvest IIIF metadata from MUMPS
 func Meta(
-	id identifier.Identifier,
+	id string,
 	loiType string,
 	urlty string,
 	imgty string,
@@ -35,7 +34,7 @@ func Meta(
 	iiifsys string) (MResponse, error) {
 
 	payload := make(map[string]string)
-	payload["loi"] = id.String()
+	payload["loi"] = id
 	payload["iiifsys"] = iiifsys
 	switch loiType {
 	case "c", "o":

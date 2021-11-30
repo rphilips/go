@@ -10,14 +10,22 @@ import (
 
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/sqlite"
+	"brocade.be/iiiftool/lib/util"
 )
 
 var iifBaseDir = registry.Registry["iiif-base-dir"]
+var indexDb = filepath.Join(iifBaseDir, "index.sqlite")
+
+// Make identifier safe for index
+func safe(id string) string {
+	id = strings.ToLower(id)
+	unsafeRegexp := regexp.MustCompile(`[^a-z0-9]`)
+	id = unsafeRegexp.ReplaceAllString(id, "_")
+	return id
+}
 
 // Rebuild IIIF index
 func Rebuild() error {
-
-	indexDb := filepath.Join(iifBaseDir, "index.sqlite")
 
 	os.Remove(indexDb)
 
@@ -69,9 +77,7 @@ func Rebuild() error {
 			if index == "" {
 				continue
 			}
-			index = strings.ToLower(index)
-			unsafeRegexp := regexp.MustCompile(`[^a-z0-9]`)
-			index = unsafeRegexp.ReplaceAllString(index, "_")
+			index = safe(index)
 			_, err = stmt1.Exec(index, meta.Digest)
 			if err != nil {
 				// do not throw error
@@ -88,4 +94,20 @@ func Rebuild() error {
 	}
 
 	return nil
+}
+
+// Given a IIIF identifier, lookup its digest
+// in the index database
+func LookupId(id string) (string, error) {
+	index, err := sql.Open("sqlite", indexDb)
+	if err != nil {
+		return "", fmt.Errorf("cannot open index database: %v", err)
+	}
+	defer index.Close()
+
+	id = safe(id)
+	row := index.QueryRow("SELECT digest FROM indexes where id=?", id)
+	digest := util.ReadStringRow(row)
+
+	return digest, nil
 }
