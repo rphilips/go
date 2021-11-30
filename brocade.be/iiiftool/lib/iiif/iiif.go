@@ -15,11 +15,13 @@ import (
 var iifBaseDir = registry.Registry["iiif-base-dir"]
 
 type MResponse struct {
-	Digest     string
-	Identifier string
-	Iiifsys    string
-	Images     []string
-	Imgloi     string
+	Digest     string              `json:"digest"`
+	Identifier string              `json:"identifier"`
+	Iiifsys    string              `json:"iiifsys"`
+	Images     []map[string]string `json:"images"`
+	Imgloi     string              `json:"imgloi"`
+	Index      []string            `json:"index"`
+	Manifest   interface{}
 }
 
 // Harvest IIIF metadata from MUMPS
@@ -29,10 +31,12 @@ func Meta(
 	urlty string,
 	imgty string,
 	access string,
-	mime string) (MResponse, error) {
+	mime string,
+	iiifsys string) (MResponse, error) {
 
 	payload := make(map[string]string)
 	payload["loi"] = id.String()
+	payload["iiifsys"] = iiifsys
 	switch loiType {
 	case "c", "o":
 		payload["urlty"] = urlty
@@ -69,11 +73,3 @@ func Digest2Location(digest string) string {
 	location := filepath.Join(iifBaseDir, folder[0:2], subfolder, basename)
 	return location
 }
-
-// Encode using SHA1
-// func (id Identifier) Encode() string {
-// 	hash := sha1.New()
-// 	hash.Write([]byte(id.String()))
-// 	encodedString := hex.EncodeToString(hash.Sum(nil))
-// 	return encodedString
-// }

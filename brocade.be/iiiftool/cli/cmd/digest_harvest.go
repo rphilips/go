@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"strconv"
 
 	fs "brocade.be/base/fs"
 	"brocade.be/iiiftool/lib/sqlite"
@@ -41,7 +40,7 @@ func digestHarvest(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: file cannot be harvested\n%s", err)
 	}
 
-	err = fs.Store(file, sqlar.Reader, strconv.FormatInt(sqlar.Mode, 10))
+	err = fs.Store(file, sqlar.Reader, "rw-rw-rw-")
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: file cannot be created\n%s", err)
 	}
