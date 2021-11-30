@@ -31,6 +31,16 @@ type Sqlar struct {
 	Reader *bytes.Reader
 }
 
+type Meta struct {
+	Key        string
+	Digest     string
+	Identifier string
+	Indexes    string
+	Imgloi     string
+	Iiifsys    string
+	Manifest   string
+}
+
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
 func Store(sqlitefile string,
@@ -96,6 +106,7 @@ func Store(sqlitefile string,
 			key INTEGER PRIMARY KEY AUTOINCREMENT,
 			digest TEXT,
 			identifier TEXT,
+			indexes TEXT,
 			imgloi TEXT,
 			iiifsys TEXT,
 			manifest TEXT
@@ -129,14 +140,15 @@ func Store(sqlitefile string,
 	}
 	defer stmt3.Close()
 
-	stmt4, err := db.Prepare("INSERT INTO meta (key, digest, identifier, iiifsys, imgloi, manifest) Values($1,$2,$3,$4,$5,$6)")
+	stmt4, err := db.Prepare("INSERT INTO meta (key, digest, identifier, indexes, iiifsys, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)")
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert4: %v", err)
 	}
 	defer stmt4.Close()
 
 	manifest, err := json.Marshal(mResponse.Manifest)
-	_, err = stmt4.Exec(nil, mResponse.Identifier, mResponse.Digest, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
+	index := strings.Join(mResponse.Index, "^")
+	_, err = stmt4.Exec(nil, mResponse.Digest, mResponse.Identifier, index, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
 	if err != nil {
 		return fmt.Errorf("cannot exec stmt4: %v", err)
 	}
@@ -231,8 +243,29 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 // Function that reads a single sqlar row sql.Row
 func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	var data []byte
-	err := row.Scan(&sqlar.Name, &sqlar.Mode, &sqlar.Mtime, &sqlar.Sz, &data)
+	err := row.Scan(
+		&sqlar.Name,
+		&sqlar.Mode,
+		&sqlar.Mtime,
+		&sqlar.Sz,
+		&data)
 	sqlar.Reader = bytes.NewReader(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Function that reads a single meta row sql.Row
+func ReadMetaRow(row *sql.Row, meta *Meta) error {
+	err := row.Scan(
+		&meta.Key,
+		&meta.Digest,
+		&meta.Identifier,
+		&meta.Indexes,
+		&meta.Imgloi,
+		&meta.Iiifsys,
+		&meta.Manifest)
 	if err != nil {
 		return err
 	}
