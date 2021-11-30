@@ -21,7 +21,7 @@ var fileInspectCmd = &cobra.Command{
 	If no second argument is supplied, inspect shows the database schema`,
 	Args: cobra.MinimumNArgs(1),
 	Example: `iiiftool file inspect mydb.sqlite sqlar
-	iiiftool file inspect mydb.sqlite`,
+iiiftool file inspect mydb.sqlite`,
 	RunE: fileInspect,
 }
 

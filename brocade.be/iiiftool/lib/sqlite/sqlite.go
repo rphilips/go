@@ -201,15 +201,17 @@ func Store(sqlitefile string,
 // version with sqlite3
 func Inspect(sqlitefile string, table string) (interface{}, error) {
 
-	query := "SELECT * FROM " + table
-	if table == "sqlar" {
+	var query string
+	switch {
+	case table == "sqlar":
 		query = "SELECT name, mode, mtime, sz FROM sqlar"
-	}
-	if table == "" {
+	case table == "":
 		query = `SELECT m.name as tables, group_concat(p.name,';') as columns FROM sqlite_master AS m
 		JOIN pragma_table_info(m.name) AS p
 		GROUP BY m.name
 		ORDER BY m.name, p.cid`
+	default:
+		query = "SELECT * FROM " + table
 	}
 
 	cmd := exec.Command("sqlite3", sqlitefile, query, "-header")
