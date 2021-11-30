@@ -70,10 +70,8 @@ func Rebuild() error {
 				continue
 			}
 			index = strings.ToLower(index)
-			fmt.Println(index)
 			unsafeRegexp := regexp.MustCompile(`[^a-z0-9]`)
 			index = unsafeRegexp.ReplaceAllString(index, "_")
-			fmt.Println(index)
 			_, err = stmt1.Exec(index, meta.Digest)
 			if err != nil {
 				// do not throw error
