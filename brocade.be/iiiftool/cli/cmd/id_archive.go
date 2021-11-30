@@ -8,7 +8,6 @@ import (
 
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
-	"brocade.be/iiiftool/lib/identifier"
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
@@ -49,12 +48,12 @@ func init() {
 
 func idArchive(cmd *cobra.Command, args []string) error {
 	// verify input
-	id := identifier.Identifier(args[0])
-	if id.String() == "" {
+	id := args[0]
+	if id == "" {
 		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
 
-	loiType := strings.Split(id.String(), ":")[0]
+	loiType := strings.Split(id, ":")[0]
 	switch loiType {
 	case "c", "o":
 		if Furlty == "" {
