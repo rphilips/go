@@ -44,7 +44,7 @@ type Meta struct {
 // Given a IIIF identifier and some io.Readers
 // store the contents in the appropriate SQLite archive
 func Store(sqlitefile string,
-	filestream map[string]io.Reader,
+	filestream []io.Reader,
 	cwd string,
 	mResponse iiif.MResponse) error {
 
@@ -183,51 +183,35 @@ func Store(sqlitefile string,
 		return nil
 	}
 
-	count := 0
-	for name, stream := range filestream {
+	for i, stream := range filestream {
 		docman := ""
 		if len(mResponse.Images) != 0 {
-			docman = mResponse.Images[count]["loc"]
+			docman = mResponse.Images[i]["loc"]
 		}
-		err = sqlar(docman, name, stream)
+		err = sqlar(docman, mResponse.Images[i]["name"], stream)
 		if err != nil {
 			return err
 		}
-		count++
 	}
 
 	return nil
 }
 
 // Given a SQLite archive and a table name show the contents of that table
-func Inspect2(sqlitefile string, table string) ([]interface{}, error) {
-
-	result := make([]interface{}, 0)
-	db, err := sql.Open("sqlite", sqlitefile)
-	if err != nil {
-		return result, fmt.Errorf("cannot open file: %v", err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query("SELECT * FROM " + table)
-	if table == "sqlar" {
-		rows, err = db.Query("SELECT name, mode, mtime, sz FROM sqlar")
-	}
-	defer rows.Close()
-	if err != nil {
-		return result, fmt.Errorf("cannot inspect file: %v", err)
-	}
-
-	return util.ReadRows(rows)
-}
-
-// Given a SQLite archive and a table name show the contents of that table
 // version with sqlite3
 func Inspect(sqlitefile string, table string) (interface{}, error) {
 
-	query := "SELECT * FROM " + table
-	if table == "sqlar" {
+	var query string
+	switch {
+	case table == "sqlar":
 		query = "SELECT name, mode, mtime, sz FROM sqlar"
+	case table == "":
+		query = `SELECT m.name as tables, group_concat(p.name,';') as columns FROM sqlite_master AS m
+		JOIN pragma_table_info(m.name) AS p
+		GROUP BY m.name
+		ORDER BY m.name, p.cid`
+	default:
+		query = "SELECT * FROM " + table
 	}
 
 	cmd := exec.Command("sqlite3", sqlitefile, query, "-header")
