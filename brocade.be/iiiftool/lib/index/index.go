@@ -14,7 +14,7 @@ import (
 )
 
 var iifBaseDir = registry.Registry["iiif-base-dir"]
-var indexDb = filepath.Join(iifBaseDir, "index.sqlite")
+var iiifIndexDb = registry.Registry["iiif-index-db"]
 
 // Make identifier safe for index
 func safe(id string) string {
@@ -27,9 +27,9 @@ func safe(id string) string {
 // Rebuild IIIF index
 func Rebuild() error {
 
-	os.Remove(indexDb)
+	os.Remove(iiifIndexDb)
 
-	index, err := sql.Open("sqlite", indexDb)
+	index, err := sql.Open("sqlite", iiifIndexDb)
 	if err != nil {
 		return fmt.Errorf("cannot open index database: %v", err)
 	}
@@ -99,7 +99,7 @@ func Rebuild() error {
 // Given a IIIF identifier, lookup its digest
 // in the index database
 func LookupId(id string) (string, error) {
-	index, err := sql.Open("sqlite", indexDb)
+	index, err := sql.Open("sqlite", iiifIndexDb)
 	if err != nil {
 		return "", fmt.Errorf("cannot open index database: %v", err)
 	}
