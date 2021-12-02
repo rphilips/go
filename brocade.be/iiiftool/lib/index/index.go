@@ -38,7 +38,8 @@ func Rebuild() error {
 	// note: do not use "index" or "indexes" as table name in SQLite!
 	_, err = index.Exec(`
 		CREATE TABLE indexes (
-			id TEXT PRIMARY KEY,
+			key INTEGER PRIMARY KEY AUTOINCREMENT,
+			id TEXT,
 			digest TEXT,
 			location TEXT
 		);`)
@@ -67,7 +68,7 @@ func Rebuild() error {
 		// do not throw error, to let "sql: no rows in result set" pass
 		_ = sqlite.ReadMetaRow(row, &meta)
 
-		stmt1, err := index.Prepare("INSERT INTO indexes (id, digest, location) Values($1,$2,$3)")
+		stmt1, err := index.Prepare("INSERT INTO indexes (key, id, digest, location) Values($1,$2,$3,$4)")
 		if err != nil {
 			return fmt.Errorf("cannot prepare insert1: %v", err)
 		}
@@ -79,7 +80,7 @@ func Rebuild() error {
 				continue
 			}
 			index = safe(index)
-			_, err = stmt1.Exec(index, meta.Digest, path)
+			_, err = stmt1.Exec(nil, index, meta.Digest, path)
 			if err != nil {
 				// do not throw error
 				fmt.Printf("Error executing stmt1: %v: %s\n", err, index)

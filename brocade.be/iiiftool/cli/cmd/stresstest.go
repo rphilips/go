@@ -54,7 +54,7 @@ func stresstest(cmd *cobra.Command, args []string) error {
 	}
 
 	diff := end.Sub(start)
-	fmt.Println(len(result), "requests handled in", diff, "ns")
+	fmt.Println(len(result), "requests handled in", diff)
 
 	return nil
 }
