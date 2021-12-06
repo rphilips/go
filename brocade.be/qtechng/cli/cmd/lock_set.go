@@ -51,6 +51,9 @@ func lockSet(cmd *cobra.Command, args []string) {
 }
 
 func checkLock(lock string, until string) (locker string) {
+
+	ioffset, err := strconv.Atoi(until)
+
 	lockdir := qregistry.Registry["lock-dir"]
 	if lockdir == "" {
 		lockdir = qregistry.Registry["scratch-dir"]
@@ -58,7 +61,6 @@ func checkLock(lock string, until string) (locker string) {
 	if lockdir == "" {
 		return ""
 	}
-	ioffset, err := strconv.Atoi(until)
 	if err == nil && ioffset > 0 {
 		h := time.Now()
 		h = h.Add(time.Second * time.Duration(ioffset))

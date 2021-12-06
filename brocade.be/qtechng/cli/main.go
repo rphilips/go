@@ -17,11 +17,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -144,6 +146,22 @@ func main() {
 		os.Exit(0)
 	}
 
+	if len(os.Args) > 2 && os.Args[1] == "run" {
+		cmd := exec.Command(os.Args[2], os.Args[3:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		cmd.Run()
+		os.Exit(0)
+	}
+
+	if len(os.Args) > 2 && os.Args[1] == "ssh" {
+		catchOut, catchErr, _ := cmd.RunSSH(os.Args[2:])
+		fmt.Println(catchOut)
+		fmt.Fprintln(os.Stderr, catchErr)
+		os.Exit(0)
+	}
+
 	if len(os.Args) == 1 {
 		fi, _ := os.Stdin.Stat()
 		if (fi.Mode() & os.ModeCharDevice) == 0 {
@@ -161,6 +179,15 @@ func main() {
 				l.Fatal("Blocked for workstations until: `" + blocktime + "`")
 			}
 			payload = qclient.ReceivePayload(os.Stdin)
+			if len(payload.Args) > 1 && payload.Args[0] == "run" {
+				args := payload.Args
+				cmd := exec.Command(args[1], args[2:]...)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				cmd.Stdin = os.Stdin
+				cmd.Run()
+				os.Exit(0)
+			}
 			os.Args = append(os.Args[:1], "--transported")
 			os.Args = append(os.Args, payload.Args...)
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/afero"
 
 	qfs "brocade.be/base/fs"
+	qparallel "brocade.be/base/parallel"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qutil "brocade.be/qtechng/lib/util"
@@ -122,7 +123,7 @@ func (release Release) Init() (err error) {
 		return err
 	}
 	fs := release.FS("/")
-	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/m4", "/object/l4", "/object/i4", "/object/r4", "/admin", "/log"} {
+	for _, dir := range []string{"/", "/source/data", "/meta", "/unique", "/tmp", "/object/t4", "/object/m4", "/object/l4", "/object/i4", "/object/r4", "/admin", "/log"} {
 		fs.MkdirAll(dir, 0o770)
 	}
 
@@ -197,9 +198,6 @@ func (release Release) SourceCount() map[string]int {
 	return stat
 }
 
-
-
-
 func (release *Release) ObjectStore(objname string, obj json.Marshaler) (changed bool, before []byte, after []byte, err error) {
 	fs, place := release.ObjectPlace(objname)
 	return fs.Store(place, obj, "")
@@ -216,7 +214,6 @@ func (release *Release) UniqueUnlink(qpath string) {
 	fs, place := release.UniquePlace(qpath)
 	fs.Waste(place)
 }
-
 
 func (release Release) ReInit() error {
 	fs := release.FS("/")
@@ -241,6 +238,60 @@ func (release Release) QPaths() []string {
 		qpaths[i] = qpath
 	}
 	return qpaths
+}
+
+func (release Release) Modifications(after time.Time, mode string) (result map[string][]string, err error) {
+	result = make(map[string][]string)
+	stamp := time.Now()
+	dir := ""
+	switch mode {
+	case "source":
+		dir, _ = release.FS("/").RealPath("/source/data")
+	case "meta":
+		dir, _ = release.FS("/").RealPath("/meta")
+	case "i4", "m4", "r4", "l4", "t4":
+		dir, _ = release.FS("/").RealPath("/object/" + mode)
+	}
+	root, _ := release.FS("/").RealPath("/")
+	if dir != "" {
+		changed, err := qfs.ChangedAfter(dir, after, nil)
+		if err != nil {
+			return nil, err
+		}
+		if len(changed) == 0 {
+			return nil, nil
+		}
+		changed2 := make([]string, len(changed))
+		for i, p := range changed {
+			rel, _ := filepath.Rel(root, p)
+			changed2[i] = rel
+		}
+		sort.Strings(changed2)
+		result[mode] = changed2
+		return result, nil
+	}
+
+	modes := []string{"source", "meta", "i4", "m4", "r4", "t4", "l4"}
+	fn := func(n int) (result interface{}, err error) {
+		mode := modes[n]
+		return release.Modifications(after, mode)
+	}
+	all, errorlist := qparallel.NMap(len(modes), -1, fn)
+	for _, e := range errorlist {
+		if e != nil {
+			return nil, e
+		}
+	}
+	for _, res := range all {
+		x := res.(map[string][]string)
+		for sub, value := range x {
+			if len(value) != 0 {
+				result[sub] = value
+			}
+		}
+	}
+	result["context"] = []string{stamp.Format(time.RFC3339Nano), root}
+	return result, nil
 }
 
 ////////////////////////////// Help functions ///////////////

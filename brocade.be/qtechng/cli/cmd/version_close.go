@@ -73,7 +73,7 @@ func versionClose(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	_, _, err = qsync.Sync("0.00", br, true)
+	_, _, err = qsync.Sync("0.00", br, true, false)
 
 	if err != nil {
 		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

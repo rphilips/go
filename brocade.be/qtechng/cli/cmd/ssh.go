@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -61,4 +62,16 @@ func ReadSSHAll(fname string) ([]byte, error) {
 		log.Fatal("cmd/cat/1:\n", err, "\n====\n", catchErr)
 	}
 	return catchOut.Bytes(), nil
+}
+
+func RunSSH(args []string) (catchOut *bytes.Buffer, catchErr *bytes.Buffer, err error) {
+	payload := qclient.Payload{
+		ID:     "Once",
+		UID:    FUID,
+		CMD:    "qtechng",
+		Origin: QtechType,
+		Args:   append([]string{"run"}, args...),
+	}
+	whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
+	return qssh.SSHcmd(&payload, whowhere)
 }

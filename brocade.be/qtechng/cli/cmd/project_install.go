@@ -85,7 +85,7 @@ func preProjectInstall(cmd *cobra.Command, args []string) {
 		Frefname = "projectinstall-" + qutil.Timestamp(true)
 	}
 	if strings.Contains(QtechType, "P") {
-		qsync.Sync("", "", true)
+		qsync.Sync("", "", true, false)
 	}
 
 	if !strings.ContainsAny(QtechType, "BP") {

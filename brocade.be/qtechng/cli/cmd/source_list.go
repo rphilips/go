@@ -19,7 +19,6 @@ var sourceListCmd = &cobra.Command{
 	RunE:    sourceList,
 	PreRun:  preSourceList,
 	Annotations: map[string]string{
-		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
 		"fill-version":   "yes",
 	},
@@ -45,7 +44,7 @@ func preSourceList(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
+	if strings.ContainsAny(QtechType, "PB") {
 		addData(Fpayload, Fcargo, false, false, "")
 	}
 

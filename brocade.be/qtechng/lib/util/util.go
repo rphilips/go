@@ -1305,3 +1305,35 @@ func Deflate(data []byte) []byte {
 	w.Close()
 	return b.Bytes()
 }
+
+func TimeParse(s string) (tim time.Time, err error) {
+	if len(s) < 10 {
+		return tim, fmt.Errorf("`%s` has wrong time format", s)
+	}
+	if len(s) == 10 {
+		s = s + "T" + "00:00:00"
+	}
+	// if strings.IndexAny(s, "SMTWF") == 0 {
+	// 	if !strings.ContainsRune(s, ',') {
+	// 		s = strings.Replace(s, " ", ", ", 1)
+	// 	}
+	// 	tim, err = time.Parse(time.RFC1123, s)
+	// 	return
+	// }
+
+	if strings.ContainsRune(s, 'T') {
+		part2 := strings.SplitN(s, "T", 2)[1]
+		if !strings.ContainsAny(part2, "Z+-") {
+
+			s += "Z"
+		}
+	}
+	loc, _ := time.LoadLocation("Local")
+	tim, err = time.ParseInLocation(time.RFC3339Nano, s, loc)
+	if err == nil {
+		return
+	}
+	tim, err = time.ParseInLocation(time.RFC3339, s, loc)
+	return
+
+}

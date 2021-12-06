@@ -51,7 +51,7 @@ func sourceInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	if !strings.Contains(QtechType, "B") {
-		qsync.Sync("", "", true)
+		qsync.Sync("", "", true, false)
 	}
 
 	patterns := make([]string, len(args))
@@ -88,7 +88,7 @@ func preSourceInstall(cmd *cobra.Command, args []string) {
 		Frefname = "sourceinstall-" + qutil.Timestamp(true)
 	}
 	if strings.Contains(QtechType, "P") {
-		qsync.Sync("", "", true)
+		qsync.Sync("", "", true, false)
 	}
 
 	if !strings.ContainsAny(QtechType, "BP") {
