@@ -13,10 +13,16 @@ var fileInspectCmd = &cobra.Command{
 	Use:   "inspect",
 	Short: "Inspect files for IIIF",
 	Long: `Inspect a SQLite archive.
-	The first argument is the SQLite archive, the second is the table to inspect`,
-	Args:    cobra.MinimumNArgs(2),
-	Example: `iiiftool file inspect mydb.sqlite sqlar`,
-	RunE:    fileInspect,
+	The first argument is the SQLite archive, the second is the table to inspect:
+	- admin (administrative info)
+	- sqlar (archive)
+	- files (file info)
+	- meta (IIIF meta information)
+	If no second argument is supplied, inspect shows the database schema`,
+	Args: cobra.MinimumNArgs(1),
+	Example: `iiiftool file inspect mydb.sqlite sqlar
+iiiftool file inspect mydb.sqlite`,
+	RunE: fileInspect,
 }
 
 func init() {
@@ -25,7 +31,16 @@ func init() {
 
 func fileInspect(cmd *cobra.Command, args []string) error {
 
-	result, err := sqlite.Inspect(args[0], args[1])
+	sqliteFile := args[0]
+	if sqliteFile == "" {
+		log.Fatalf("iiiftool ERROR: argument 1 is missing")
+	}
+	table := ""
+	if len(args) == 2 {
+		table = args[1]
+	}
+
+	result, err := sqlite.Inspect(sqliteFile, table)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot inspect:\n%s", err)
 	}

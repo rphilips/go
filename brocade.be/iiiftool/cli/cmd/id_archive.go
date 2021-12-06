@@ -4,12 +4,10 @@ import (
 	"io"
 	"log"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
-	"brocade.be/iiiftool/lib/identifier"
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
@@ -31,10 +29,11 @@ Various additional parameters are in use and sometimes required:
 	RunE:    idArchive,
 }
 
-var Furlty = ""
-var Fimgty = ""
-var Faccess = ""
-var Fmime = ""
+var Furlty string
+var Fimgty string
+var Faccess string
+var Fmime string
+var Fiiifsys string
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
@@ -42,18 +41,19 @@ func init() {
 	idArchiveCmd.PersistentFlags().StringVar(&Fimgty, "imgty", "", "Image type")
 	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
+	idArchiveCmd.PersistentFlags().StringVar(&Fiiifsys, "iiif", "test", "IIIF system")
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
 	// verify input
-	id := identifier.Identifier(args[0])
-	if id.String() == "" {
+	id := args[0]
+	if id == "" {
 		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
 
-	loiType := strings.Split(id.String(), ":")[0]
+	loiType := strings.Split(id, ":")[0]
 	switch loiType {
 	case "c", "o":
 		if Furlty == "" {
@@ -66,37 +66,39 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 
 	// harvest IIIF metadata from MUMPS
-	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime)
+	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
 	// get file contents from docman ids
-	originalStream := make([]io.Reader, len(mResponse.Images))
-	originalfNames := make([]string, len(mResponse.Images))
+	imgLen := len(mResponse.Images)
+	originalStream := make([]io.Reader, imgLen)
 
 	empty := true
-	for i, id := range mResponse.Images {
-		docid := docman.DocmanID(id)
+	for i, image := range mResponse.Images {
+		docid := docman.DocmanID(image["loc"])
 		reader, err := docid.Reader()
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
 		}
 		empty = false
 		originalStream[i] = reader
-		originalfNames[i] = filepath.Base(id)
 	}
 	if empty {
 		log.Fatalf("iiiftool ERROR: no docman images found")
 	}
 
 	// convert file contents from TIFF/JPG to JP2K
-	convertedStream := make([]io.Reader, len(originalStream))
-	convertedfNames := make([]string, len(originalStream))
+	convertedStream := make([]io.Reader, imgLen)
 
 	fn := func(n int) (interface{}, error) {
 		old := originalStream[n]
 		args := util.GmConvertArgs(Fquality, Ftile)
+		// "Specify input_file as - for standard input, output_file as - for standard output",
+		// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
+		// but it needs to be "- jp2:-"!
+		args = append(args, "-", "jp2:-")
 		cmd := exec.Command("gm", args...)
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
@@ -117,24 +119,21 @@ func idArchive(cmd *cobra.Command, args []string) error {
 			io.Copy(stdin, old)
 		}()
 		convertedStream[n] = out
-		ext := filepath.Ext(originalfNames[n])
-		convertedfNames[n] = strings.TrimSuffix(originalfNames[n], ext) + ".jp2"
 		return out, nil
 	}
 
-	parallel.NMap(len(originalStream), -1, fn)
+	_, mapErr := parallel.NMap(len(originalStream), -1, fn)
+	for _, e := range mapErr {
+		if e != nil {
+			log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
+		}
+	}
 
 	// store file contents in SQLite archive
-	filestream := make(map[string]io.Reader, len(convertedStream))
-	for i, file := range convertedfNames {
-		filestream[file] = convertedStream[i]
-	}
 
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
-	// to do: identifier vanuit de MUMPS ook in sqlite zetten!
-
-	err = sqlite.Store(sqlitefile, filestream, Fcwd, mResponse)
+	err = sqlite.Store(sqlitefile, convertedStream, Fcwd, mResponse)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 	}

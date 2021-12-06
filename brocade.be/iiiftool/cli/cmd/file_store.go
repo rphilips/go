@@ -8,7 +8,6 @@ import (
 
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/sqlite"
-
 	"github.com/spf13/cobra"
 )
 
@@ -37,19 +36,24 @@ func fileStore(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: SQLite archive is missing")
 	}
 
-	files := make(map[string]io.Reader, len(args[1:]))
+	var dummyMeta iiif.MResponse
 
-	for _, file := range args[1:] {
-		name := filepath.Base(file)
+	files := make([]io.Reader, len(args[1:]))
+
+	for i, file := range args[1:] {
 		reader, err := os.Open(file)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: file is not valid: %v", file)
 		}
-		files[name] = reader
+		files[i] = reader
+
+		name := filepath.Base(file)
+		data := map[string]string{"name": name}
+		dummyMeta.Images = append(dummyMeta.Images, data)
+
 	}
 
-	var empty iiif.MResponse
-	err := sqlite.Store(sqlitefile, files, Fcwd, empty)
+	err := sqlite.Store(sqlitefile, files, Fcwd, dummyMeta)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
 	}
