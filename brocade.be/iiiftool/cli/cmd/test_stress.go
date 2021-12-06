@@ -11,21 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stresstestCmd = &cobra.Command{
-	Use:   "stresstest",
-	Short: "stresstest",
-	Long: `Perform a IIIF stresstest.
+var testStressCmd = &cobra.Command{
+	Use:   "stress",
+	Short: "stress",
+	Long: `Perform a IIIF stress test.
 	The argument is the number of request to perform`,
 	Args:    cobra.ExactArgs(1),
-	RunE:    stresstest,
-	Example: "iiiftool stresstest 100",
+	Example: "iiiftool test stress 100",
+	RunE:    testStress,
 }
 
 func init() {
-	rootCmd.AddCommand(stresstestCmd)
+	testCmd.AddCommand(testStressCmd)
 }
 
-func stresstest(cmd *cobra.Command, args []string) error {
+func testStress(cmd *cobra.Command, args []string) error {
 
 	URL := "https://dev.anet.be/iiif/index.phtml?id=tg:uakagaab:7188&file=manifest.json"
 
@@ -54,7 +54,7 @@ func stresstest(cmd *cobra.Command, args []string) error {
 	}
 
 	diff := end.Sub(start)
-	fmt.Println(len(result), "requests handled in", diff)
+	fmt.Println(len(result), "requests to", URL, "\nhandled in", diff)
 
 	return nil
 }
