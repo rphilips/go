@@ -286,8 +286,8 @@ func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
 }
 
 // Given a IIIF harvest code, i.e. digest with filepath,
-// e.g. a42f98d253ea3dd019de07870862cbdc62d6077c00000001.jp2
-// return that filename as a stream
+// e.g. a42f98d253ea3dd019de07870862cbdc62d6077c00000001.jp2.
+// Return that filename as a stream
 func Harvest(harvestcode string, sqlar *Sqlar) error {
 
 	digest := harvestcode[0:40]
