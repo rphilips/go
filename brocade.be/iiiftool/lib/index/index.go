@@ -108,8 +108,26 @@ func LookupId(id string) (string, error) {
 	defer index.Close()
 
 	id = safe(id)
-	row := index.QueryRow("SELECT digest FROM indexes where id=?", id)
+	row := index.QueryRow("SELECT * FROM indexes where id=?", id)
 	digest := util.ReadStringRow(row)
 
 	return digest, nil
+}
+
+// Search the index database for a search string
+func Search(search string) ([]string, error) {
+
+	result := []string{""}
+	index, err := sql.Open("sqlite", iiifIndexDb)
+	if err != nil {
+		return result, fmt.Errorf("cannot open index database: %v", err)
+	}
+	defer index.Close()
+
+	search = safe(search)
+
+	// err, row := sql.Query("SELECT * FROM indexes where id=%s or digest=%s", search)
+	// digest := util.ReadStringRow(row)
+
+	return result, nil
 }

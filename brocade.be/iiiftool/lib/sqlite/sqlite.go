@@ -26,7 +26,7 @@ var user = registry.Registry["qtechng-user"]
 type Sqlar struct {
 	Name   string
 	Mode   int64
-	Mtime  int64
+	Mtime  time.Time
 	Sz     int64
 	Reader *bytes.Reader
 }
@@ -227,13 +227,15 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 // Function that reads a single sqlar row sql.Row
 func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	var data []byte
+	var mtime int64
 	err := row.Scan(
 		&sqlar.Name,
 		&sqlar.Mode,
-		&sqlar.Mtime,
+		mtime,
 		&sqlar.Sz,
 		&data)
 	sqlar.Reader = bytes.NewReader(data)
+	sqlar.Mtime = time.Unix(0, mtime)
 	if err != nil {
 		return err
 	}
