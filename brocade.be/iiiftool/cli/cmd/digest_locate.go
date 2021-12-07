@@ -9,9 +9,10 @@ import (
 )
 
 var digestLocateCmd = &cobra.Command{
-	Use:     "locate",
-	Short:   "Locate a IIIF digest",
-	Long:    "Given a IIIF digest formulate an appropriate SQLite filepath.",
+	Use:   "locate",
+	Short: "Locate a IIIF digest",
+	Long: `Given a IIIF digest formulate an appropriate SQLite filepath
+-- regardless of whether this location actually exists or not.`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `iiiftool digest locate a42f98d253ea3dd019de07870862cbdc62d6077c`,
 	RunE:    digestLocate,
