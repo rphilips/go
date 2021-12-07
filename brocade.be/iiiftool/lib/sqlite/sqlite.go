@@ -231,7 +231,7 @@ func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	err := row.Scan(
 		&sqlar.Name,
 		&sqlar.Mode,
-		mtime,
+		&mtime,
 		&sqlar.Sz,
 		&data)
 	sqlar.Reader = bytes.NewReader(data)
