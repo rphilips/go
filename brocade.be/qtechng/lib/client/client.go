@@ -22,6 +22,7 @@ import (
 type LocalFile struct {
 	Release string `json:"release"`
 	QPath   string `json:"qpath"`
+	DevPath string `json:"devpath"`
 	Project string `json:"project"`
 	Time    string `json:"time"`
 	Digest  string `json:"digest"`
@@ -265,6 +266,10 @@ func (dir *Dir) Add(locfils ...LocalFile) {
 		}
 		if !qfs.IsFile(filepath.Join(dir.Dir, base)) {
 			continue
+		}
+		olddigest := dir.Files[base].Digest
+		if locfil.Digest == "" {
+			locfil.Digest = olddigest
 		}
 		dir.Files[base] = locfil
 		ok = true

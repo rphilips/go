@@ -435,7 +435,11 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 	changed = false
 	if !reset {
 		var e error
-		changed, before, after, e = fs.Store(source.String(), data, meta.Digest)
+		digest := meta.Digest
+		if digest == "" {
+			digest = " "
+		}
+		changed, before, after, e = fs.Store(source.String(), fdata, digest)
 		if e != nil {
 			err = &qerror.QError{
 				Ref:     []string{"source.store.forbidden"},
@@ -446,7 +450,7 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 			return
 		}
 	} else {
-		after = data.([]byte)
+		after = fdata
 		before = []byte{}
 		changed = true
 	}

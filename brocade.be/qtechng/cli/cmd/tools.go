@@ -29,6 +29,7 @@ import (
 type lister struct {
 	Release string `json:"version"`
 	QPath   string `json:"qpath"`
+	DevPath string `json:"devpath"`
 	Project string `json:"project"`
 	Path    string `json:"file"`
 	URL     string `json:"fileurl"`
@@ -72,6 +73,7 @@ type storer struct {
 }
 
 func buildSQuery(args []string, filesinproject bool, qdirs []string, mumps bool) qsource.SQuery {
+
 	if len(args) != 0 {
 		if len(Fqpattern) == 0 {
 			Fqpattern = args
@@ -128,24 +130,26 @@ func fetchData(args []string, filesinproject bool, qdirs []string, mumps bool) (
 		Args:   os.Args[1:],
 		Query:  buildSQuery(args, filesinproject, qdirs, mumps),
 	}
+
 	pcargo = new(qclient.Cargo)
-	if !strings.ContainsRune(QtechType, 'B') && !strings.ContainsRune(QtechType, 'P') {
-		whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
-		catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
-		if err != nil {
-			return pcargo, fmt.Errorf("cmd/tools/fetchData/1:\n%s\n====\n%s", err.Error(), catchErr)
-		}
-		if catchErr.Len() != 0 {
-			return pcargo, fmt.Errorf("cmd/tools/fetchData/2:\n%s", catchErr)
-		}
-		dec := gob.NewDecoder(catchOut)
-		err = dec.Decode(pcargo)
-		if err == io.EOF {
-			err = nil
-		}
-		if err != nil {
-			return pcargo, fmt.Errorf("cmd/tools/fetchData/3:\n%s", err.Error())
-		}
+	if strings.ContainsAny(QtechType, "PB") {
+		return
+	}
+	whowhere := qregistry.Registry["qtechng-user"] + "@" + qregistry.Registry["qtechng-server"]
+	catchOut, catchErr, err := qssh.SSHcmd(Fpayload, whowhere)
+	if err != nil {
+		return pcargo, fmt.Errorf("cmd/tools/fetchData/1:\n%s\n====\n%s", err.Error(), catchErr)
+	}
+	if catchErr.Len() != 0 {
+		return pcargo, fmt.Errorf("cmd/tools/fetchData/2:\n%s", catchErr)
+	}
+	dec := gob.NewDecoder(catchOut)
+	err = dec.Decode(pcargo)
+	if err == io.EOF {
+		err = nil
+	}
+	if err != nil {
+		return pcargo, fmt.Errorf("cmd/tools/fetchData/3:\n%s", err.Error())
 	}
 	return
 }
@@ -212,6 +216,7 @@ func fetchObjectData(args []string) (pcargo *qclient.Cargo, err error) {
 
 func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool, withlint bool, batchid string) {
 	query := ppayload.Query.Copy()
+
 	psources := query.Run()
 	paths := make([]string, len(psources))
 	for i, ps := range psources {
@@ -250,6 +255,9 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		psource := psources[i]
 		locfile.Release = query.Release
 		locfile.QPath = qpath
+		if strings.Contains(qregistry.Registry["qtechng-type"], "B") {
+			locfile.DevPath = psource.Path()
+		}
 		locfile.Project = psource.Project().String()
 		locfile.Digest = digest
 		locfile.Cu = pmeta.Cu
@@ -464,6 +472,7 @@ func listTransport(pcargo *qclient.Cargo) ([]string, []lister) {
 			result[i] = lister{
 				Release: locfil.Release,
 				QPath:   locfil.QPath,
+				DevPath: locfil.DevPath,
 				Project: locfil.Project,
 				Path:    locfil.Place,
 				URL:     qutil.FileURL(locfil.Place, locfil.QPath, -1),

@@ -1,13 +1,13 @@
 package sync
 
 import (
-	"bufio"
 	"encoding/json"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	qcredential "brocade.be/base/credential"
+	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qserver "brocade.be/qtechng/lib/server"
@@ -19,12 +19,16 @@ import (
 // vtarget is on the current server.
 // vtarget can only be empty on a non-development machine
 // if vtarget is empty it reduces to the value of registry("brocade-release")
-func Sync(vsource string, vtarget string, force bool) (changed []string, deleted []string, err error) {
+func Sync(vsource string, vtarget string, force bool, deep bool) (changed []string, deleted []string, err error) {
+	// shallow := !deep
+	shallow := false
+
 	qtechType := qregistry.Registry["qtechng-type"]
 	if strings.Contains(qtechType, "B") && strings.Contains(qtechType, "P") && vsource == vtarget {
 		return
 	}
 	syncrun := qregistry.Registry["qtechng-sync-exe"]
+
 	copyrun := qregistry.Registry["qtechng-copy-exe"]
 	run := ""
 	regvalue := ""
@@ -49,6 +53,7 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		}
 		run = copyrun
 		regvalue = "qtechng-copy-exe"
+		shallow = false
 	}
 
 	runparts := make([]string, 0)
@@ -121,8 +126,53 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		}
 		return
 	}
+	if vsource != vtarget {
+		shallow = false
+	}
 
 	// real start of sync/copy
+
+	syncmap := make(map[string][]string)
+	files := make([]string, 0)
+	if shallow {
+		sout, _, err := qutil.QtechNG([]string{
+			"version",
+			"modified",
+			vsource,
+		}, []string{"$..DATA"}, false, "")
+		if err != nil {
+			shallow = false
+			syncmap = nil
+		}
+		if !strings.HasPrefix(sout, "{") {
+			syncmap = nil
+			shallow = false
+		} else {
+			json.Unmarshal([]byte(sout), &syncmap)
+			context := syncmap["context"]
+			if len(context) == 0 {
+				syncmap = nil
+				shallow = false
+			}
+		}
+		if shallow && len(syncmap) > 1 {
+			for k, fils := range syncmap {
+				if k == "context" {
+					continue
+				}
+				files = append(files, fils...)
+			}
+		}
+
+		if shallow {
+			tmpfile, _ := qfs.TempFile("", "qsync-")
+			qfs.Store(tmpfile, strings.Join(files, "\n"), "qtech")
+			x := make([]string, 0)
+			x = append(x, runparts[0], "--files-from="+tmpfile)
+			runparts = append(x, runparts[1:]...)
+		}
+
+	}
 
 	runargs := make([]string, len(runparts))
 	for i, arg := range runparts {
@@ -131,6 +181,7 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 		runargs[i] = arg
 	}
 
+	//fmt.Println("runargs:", runargs)
 	inm := runargs[0]
 	inm, _ = exec.LookPath(inm)
 
@@ -140,66 +191,63 @@ func Sync(vsource string, vtarget string, force bool) (changed []string, deleted
 	} else {
 		cmd = exec.Command(inm, runargs[1:]...)
 	}
-	pipe, e := cmd.StdoutPipe()
+	cmd = qcredential.Credential(cmd)
+	out, e := cmd.Output()
+
 	if e != nil {
 		err = &qerror.QError{
-			Ref: []string{"sync.exe.pipe.build"},
-			Msg: []string{"Cannot open pipe to `" + regvalue + "`: `" + e.Error() + "`"},
+			Ref: []string{"sync.exe.error"},
+			Msg: []string{e.Error()},
 		}
 		return
 	}
-	cmd = qcredential.Credential(cmd)
-	err = cmd.Start()
-	if err != nil {
-		err = &qerror.QError{
-			Ref: []string{"sync.exe.pipe.run"},
-			Msg: []string{"Cannot run `" + regvalue + "`: `" + err.Error() + "`"},
-		}
-		return
-	}
-	reader := bufio.NewReader(pipe)
+	sout := string(out)
 
 	changed = make([]string, 0)
 	deleted = make([]string, 0)
-	go func() {
-		defer pipe.Close()
-		line, err := reader.ReadString('\n')
-		for err == nil {
-			// >f+++++++++ source/date.txt
-			switch {
-			case strings.HasPrefix(line, ">f"):
-				parts := strings.SplitN(line, " ", 2)
-				if len(parts) != 2 {
-					break
-				}
-				f := strings.TrimSpace(parts[1])
-				f = filepath.ToSlash(f)
-				if !strings.HasPrefix(f, "source/data") {
-					break
-				}
-				f = strings.TrimPrefix(f, "source/data")
-				if f == "" || f == "/" {
-					break
-				}
-				changed = append(changed, f)
-			case strings.HasPrefix(line, "*deleting"):
-				line = strings.TrimPrefix(line, "*deleting")
-				line = strings.TrimSpace(line)
-				f := filepath.ToSlash(line)
-				if !strings.HasPrefix(f, "source/data") {
-					break
-				}
-				f = strings.TrimPrefix(f, "source/data")
-				if f == "" || f == "/" {
-					break
-				}
-				deleted = append(deleted, f)
+
+	for _, line := range strings.SplitN(sout, "\n", -1) {
+		switch {
+		case strings.HasPrefix(line, ">f"):
+			parts := strings.SplitN(line, " ", 2)
+			if len(parts) != 2 {
+				break
 			}
-			line, err = reader.ReadString('\n')
+			f := strings.TrimSpace(parts[1])
+			f = filepath.ToSlash(f)
+			if !strings.HasPrefix(f, "source/data") {
+				break
+			}
+			f = strings.TrimPrefix(f, "source/data")
+			if f == "" || f == "/" {
+				break
+			}
+			changed = append(changed, f)
+		case strings.HasPrefix(line, "*deleting"):
+			line = strings.TrimPrefix(line, "*deleting")
+			line = strings.TrimSpace(line)
+			f := filepath.ToSlash(line)
+			if !strings.HasPrefix(f, "source/data") {
+				break
+			}
+			f = strings.TrimPrefix(f, "source/data")
+			if f == "" || f == "/" {
+				break
+			}
+			deleted = append(deleted, f)
 		}
-	}()
+	}
 
-	cmd.Wait()
-
+	if shallow {
+		context := syncmap["context"]
+		if len(context) != 0 {
+			m := make(map[string]string)
+			m["timestamp"] = context[0]
+			b, _ := json.Marshal(m)
+			release, _ := qserver.Release{}.New(vsource, false)
+			tsf, _ := release.FS("/").RealPath("/admin/sync.json")
+			qfs.Store(tsf, b, "qtech")
+		}
+	}
 	return
 }

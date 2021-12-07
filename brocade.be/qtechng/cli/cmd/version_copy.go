@@ -99,7 +99,7 @@ func versionCopy(cmd *cobra.Command, args []string) error {
 
 	}
 
-	changed, deleted, err := qsync.Sync(sversion, tversion, false)
+	changed, deleted, err := qsync.Sync(sversion, tversion, false, false)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")

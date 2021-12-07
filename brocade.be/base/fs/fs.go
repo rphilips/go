@@ -1015,3 +1015,28 @@ func Log(v ...interface{}) {
 	fmt.Fprintln(f, v...)
 	fmt.Fprintln(f, "===")
 }
+
+func ChangedAfter(rootdir string, after time.Time, skipsubdirs []string) (paths []string, err error) {
+
+	skips := make(map[string]bool)
+	for _, s := range skipsubdirs {
+		s := strings.TrimSuffix(s, string(os.PathSeparator))
+		skips[s] = true
+	}
+	fn := func(path string, info fs.FileInfo, err error) error {
+		if info.Mode().IsDir() {
+			relpath, _ := filepath.Rel(rootdir, path)
+			if skips[relpath] {
+				return filepath.SkipDir
+			} else {
+				return nil
+			}
+		}
+		if info.ModTime().After(after) {
+			paths = append(paths, path)
+		}
+		return nil
+	}
+	err = filepath.Walk(rootdir, fn)
+	return paths, err
+}

@@ -32,8 +32,11 @@ it may be necessary to run this command as root!`,
 	},
 }
 
+var Fdeep bool
+
 func init() {
 	versionCmd.AddCommand(versionSyncCmd)
+	versionSyncCmd.Flags().BoolVar(&Fdeep, "deep", false, "if true, all files in the repository are synced")
 }
 
 func versionSync(cmd *cobra.Command, args []string) error {
@@ -65,7 +68,7 @@ func versionSync(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	changed, deleted, err := qsync.Sync(current, current, false)
+	changed, deleted, err := qsync.Sync(current, current, false, Fdeep)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
@@ -83,6 +86,10 @@ func versionSync(cmd *cobra.Command, args []string) error {
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		return nil
+	}
+	if len(changed) == 0 && len(deleted) == 0 {
+		Fmsg = qreport.Report(nil, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 		return nil
 	}
 

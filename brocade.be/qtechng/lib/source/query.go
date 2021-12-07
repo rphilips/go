@@ -3,11 +3,14 @@ package source
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
 	qfnmatch "brocade.be/base/fnmatch"
+	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
 	qmeta "brocade.be/qtechng/lib/meta"
 	qobject "brocade.be/qtechng/lib/object"
@@ -709,4 +712,31 @@ func (query *Query) RunObject() map[string]*qobject.Uber {
 		}
 	}
 	return ubermap
+}
+
+func SyncQuery(r string, tstamp string, sysname string, rnd string) (err error) {
+	now := qutil.Time()
+	//time.Sleep(1050 * time.Millisecond)
+	query := new(Query)
+	query.Release = r
+	query.MtAfter = tstamp
+	query.Harmonise()
+	sources := query.Run()
+	data := make([]string, len(sources)+2)
+	release, _ := qserver.Release{}.New(query.Release, true)
+	fs := release.FS()
+	for i, ps := range sources {
+		data[i], _ = fs.RealPath(ps.String())
+	}
+	fs = release.FS("/")
+	data[len(sources)], _ = fs.RealPath("/admin/sync-" + sysname)
+	fs = release.FS()
+	fname := filepath.Join("scratch-dir", "sync-"+sysname+"-"+rnd+".json")
+	blob, _ := json.Marshal(data)
+	err = qfs.Store(fname, blob, "temp")
+	if err != nil {
+		return err
+	}
+	err = qfs.Store(data[len(sources)], now, "qpath")
+	return err
 }

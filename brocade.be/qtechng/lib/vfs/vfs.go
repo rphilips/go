@@ -103,7 +103,7 @@ func (fs QFs) JSONLoad(jname string, result interface{}) (err error) {
 //            or has different content
 func (fs QFs) Store(fname string, data interface{}, digest string) (changed bool, before []byte, after []byte, err error) {
 	if fs.ReadOnly {
-		return false, nil, nil, errors.New("Filesystem is readonly")
+		return false, nil, nil, errors.New("filesystem is readonly")
 	}
 
 	before, e := fs.ReadFile(fname)
@@ -111,7 +111,7 @@ func (fs QFs) Store(fname string, data interface{}, digest string) (changed bool
 	if e == nil && digest != "" {
 		dg := qutil.Digest(before)
 		if dg != digest {
-			return false, before, nil, errors.New("Digest does not match")
+			return false, before, nil, errors.New("digest does not match")
 		}
 	}
 
@@ -123,7 +123,7 @@ func (fs QFs) Store(fname string, data interface{}, digest string) (changed bool
 		return false, before, nil, err
 	}
 
-	if bytes.Compare(before, after) == 0 && !os.IsNotExist(e) {
+	if bytes.Equal(before, after) && !os.IsNotExist(e) {
 		return false, before, after, nil
 	}
 
