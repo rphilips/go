@@ -36,38 +36,6 @@ func ReadStringRow(row *sql.Row) string {
 	return data
 }
 
-// Function that reads multiple sql.Rows
-func ReadRows(rows *sql.Rows) ([]interface{}, error) {
-
-	result := make([]interface{}, 0)
-
-	columns, err := rows.Columns()
-	if err != nil {
-		return result, err
-	}
-
-	for rows.Next() {
-
-		data := make([]*interface{}, len(columns))
-		err := rows.Scan(&data[0], &data[1], &data[2])
-		if err != nil {
-			return result, err
-		}
-
-		values := make([]interface{}, 0)
-
-		for _, item := range data {
-			values = append(values, *item)
-		}
-
-		result = append(result, values)
-	}
-	if err := rows.Err(); err != nil {
-		return result, err
-	}
-	return result, nil
-}
-
 // Function that standardizes image filenames
 func ImageName(name string, index int) string {
 	ext := filepath.Ext(name)

@@ -258,9 +258,36 @@ func ReadMetaRow(row *sql.Row, meta *Meta) error {
 	return nil
 }
 
+// Function that reads multiple Index sql.Rows
+func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
+
+	result := make([][]string, 0)
+
+	// key|id|digest|location
+	columns, err := rows.Columns()
+	if err != nil {
+		return result, err
+	}
+
+	for rows.Next() {
+
+		data := make([]string, len(columns))
+		err := rows.Scan(&data[0], &data[1], &data[2], &data[3])
+		if err != nil {
+			return result, err
+		}
+
+		result = append(result, data)
+	}
+	if err := rows.Err(); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 // Given a IIIF harvest code, i.e. digest with filepath,
-// e.g. a42f98d253ea3dd019de07870862cbdc62d6077c00000001.jp2
-// return that filename as a stream
+// e.g. a42f98d253ea3dd019de07870862cbdc62d6077c00000001.jp2.
+// Return that filename as a stream
 func Harvest(harvestcode string, sqlar *Sqlar) error {
 
 	digest := harvestcode[0:40]
