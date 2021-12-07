@@ -4,29 +4,44 @@ import (
 	"fmt"
 	"log"
 
-	"brocade.be/iiiftool/lib/iiif"
+	"brocade.be/iiiftool/lib/index"
 	"github.com/spf13/cobra"
 )
 
-var digestLocateCmd = &cobra.Command{
-	Use:     "locate",
-	Short:   "Locate a IIIF digest",
-	Long:    "Given a IIIF digest formulate an appropriate SQLite filepath.",
+var idLocateCmd = &cobra.Command{
+	Use:   "locate",
+	Short: "Locate a IIIF id",
+	Long: `Given a IIIF id formulate an appropriate SQLite filepath
+-- regardless of whether this location actually exists or not.`,
 	Args:    cobra.MinimumNArgs(1),
-	Example: `iiiftool digest locate a42f98d253ea3dd019de07870862cbdc62d6077c`,
-	RunE:    digestLocate,
+	Example: `iiiftool id locate dg:ua:9`,
+	RunE:    idLocate,
 }
 
 func init() {
-	digestCmd.AddCommand(digestLocateCmd)
+	idCmd.AddCommand(idLocateCmd)
 }
 
-func digestLocate(cmd *cobra.Command, args []string) error {
-	digest := args[0]
-	if digest == "" {
+func idLocate(cmd *cobra.Command, args []string) error {
+	id := args[0]
+	if id == "" {
 		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
 
-	fmt.Println(iiif.Digest2Location(digest))
+	search, err := index.Search(id)
+	if err != nil {
+		log.Fatalf("iiiftool ERROR: error searching index:\n%s", err)
+	}
+
+	result := make(map[string]bool)
+
+	for _, res := range search {
+		location := res[3]
+		result[location] = true
+	}
+
+	for location := range result {
+		fmt.Println(location)
+	}
 	return nil
 }
