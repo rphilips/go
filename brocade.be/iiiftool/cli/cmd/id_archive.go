@@ -18,7 +18,8 @@ import (
 var idArchiveCmd = &cobra.Command{
 	Use:   "archive",
 	Short: "Create archive for a IIIF identifier",
-	Long: `Given a IIIF identifier, put the appropriate image files in an SQLite archive.
+	Long: `Given a IIIF identifier, convert the appropriate image files
+and store them in an SQLite archive.
 Various additional parameters are in use and sometimes required:
 --urlty:	url type (required for c-loi/o-loi)
 --imgty:	image type (required for tg-loi)
@@ -65,7 +66,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// harvest IIIF metadata from MUMPS
+	// get IIIF metadata from MUMPS
 	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
@@ -130,9 +131,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 
 	// store file contents in SQLite archive
-
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
-
 	err = sqlite.Store(sqlitefile, convertedStream, Fcwd, mResponse)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)

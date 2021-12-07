@@ -10,7 +10,7 @@ import (
 
 var testRequestsCmd = &cobra.Command{
 	Use:     "requests",
-	Short:   "requests",
+	Short:   "Image requests test",
 	Long:    `Perform a IIIF image requests test`,
 	Args:    cobra.NoArgs,
 	Example: "iiiftool test requests",

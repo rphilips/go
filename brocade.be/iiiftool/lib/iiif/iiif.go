@@ -68,7 +68,7 @@ func Digest2Location(digest string) string {
 	digest = util.StrReverse(digest)
 	folder := digest[0:2]
 	subfolder := digest[2:4]
-	basename := digest[0:12] + ".sqlite"
+	basename := digest + ".sqlite"
 	location := filepath.Join(iifBaseDir, folder[0:2], subfolder, basename)
 	return location
 }
