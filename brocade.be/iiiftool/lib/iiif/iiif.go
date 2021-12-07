@@ -20,7 +20,7 @@ type MResponse struct {
 	Images     []map[string]string `json:"images"`
 	Imgloi     string              `json:"imgloi"`
 	Index      []string            `json:"index"`
-	Manifest   interface{}
+	Manifest   interface{}         `json:"manifest"`
 }
 
 // Harvest IIIF metadata from MUMPS
