@@ -63,7 +63,7 @@ func Meta(
 }
 
 // Given an IIIF, formulate its appropriate location in the filesystem
-// -- regardless of whether the location is an existing filepath or not.
+// -- regardless of whether this location is an existing filepath or not.
 func Digest2Location(digest string) string {
 	digest = util.StrReverse(digest)
 	folder := digest[0:2]
