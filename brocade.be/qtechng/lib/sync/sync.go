@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	qcredential "brocade.be/base/credential"
 	qfs "brocade.be/base/fs"
@@ -19,9 +20,10 @@ import (
 // vtarget is on the current server.
 // vtarget can only be empty on a non-development machine
 // if vtarget is empty it reduces to the value of registry("brocade-release")
-func Sync(vsource string, vtarget string, force bool, deep bool) (changed []string, deleted []string, err error) {
-	// shallow := !deep
-	shallow := false
+func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []string, deleted []string, err error) {
+	deep := true
+	shallow := !deep
+	//shallow := false
 
 	qtechType := qregistry.Registry["qtechng-type"]
 	if strings.Contains(qtechType, "B") && strings.Contains(qtechType, "P") && vsource == vtarget {
@@ -237,17 +239,25 @@ func Sync(vsource string, vtarget string, force bool, deep bool) (changed []stri
 			deleted = append(deleted, f)
 		}
 	}
-
+	stamp := ""
 	if shallow {
 		context := syncmap["context"]
 		if len(context) != 0 {
-			m := make(map[string]string)
-			m["timestamp"] = context[0]
-			b, _ := json.Marshal(m)
-			release, _ := qserver.Release{}.New(vsource, false)
-			tsf, _ := release.FS("/").RealPath("/admin/sync.json")
-			qfs.Store(tsf, b, "qtech")
+			stamp = context[0]
 		}
+	}
+
+	if !shallow && regvalue == "qtechng-copy-exe" {
+		now := time.Now()
+		stamp = now.Format(time.RFC3339Nano)
+	}
+	if stamp != "" {
+		m := make(map[string]string)
+		m["timestamp"] = stamp
+		b, _ := json.Marshal(m)
+		release, _ := qserver.Release{}.New(vsource, false)
+		tsf, _ := release.FS("/").RealPath("/admin/sync.json")
+		qfs.Store(tsf, b, "qtech")
 	}
 	return
 }

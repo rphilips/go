@@ -68,7 +68,18 @@ func init() {
 }
 
 func fileNew(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		files, _, err := qfs.FilesDirs(Fcwd)
+		if err != nil {
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			return nil
+		}
+		for _, f := range files {
+			name := f.Name()
+			args = append(args, qutil.AbsPath(name, Fcwd))
+		}
 
+	}
 	if Fcreate {
 		Frecurse = false
 		for _, fname := range args {

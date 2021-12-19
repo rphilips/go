@@ -62,6 +62,11 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if strings.ContainsRune(QtechType, 'B') {
+		releases := qserver.Releases(-1)
+		msg["releases"] = releases
+	}
+
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
 	return nil
 }
