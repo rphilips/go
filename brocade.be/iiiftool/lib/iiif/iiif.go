@@ -20,7 +20,7 @@ type MResponse struct {
 	Images     []map[string]string `json:"images"`
 	Imgloi     string              `json:"imgloi"`
 	Index      []string            `json:"index"`
-	Manifest   interface{}
+	Manifest   interface{}         `json:"manifest"`
 }
 
 // Harvest IIIF metadata from MUMPS
@@ -63,12 +63,12 @@ func Meta(
 }
 
 // Given an IIIF, formulate its appropriate location in the filesystem
-// -- regardless of whether this location is an existing filepath or not.
+// -- regardless of whether the location is an existing filepath or not.
 func Digest2Location(digest string) string {
 	digest = util.StrReverse(digest)
 	folder := digest[0:2]
 	subfolder := digest[2:4]
-	basename := digest[0:12] + ".sqlite"
+	basename := digest + ".sqlite"
 	location := filepath.Join(iifBaseDir, folder[0:2], subfolder, basename)
 	return location
 }

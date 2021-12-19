@@ -13,7 +13,7 @@ import (
 
 var testStressCmd = &cobra.Command{
 	Use:   "stress",
-	Short: "stress",
+	Short: "Stress test",
 	Long: `Perform a IIIF stress test.
 	The argument is the number of request to perform`,
 	Args:    cobra.ExactArgs(1),

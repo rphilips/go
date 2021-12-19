@@ -17,7 +17,7 @@ var fileStoreCmd = &cobra.Command{
 	Long: `Store files for IIIF in an SQLite archive.
 	The first argument is the SQLite archive,
 	the other arguments are the files to store.
-	If the files append already exist in the archive,
+	If the files already exist in the archive,
 	they are appended.
 `,
 	Args:    cobra.MinimumNArgs(2),
@@ -31,7 +31,6 @@ func init() {
 
 func fileStore(cmd *cobra.Command, args []string) error {
 	sqlitefile := args[0]
-
 	if sqlitefile == "" {
 		log.Fatalf("iiiftool ERROR: SQLite archive is missing")
 	}
