@@ -36,7 +36,7 @@ func preProjectList(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatal("cmd/project_list/1:\n", err)
 		}
-	} 
+	}
 
 	if strings.ContainsRune(QtechType, 'B') || strings.ContainsRune(QtechType, 'P') {
 		addData(Fpayload, Fcargo, false, false, "")
@@ -53,7 +53,7 @@ func preProjectList(cmd *cobra.Command, args []string) {
 func projectList(cmd *cobra.Command, args []string) error {
 
 	result := projlistTransport(Fcargo)
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }
 

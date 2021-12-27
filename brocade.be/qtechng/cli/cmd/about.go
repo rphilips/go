@@ -35,7 +35,7 @@ func init() {
 
 func about(cmd *cobra.Command, args []string) error {
 	if qregistry.Registry["error"] != "" {
-		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -51,6 +51,6 @@ func about(cmd *cobra.Command, args []string) error {
 		msg["!!user.username"] = user.Username
 	}
 	msg["BROCADE_REGISTRY"] = os.Getenv("BROCADE_REGISTRY")
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

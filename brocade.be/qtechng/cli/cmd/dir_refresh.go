@@ -65,11 +65,11 @@ func dirRefresh(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(errlist) != 0 {
-		Fmsg = qreport.Report("", errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if len(dirs) == 0 {
-		Fmsg = qreport.Report("", errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -101,6 +101,6 @@ func dirRefresh(cmd *cobra.Command, args []string) error {
 	}
 
 	sort.Strings(result)
-	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

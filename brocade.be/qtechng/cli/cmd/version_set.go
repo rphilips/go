@@ -35,13 +35,13 @@ func versionSet(cmd *cobra.Command, args []string) error {
 
 	if strings.Contains(QtechType, "B") {
 		err := fmt.Errorf("this command cannot be used on a development server")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	if version == "0.00" || version == "" {
 		err := fmt.Errorf("version `0.00` cannot be set")
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -54,36 +54,36 @@ func versionSet(cmd *cobra.Command, args []string) error {
 			Ref: []string{"set.version.lowest"},
 			Msg: []string{"The version of the new release `" + version + "` should be higher than `" + br + "`"},
 		}
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	release, err := qserver.Release{}.New(version, true)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	ok, _ := release.Exists("")
 	if !ok {
 		err = fmt.Errorf("version `%s` does NOT exist", release.String())
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	err = qregistry.SetRegistry("brocade-release", version)
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	err = qregistry.SetRegistry("brocade-release-say", version)
 	if err != nil {
-		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(Fmsg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	msg := make(map[string]string)
 	msg["brocade-release"] = qregistry.Registry["brocade-release"]
 	msg["brocade-release-say"] = qregistry.Registry["brocade-releas-say"]
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

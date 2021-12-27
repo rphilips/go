@@ -102,7 +102,7 @@ func textExport(cmd *cobra.Command, args []string) error {
 		result = nil
 	}
 
-	Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 
 	return nil
 

@@ -217,14 +217,14 @@ func guiMenu(cmd *cobra.Command, args []string) error {
 
 				t, err := template.ParseFS(guifs, "templates/"+Fmenu+".html")
 				if err != nil {
-					Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+					Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 					return
 				}
 				buf := new(bytes.Buffer)
 				err = t.Execute(buf, guiFiller)
 
 				if err != nil {
-					Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+					Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 					return
 				}
 				ui.Load("data:text/html," + url.PathEscape(buf.String()))

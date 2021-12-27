@@ -110,7 +110,7 @@ func fileCi(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if Fmsg == "" {
-		Fmsg = qreport.Report(result, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(result, Fcargo.Error, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 	return nil
 }
@@ -125,11 +125,11 @@ func preCi(cmd *cobra.Command, args []string) {
 	if len(errlist) == 0 {
 		errlist = nil
 	} else {
-		errlist = qerror.FlattenErrors(qerror.ErrorSlice(errlist))
+		errlist = qerror.FlattenErrors(qerror.ErrorSlice(errlist), "pre-ci")
 	}
 
 	if errlist != nil || Fpayload == nil {
-		Fmsg = qreport.Report(nil, qerror.ErrorSlice(errlist), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, qerror.ErrorSlice(errlist), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		cmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
 		return
 	}

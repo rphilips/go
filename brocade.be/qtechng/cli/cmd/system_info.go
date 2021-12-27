@@ -67,6 +67,6 @@ func systemInfo(cmd *cobra.Command, args []string) error {
 		msg["releases"] = releases
 	}
 
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

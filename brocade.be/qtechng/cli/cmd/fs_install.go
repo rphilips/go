@@ -43,17 +43,17 @@ func init() {
 
 func fsInstall(cmd *cobra.Command, args []string) error {
 	if qregistry.Registry["error"] != "" {
-		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	bindir := qregistry.Registry["bindir"]
 	if bindir == "" || !qfs.IsDir(bindir) {
-		Fmsg = qreport.Report(nil, errors.New("`bindir` is not defined or does not exist"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("`bindir` is not defined or does not exist"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	newexe := qutil.AbsPath(args[0], Fcwd)
 	if !qfs.IsFile(newexe) {
-		Fmsg = qreport.Report(nil, errors.New("`"+newexe+"` does not exist"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("`"+newexe+"` does not exist"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -69,7 +69,7 @@ func fsInstall(cmd *cobra.Command, args []string) error {
 	oldexe := filepath.Join(bindir, name)
 
 	if qfs.SameFile(newexe, oldexe) {
-		Fmsg = qreport.Report(nil, errors.New("do not replace a binary with itself"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("do not replace a binary with itself"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 
 	}

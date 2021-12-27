@@ -26,6 +26,6 @@ func init() {
 
 func logPack(cmd *cobra.Command, args []string) error {
 	msg, err := qlog.Pack()
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

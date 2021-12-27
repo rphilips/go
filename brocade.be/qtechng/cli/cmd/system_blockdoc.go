@@ -56,6 +56,6 @@ func systemBlockdoc(cmd *cobra.Command, args []string) error {
 			msg = ""
 		}
 	}
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

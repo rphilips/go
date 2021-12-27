@@ -67,12 +67,12 @@ func textDetectLocal(cmd *cobra.Command, args []string) {
 	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return
 		}
 		err = json.Unmarshal(data, &args)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return
 		}
 	}
@@ -113,11 +113,11 @@ func textDetect(cmd *cobra.Command, args []string) error {
 	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
 		if err != nil {
-			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 		err = json.Unmarshal(data, &args)
 		if err != nil {
-			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(results, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 	}
 
@@ -141,7 +141,7 @@ func textDetect(cmd *cobra.Command, args []string) error {
 	if len(results) == 0 {
 		results = nil
 	}
-	Fmsg = qreport.Report(results, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(results, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 
 }

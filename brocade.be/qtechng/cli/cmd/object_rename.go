@@ -55,17 +55,17 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	objnew := args[1]
 	if objnew == objold {
 		err := fmt.Errorf("`%s`: same identifier for both objects", objold)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if len(objold) < 4 {
 		err := fmt.Errorf("`%s` cannot be an object", objold)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if len(objnew) < 4 {
 		err := fmt.Errorf("`%s` cannot be an object", objnew)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -81,24 +81,24 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	}
 	if pfold == "" {
 		err := fmt.Errorf("`%s` should start with m4, l4 or i4", objold)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if pfnew == "" {
 		err := fmt.Errorf("`%s` should start with m4, l4 or i4", objnew)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if pfnew != pfold {
 		err := fmt.Errorf("`%s` and `%s` are of different type", objnew, objold)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	release, err := qserver.Release{}.New(Fversion, true)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -106,7 +106,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	exists, _ := fs.Exists(placeold)
 	if !exists {
 		err := fmt.Errorf("`%s` is not an existing object", objold)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -114,20 +114,20 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	exists, _ = fs.Exists(placenew)
 	if !exists {
 		err := fmt.Errorf("`%s` is not an existing object", objnew)
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	mapdepnew, err := qobject.GetDependenciesDeep(release, objnew)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	mapdepsnew := mapdepnew[objnew]
 	for _, dep := range mapdepsnew {
 		if dep == objold {
 			err := fmt.Errorf("`%s` depends on `%s`", objold, objnew)
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 	}
@@ -137,7 +137,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	mapdep, err := qobject.GetDependenciesDeep(release, objold)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	mapdeps, ok := mapdep[objold]
@@ -150,7 +150,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 	for _, dep := range mapdeps {
 		if dep == objnew {
 			err := fmt.Errorf("`%s` depends on `%s`", objnew, objold)
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 
 		}
@@ -171,7 +171,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 
 	tmpdir, err := qfs.TempDir("", "objrename.")
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	argums := []string{"source", "co", "--version=" + Fversion, "--tree", "--nature=text"}
@@ -183,14 +183,14 @@ func objectRename(cmd *cobra.Command, args []string) error {
 		err = fmt.Errorf("checkout of relevant sources gives error: `%s`", serr)
 	}
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	plocfils, errlist := qclient.Find(tmpdir, nil, Fversion, true, nil, false, "", "", nil)
 
 	if errlist != nil {
-		Fmsg = qreport.Report(nil, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -217,7 +217,7 @@ func objectRename(cmd *cobra.Command, args []string) error {
 
 	for _, e := range errorlist {
 		if e != nil {
-			Fmsg = qreport.Report(nil, e, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, e, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 	}

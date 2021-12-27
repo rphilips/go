@@ -84,7 +84,7 @@ func preImport(cmd *cobra.Command, args []string) {
 			File: csvfile,
 			Msg:  []string{"`" + csvfile + "` read with error: " + e.Error()},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		Fpayload = nil
 		return
 	}
@@ -173,7 +173,7 @@ func textImport(cmd *cobra.Command, args []string) error {
 			result = nil
 		}
 
-		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 
 	return nil

@@ -79,7 +79,7 @@ func systemBackup(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if git == "" || !qfs.Exists(git) {
-		Fmsg = qreport.Report("", errors.New("cannot find `git`)"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", errors.New("cannot find `git`)"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 	argums := []string{path.Base(git), "push", "--mirror", "backup"}
 
@@ -102,9 +102,9 @@ func systemBackup(cmd *cobra.Command, args []string) error {
 	sout = strings.TrimSpace(sout)
 
 	if err != nil {
-		Fmsg = qreport.Report(sout, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(sout, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	} else {
-		Fmsg = qreport.Report(sout, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(sout, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 	return nil
 }

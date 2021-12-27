@@ -80,7 +80,7 @@ func fileDiff(cmd *cobra.Command, args []string) error {
 	target := filepath.Join(tmpdir, basename)
 	_, _, err := qutil.QtechNG(argums, nil, false, tmpdir)
 	if err != nil {
-		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	name := ""
@@ -90,7 +90,7 @@ func fileDiff(cmd *cobra.Command, args []string) error {
 		qfs.CopyFile(target, name, "qtech", false)
 		qfs.Rmpath(tmpdir)
 	} else {
-		Fmsg = qreport.Report("", fmt.Errorf("cannot retrieve `%s`", plocfil.QPath), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", fmt.Errorf("cannot retrieve `%s`", plocfil.QPath), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 

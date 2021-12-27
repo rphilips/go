@@ -51,7 +51,7 @@ func LockRunner(args []string) {
 
 	locker := checkLock(lock, until)
 	if locker == "" {
-		Fmsg = qreport.Report(nil, fmt.Errorf("cannot obtain lock `%s`", lock), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, fmt.Errorf("cannot obtain lock `%s`", lock), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return
 	}
 
@@ -83,7 +83,7 @@ func LockRunner(args []string) {
 				os.Exit(status.ExitStatus())
 			}
 		}
-		Fmsg = qreport.Report(nil, fmt.Errorf("unable to run command succesfully"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, fmt.Errorf("unable to run command succesfully"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return
 	}
 }

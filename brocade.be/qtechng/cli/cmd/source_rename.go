@@ -56,14 +56,14 @@ func init() {
 func sourceRename(cmd *cobra.Command, args []string) error {
 	if Fwith == "" {
 		err := fmt.Errorf("`--with=...` flag should not be empty")
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if Fregexp && Freplace != "" {
 		_, e := regexp.Compile(Freplace)
 		if e != nil {
 			err := fmt.Errorf("`--replace=...` flag is not a valid regular expression")
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 	}
@@ -97,6 +97,6 @@ func sourceRename(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

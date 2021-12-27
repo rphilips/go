@@ -163,7 +163,7 @@ func dirTell(cmd *cobra.Command, args []string) error {
 		err = w.Flush()
 		return err
 	}
-	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }
 

@@ -156,7 +156,7 @@ func (errslice ErrorSlice) MarshalJSON() (js []byte, err error) {
 	if len(errslice) == 0 {
 		return
 	}
-	eslice := FlattenErrors(errslice)
+	eslice := FlattenErrors(errslice, "")
 	if len(eslice) == 0 {
 		return
 	}
@@ -164,7 +164,7 @@ func (errslice ErrorSlice) MarshalJSON() (js []byte, err error) {
 }
 
 func (errslice ErrorSlice) Error() string {
-	eslice := FlattenErrors(errslice)
+	eslice := FlattenErrors(errslice, "")
 	if len(eslice) == 0 {
 		return "nil"
 	}
@@ -228,7 +228,7 @@ func QErrorTune(e error, additional *QError) *QError {
 	}
 }
 
-func FlattenErrors(err interface{}) []error {
+func FlattenErrors(err interface{}, errid string) []error {
 	if err == nil {
 		return nil
 	}
@@ -291,21 +291,33 @@ func FlattenErrors(err interface{}) []error {
 		}
 		switch v := e.(type) {
 		case QError:
+			if len(v.Ref) == 0 && errid != "" {
+				v.Ref = []string{errid}
+			}
+			if len(v.Ref) == 1 && v.Ref[0] == "unknown" && errid != "" {
+				v.Ref = []string{errid}
+			}
 			errs2 = append(errs2, v)
 		case *QError:
+			if len(v.Ref) == 0 && errid != "" {
+				v.Ref = []string{errid}
+			}
+			if len(v.Ref) == 1 && v.Ref[0] == "unknown" && errid != "" {
+				v.Ref = []string{errid}
+			}
 			errs2 = append(errs2, *v)
 		case ErrorSlice:
 			if len(v) == 0 {
 				continue
 			}
 			es := []error(v)
-			errs2 = append(errs2, FlattenErrors(es)...)
+			errs2 = append(errs2, FlattenErrors(es, errid)...)
 		case *ErrorSlice:
 			if len(*v) == 0 {
 				continue
 			}
 			es := []error(*v)
-			errs2 = append(errs2, FlattenErrors(es)...)
+			errs2 = append(errs2, FlattenErrors(es, errid)...)
 		case error:
 			if v == nil {
 				continue
@@ -313,6 +325,10 @@ func FlattenErrors(err interface{}) []error {
 			es := QError{
 				Msg: []string{v.Error()},
 			}
+			if errid != "" {
+				es.Ref = []string{errid}
+			}
+
 			errs2 = append(errs2, es)
 		default:
 			errs2 = append(errs2, v)

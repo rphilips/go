@@ -54,7 +54,7 @@ func versionSync(cmd *cobra.Command, args []string) error {
 			Ref: []string{"sync.bp"},
 			Msg: []string{"No sync necessary: server is both production and development"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -64,14 +64,14 @@ func versionSync(cmd *cobra.Command, args []string) error {
 			Ref: []string{"sync.production"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	changed, deleted, err := qsync.Sync(current, current, false, Fdeep)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	msg := make(map[string][]string)
@@ -85,11 +85,11 @@ func versionSync(cmd *cobra.Command, args []string) error {
 	}
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if len(changed) == 0 && len(deleted) == 0 {
-		Fmsg = qreport.Report(nil, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -105,6 +105,6 @@ func versionSync(cmd *cobra.Command, args []string) error {
 	refname := qutil.Reference("synced")
 	err = qsource.Install(refname, sources, false, nil)
 
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

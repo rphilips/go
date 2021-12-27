@@ -47,7 +47,7 @@ func versionCheck(cmd *cobra.Command, args []string) error {
 			Ref: []string{"check.version"},
 			Msg: []string{"Registry value `brocade-release` should be a valid release"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if Frefname == "" {
@@ -81,7 +81,7 @@ func versionCheck(cmd *cobra.Command, args []string) error {
 
 	if err != nil {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, reportfile)
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, reportfile, "version-check1")
 			return nil
 		}
 	}
@@ -94,6 +94,6 @@ func versionCheck(cmd *cobra.Command, args []string) error {
 		sort.Strings(qpaths)
 		msg["checked"] = qpaths
 	}
-	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, reportfile)
+	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, reportfile, "version-check2")
 	return nil
 }

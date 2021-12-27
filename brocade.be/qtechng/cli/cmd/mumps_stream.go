@@ -38,7 +38,7 @@ func init() {
 
 func mumpsStream(cmd *cobra.Command, args []string) error {
 	if Faction == "" {
-		Fmsg = qreport.Report(nil, errors.New("action flag is empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("action flag is empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	payload := make(map[string]string)
@@ -53,7 +53,7 @@ func mumpsStream(cmd *cobra.Command, args []string) error {
 			key = arg
 		}
 		if key == "" {
-			Fmsg = qreport.Report(nil, errors.New("empty key"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, errors.New("empty key"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 		payload[key] = value
@@ -62,7 +62,7 @@ func mumpsStream(cmd *cobra.Command, args []string) error {
 	oreader, _, err := qmumps.Reader(Faction, payload)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	io.Copy(os.Stdout, oreader)

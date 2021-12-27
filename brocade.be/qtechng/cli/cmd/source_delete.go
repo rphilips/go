@@ -57,6 +57,6 @@ func sourceDelete(cmd *cobra.Command, args []string) error {
 	} else {
 		result["qpath"] = qpaths
 	}
-	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }

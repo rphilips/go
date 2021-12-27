@@ -58,12 +58,12 @@ func listUnion(cmd *cobra.Command, args []string) error {
 	if len(lresult) != 0 {
 		qutil.EditList(Flist, false, lresult)
 		if Fshow {
-			Fmsg = qreport.Report(lresult, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(lresult, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		} else {
-			Fmsg = qreport.Report("Created `"+Flist+"` with "+strconv.Itoa(len(lresult))+" elements", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report("Created `"+Flist+"` with "+strconv.Itoa(len(lresult))+" elements", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 	} else {
-		Fmsg = qreport.Report("No elements found!", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("No elements found!", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 
 	return nil

@@ -77,12 +77,12 @@ func textTranslateLocal(cmd *cobra.Command, args []string) {
 	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return
 		}
 		err = json.Unmarshal(data, &args)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return
 		}
 	}
@@ -109,7 +109,7 @@ func textTranslate(cmd *cobra.Command, args []string) error {
 
 	services := qregistry.Registry["qtechng-translation-services"]
 	if services == "" {
-		Fmsg = qreport.Report(nil, errors.New("no translation services defined"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("no translation services defined"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	trsystems := strings.SplitN(services, ",", -1)
@@ -139,11 +139,11 @@ func textTranslate(cmd *cobra.Command, args []string) error {
 	if Fisfile {
 		data, err := qfs.Fetch(qutil.AbsPath(args[0], Fcwd))
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 		err = json.Unmarshal(data, &args)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 	}
 	if len(args) == 0 {
@@ -202,7 +202,7 @@ func textTranslate(cmd *cobra.Command, args []string) error {
 
 	results, _ := qparallel.NMap(len(missions), -1, fn)
 
-	Fmsg = qreport.Report(results, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(results, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 
 	return nil
 

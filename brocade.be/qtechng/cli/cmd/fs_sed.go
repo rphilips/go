@@ -12,6 +12,7 @@ import (
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	qsed "github.com/rwtodd/Go.Sed/sed"
 	"github.com/spf13/cobra"
 )
@@ -28,13 +29,17 @@ var fsSedCmd = &cobra.Command{
 	Some remarks:
 
 		- This command is executed only on files which are deemed valid UTF-8 files.
-		- If the second argument is '-', the sed program is applied to stdin.
+		- With only one argument, the sed program is applied to stdin,
+	      output is written to stdout
+		- With more than one argument, the output is written to the same file with the '--ext'
+	      flag added to the name. (If '--ext' is empty, the file is modified inplace.)
 		- If no arguments are given, the command asks for arguments.
 		- The other arguments: at least one file or directory are to be specified.
 		  (use '.' to indicate the current working directory)
 		- If an argument is a directory, all files in that directory are handled.
 		- The '--recurse' flag recursively traverses the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames.`,
+		- The '--pattern' flag builds a list of acceptable patterns on the basenames
+		- The '--utf8only' flag restricts to files with UTF-8 content.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs sed '/remark/d' cwd=../catalografie`,
 	RunE:    fsSed,
@@ -46,63 +51,34 @@ var fsSedCmd = &cobra.Command{
 func init() {
 	fsSedCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsSedCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsSedCmd.Flags().BoolVar(&Futf8only, "utf8only", false, "Is this a file with UTF-8 content?")
+	fsSedCmd.Flags().StringVar(&Fext, "ext", "", "Additional extension for result file")
 	fsCmd.AddCommand(fsSedCmd)
 }
 
 func fsSed(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
 	if len(args) == 0 {
-		ask = true
-		fmt.Print("Enter sed command       : ")
+		fmt.Print("Enter AWK command: ")
 		text, _ := reader.ReadString('\n')
-		text = strings.TrimSpace(text)
+		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
 			return nil
 		}
 		args = append(args, text)
 	}
-	if len(args) == 1 {
-		ask = true
-		for {
-			fmt.Print("File/directory          : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSpace(text)
-			if text == "" {
-				break
-			}
-			args = append(args, text)
-		}
-		if len(args) == 1 {
-			return nil
-		}
-	}
+	extra, recurse, patterns, utf8only, _ := qutil.AskArg(args, 1, !Frecurse, len(Fpattern) == 0, !Futf8only, false)
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSpace(text)
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
+	if len(extra) != 0 {
+		args = append(args, extra...)
+		if recurse {
 			Frecurse = true
 		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSpace(text)
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
+		if len(patterns) != 0 {
+			Fpattern = patterns
+		}
+		if utf8only {
+			Futf8only = true
 		}
 	}
 	var program io.Reader
@@ -110,7 +86,8 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		var err error
 		fl, err := os.Open(args[0])
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Ferrid = "fs-sed-sedfile"
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 		defer fl.Close()
@@ -121,7 +98,8 @@ func fsSed(cmd *cobra.Command, args []string) error {
 	engine, err := qsed.New(program)
 
 	if err != nil {
-		return err
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-invalidsed")
+		return nil
 	}
 
 	fsed := func(reader io.Reader, writer io.Writer) error {
@@ -135,35 +113,41 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if len(args) == 2 && args[1] == "-" {
+	files := make([]string, 0)
+	if len(args) > 1 {
+		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-sed-glob"
+			return err
+		}
+	}
 
+	if len(args) == 1 {
+		var f *os.File = nil
 		if Fstdout != "" {
-			f, err := os.Create(Fstdout)
+			f, err = os.Create(Fstdout)
 			if err != nil {
 				log.Fatal(err)
 			}
-			defer f.Close()
-			return fsed(nil, f)
+		} else {
+			f = os.Stdout
 		}
-		return fsed(nil, nil)
-	}
 
-	files := make([]string, 0)
-	files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, true)
+		if f != nil {
+			defer f.Close()
+		}
+		return fsed(os.Stdin, f)
+	}
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-nofiles")
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["sed"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
-	}
-
-	if err != nil {
-		return err
 	}
 
 	fn := func(n int) (interface{}, error) {
@@ -193,7 +177,7 @@ func fsSed(cmd *cobra.Command, args []string) error {
 			return false, err
 		}
 		qfs.CopyMeta(src, tmpfile, false)
-		err = qfs.CopyFile(tmpfile, src, "=", false)
+		err = qfs.CopyFile(tmpfile, src+Fext, "=", false)
 		if err != nil {
 			return false, err
 		}
@@ -215,16 +199,16 @@ func fsSed(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		if r.(bool) {
-			changed = append(changed, src)
+			changed = append(changed, src+Fext)
 		}
 	}
 
 	msg := make(map[string][]string)
 	msg["sed"] = changed
 	if len(errs) == 0 {
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	} else {
-		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-errors")
 	}
 	return nil
 }

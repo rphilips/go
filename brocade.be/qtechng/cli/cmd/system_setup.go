@@ -42,7 +42,7 @@ func init() {
 
 func systemSetup(cmd *cobra.Command, args []string) error {
 	if qregistry.Registry["error"] != "" {
-		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New(qregistry.Registry["error"]), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	qt := qregistry.Registry["qtechng-type"]
@@ -91,7 +91,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	if onB {
 		err := qutil.RefreshBinary(true)
 		if err != nil {
-			Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 		return nil
 	}
@@ -99,13 +99,13 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// get 'about'
 	soutr, serrr, err := qutil.QtechNG([]string{"about", "--remote"}, []string{"$..DATA"}, false, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(serrr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	mr := make(map[string]string)
 	err = json.Unmarshal([]byte(soutr), &mr)
 	if err != nil {
-		Fmsg = qreport.Report(soutr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(soutr, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	username := mr["!!user.username"]
@@ -171,13 +171,13 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	// QtechNG
 	soutl, serrl, err := qutil.QtechNG([]string{"about"}, []string{"$..DATA"}, false, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(serrl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	ml := make(map[string]string)
 	err = json.Unmarshal([]byte(soutl), &ml)
 	if err != nil {
-		Fmsg = qreport.Report(soutl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(soutl, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	// releases
@@ -194,7 +194,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 
 	err = qutil.RefreshBinary(ml["!BuildTime"] != mr["!BuildTime"] || strings.ContainsAny(qregistry.Registry["qtechng-type"], "BP"))
 	if err != nil {
-		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -203,7 +203,7 @@ func systemSetup(cmd *cobra.Command, args []string) error {
 	if err == nil {
 		r = "QtechNG installed. Check with `qtechng about`"
 	}
-	Fmsg = qreport.Report(r, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(r, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }
 

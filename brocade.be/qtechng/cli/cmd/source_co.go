@@ -56,7 +56,7 @@ func sourceCo(cmd *cobra.Command, args []string) error {
 		errs = nil
 	}
 
-	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }
 

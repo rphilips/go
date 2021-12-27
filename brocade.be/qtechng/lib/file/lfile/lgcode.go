@@ -261,33 +261,31 @@ func replaceInString(s string, lg string, r string) string {
 		return s
 	}
 	parts := strings.SplitN(s, "l4_", -1)
-	pieces := make([]string, 0)
-
-	odd := true
-	for _, part := range parts {
-		odd = !odd
-		if !odd {
-			pieces = append(pieces, part)
+	for i, part := range parts {
+		if i == 0 {
 			continue
 		}
-		rest := ""
-		for _, ch := range part {
-			if !strings.ContainsRune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ch) {
-				break
+		l4 := ""
+		l4rest := ""
+		for i, ch := range part {
+			if ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') {
+				l4 += string(ch)
+				continue
 			}
-			rest += string(ch)
+			l4rest = part[i:]
+			break
 		}
-		if rest == "" {
-			pieces = append(pieces, "l4_"+part)
+		if l4 == "" {
+			parts[i] = "l4_" + part
 			continue
 		}
 		lgco := Lgcode{
-			ID:      rest,
+			ID:      l4,
 			Version: r,
 		}
 		err := qobject.Fetch(&lgco)
 		if err != nil {
-			pieces = append(pieces, "l4_"+part)
+			parts[i] = "l4_" + part
 			continue
 		}
 		lgco = (&lgco).AliasResolve()
@@ -305,15 +303,13 @@ func replaceInString(s string, lg string, r string) string {
 		case "U":
 			text = lgco.U
 		}
-
 		text = replaceInString(text, lg, r)
-		pieces = append(pieces, text)
-		pieces = append(pieces, strings.TrimPrefix(part, rest))
+		parts[i] = text + l4rest
 	}
-	return strings.Join(pieces, "")
+	return strings.Join(parts, "")
 }
 
-// AliasResolve geeft eem Lgcode terug die uiteindelijk geen alias bevat
+// AliasResolve geeft een Lgcode terug die uiteindelijk geen alias bevat
 func (lgcode *Lgcode) AliasResolve() Lgcode {
 	alias := lgcode.Alias
 	if alias == "" {
@@ -321,8 +317,11 @@ func (lgcode *Lgcode) AliasResolve() Lgcode {
 	}
 	lgco := *lgcode
 	lgco.ID = alias
-	qobject.Fetch(&lgco)
-	return (&lgco).AliasResolve()
+	err := qobject.Fetch(&lgco)
+	if err == nil {
+		return (&lgco).AliasResolve()
+	}
+	return *lgcode
 }
 
 // Deps lijst de objecten op waarvan dit object aghankelijk is

@@ -132,11 +132,11 @@ func fsRegistry(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 && args[0] == "-" {
 		r, err := fnreg(nil)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 		if r == nil {
-			Fmsg = qreport.Report("No registry value found", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report("No registry value found", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 		msg := make(map[string][]string)
 		regs := make([]string, 0)
@@ -145,7 +145,7 @@ func fsRegistry(cmd *cobra.Command, args []string) error {
 		}
 		sort.Strings(regs)
 		msg["registry"] = regs
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -154,12 +154,12 @@ func fsRegistry(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["registry"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -200,9 +200,9 @@ func fsRegistry(cmd *cobra.Command, args []string) error {
 	msg := make(map[string]map[string][]string)
 	msg["registry"] = registries
 	if len(errs) == 0 {
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	} else {
-		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 	return nil
 }

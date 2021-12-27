@@ -44,7 +44,7 @@ func mumpsJSON(cmd *cobra.Command, args []string) error {
 	name := qutil.MName(args[0], true)
 
 	if name == "" {
-		Fmsg = qreport.Report(nil, errors.New("empty or invalid global reference"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("empty or invalid global reference"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 
 	payload := map[string]string{"mglobal": name}
@@ -52,13 +52,13 @@ func mumpsJSON(cmd *cobra.Command, args []string) error {
 
 	oreader, _, err := qmumps.Reader(action, payload)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	js, err := io.ReadAll(oreader)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func mumpsJSON(cmd *cobra.Command, args []string) error {
 	if Fstdout != "" {
 		dst, err = os.Create(Fstdout)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 		defer dst.Close()
@@ -80,7 +80,7 @@ func mumpsJSON(cmd *cobra.Command, args []string) error {
 	if len(Fjq) != 0 || Fyaml {
 		output, err = qutil.Transform(js, Fjq, Fyaml)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 	}
@@ -93,13 +93,13 @@ func mumpsJSON(cmd *cobra.Command, args []string) error {
 	for dec.More() {
 		if err = dec.Decode(&data); err != nil {
 			e := fmt.Errorf("problem with %q: %v", name, err)
-			Fmsg = qreport.Report(nil, e, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, e, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 
 		if err = enc.Encode(&data); err != nil {
 			e := fmt.Errorf("cannot write out tidy %q: %v", name, err)
-			Fmsg = qreport.Report(nil, e, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, e, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 	}
 

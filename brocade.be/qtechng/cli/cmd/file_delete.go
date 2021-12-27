@@ -96,7 +96,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	Fmsg = qreport.Report(result, errorlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errorlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	if len(list) != 0 {
 		qutil.EditList(Flist, false, list)
 	}

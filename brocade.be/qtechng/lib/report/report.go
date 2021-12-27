@@ -24,7 +24,7 @@ type report struct {
 	Errors interface{} `json:"ERRORS" yaml:"ERRORS"`
 }
 
-func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, joiner string, silent bool, file string) string {
+func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote bool, joiner string, silent bool, file string, errid string) string {
 	if silent {
 		return ""
 	}
@@ -69,8 +69,7 @@ func Report(r interface{}, e interface{}, jsonpath []string, yaml bool, unquote 
 	show.Result = r
 
 	// Errors
-
-	errs := qerror.FlattenErrors(e)
+	errs := qerror.FlattenErrors(e, errid)
 	if len(errs) == 0 {
 		show.Errors = nil
 	} else {

@@ -53,7 +53,7 @@ func versionModified(cmd *cobra.Command, args []string) error {
 			Ref: []string{"modified.version"},
 			Msg: []string{"The version  should be `" + qregistry.Registry["brocade-release"] + "`"},
 		}
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -84,14 +84,14 @@ func versionModified(cmd *cobra.Command, args []string) error {
 	}
 	tim, err := qutil.TimeParse(Fafter)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	if strings.ContainsRune(QtechType, 'B') {
 		after, _ := qutil.TimeParse(Fafter)
 		result, err := release.Modifications(after, "")
-		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(result, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	Fafter = tim.Format(time.RFC3339Nano)
@@ -106,11 +106,11 @@ func versionModified(cmd *cobra.Command, args []string) error {
 	}
 	stdout, stderr, err := qutil.QtechNG(argums, Fjq, Fyaml, Fcwd)
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	if strings.TrimSpace(stderr) != "" {
-		Fmsg = qreport.Report(nil, errors.New(stderr), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New(stderr), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 

@@ -38,18 +38,18 @@ func logPanic(cmd *cobra.Command, args []string) error {
 		when = args[0]
 	}
 	if when == "" {
-		Fmsg = qreport.Report(nil, errors.New("argument should not be empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errors.New("argument should not be empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 	info, err := qlog.Panic(when)
 
 	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
 	if len(info) == 0 {
-		Fmsg = qreport.Report("No panics found!", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("No panics found!", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 

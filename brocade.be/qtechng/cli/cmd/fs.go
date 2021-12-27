@@ -13,6 +13,9 @@ including UNIX-style commands like AWK or SED, which thus become available on al
 	Example: "qtechng fs",
 }
 
+var Fext = ""
+var Futf8only = false
+
 func init() {
 	rootCmd.AddCommand(fsCmd)
 

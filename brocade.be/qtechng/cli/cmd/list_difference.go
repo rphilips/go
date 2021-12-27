@@ -67,12 +67,12 @@ func listDifference(cmd *cobra.Command, args []string) error {
 	if len(iresult) != 0 {
 		qutil.EditList(Flist, false, iresult)
 		if Fshow {
-			Fmsg = qreport.Report(iresult, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(iresult, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		} else {
-			Fmsg = qreport.Report("Created `"+Flist+"` with "+strconv.Itoa(len(iresult))+" elements", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report("Created `"+Flist+"` with "+strconv.Itoa(len(iresult))+" elements", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		}
 	} else {
-		Fmsg = qreport.Report("No elements found!", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("No elements found!", nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 	return nil
 }

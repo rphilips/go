@@ -61,7 +61,7 @@ func fileList(cmd *cobra.Command, args []string) error {
 			list = append(list, locfil.QPath)
 		}
 	}
-	Fmsg = qreport.Report(result, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	if len(list) != 0 {
 		qutil.EditList(Flist, false, list)
 	}

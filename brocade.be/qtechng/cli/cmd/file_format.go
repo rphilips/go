@@ -113,7 +113,7 @@ func fileFormat(cmd *cobra.Command, args []string) error {
 		return err == nil, err
 	}
 	_, errorlist := qparallel.NMap(len(argums), -1, format)
-	elist := qerror.FlattenErrors(qerror.ErrorSlice(errorlist))
+	elist := qerror.FlattenErrors(qerror.ErrorSlice(errorlist), "file-format")
 	if len(elist) == 0 {
 		if Flist != "" {
 			list := make([]string, 0)

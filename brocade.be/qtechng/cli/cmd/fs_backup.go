@@ -61,7 +61,7 @@ func fsBackup(cmd *cobra.Command, args []string) error {
 	}
 	Fbackupfile = qutil.AbsPath(Fbackupfile, Fcwd)
 	if qfs.Exists(Fbackupfile) {
-		Fmsg = qreport.Report("", fmt.Errorf("backupfile `%s` exists already", Fbackupfile), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", fmt.Errorf("backupfile `%s` exists already", Fbackupfile), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -112,12 +112,12 @@ func fsBackup(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 			return nil
 		}
 		msg := make(map[string][]string)
 		msg["backup"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -125,7 +125,7 @@ func fsBackup(cmd *cobra.Command, args []string) error {
 
 	msg := make(map[string][]string)
 	msg["backuped"] = files
-	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }
 

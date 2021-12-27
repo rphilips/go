@@ -42,7 +42,7 @@ func fileRefresh(cmd *cobra.Command, args []string) error {
 	}
 	locfils, errlist := qclient.Find(Fcwd, args, "", Frecurse, Fqpattern, Fonlychanged, Finlist, Fnotinlist, nil)
 	if errlist != nil {
-		Fmsg = qreport.Report(nil, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report(nil, errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 	versions := make(map[string]map[string][]string)
 
@@ -66,7 +66,7 @@ func fileRefresh(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(versions) == 0 {
-		Fmsg = qreport.Report("", errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+		Fmsg = qreport.Report("", errlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}
 
 	result := make([]string, 0)
@@ -111,6 +111,6 @@ func fileRefresh(cmd *cobra.Command, args []string) error {
 		}
 	}
 	sort.Strings(result)
-	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "")
+	Fmsg = qreport.Report(result, errs, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil
 }
