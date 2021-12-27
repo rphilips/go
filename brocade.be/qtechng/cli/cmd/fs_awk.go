@@ -32,7 +32,6 @@ Warning! This command is very powerful and can permanently alter your files.
 
 Some remarks:
 
-    - This command is executed only on files which are deemed valid UTF-8 files.
 	- With only one argument, the AWK program is applied to stdin,
 	  output is written to stdout
 	- With more than one argument, the output is written to the same file with the '--ext'

@@ -27,9 +27,21 @@ With 'sqlite3' installed, you can verify the backup with:
 You can extract the backup with:
 
 sqlite3 mybackup.sqlite -Ax
-`,
+
+
+Some remarks:
+
+	- If no arguments are given, the command asks for arguments.
+	- The other arguments: at least one file or directory are to be specified.
+	  (use '.' to indicate the current working directory)
+	- If an argument is a directory, all files in that directory are taken.
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+	- The '--backup' flag contains the name of the backup file (relative to the current working directory)`,
+
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs backup cwd=../catalografie`,
+	Example: `qtechng fs backup . --cwd=../catalografie --backup=backup.sqlite`,
 	RunE:    fsBackup,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -42,13 +54,14 @@ func init() {
 	fsBackupCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsBackupCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsBackupCmd.Flags().StringVar(&Fbackupfile, "backup", "", "File with backup")
+	fsBackupCmd.Flags().BoolVar(&Futf8only, "utf8only", false, "Is this a file with UTF-8 content?")
 	fsCmd.AddCommand(fsBackupCmd)
 }
 
 func fsBackup(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 	if Fbackupfile == "" {
-		fmt.Print("Backupfile ?         : ")
+		fmt.Print("Backupfile ? : ")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSuffix(text, "\n")
 		if text == "" {
@@ -65,54 +78,26 @@ func fsBackup(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
-		}
-		if len(args) == 0 {
-			return nil
-		}
-	}
+	extra, recurse, patterns, utf8only, _ := qutil.AskArg(args, 0, !Frecurse, len(Fpattern) == 0, !Futf8only, false)
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
+	if len(extra) != 0 {
+		args = append(args, extra...)
+		if recurse {
 			Frecurse = true
 		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
+		if len(patterns) != 0 {
+			Fpattern = patterns
+		}
+		if utf8only {
+			Futf8only = true
 		}
 	}
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
+
+	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
 
 	if len(files) == 0 {
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-invalid")
 			return nil
 		}
 		msg := make(map[string][]string)
