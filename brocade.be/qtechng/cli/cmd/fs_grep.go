@@ -3,27 +3,43 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fsGrepCmd = &cobra.Command{
 	Use:   "grep",
 	Short: "Execute *grep* on files",
-	Long: `The first argument is the string to search for.
-Searching is done line per line.
-Take care: searching applies to binary files as well!
-The other arguments are filenames or directory names.
-If the argument is a directory name, all files in that directory are searched.`,
+	Long: `Searches files for content
+
+	The arguments are files or directories.
+	A directory stand for ALL files.
+
+	These argument scan be expanded/restricted by using the flags:
+
+		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+		- The '--pattern' flag builds a list of acceptable patterns on the basenames
+		- The '--utf8only' flag restricts to files with UTF-8 content
+
+	The search action on the lines in the argument are guided by:
+
+		- The '--search' flag gives the string to search for in each line of the argument
+		- The '--regexp' flag indicates if the '--search' flag is a regular expression
+
+
+	Some remarks:
+
+		- Search is done line per line
+		- With the '--ask' flag, you can interactively specify the arguments and flags`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs grep UDuser ../catalografie`,
 	RunE:    fsGrep,
@@ -34,102 +50,64 @@ If the argument is a directory name, all files in that directory are searched.`,
 
 func init() {
 	fsGrepCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsGrepCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
+	fsGrepCmd.Flags().StringVar(&Fsearch, "search", "", "Search for")
 	fsGrepCmd.Flags().BoolVar(&Ftolower, "tolower", false, "Lowercase before grepping")
-	fsGrepCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsGrepCmd)
 }
 
 func fsGrep(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		fmt.Print("Enter search string     : ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"search::" + Fsearch,
+			"regexp:search:" + qutil.UnYes(Fregexp),
+			"tolower:search:" + qutil.UnYes(Ftolower),
+			"files:search",
+			"recurse:search,files:" + qutil.UnYes(Frecurse),
+			"patterns:search,files:",
+			"utf8only:search,files:" + qutil.UnYes(Futf8only),
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-abort")
 			return nil
 		}
-		args = append(args, text)
+		Fsearch = argums["search"].(string)
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fregexp = argums["regexp"].(bool)
+		Ftolower = argums["tolower"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
 	}
-
-	if len(args) == 1 {
-		ask = true
-		for {
-			fmt.Print("File/directory        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
-		}
-		if len(args) == 1 {
-			return nil
-		}
-	}
-	if ask && !Fregexp {
-		fmt.Print("Regexp ?                : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fregexp = true
-		}
-	}
-
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
-
-	needle := []byte(args[0])
-	sneedle := args[0]
-	var err error
-	files := make([]string, 0)
-	if Fregexp {
-		_, err = regexp.Compile(args[0])
-	}
-	if err == nil {
-		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, true)
-	}
-
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["grepped"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	if Fsearch == "" {
+		Fmsg = qreport.Report(nil, errors.New("search string is empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-grep-search")
 		return nil
 	}
+	if Fregexp {
+		var err error
+		_, err = regexp.Compile(Fsearch)
+		if err != nil {
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-grep-invalidregexp")
+			return nil
+		}
+	}
+	needle := []byte(Fsearch)
+	sneedle := Fsearch
+
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-grep-glob"
+			return err
+		}
+	}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-grep-nofiles")
+		return nil
+	}
+
 	type line struct {
 		lineno  int
 		content []byte
@@ -191,7 +169,7 @@ func fsGrep(cmd *cobra.Command, args []string) error {
 		lins := r.([]line)
 		if len(lins) != 0 {
 			for _, lin := range lins {
-				t := src + ":" + strconv.Itoa(lin.lineno) + ":" + string(lin.content)
+				t := qutil.FileURL(src, "", lin.lineno) + " " + strings.TrimSpace(string(lin.content))
 				grep = append(grep, t)
 			}
 		}

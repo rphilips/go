@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"bufio"
 	"database/sql"
+	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	_ "modernc.org/sqlite"
 
@@ -31,8 +29,8 @@ sqlite3 mybackup.sqlite -Ax
 
 Some remarks:
 
-	- If no arguments are given, the command asks for arguments.
-	- The other arguments: at least one file or directory are to be specified.
+    - With the '--ask' flag, you can interactively specify the arguments and flags
+	- At least one file or directory are to be specified.
 	  (use '.' to indicate the current working directory)
 	- If an argument is a directory, all files in that directory are taken.
 	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
@@ -51,58 +49,54 @@ Some remarks:
 var Fbackupfile = ""
 
 func init() {
-	fsBackupCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsBackupCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsBackupCmd.Flags().StringVar(&Fbackupfile, "backup", "", "File with backup")
-	fsBackupCmd.Flags().BoolVar(&Futf8only, "utf8only", false, "Is this a file with UTF-8 content?")
 	fsCmd.AddCommand(fsBackupCmd)
 }
 
 func fsBackup(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-	if Fbackupfile == "" {
-		fmt.Print("Backupfile ? : ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"backup::" + Fbackupfile,
+			"files:backup",
+			"recurse:backup,files:" + qutil.UnYes(Frecurse),
+			"patterns:backup,files:",
+			"utf8only:backup,files:" + qutil.UnYes(Futf8only),
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-abort")
 			return nil
 		}
-		Fbackupfile = text
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fbackupfile = argums["backup"].(string)
 	}
 	if Fbackupfile == "" {
+		Fmsg = qreport.Report(nil, errors.New("missing backup file"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-backupfile")
 		return nil
 	}
 	Fbackupfile = qutil.AbsPath(Fbackupfile, Fcwd)
 	if qfs.Exists(Fbackupfile) {
-		Fmsg = qreport.Report("", fmt.Errorf("backupfile `%s` exists already", Fbackupfile), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+		Fmsg = qreport.Report("", fmt.Errorf("backupfile `%s` exists already", Fbackupfile), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-exists")
 		return nil
 	}
 
-	extra, recurse, patterns, utf8only, _ := qutil.AskArg(args, 0, !Frecurse, len(Fpattern) == 0, !Futf8only, false)
-
-	if len(extra) != 0 {
-		args = append(args, extra...)
-		if recurse {
-			Frecurse = true
-		}
-		if len(patterns) != 0 {
-			Fpattern = patterns
-		}
-		if utf8only {
-			Futf8only = true
-		}
+	if len(args) == 0 {
+		Fmsg = qreport.Report("", fmt.Errorf("no files to backup"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-nofiles1")
+		return nil
 	}
 
 	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
 
+	if err != nil {
+		Ferrid = "fs-backup-glob"
+		return err
+	}
+
 	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-invalid")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["backup"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+		Fmsg = qreport.Report("", fmt.Errorf("no files to backup"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-nofiles2")
 		return nil
 	}
 

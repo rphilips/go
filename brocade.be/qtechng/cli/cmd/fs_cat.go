@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
+	"errors"
 	"io"
 	"os"
-	"strings"
 
 	qreport "brocade.be/qtechng/lib/report"
 	qutil "brocade.be/qtechng/lib/util"
@@ -14,17 +12,23 @@ import (
 
 var fsCatCmd = &cobra.Command{
 	Use:   "cat",
-	Short: "Execute a *cat* command ",
-	Long: `Execute a *cat* command to render files on stdout.
-The arguments are the names of the files.
-The contents of these files will be copied to stdout,
-one after the other (*cat* < "concatenate")
+	Short: "Execute the cat command ",
+	Long: `Execute  the cat command
 
-With the '--stdout=...' flag, the contents can be redirected to a file.
+	Some remarks:
 
-If there is only one argument and it is '-', input is taken from stdin.
-`,
-	Args:    cobra.MinimumNArgs(1),
+	- Replacement is done line per line
+	- With no arguments, stdin is copied
+	  output is written to stdout
+	- the arguments are files or directories
+	  (use '.' to indicate the current working directory)
+	- If an argument is a directory, all files in that directory are handled.
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- The '--recurse' flag recursively traverses the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+    - With the '--stdout=...' flag, the contents can be redirected to a file.`,
+	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs cat bcawedit.m cwd=../catalografie`,
 	RunE:    fsCat,
 	Annotations: map[string]string{
@@ -37,66 +41,39 @@ func init() {
 }
 
 func fsCat(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory          : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Fask {
+		askfor := []string{
+			"files:",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
 		}
-		if len(args) != 0 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-cat-abort")
 			return nil
 		}
-	}
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
 	}
 
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
 	var files []string
 	var err error
 
-	if len(args) != 1 || args[0] != "-" {
+	if len(args) != 0 {
 		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
+		if err != nil {
+			Ferrid = "fs-cat-glob"
+			return err
+		}
 		if len(files) == 0 {
-			if err != nil {
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-				return nil
-			}
-			msg := make(map[string][]string)
-			msg["copied"] = files
-			Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-cat-nofiles")
 			return nil
 		}
 	}
+
 	output := os.Stdout
 	if Fstdout != "" {
 		f, err := os.Create(qutil.AbsPath(Fstdout, Fcwd))
@@ -114,7 +91,7 @@ func fsCat(cmd *cobra.Command, args []string) error {
 		io.Copy(output, f)
 		f.Close()
 	}
-	if len(args) == 1 && args[0] == "-" {
+	if len(args) == 0 {
 		io.Copy(output, os.Stdin)
 	}
 	return nil

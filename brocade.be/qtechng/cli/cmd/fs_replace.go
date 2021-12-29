@@ -3,12 +3,11 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"log"
 	"os"
 	"regexp"
-	"strings"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
@@ -22,25 +21,33 @@ var fsReplaceCmd = &cobra.Command{
 	Use:   "replace",
 	Short: "Replace a string with another one in files",
 	Long: `Replace a string with another one in files.
-	First argument is the string to search for,
-	the second argument is the replacement.
 
-	Warning! This command is very powerful and can permanently alter your files.
+Warning! This command is very powerful and can permanently alter your files.
 
-	Some remarks:
+The arguments are files or directories.
+A directory stand for ALL files.
 
-        - Replacement is done line per line
-		- With only two argument, the program is applied to stdin,
-	      output is written to stdout
-		- With more than one argument, the output is written to the same file with the '--ext'
-	      flag added to the name. (If '--ext' is empty, the file is modified inplace.)
-		- If no arguments are given, the command asks for arguments.
-		- The other arguments: at least one file or directory are to be specified.
-		  (use '.' to indicate the current working directory)
-		- If an argument is a directory, all files in that directory are handled.
-		- The '--recurse' flag recursively traverses the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content.`,
+These argument scan be expanded/restricted by using the flags:
+
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+
+The search/replace action on the lines in the argument are guided by:
+
+    - The '--search' flag gives the string to search for in the abspath of the argument
+    - The '--replace' flag replaces the 'search' part
+	- The '--regexp' flag indicates if the '--search' flag is a regular expression
+
+
+Some remarks:
+
+	- Replacement is done line per line
+	- With no arguments, the program is applied to stdin,
+	  output is written to stdout
+	- With more than one argument, the output is written to the same file with the '--ext'
+	  flag added to the name. (If '--ext' is empty, the file is modified inplace.)
+	- With the '--ask' flag, you can interactively specify the arguments and flags`,
 
 	Args: cobra.MinimumNArgs(0),
 	Example: `qtechng fs replace cwd=../catalografie
@@ -53,63 +60,53 @@ var fsReplaceCmd = &cobra.Command{
 
 func init() {
 	fsReplaceCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsReplaceCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsReplaceCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
-	fsReplaceCmd.Flags().BoolVar(&Futf8only, "utf8only", false, "Is this a file with UTF-8 content?")
-	fsReplaceCmd.Flags().StringVar(&Fext, "ext", "", "Additional extension for result file")
+	fsReplaceCmd.Flags().StringVar(&Fsearch, "search", "", "Search for")
+	fsReplaceCmd.Flags().StringVar(&Freplace, "replace", "", "Replace with")
 	fsCmd.AddCommand(fsReplaceCmd)
 }
 
 func fsReplace(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	if len(args) == 0 {
-		fmt.Print("Enter search string: ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"search::" + Fsearch,
+			"regexp:search:" + qutil.UnYes(Fregexp),
+			"replace:search:" + Freplace,
+			"files:search",
+			"recurse:search,files:" + qutil.UnYes(Frecurse),
+			"patterns:search,files:",
+			"utf8only:search,files:" + qutil.UnYes(Futf8only),
+			"ext:search,files:" + Fext,
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-abort")
 			return nil
 		}
-		args = append(args, text)
+		Fsearch = argums["search"].(string)
+		Freplace = argums["replace"].(string)
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fregexp = argums["regexp"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fext = argums["ext"].(string)
 	}
-	if len(args) == 1 {
-		fmt.Print("Enter replacement string: ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		args = append(args, text)
+	if Fsearch == "" {
+		Fmsg = qreport.Report(nil, errors.New("search string is empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-search")
+		return nil
 	}
-
-	extra, recurse, patterns, utf8only, rexp := qutil.AskArg(args, 2, !Frecurse, len(Fpattern) == 0, !Futf8only, !Fregexp)
-
-	if len(extra) != 0 {
-		args = append(args, extra...)
-		if recurse {
-			Frecurse = true
-		}
-		if len(patterns) != 0 {
-			Fpattern = patterns
-		}
-		if utf8only {
-			Futf8only = true
-		}
-		if rexp {
-			Fregexp = true
-		}
-	}
-
-	replace := []byte(args[1])
-	needle := []byte(args[0])
-	sneedle := args[0]
 	var rneedle *regexp.Regexp
-	var err error
-
 	if Fregexp {
-		rneedle, err = regexp.Compile(args[0])
+		var err error
+		rneedle, err = regexp.Compile(Fsearch)
 		if err != nil {
 			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-invalidregexp")
 			return nil
 		}
 	}
+	needle := []byte(Fsearch)
+	sneedle := Fsearch
+	replace := []byte(Freplace)
 
 	frepl := func(reader io.Reader, writer io.Writer) (found bool, err error) {
 		input := bufio.NewReader(reader)
@@ -148,18 +145,20 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 	}
 
 	files := make([]string, 0)
-	if len(args) > 2 {
-		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern, true, false, Futf8only)
-		if len(files) == 0 {
-			if err != nil {
-				Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-nofiles")
-				return nil
-			}
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-replace-glob"
+			return err
 		}
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-nofiles")
+		return nil
 	}
-	if len(args) == 2 {
+	if len(args) == 0 {
 		var f *os.File = nil
 		if Fstdout != "" {
+			var err error
 			f, err = os.Create(Fstdout)
 			if err != nil {
 				log.Fatal(err)
@@ -171,17 +170,6 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 			defer f.Close()
 		}
 		frepl(os.Stdin, f)
-	}
-
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-replace-nofiles")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["replaced"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		return nil
 	}
 
 	fn := func(n int) (interface{}, error) {
@@ -232,7 +220,7 @@ func fsReplace(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		if r.(bool) {
-			changed = append(changed, src)
+			changed = append(changed, src+Fext)
 		}
 	}
 

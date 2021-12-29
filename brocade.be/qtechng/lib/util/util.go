@@ -1005,7 +1005,7 @@ func FileURL(fname string, qpath string, lineno int) string {
 		fname = "/" + fname
 	}
 	x := ""
-	if lineno > 1 {
+	if lineno > 0 {
 		x = strconv.Itoa(lineno)
 	}
 	u := &url.URL{

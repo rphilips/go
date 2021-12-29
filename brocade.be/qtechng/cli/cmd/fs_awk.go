@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
+	"errors"
 	"io"
 	"log"
 	"os"
-	"strings"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
@@ -26,69 +24,72 @@ The first argument is an AWK command.
 See: https://en.wikipedia.org/wiki/AWK
 
 The files are given as input to the AWK statements.
-The result - what appears on stdout - replaces the original file!
 
 Warning! This command is very powerful and can permanently alter your files.
 
 Some remarks:
 
-	- With only one argument, the AWK program is applied to stdin,
+	- With no arguments, the AWK program is applied to stdin,
 	  output is written to stdout
-	- With more than one argument, the output is written to the same file with the '--ext'
+	- Otherwise, the output is written to the same file with the '--ext'
 	  flag added to the name. (If '--ext' is empty, the file is modified inplace.)
-	- If no arguments are given, the command asks for arguments.
-	- The other arguments: at least one file or directory are to be specified.
+	- The arguments are files or directories on which the AWK instruction works
 	  (use '.' to indicate the current working directory)
 	- If an argument is a directory, all files in that directory are taken.
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- The '--awk' flag contains the AWK statement
+	- The '--isfile' flag specifies that the '--awk' flag is the name of a file
 	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
 	- The '--pattern' flag builds a list of acceptable patterns on the basenames
 	- The '--utf8only' flag restricts to files with UTF-8 content`,
 
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs awk '{print $1}' . --cwd=../catalografie`,
-	RunE:    fsAWK,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs awk . --awk='{print $1}' --cwd=../catalografie --recurse --pattern='*.txt'
+qtechng fs awk --ask`,
+	RunE: fsAWK,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
 
+var Fawk = ""
+
 func init() {
-	fsAWKCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsAWKCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is this an AWK file?")
-	fsAWKCmd.Flags().BoolVar(&Futf8only, "utf8only", false, "Is this a file with UTF-8 content?")
-	fsAWKCmd.Flags().StringVar(&Fext, "ext", "", "Additional extension for result file")
-	fsAWKCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsAWKCmd.Flags().StringVar(&Fawk, "awk", "", "AWK command")
 	fsCmd.AddCommand(fsAWKCmd)
 }
 
 func fsAWK(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	if len(args) == 0 {
-		fmt.Print("Enter AWK command: ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"awk::" + Fawk,
+			"isfile:awk:" + qutil.UnYes(Fisfile),
+			"files:awk",
+			"recurse:awk,files:" + qutil.UnYes(Frecurse),
+			"patterns:awk,files:",
+			"utf8only:awk,files:" + qutil.UnYes(Futf8only),
+			"ext:awk,files:" + Fext,
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-abort")
 			return nil
 		}
-		args = append(args, text)
+		Fawk = argums["awk"].(string)
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fisfile = argums["isfile"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fext = argums["ext"].(string)
 	}
-	extra, recurse, patterns, utf8only, _ := qutil.AskArg(args, 1, !Frecurse, len(Fpattern) == 0, !Futf8only, false)
-
-	if len(extra) != 0 {
-		args = append(args, extra...)
-		if recurse {
-			Frecurse = true
-		}
-		if len(patterns) != 0 {
-			Fpattern = patterns
-		}
-		if utf8only {
-			Futf8only = true
-		}
+	if Fawk == "" {
+		Fmsg = qreport.Report(nil, errors.New("missing AWK statement"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-cmd")
+		return nil
 	}
 
-	program := args[0]
+	program := Fawk
 
 	if Fisfile {
 		var err error
@@ -102,7 +103,6 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	_, err := qawkp.ParseProgram([]byte(program), nil)
 
 	if err != nil {
-
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-invalidawk")
 		return nil
 	}
@@ -112,15 +112,19 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	}
 
 	files := make([]string, 0)
-	if len(args) > 1 {
-		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, Futf8only)
+	if len(args) != 0 {
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
 		if err != nil {
 			Ferrid = "fs-awk-glob"
 			return err
 		}
+		if len(files) == 0 {
+			Fmsg = qreport.Report(nil, errors.New("no files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-nofiles")
+			return nil
+		}
 	}
 
-	if len(args) == 1 {
+	if len(args) == 0 {
 		var f *os.File = nil
 		if Fstdout != "" {
 			f, err = os.Create(Fstdout)
@@ -134,17 +138,6 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 			defer f.Close()
 		}
 		return fawk(os.Stdin, f)
-	}
-
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-nofiles")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["awk"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		return nil
 	}
 
 	fn := func(n int) (interface{}, error) {

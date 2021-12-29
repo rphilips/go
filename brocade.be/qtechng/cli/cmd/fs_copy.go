@@ -1,9 +1,8 @@
 package cmd
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -13,20 +12,42 @@ import (
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fsCopyCmd = &cobra.Command{
 	Use:   "copy",
-	Short: "Copy files",
-	Long: `The first argument is part of the absolute filepath that has to be copied.
-The second argument is the replacement of that part.
-The other arguments are filenames or directory names.
-If the argument is a directory name, all files in that directory are handled.
-Use the --delete flag if the original files should be deleted.
-`,
+	Short: "Copy/Rename files",
+	Long: `This action allows for copying and renaming of files.
+
+Warning! This command is very powerful and can permanently alter your files.
+
+The arguments are files or directories.
+A directory stand for ALL files.
+
+
+
+These argument scan be expanded/restricted by using the flags:
+
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+
+The target destination is constructed by a search/replace action on the arguments:
+
+    - The '--search' flag gives the string to search for in the abspath of the argument
+    - The '--replace' flag replaces the 'search' part
+	- The '--regexp' flag indicates if the '--search' flag is a regular expression
+
+There are 3 special flags to add functionality:
+
+    - With the '--ask' flag, you can interactively specify the arguments and flags
+	- With the '--confirm' flag, you can inspect the FIRST replacement BEFORE it is
+	  executed.
+	- With the '--delete' flag, you can delete the original file`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs copy cwd=../catalografie`,
+	Example: `qtechng fs copy . --search=test --replace=toast --cwd=../catalografie`,
 	RunE:    fsCopy,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -41,132 +62,66 @@ var Fconfirm bool
 
 func init() {
 	fsCopyCmd.Flags().BoolVar(&Fregexp, "regexp", false, "Regular expression")
-	fsCopyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
+	fsCopyCmd.Flags().StringVar(&Fsearch, "search", "", "Search for")
+	fsCopyCmd.Flags().StringVar(&Freplace, "replace", "", "Replace with")
 	fsCopyCmd.Flags().BoolVar(&Fdelete, "delete", false, "Delete original files")
 	fsCopyCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
-	fsCopyCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsCopyCmd)
 }
 
 func fsCopy(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		fmt.Print("Enter search string in file name: ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"search::" + Fsearch,
+			"regexp:search:" + qutil.UnYes(Fregexp),
+			"replace:search:" + Freplace,
+			"files:search",
+			"recurse:search,files:" + qutil.UnYes(Frecurse),
+			"patterns:search,files:",
+			"utf8only:search,files:" + qutil.UnYes(Futf8only),
+			"confirm:search,files:" + qutil.UnYes(Fconfirm),
+			"delete:search,files:" + qutil.UnYes(Fdelete),
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-abort")
 			return nil
 		}
-		args = append(args, text)
-	}
-	if len(args) == 1 {
-		ask = true
-		fmt.Print("Enter replacement string   : ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		args = append(args, text)
-	}
-
-	if len(args) == 2 {
-		ask = true
-		for {
-			fmt.Print("File/directory             : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
-		}
-		if len(args) == 2 {
-			return nil
-		}
-	}
-	if ask && !Fdelete {
-		fmt.Print("Delete ?                   : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fdelete = true
-		}
-	}
-	if ask && !Fregexp {
-		fmt.Print("Regexp ?                   : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fregexp = true
-		}
+		Fsearch = argums["search"].(string)
+		Freplace = argums["replace"].(string)
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fregexp = argums["regexp"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fconfirm = argums["confirm"].(bool)
+		Fdelete = argums["delete"].(bool)
 	}
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?                  : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
+	if Fsearch == "" {
+		Fmsg = qreport.Report(nil, errors.New("search string is empty"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-search")
+		return nil
 	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
-
-	if ask && !Fconfirm {
-		fmt.Print("Confirm first time ?       : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fconfirm = true
-		}
-	}
-
-	copy := args[1]
-	needle := args[0]
-	var rneedle *regexp.Regexp
-	var err error
-	files := make([]string, 0)
+	var rsearch *regexp.Regexp
 	if Fregexp {
-		rneedle, err = regexp.Compile(needle)
-	}
-	if err == nil {
-		files, err = glob(Fcwd, args[2:], Frecurse, Fpattern, true, false, false)
-	}
-
-	if len(files) == 0 {
+		var err error
+		rsearch, err = regexp.Compile(Fsearch)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-invalidregexp")
 			return nil
 		}
-		msg := make(map[string][]string)
-		msg["copied"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	}
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-copy-glob"
+			return err
+		}
+	}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no files found to copy"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-nofiles")
 		return nil
 	}
 
@@ -179,32 +134,20 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	for _, file := range files {
 		a, _ := filepath.Abs(file)
 		if Fregexp {
-			target = rneedle.ReplaceAllString(a, copy)
+			target = rsearch.ReplaceAllString(a, Freplace)
 		} else {
-			target = strings.ReplaceAll(a, needle, copy)
+			target = strings.ReplaceAll(a, Fsearch, Freplace)
 		}
-		if target == file {
-			continue
-		}
-		if target == a {
+		if qfs.SameFile(target, a) {
 			continue
 		}
 		if Fconfirm {
 			Fconfirm = false
-			fmt.Printf("Copy `%s` to `%s`: <n>", a, target)
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				text = "n"
-			}
-			ok := false
-			if strings.ContainsAny(text, "jJyY1tT") {
-				ok = true
-			}
-			if !ok {
-				rfiles = make([]string, 0)
-				folders = make(map[string]string)
-				break
+			prompt := fmt.Sprintf("Copy `%s` to `%s` ? ", a, target)
+			confirm := qutil.Confirm(prompt)
+			if !confirm {
+				Fmsg = qreport.Report(nil, errors.New("did not pass confirmation"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-confirm")
+				return nil
 			}
 		}
 		tdir := filepath.Dir(target)
@@ -243,15 +186,11 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(errs) != 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
-		}
-
+		Fmsg = qreport.Report(nil, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-dirconstruction")
+		return nil
 	}
 
 	fn := func(n int) (interface{}, error) {
-
 		src := files[n]
 		dst := copymap[src]
 		err := qfs.CopyFile(src, dst, "=", true)

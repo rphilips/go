@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -28,62 +27,68 @@ var fsSedCmd = &cobra.Command{
 
 	Some remarks:
 
-		- With only one argument, the sed program is applied to stdin,
-	      output is written to stdout
-		- With more than one argument, the output is written to the same file with the '--ext'
-	      flag added to the name. (If '--ext' is empty, the file is modified inplace.)
-		- If no arguments are given, the command asks for arguments.
-		- The other arguments: at least one file or directory are to be specified.
+		- With no arguments, the sed program is applied to stdin,
+		  output is written to stdout
+		- Otherwise, the output is written to the same file with the '--ext'
+		  flag added to the name. (If '--ext' is empty, the file is modified inplace.)
+		- The arguments are files or directories on which the sed instruction works
 		  (use '.' to indicate the current working directory)
-		- If an argument is a directory, all files in that directory are handled.
-		- The '--recurse' flag recursively traverses the subdirectories of the argument directories.
+		- If an argument is a directory, all files in that directory are taken.
+		- With the '--ask' flag, you can interactively specify the arguments and flags
+		- The '--sed' flag contains the sed statement
+		- The '--isfile' flag specifies that the '--sed' flag is the name of a file
+		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
 		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content.`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs sed '/remark/d' cwd=../catalografie`,
-	RunE:    fsSed,
+		- The '--utf8only' flag restricts to files with UTF-8 content`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs sed '/remark/d' . cwd=../catalografie --patern='*.txt'
+qtechng fs sed --ask`,
+	RunE: fsSed,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},
 }
+var Fsed = ""
 
 func init() {
-	fsSedCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsSedCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
-	fsSedCmd.Flags().BoolVar(&Futf8only, "utf8only", false, "Is this a file with UTF-8 content?")
-	fsSedCmd.Flags().StringVar(&Fext, "ext", "", "Additional extension for result file")
+	fsSedCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is this an AWK file?")
+	fsSedCmd.Flags().StringVar(&Fsed, "sed", "", "sed command")
 	fsCmd.AddCommand(fsSedCmd)
 }
 
 func fsSed(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-	if len(args) == 0 {
-		fmt.Print("Enter AWK command: ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"sed::" + Fsed,
+			"isfile:sed:" + qutil.UnYes(Fisfile),
+			"files:sed",
+			"recurse:sed,files:" + qutil.UnYes(Frecurse),
+			"patterns:sed,files:",
+			"utf8only:sed,files:" + qutil.UnYes(Futf8only),
+			"ext:sed,files:" + Fext,
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-abort")
 			return nil
 		}
-		args = append(args, text)
+		Fsed = argums["sed"].(string)
+		args = argums["files"].([]string)
+		Fisfile = argums["isfile"].(bool)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fext = argums["ext"].(string)
 	}
-	extra, recurse, patterns, utf8only, _ := qutil.AskArg(args, 1, !Frecurse, len(Fpattern) == 0, !Futf8only, false)
+	if Fsed == "" {
+		Fmsg = qreport.Report(nil, errors.New("missing sed statement"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-cmd")
+		return nil
+	}
 
-	if len(extra) != 0 {
-		args = append(args, extra...)
-		if recurse {
-			Frecurse = true
-		}
-		if len(patterns) != 0 {
-			Fpattern = patterns
-		}
-		if utf8only {
-			Futf8only = true
-		}
-	}
 	var program io.Reader
 	if Fisfile {
 		var err error
-		fl, err := os.Open(args[0])
+		fl, err := os.Open(Fsed)
 		if err != nil {
 			Ferrid = "fs-sed-sedfile"
 			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
@@ -92,7 +97,7 @@ func fsSed(cmd *cobra.Command, args []string) error {
 		defer fl.Close()
 		program = fl
 	} else {
-		program = strings.NewReader(args[0])
+		program = strings.NewReader(Fsed)
 	}
 	engine, err := qsed.New(program)
 
@@ -113,15 +118,19 @@ func fsSed(cmd *cobra.Command, args []string) error {
 	}
 
 	files := make([]string, 0)
-	if len(args) > 1 {
-		files, err = glob(Fcwd, args[1:], Frecurse, Fpattern, true, false, Futf8only)
+	if len(args) != 0 {
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
 		if err != nil {
 			Ferrid = "fs-sed-glob"
 			return err
 		}
+		if len(files) == 0 {
+			Fmsg = qreport.Report(nil, errors.New("no files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-nofiles")
+			return nil
+		}
 	}
 
-	if len(args) == 1 {
+	if len(args) == 0 {
 		var f *os.File = nil
 		if Fstdout != "" {
 			f, err = os.Create(Fstdout)
@@ -136,17 +145,6 @@ func fsSed(cmd *cobra.Command, args []string) error {
 			defer f.Close()
 		}
 		return fsed(os.Stdin, f)
-	}
-
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-nofiles")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["sed"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		return nil
 	}
 
 	fn := func(n int) (interface{}, error) {

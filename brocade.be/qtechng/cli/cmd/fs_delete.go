@@ -1,25 +1,38 @@
 package cmd
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fsDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete files",
-	Long: `The arguments are filenames or directory names.
-If the argument is a directory name, all files in that directory are handled.
-Use the delete flag if the original files should be deleted.
-`,
+	Long: `This action allows for deleting of files.
+
+	Warning! This command is very powerful and can permanently alter your files.
+
+	The arguments are files or directories.
+	A directory stand for ALL files.
+
+	These argument scan be expanded/restricted by using the flags:
+
+		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+		- The '--pattern' flag builds a list of acceptable patterns on the basenames
+		- The '--utf8only' flag restricts to files with UTF-8 content
+
+	There are 3 special flags to add functionality:
+
+		- With the '--ask' flag, you can interactively specify the arguments and flags
+		- With the '--confirm' flag, you can inspect the FIRST replacement BEFORE it is
+		  executed.`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs delete *.bak`,
 	RunE:    fsDelete,
@@ -29,99 +42,53 @@ Use the delete flag if the original files should be deleted.
 }
 
 func init() {
-	fsDeleteCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
 	fsDeleteCmd.Flags().BoolVar(&Fconfirm, "confirm", false, "Ask the first time for confirmation")
-	fsDeleteCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsDeleteCmd)
 }
 
 func fsDelete(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory          : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
+			"confirm:files:" + qutil.UnYes(Fconfirm),
 		}
-		if len(args) == 0 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-delete-abort")
 			return nil
 		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fconfirm = argums["confirm"].(bool)
 	}
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
-
-	if ask && !Fconfirm {
-		fmt.Print("Confirm first time ?    : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fconfirm = true
-		}
-	}
-
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
-
-	if Fconfirm && len(files) != 0 {
-		Fconfirm = false
-		fmt.Printf("Delete `%s`: <n>", files[0])
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		ok := false
-		if strings.ContainsAny(text, "jJyY1tT") {
-			ok = true
-		}
-		if !ok {
-			files = make([]string, 0)
-		}
-	}
-
-	if len(files) == 0 {
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+			Ferrid = "fs-delete-glob"
+			return err
+		}
+	}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no files found to delete"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-delete-nofiles")
+		return nil
+	}
+
+	if Fconfirm {
+		Fconfirm = false
+		prompt := fmt.Sprintf("Delete `%s` ? ", files[0])
+		confirm := qutil.Confirm(prompt)
+		if !confirm {
+			Fmsg = qreport.Report(nil, errors.New("did not pass confirmation"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-delete-confirm")
 			return nil
 		}
-		msg := make(map[string][]string)
-		msg["deleted"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		return nil
 	}
 
 	fn := func(n int) (interface{}, error) {
