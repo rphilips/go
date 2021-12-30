@@ -2,26 +2,40 @@ package cmd
 
 import (
 	"bufio"
-	"fmt"
+	"errors"
 	"io"
 	"io/ioutil"
 	"os"
 	"regexp"
-	"sort"
 	"strings"
 
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fsRegistryCmd = &cobra.Command{
-	Use:     "registry",
-	Short:   "Searches for the use of brocade registry values",
-	Long:    `Searches for the use of brocade registry values in go and python files`,
+	Use:   "registry",
+	Short: "Searches for the use of brocade registry values",
+	Long: `Searches for the use of brocade registry values files
+
+	The arguments are files or directories.
+	A directory stand for ALL its files.
+
+	These argument scan be expanded/restricted by using the flags:
+
+		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+		- The '--pattern' flag builds a list of acceptable patterns on the basenames
+		- The '--utf8only' flag restricts to files with UTF-8 content
+
+
+	Some remarks:
+
+	- With the '--ask' flag, you can interactively specify the arguments and flags`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs registry cwd=../catalografie`,
+	Example: `qtechng fs registry *.py cwd=../catalografie`,
 	RunE:    fsRegistry,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -33,58 +47,41 @@ func init() {
 }
 
 func fsRegistry(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
 		}
-		if len(args) == 0 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-registry-abort")
 			return nil
 		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
 	}
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-registry-glob"
+			return err
 		}
 	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-registry-nofiles")
+		return nil
 	}
 
 	re1 := regexp.MustCompile("r4_[a-z][A-Za-z0-9_]*")
 	re2 := regexp.MustCompile(`\bregistry\.[a-z][A-Za-z0-9_]*`)
 	re3 := regexp.MustCompile(`\bregistry[([]\s*['"` + "`" + `]+[a-z][A-Za-z0-9_-]*`)
-
-	if len(Fpattern) == 0 {
-		Fpattern = []string{"*"}
-	}
 
 	fnreg := func(reader io.Reader) (map[string]bool, error) {
 		result := make(map[string]bool)
@@ -126,39 +123,6 @@ func fsRegistry(cmd *cobra.Command, args []string) error {
 		}
 
 		return result, nil
-	}
-	if len(args) == 1 && args[0] == "-" {
-		r, err := fnreg(nil)
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
-		}
-		if r == nil {
-			Fmsg = qreport.Report("No registry value found", err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		}
-		msg := make(map[string][]string)
-		regs := make([]string, 0)
-		for reg := range r {
-			regs = append(regs, reg)
-		}
-		sort.Strings(regs)
-		msg["registry"] = regs
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		return nil
-	}
-
-	files := make([]string, 0)
-	files, err := glob(Fcwd, []string{"."}, true, Fpattern, true, false, true)
-
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["registry"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-		return nil
 	}
 
 	fn := func(n int) (interface{}, error) {

@@ -15,9 +15,9 @@ import (
 )
 
 var fsNoutf8Cmd = &cobra.Command{
-	Use:     "noutf8",
-	Short:   "Search for non-UTF8 sequences",
-	Long:    `This command searches for non-UTF8 byte sequences
+	Use:   "noutf8",
+	Short: "Search for non-UTF8 sequences",
+	Long: `This command searches for non-UTF8 byte sequences
 
 	The arguments are files or directories.
 	A directory stand for ALL its files.
@@ -28,16 +28,12 @@ var fsNoutf8Cmd = &cobra.Command{
 		- The '--pattern' flag builds a list of acceptable patterns on the basenames
 		- The '--utf8only' flag restricts to files with UTF-8 content
 
-	The search action on the lines in the argument are guided by:
-
-		- The '--search' flag gives the string to search for in each line of the argument
-		- The '--regexp' flag indicates if the '--search' flag is a regular expression
-
 
 	Some remarks:
 
 		- Search is done line per line
-		- With the '--ask' flag, you can interactively specify the arguments and flags`,`,
+		- With the '--ask' flag, you can interactively specify the arguments and flags
+		- The result is with file URLs (appropriate for fast editor location)`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs noutf8 *.m cwd=../catalografie`,
 	RunE:    fsNoutf8,
