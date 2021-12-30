@@ -22,7 +22,7 @@ var fsGrepCmd = &cobra.Command{
 	Long: `Searches files for content
 
 	The arguments are files or directories.
-	A directory stand for ALL files.
+	A directory stand for ALL its files.
 
 	These argument scan be expanded/restricted by using the flags:
 

@@ -25,7 +25,7 @@ var fsReplaceCmd = &cobra.Command{
 Warning! This command is very powerful and can permanently alter your files.
 
 The arguments are files or directories.
-A directory stand for ALL files.
+A directory stand for ALL its files.
 
 These argument scan be expanded/restricted by using the flags:
 

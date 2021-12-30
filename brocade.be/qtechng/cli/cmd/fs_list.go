@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
+	"errors"
 
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -23,80 +21,53 @@ If the argument is a directory name, all files in that directory are handled.`,
 	},
 }
 
-var Fonlytext bool
+var Fasurl = false
 
 func init() {
-	fsListCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsListCmd.Flags().BoolVar(&Fonlytext, "onlytext", false, "Only text files")
-	fsListCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsListCmd.Flags().BoolVar(&Fasurl, "url", false, "Show as URL")
 	fsCmd.AddCommand(fsListCmd)
 }
 
 func fsList(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
+			"url:files:" + qutil.UnYes(Fasurl),
 		}
-		if len(args) == 0 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-list-abort")
 			return nil
 		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Fasurl = argums["url"].(bool)
+		Futf8only = argums["utf8only"].(bool)
 	}
-
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-list-glob"
+			return err
 		}
 	}
-
-	if ask && !Fonlytext {
-		fmt.Print("Only text files ?       : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fonlytext = true
-		}
-	}
-
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, Fonlytext)
-
-	if err != nil {
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-list-nofiles")
 		return nil
 	}
+
 	msg := make(map[string][]string)
+	if Fasurl {
+		for i, file := range files {
+			files[i] = qutil.FileURL(file, "", -1)
+		}
+	}
 	msg["listed"] = files
 	Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil

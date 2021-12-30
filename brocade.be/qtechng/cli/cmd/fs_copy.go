@@ -24,7 +24,7 @@ var fsCopyCmd = &cobra.Command{
 Warning! This command is very powerful and can permanently alter your files.
 
 The arguments are files or directories.
-A directory stand for ALL files.
+A directory stand for ALL its files.
 
 
 

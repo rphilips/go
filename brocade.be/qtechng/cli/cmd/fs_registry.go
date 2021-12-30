@@ -29,8 +29,6 @@ var fsRegistryCmd = &cobra.Command{
 }
 
 func init() {
-	fsRegistryCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsRegistryCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsRegistryCmd)
 }
 

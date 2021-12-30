@@ -40,6 +40,10 @@ var Askit = map[string]Ask{
 		Prompt:  "Regular expression ?",
 		IsBoole: true,
 	},
+	"url": {
+		Prompt:  "Show as URL ?",
+		IsBoole: true,
+	},
 	"tolower": {
 		Prompt:  "To lowercase ?",
 		IsBoole: true,
