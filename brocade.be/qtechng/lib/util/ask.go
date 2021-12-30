@@ -36,6 +36,14 @@ var Askit = map[string]Ask{
 		Prompt:  "Recurse through directories ?",
 		IsBoole: true,
 	},
+	"windows": {
+		Prompt:  "Windows EOL convention ?",
+		IsBoole: true,
+	},
+	"unix": {
+		Prompt:  "Unix EOL convention ?",
+		IsBoole: true,
+	},
 	"regexp": {
 		Prompt:  "Regular expression ?",
 		IsBoole: true,
@@ -150,24 +158,35 @@ func IsTrue(checks string, result map[string]interface{}) bool {
 	parts := strings.SplitN(checks, ",", -1)
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
+		not := strings.HasPrefix(part, "!")
+		part = strings.TrimLeft(part, "! ")
 		if part == "" {
 			continue
 		}
 		value, ok := result[part]
 		if !ok {
-			return false
+			return not
 		}
 		switch v := value.(type) {
 		case string:
-			if v == "" {
+			if not && v != "" {
+				return false
+			}
+			if !not && v == "" {
 				return false
 			}
 		case bool:
-			if !v {
+			if not && v {
+				return false
+			}
+			if !not && !v {
 				return false
 			}
 		case []string:
-			if len(v) == 0 {
+			if not && len(v) != 0 {
+				return false
+			}
+			if !not && len(v) == 0 {
 				return false
 			}
 		}

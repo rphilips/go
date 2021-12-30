@@ -3,27 +3,44 @@ package cmd
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"unicode"
 
 	qfs "brocade.be/base/fs"
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fsRStripCmd = &cobra.Command{
 	Use:   "rstrip",
 	Short: "Execute rstrip on file lines",
-	Long: `Each line in the files is right-stripped and an end-of-line is added.
-Default end-of-line conventions are UNIX-style,
-The arguments are filenames or directory names.
-If the argument is a directory name, all files in that directory are handled.`,
+	Long: `Execute rstrip on file lines
+
+
+Each line in the files is right-stripped and an appropriate end-of-line is added.
+
+The arguments are files or directories.
+A directory stand for ALL its files.
+
+These argument scan be expanded/restricted by using the flags:
+
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+
+Some remarks:
+
+	- The '--unix' flag ensures Unix EOL convention
+	- The '--windows' flag ensures Windows EOL convention
+	- Without these flags, the EOL convention is based line-per-line
+	- With the '--ask' flag, you can interactively specify the arguments and flags`,
+
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs rstrip cwd=../catalografie`,
 	RunE:    fsRStrip,
@@ -33,90 +50,60 @@ If the argument is a directory name, all files in that directory are handled.`,
 }
 
 // Fwineol windows end-of-line
-var Fwineol bool
+var Fwindows bool
+var Funix bool
 
 func init() {
-	fsRStripCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsRStripCmd.Flags().BoolVar(&Fwineol, "wineol", false, "Apply MS-Windows end-of-line convention")
-	fsRStripCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsRStripCmd.Flags().BoolVar(&Fwindows, "windows", false, "Apply MS-Windows end-of-line convention")
+	fsRStripCmd.Flags().BoolVar(&Funix, "unix", false, "Apply Unix end-of-line convention")
 	fsCmd.AddCommand(fsRStripCmd)
 }
 
 func fsRStrip(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory               : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
+			"windows:files:" + qutil.UnYes(Fwindows),
+			"unix:files,!windows:" + qutil.UnYes(Fwindows),
 		}
-		if len(args) == 0 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-rstrip-abort")
 			return nil
 		}
-	}
-	if ask && !Fwineol {
-		fmt.Print("Windows end-of-line ?        : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Fwineol = true
-		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Fwindows = argums["windows"].(bool)
+		Funix = argums["unix"].(bool)
 	}
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?                    : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename          : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
-
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, true)
-
-	if len(files) == 0 {
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
+			Ferrid = "fs-rstrip-glob"
+			return err
 		}
-		msg := make(map[string][]string)
-		msg["rstripped"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-rstrip-nofiles")
 		return nil
 	}
-
-	eol := []byte("\n")
-	if Fwineol {
+	whateol := true
+	eol := []byte{}
+	if Fwindows {
 		eol = []byte("\r\n")
+		whateol = false
+	}
+	if Funix {
+		eol = []byte("\n")
+		whateol = false
 	}
 	fn := func(n int) (interface{}, error) {
 
@@ -148,7 +135,6 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 				panic(err)
 			}
 		}()
-		var rbuf []byte
 		ok := false
 		for {
 			// read a chunk
@@ -161,6 +147,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 					break
 				}
 				length := len(buf)
+
 				buf = bytes.TrimRightFunc(buf, unicode.IsSpace)
 				if len(buf) != length {
 					ok = true
@@ -171,10 +158,11 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 				}
 				return ok, nil
 			}
-
-			eolok := bytes.HasSuffix(buf, eol)
-			if !eolok {
-				ok = true
+			if whateol {
+				eol = []byte("\n")
+				if bytes.HasSuffix(buf, []byte("\r\n")) {
+					eol = []byte("\r\n")
+				}
 			}
 			length := len(buf)
 			buf = bytes.TrimRightFunc(buf, unicode.IsSpace)
@@ -182,12 +170,12 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 			if len(buf) != length {
 				ok = true
 			}
-			_, e := fo.Write(rbuf)
+			_, e := fo.Write(buf)
 			if e != nil {
 				return false, e
 			}
 		}
-		qfs.Rmpath((tmpfile))
+		qfs.Rmpath(tmpfile)
 		return ok, nil
 	}
 
