@@ -22,7 +22,7 @@ Remember:
 
 ` + Mfiles,
 	Args: cobra.MinimumNArgs(0),
-	Example: `qtechng file delete application/bcawedit.m install.py cwd=../catalografie
+	Example: `qtechng file delete application/bcawedit.m install.py cwd=../workspace
 qtechng file delete test.rst --unlink`,
 	RunE: fileDelete,
 	Annotations: map[string]string{

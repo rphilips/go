@@ -24,7 +24,7 @@ var fileCiCmd = &cobra.Command{
 	Short: "Check in qtechng files",
 	Long:  `Stores local files in the qtechng repository` + Mfiles,
 	Args:  cobra.MinimumNArgs(0),
-	Example: `qtechng file ci application/bcawedit.m install.py cwd=../catalografie
+	Example: `qtechng file ci application/bcawedit.m install.py cwd=../workspace
 qtechng file ci`,
 	RunE:   fileCi,
 	PreRun: preCi,

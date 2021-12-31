@@ -21,28 +21,29 @@ var fsGrepCmd = &cobra.Command{
 	Short: "Execute *grep* on files",
 	Long: `Searches files for content
 
-	The arguments are files or directories.
-	A directory stand for ALL its files.
+The arguments are files or directories.
+A directory stand for ALL its files.
 
-	These argument scan be expanded/restricted by using the flags:
+These argument scan be expanded/restricted by using the flags:
 
-		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
 
-	The search action on the lines in the argument are guided by:
+The search action on the lines in the argument are guided by:
 
-		- The '--search' flag gives the string to search for in each line of the argument
-		- The '--regexp' flag indicates if the '--search' flag is a regular expression
+	- The '--search' flag gives the string to search for in each line of the argument
+	- The '--regexp' flag indicates if the '--search' flag is a regular expression
 
 
-	Some remarks:
+Some remarks:
 
-		- Search is done line per line
-		- With the '--ask' flag, you can interactively specify the arguments and flags`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs grep UDuser ../catalografie`,
-	RunE:    fsGrep,
+	- Search is done line per line
+	- With the '--ask' flag, you can interactively specify the arguments and flags`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs grep . --cwd=../workspace --pattern='*.m' --search=UDuser
+qtechng fs grep --ask`,
+	RunE: fsGrep,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

@@ -19,23 +19,23 @@ var fsNoutf8Cmd = &cobra.Command{
 	Short: "Search for non-UTF8 sequences",
 	Long: `This command searches for non-UTF8 byte sequences
 
-	The arguments are files or directories.
-	A directory stand for ALL its files.
+The arguments are files or directories.
+A directory stand for ALL its files.
 
-	These argument scan be expanded/restricted by using the flags:
+These argument scan be expanded/restricted by using the flags:
 
-		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
 
 
-	Some remarks:
+Some remarks:
 
-		- Search is done line per line
-		- With the '--ask' flag, you can interactively specify the arguments and flags
-		- The result is with file URLs (appropriate for fast editor location)`,
+	- Search is done line per line
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- The result is with file URLs (appropriate for fast editor location)`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs noutf8 *.m cwd=../catalografie`,
+	Example: `qtechng fs noutf8 *.m cwd=../workspace`,
 	RunE:    fsNoutf8,
 	Annotations: map[string]string{
 		"remote-allowed": "no",

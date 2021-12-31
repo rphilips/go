@@ -41,9 +41,10 @@ Some remarks:
 	- Without these flags, the EOL convention is based line-per-line
 	- With the '--ask' flag, you can interactively specify the arguments and flags`,
 
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs rstrip cwd=../catalografie`,
-	RunE:    fsRStrip,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs rstrip myfile.m --unix --cwd=../workspace
+qtechng fs rstrip --ask`,
+	RunE: fsRStrip,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

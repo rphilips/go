@@ -38,9 +38,11 @@ Some remarks:
 	- The '--utf8only' flag restricts to files with UTF-8 content
 	- The '--backup' flag contains the name of the backup file (relative to the current working directory)`,
 
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs backup . --cwd=../catalografie --backup=backup.sqlite`,
-	RunE:    fsBackup,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs backup . --cwd=../workspace --backup=backup.sqlite
+qtechng fs backup f1.txt f2.txt --backup=backup.sqlite --cwd=../workspace
+qtechng fs awk --ask`,
+	RunE: fsBackup,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

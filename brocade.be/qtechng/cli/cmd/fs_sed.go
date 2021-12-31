@@ -20,28 +20,28 @@ var fsSedCmd = &cobra.Command{
 	Use:   "sed",
 	Short: "Execute a sed command",
 	Long: `Executes a *sed* command on files.
-	The first argument is a sed command.
-	See: https://en.wikipedia.org/wiki/Sed
+The first argument is a sed command.
+See: https://en.wikipedia.org/wiki/Sed
 
-	Warning! This command is very powerful and can permanently alter your files.
+Warning! This command is very powerful and can permanently alter your files.
 
-	Some remarks:
+Some remarks:
 
-		- With no arguments, the sed program is applied to stdin,
-		  output is written to stdout
-		- Otherwise, the output is written to the same file with the '--ext'
-		  flag added to the name. (If '--ext' is empty, the file is modified inplace.)
-		- The arguments are files or directories on which the sed instruction works
-		  (use '.' to indicate the current working directory)
-		- If an argument is a directory, all files in that directory are taken.
-		- With the '--ask' flag, you can interactively specify the arguments and flags
-		- The '--sed' flag contains the sed statement
-		- The '--isfile' flag specifies that the '--sed' flag is the name of a file
-		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content`,
+	- With no arguments, the sed program is applied to stdin,
+		output is written to stdout
+	- Otherwise, the output is written to the same file with the '--ext'
+		flag added to the name. (If '--ext' is empty, the file is modified inplace.)
+	- The arguments are files or directories on which the sed instruction works
+		(use '.' to indicate the current working directory)
+	- If an argument is a directory, all files in that directory are taken.
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- The '--sed' flag contains the sed statement
+	- The '--isfile' flag specifies that the '--sed' flag is the name of a file
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content`,
 	Args: cobra.MinimumNArgs(0),
-	Example: `qtechng fs sed '/remark/d' . cwd=../catalografie --patern='*.txt'
+	Example: `qtechng fs sed '/remark/d' . cwd=../workspace --patern='*.txt'
 qtechng fs sed --ask`,
 	RunE: fsSed,
 	Annotations: map[string]string{

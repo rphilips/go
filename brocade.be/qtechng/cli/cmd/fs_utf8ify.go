@@ -37,9 +37,11 @@ Some remarks:
 	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
 	- The '--pattern' flag builds a list of acceptable patterns on the basenames`,
 
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs utf8ify  . --cwd=../catalografie`,
-	RunE:    fsUTF8ify,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs utf8ify  . --recurse --cwd=../workspace
+qtechng fs utf8ify . --recurse --cwd=../workspace --replacement=PROBLEM
+qtechng fs utf8ify --ask`,
+	RunE: fsUTF8ify,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

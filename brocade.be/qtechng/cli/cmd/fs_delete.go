@@ -17,25 +17,26 @@ var fsDeleteCmd = &cobra.Command{
 	Short: "Delete files",
 	Long: `This action allows for deleting of files.
 
-	Warning! This command is very powerful and can permanently alter your files.
+Warning! This command is very powerful and can permanently alter your files.
 
-	The arguments are files or directories.
-	A directory stand for ALL its files.
+The arguments are files or directories.
+A directory stand for ALL its files.
 
-	These argument scan be expanded/restricted by using the flags:
+These argument scan be expanded/restricted by using the flags:
 
-		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
 
-	There are 3 special flags to add functionality:
+There are 3 special flags to add functionality:
 
-		- With the '--ask' flag, you can interactively specify the arguments and flags
-		- With the '--confirm' flag, you can inspect the FIRST replacement BEFORE it is
-		  executed.`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs delete *.bak`,
-	RunE:    fsDelete,
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- With the '--confirm' flag, you can inspect the FIRST replacement BEFORE it is
+		executed.`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs delete . --recurse --pattern='*.bak'
+qtechng fs delete --ask`,
+	RunE: fsDelete,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

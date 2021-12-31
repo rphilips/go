@@ -38,7 +38,7 @@ specification follows the directory structure.
 	Example: `
 qtech file new --qdir=/collection/application
 qtechng file new application/bcoledit.m --version=5.10 --qdir=/collection
-qtechng file new application/bcoledit.m  --cwd=../catalografie
+qtechng file new application/bcoledit.m  --cwd=../workspace
 qtechng file new bcawedit.m  --cwd=application
 qtechng file new bcawedit.m
 	`,

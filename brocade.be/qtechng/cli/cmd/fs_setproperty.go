@@ -43,9 +43,10 @@ Some remarks:
 	- Search is done line per line
 	- With the '--ask' flag, you can interactively specify the arguments and flags
 	- With the '--property' flag, you can specify the suitable property`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs setproperty *.pdf --property=process`,
-	RunE:    fsSetproperty,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs setproperty *.pdf --property=process
+qtechng fs setproperty --ask`,
+	RunE: fsSetproperty,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

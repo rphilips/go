@@ -16,9 +16,10 @@ var fsHexCmd = &cobra.Command{
 	Short: "Hexlify the arguments",
 	Long: `Shows the arguments hexlified
 `,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs hex '*.py'`,
-	RunE:    fsHex,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs hex 'Hello World'
+qtechng fs hex`,
+	RunE: fsHex,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

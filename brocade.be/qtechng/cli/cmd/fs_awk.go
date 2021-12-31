@@ -44,7 +44,9 @@ Some remarks:
 	- The '--utf8only' flag restricts to files with UTF-8 content`,
 
 	Args: cobra.MinimumNArgs(0),
-	Example: `qtechng fs awk . --awk='{print $1}' --cwd=../catalografie --recurse --pattern='*.txt'
+	Example: `qtechng fs awk . --awk='{print $1}' --cwd=../workspace --recurse --pattern='*.txt'
+qtechng fs awk  --awk='{print $1}' --stdout=result.txt
+qtechng fs awk f1.txt f2.txt --awk=myprog.awk --cwd=../workspace --isfile
 qtechng fs awk --ask`,
 	RunE: fsAWK,
 	Annotations: map[string]string{

@@ -13,24 +13,26 @@ var fsListCmd = &cobra.Command{
 	Short: "List files",
 	Long: `List files
 
-	The arguments are files or directories.
-	A directory stand for ALL its files.
+The arguments are files or directories.
+A directory stand for ALL its files.
 
-	These argument scan be expanded/restricted by using the flags:
+These argument scan be expanded/restricted by using the flags:
 
-		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
 
-	Some remarks:
+Some remarks:
 
-		- Search is done line per line
-		- With the '--ask' flag, you can interactively specify the arguments and flags
-		- With the '--url' flag, files are shown as URLs`,
+	- Search is done line per line
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- With the '--url' flag, files are shown as URLs`,
 
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs list . --cwd=../catalografie`,
-	RunE:    fsList,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs list . --cwd=../workspace
+	qtechng fs list --ask
+`,
+	RunE: fsList,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

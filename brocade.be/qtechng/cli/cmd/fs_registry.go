@@ -21,22 +21,23 @@ var fsRegistryCmd = &cobra.Command{
 	Short: "Searches for the use of brocade registry values",
 	Long: `Searches for the use of brocade registry values files
 
-	The arguments are files or directories.
-	A directory stand for ALL its files.
+The arguments are files or directories.
+A directory stand for ALL its files.
 
-	These argument scan be expanded/restricted by using the flags:
+These argument scan be expanded/restricted by using the flags:
 
-		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-		- The '--pattern' flag builds a list of acceptable patterns on the basenames
-		- The '--utf8only' flag restricts to files with UTF-8 content
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
 
 
-	Some remarks:
+Some remarks:
 
-	- With the '--ask' flag, you can interactively specify the arguments and flags`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs registry *.py cwd=../catalografie`,
-	RunE:    fsRegistry,
+    - With the '--ask' flag, you can interactively specify the arguments and flags`,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs registry *.m cwd=../workspace
+qtechng fs registry --ask`,
+	RunE: fsRegistry,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

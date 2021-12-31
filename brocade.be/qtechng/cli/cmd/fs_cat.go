@@ -17,7 +17,6 @@ var fsCatCmd = &cobra.Command{
 
 	Some remarks:
 
-	- Replacement is done line per line
 	- With no arguments, stdin is copied
 	  output is written to stdout
 	- the arguments are files or directories
@@ -28,9 +27,12 @@ var fsCatCmd = &cobra.Command{
 	- The '--pattern' flag builds a list of acceptable patterns on the basenames
 	- The '--utf8only' flag restricts to files with UTF-8 content
     - With the '--stdout=...' flag, the contents can be redirected to a file.`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs cat bcawedit.m cwd=../catalografie`,
-	RunE:    fsCat,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs cat bcawedit.m cwd=../workspace
+qtechng fs cat . cwd=../workspace --stdout=result.txt
+qtechng fs cat --ask
+`,
+	RunE: fsCat,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

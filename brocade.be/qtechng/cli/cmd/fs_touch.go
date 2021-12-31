@@ -30,9 +30,10 @@ These argument scan be expanded/restricted by using the flags:
 Some remarks:
 
 	- With the '--ask' flag, you can interactively specify the arguments and flags`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs touch cwd=../catalografie`,
-	RunE:    fsTouch,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs touch f1.txt f2.txtt --cwd=../workspace
+qtechng fs touch --ask`,
+	RunE: fsTouch,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

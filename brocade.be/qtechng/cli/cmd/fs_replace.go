@@ -50,8 +50,9 @@ Some remarks:
 	- With the '--ask' flag, you can interactively specify the arguments and flags`,
 
 	Args: cobra.MinimumNArgs(0),
-	Example: `qtechng fs replace cwd=../catalografie
-	qtechng fs replace aap noot /home/tdeneire/tmp --pattern=*.txt`,
+	Example: `qtechng fs replace cwd=../workspace
+qtechng fs replace aap noot /home/tdeneire/tmp --pattern=*.txt
+qtechng fs replace --ask`,
 	RunE: fsReplace,
 	Annotations: map[string]string{
 		"remote-allowed": "no",

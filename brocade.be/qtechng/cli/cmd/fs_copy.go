@@ -46,9 +46,10 @@ There are 3 special flags to add functionality:
 	- With the '--confirm' flag, you can inspect the FIRST replacement BEFORE it is
 	  executed.
 	- With the '--delete' flag, you can delete the original file`,
-	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs copy . --search=test --replace=toast --cwd=../catalografie`,
-	RunE:    fsCopy,
+	Args: cobra.MinimumNArgs(0),
+	Example: `qtechng fs copy . --recurse --pattern='*.jpeg' --search=.jpeg --replace=.jpg --cwd=../workspace
+qtechng fs copy --ask`,
+	RunE: fsCopy,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 	},

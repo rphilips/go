@@ -46,14 +46,14 @@ Note: this information is retrieved locally and can be outdated.
 
 	` + Mfiles,
 
-	Example: `  qtechng file tell bcawedit.m --cwd=../catalografie --ext
-	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=dirname
-	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=basename
-	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=project
-	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=ext
-	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=qpath
-	  qtechng file tell bcawedit.m --cwd=../catalografie --tell=version
-	  qtechng file tell bcawedit.m --cwd=../catalografie
+	Example: `  qtechng file tell bcawedit.m --cwd=../workspace --ext
+	  qtechng file tell bcawedit.m --cwd=../workspace --tell=dirname
+	  qtechng file tell bcawedit.m --cwd=../workspace --tell=basename
+	  qtechng file tell bcawedit.m --cwd=../workspace --tell=project
+	  qtechng file tell bcawedit.m --cwd=../workspace --tell=ext
+	  qtechng file tell bcawedit.m --cwd=../workspace --tell=qpath
+	  qtechng file tell bcawedit.m --cwd=../workspace --tell=version
+	  qtechng file tell bcawedit.m --cwd=../workspace
 	`,
 	RunE: fileTell,
 	Annotations: map[string]string{
