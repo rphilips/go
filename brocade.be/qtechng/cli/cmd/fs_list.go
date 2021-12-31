@@ -11,10 +11,25 @@ import (
 var fsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List files",
-	Long: `The last modification time of all files is changed to the current moment.
-If the argument is a directory name, all files in that directory are handled.`,
+	Long: `List files
+
+	The arguments are files or directories.
+	A directory stand for ALL its files.
+
+	These argument scan be expanded/restricted by using the flags:
+
+		- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+		- The '--pattern' flag builds a list of acceptable patterns on the basenames
+		- The '--utf8only' flag restricts to files with UTF-8 content
+
+	Some remarks:
+
+		- Search is done line per line
+		- With the '--ask' flag, you can interactively specify the arguments and flags
+		- With the '--url' flag, files are shown as URLs`,
+
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs list cwd=../catalografie`,
+	Example: `qtechng fs list . --cwd=../catalografie`,
 	RunE:    fsList,
 	Annotations: map[string]string{
 		"remote-allowed": "no",

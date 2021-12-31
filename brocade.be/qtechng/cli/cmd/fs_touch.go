@@ -1,23 +1,35 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
+	"errors"
 	"os"
-	"strings"
 	"time"
 
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
 
 var fsTouchCmd = &cobra.Command{
 	Use:   "touch",
 	Short: "Touch files",
-	Long: `The last modification time of the file(s) is changed to the current moment.
-If the argument is a directory name, all files in that directory are handled.`,
+	Long: `Touch files
+The last modification time of the file(s) is changed to the current moment.
+
+The arguments are files or directories.
+A directory stand for ALL its files.
+
+These argument scan be expanded/restricted by using the flags:
+
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+
+Some remarks:
+
+	- With the '--ask' flag, you can interactively specify the arguments and flags`,
 	Args:    cobra.MinimumNArgs(0),
 	Example: `qtechng fs touch cwd=../catalografie`,
 	RunE:    fsTouch,
@@ -27,67 +39,38 @@ If the argument is a directory name, all files in that directory are handled.`,
 }
 
 func init() {
-	fsTouchCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsTouchCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsCmd.AddCommand(fsTouchCmd)
 }
 
 func fsTouch(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
 		}
-		if len(args) == 0 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-touch-abort")
 			return nil
 		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
 	}
-
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
-	files, err := glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
-
-	if len(files) == 0 {
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, true, Futf8only)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
+			Ferrid = "fs-touch-glob"
+			return err
 		}
-		msg := make(map[string][]string)
-		msg["touched"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-touch-nofiles")
 		return nil
 	}
 	h := time.Now().Local()
@@ -117,7 +100,7 @@ func fsTouch(cmd *cobra.Command, args []string) error {
 	msg := make(map[string][]string)
 	msg["touched"] = touched
 	if len(errs) == 0 {
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-touch-touched")
 	} else {
 		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	}

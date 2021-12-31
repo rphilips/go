@@ -3,12 +3,12 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"unicode/utf8"
 
 	qfs "brocade.be/base/fs"
@@ -46,62 +46,51 @@ Some remarks:
 }
 
 func init() {
-	fsUTF8ifyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsUTF8ifyCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
 	fsUTF8ifyCmd.Flags().StringVar(&Freplacement, "replacement", "", "Replacement character(s)")
 	fsCmd.AddCommand(fsUTF8ifyCmd)
 }
 
 func fsUTF8ify(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-
-	if len(args) == 0 {
-		ask = true
-		for {
-			fmt.Print("File/directory          : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSpace(text)
-			if text == "" {
-				break
-			}
-			args = append(args, text)
+	if Freplacement == "" {
+		Freplacement = "\uFFFD"
+	}
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
+			"replacement:files:" + Freplacement,
 		}
-		if len(args) == 1 {
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-utf8ify-abort")
 			return nil
 		}
+		args = argums["files"].([]string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
+		Freplacement = argums["replacement"].(string)
 	}
 
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSpace(text)
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSpace(text)
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
 	repl := make([]byte, 0)
 	if Freplacement != "" {
-		repl = []byte(qutil.Joiner(Freplacement))
+		repl = []byte(Freplacement)
+	}
+
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, Futf8only)
+		if err != nil {
+			Ferrid = "fs-utf8ify-glob"
+			return err
+		}
+	}
+	if len(files) == 0 && len(args) != 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-utf8ify-nofiles")
+		return nil
 	}
 
 	utf8ify := func(reader io.Reader, repl []byte) (changed bool, valid []byte, err error) {
@@ -124,7 +113,7 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 		return
 	}
 
-	if len(args) == 1 && args[0] == "-" {
+	if len(args) == 0 {
 		_, valid, _ := utf8ify(nil, repl)
 		if Fstdout != "" {
 			f, err := os.Create(Fstdout)
@@ -137,25 +126,6 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Print(string(valid))
 		}
-		return nil
-	}
-
-	files := make([]string, 0)
-	var err error
-	if len(args) != 0 && args[0] != "-" {
-		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, false, false)
-	}
-	if err != nil {
-		return err
-	}
-	if len(files) == 0 {
-		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
-		}
-		msg := make(map[string][]string)
-		msg["utf8ify"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
 
@@ -217,7 +187,7 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 	if len(errs) == 0 {
 		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	} else {
-		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-utf8ify-error")
 	}
 	return nil
 }

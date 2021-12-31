@@ -25,6 +25,12 @@ var Askit = map[string]Ask{
 	"search": {
 		Prompt: "Search for",
 	},
+	"replacement": {
+		Prompt: "Replacement string",
+	},
+	"property": {
+		Prompt: "Brocade property (naked|process|qtech|script|temp|web|webdav)",
+	},
 	"replace": {
 		Prompt: "Replace with",
 	},

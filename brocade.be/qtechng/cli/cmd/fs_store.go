@@ -13,7 +13,7 @@ var fsStoreCmd = &cobra.Command{
 	Short:   "Store stdin to a file",
 	Long:    `This commands reads stdin and stores data to a file in the filesystem`,
 	Args:    cobra.MinimumNArgs(1),
-	Example: `qtechng fs store cwd=../catalografie`,
+	Example: `qtechng fs store receive.txt --cwd=../catalografie`,
 	RunE:    fsStore,
 	Annotations: map[string]string{
 		"remote-allowed": "no",

@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"sort"
+	"errors"
 	"strings"
 
 	qfs "brocade.be/base/fs"
@@ -12,8 +9,11 @@ import (
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
+	qutil "brocade.be/qtechng/lib/util"
 	"github.com/spf13/cobra"
 )
+
+var Fproperty = ""
 
 var fsSetpropertyCmd = &cobra.Command{
 	Use:   "setproperty",
@@ -27,9 +27,24 @@ Only the Brocade specific names are allowed:
 	- script
 	- temp
 	- web
-	- webdav`,
+	- webdav
+
+The arguments are files or directories.
+A directory stand for ALL its files.
+
+These argument scan be expanded/restricted by using the flags:
+
+	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--utf8only' flag restricts to files with UTF-8 content
+
+Some remarks:
+
+	- Search is done line per line
+	- With the '--ask' flag, you can interactively specify the arguments and flags
+	- With the '--property' flag, you can specify the suitable property`,
 	Args:    cobra.MinimumNArgs(0),
-	Example: `qtechng fs setproperty process *.pdf`,
+	Example: `qtechng fs setproperty *.pdf --property=process`,
 	RunE:    fsSetproperty,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -37,86 +52,51 @@ Only the Brocade specific names are allowed:
 }
 
 func init() {
-	fsSetpropertyCmd.Flags().BoolVar(&Frecurse, "recurse", false, "Recursively traverse directories")
-	fsSetpropertyCmd.Flags().StringArrayVar(&Fpattern, "pattern", []string{}, "Posix glob pattern on the basenames")
+	fsSetpropertyCmd.Flags().StringVar(&Fproperty, "property", "", "Brocade property")
 	fsCmd.AddCommand(fsSetpropertyCmd)
 }
 
 func fsSetproperty(cmd *cobra.Command, args []string) error {
-	reader := bufio.NewReader(os.Stdin)
-
-	ask := false
-	if len(args) == 0 {
-		props := getprops()
-		sort.Strings(props)
-		ask = true
-		fmt.Println("[", strings.Join(props, ", "), "]")
-		fmt.Print("Property              : ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
+	if Fask {
+		askfor := []string{
+			"files",
+			"recurse:files:" + qutil.UnYes(Frecurse),
+			"patterns:files:",
+			"utf8only:files:" + qutil.UnYes(Futf8only),
+			"property:files:" + qutil.UnYes(Futf8only),
+		}
+		argums, abort := qutil.AskArgs(askfor)
+		if abort {
+			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-setproperty-abort")
 			return nil
 		}
-		args = append(args, text)
-		if len(args) == 0 {
-			return nil
-		}
+		args = argums["files"].([]string)
+		Fproperty = argums["property"].(string)
+		Frecurse = argums["recurse"].(bool)
+		Fpattern = argums["patterns"].([]string)
+		Futf8only = argums["utf8only"].(bool)
 	}
-	if len(args) == 1 {
-		ask = true
-		for {
-			fmt.Print("File/directory        : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			args = append(args, text)
-		}
-		if len(args) == 1 {
-			return nil
-		}
-	}
-
-	if ask && !Frecurse {
-		fmt.Print("Recurse ?               : <n>")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSuffix(text, "\n")
-		if text == "" {
-			text = "n"
-		}
-		if strings.ContainsAny(text, "jJyY1tT") {
-			Frecurse = true
-		}
-	}
-
-	if ask && len(Fpattern) == 0 {
-		for {
-			fmt.Print("Pattern on basename     : ")
-			text, _ := reader.ReadString('\n')
-			text = strings.TrimSuffix(text, "\n")
-			if text == "" {
-				break
-			}
-			Fpattern = append(Fpattern, text)
-			if text == "*" {
-				break
-			}
-		}
-	}
-	files, err := glob(Fcwd, args[1:], Frecurse, Fpattern, true, true, false)
-
-	if len(files) == 0 {
+	files := make([]string, 0)
+	if len(args) != 0 {
+		var err error
+		files, err = glob(Fcwd, args, Frecurse, Fpattern, true, true, Futf8only)
 		if err != nil {
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
-			return nil
+			Ferrid = "fs-setproperty-glob"
+			return err
 		}
-		msg := make(map[string][]string)
-		msg["setproperty"] = files
-		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	}
+	if len(files) == 0 {
+		Fmsg = qreport.Report(nil, errors.New("no matching files found"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-setproperty-nofiles")
 		return nil
 	}
-	pathmode := args[0]
+
+	pathmode := Fproperty
+	props := getprops()
+	if !props[pathmode] {
+		Fmsg = qreport.Report(nil, errors.New("invalid property `"+pathmode+"`"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-setproperty-invalid")
+		return nil
+	}
+
 	fn := func(n int) (interface{}, error) {
 		src := files[n]
 		isdir := qfs.IsDir(src)
@@ -150,18 +130,18 @@ func fsSetproperty(cmd *cobra.Command, args []string) error {
 	if len(errs) == 0 {
 		Fmsg = qreport.Report(msg, nil, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	} else {
-		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+		Fmsg = qreport.Report(msg, qerror.ErrorSlice(errs), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-setproperty-notset")
 	}
 	return nil
 }
 
-func getprops() []string {
-	props := make([]string, 0)
+func getprops() (props map[string]bool) {
+	props = make(map[string]bool)
 	for key := range qregistry.Registry {
 		if strings.HasPrefix(key, "fs-owner-") {
 			x := strings.TrimPrefix(key, "fs-owner-")
 			if x != "" {
-				props = append(props, x)
+				props[x] = true
 			}
 		}
 	}
