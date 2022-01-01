@@ -36,6 +36,8 @@ These argument scan be expanded/restricted by using the flags:
 
 Some remarks:
 
+    - The output is written to the same file with the '--ext'
+	  flag added to the name. (If '--ext' is empty, the file is modified inplace.)
 	- The '--unix' flag ensures Unix EOL convention
 	- The '--windows' flag ensures Windows EOL convention
 	- Without these flags, the EOL convention is based line-per-line
@@ -69,6 +71,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 			"utf8only:files:" + qutil.UnYes(Futf8only),
 			"windows:files:" + qutil.UnYes(Fwindows),
 			"unix:files,!windows:" + qutil.UnYes(Fwindows),
+			"ext:awk,files:" + Fext,
 		}
 		argums, abort := qutil.AskArgs(askfor)
 		if abort {
@@ -81,6 +84,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 		Futf8only = argums["utf8only"].(bool)
 		Fwindows = argums["windows"].(bool)
 		Funix = argums["unix"].(bool)
+		Fext = argums["ext"].(string)
 	}
 
 	files := make([]string, 0)
@@ -127,7 +131,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 		defer in.Close()
 
 		// open output file
-		fo, err := os.Create(src)
+		fo, err := os.Create(src + Fext)
 		if err != nil {
 			return false, err
 		}
@@ -195,7 +199,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		if r.(bool) {
-			changed = append(changed, src)
+			changed = append(changed, src+Fext)
 		}
 	}
 

@@ -25,18 +25,21 @@ var fsUTF8ifyCmd = &cobra.Command{
 	Short: "Transforms to UTF-8 inplace",
 	Long: `Replace NON UTF-8 sequences with a replacement string.
 
-Warning! This command is very powerful and can permanently alter your files.
+Warning! This command can permanently alter your files.
 
 Some remarks:
 
-	- If the second argument is '-', the UTF8ify program is applied to stdin.
-	- If no arguments are given, the command asks for arguments.
-	- The other arguments: at least one file or directory are to be specified.
+	- With no arguments, the AWK program is applied to stdin,
+	  output is written to stdout
+	- Otherwise, the output is written to the same file with the '--ext'
+	  flag added to the name. (If '--ext' is empty, the file is modified inplace.)
+	- The arguments are files or directories on which the AWK instruction works
 	  (use '.' to indicate the current working directory)
 	- If an argument is a directory, all files in that directory are taken.
+	- With the '--ask' flag, you can interactively specify the arguments and flags
 	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
-	- The '--pattern' flag builds a list of acceptable patterns on the basenames`,
-
+	- The '--pattern' flag builds a list of acceptable patterns on the basenames
+	- The '--replacement' holds the string which replaces the NON-UTF8. If empty, the replacement string stands for U+FFFD`,
 	Args: cobra.MinimumNArgs(0),
 	Example: `qtechng fs utf8ify  . --recurse --cwd=../workspace
 qtechng fs utf8ify . --recurse --cwd=../workspace --replacement=PROBLEM
@@ -63,6 +66,7 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 			"patterns:files:",
 			"utf8only:files:" + qutil.UnYes(Futf8only),
 			"replacement:files:" + Freplacement,
+			"ext:awk,files:" + Fext,
 		}
 		argums, abort := qutil.AskArgs(askfor)
 		if abort {
@@ -74,6 +78,7 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 		Fpattern = argums["patterns"].([]string)
 		Futf8only = argums["utf8only"].(bool)
 		Freplacement = argums["replacement"].(string)
+		Fext = argums["ext"].(string)
 	}
 
 	repl := make([]byte, 0)
@@ -158,7 +163,7 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 		defer qfs.Rmpath(tmpfile)
 		qfs.Store(tmpfile, valid, "temp")
 		qfs.CopyMeta(src, tmpfile, false)
-		err = qfs.CopyFile(tmpfile, src, "=", false)
+		err = qfs.CopyFile(tmpfile, src+Fext, "=", false)
 		if err != nil {
 			return false, err
 		}
@@ -180,7 +185,7 @@ func fsUTF8ify(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		if r.(bool) {
-			changed = append(changed, src)
+			changed = append(changed, src+Fext)
 		}
 	}
 
