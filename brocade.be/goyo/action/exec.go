@@ -12,7 +12,7 @@ import (
 
 func Exec(text string) []string {
 	if text != "" {
-		err := qyottadb.Exec(text)
+		err := qyottadb.Execw(text)
 		if err != nil {
 			qutil.Error(err)
 			return nil
@@ -23,7 +23,7 @@ func Exec(text string) []string {
 	setter.SetCtrlCAborts(true)
 	defer setter.Close()
 	deflt := ""
-	qhistory.LoadHistory(setter, "exec")
+	qhistory.LoadHistory(setter, "execw")
 	for {
 		text, err := setter.PromptWithSuggestion("$ ", deflt, -1)
 		if err == qliner.ErrPromptAborted {
@@ -40,7 +40,7 @@ func Exec(text string) []string {
 		if ltext == "bye" || ltext == "exit" || ltext == "h" || ltext == "halt" {
 			break
 		}
-		err = qyottadb.Exec(text)
+		err = qyottadb.Execw(text)
 		deflt = ""
 		if err != nil {
 			qutil.Error(err)
@@ -49,7 +49,7 @@ func Exec(text string) []string {
 			setter.AppendHistory(text)
 		}
 	}
-	qhistory.SaveHistory(setter, "exec")
+	qhistory.SaveHistory(setter, "execw")
 	setter.Close()
 	return nil
 }

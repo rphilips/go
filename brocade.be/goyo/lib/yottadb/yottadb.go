@@ -1,11 +1,17 @@
 package yottadb
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
+	"syscall"
 
 	qutil "brocade.be/goyo/lib/util"
 	"lang.yottadb.com/go/yottadb"
@@ -445,12 +451,58 @@ func Exit() {
 	yottadb.Exit()
 }
 
+func Execw(text string) error {
+	RoDir := os.Getenv("GOYO_DIR")
+	fmtable := filepath.Join(RoDir, "ydbaccess.ci")
+	envvarSave := make(map[string]string)
+	qutil.SaveEnvvars(&envvarSave, "ydb_ci", "ydb_routines")
+
+	os.Setenv("ydb_ci", fmtable)
+	out := Space
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		pipe := "/tmp/goyo.pipe"
+		if _, err := os.Stat(pipe); err != nil {
+			syscall.Mkfifo(pipe, 0600)
+		}
+		stdout, _ := os.OpenFile(pipe, os.O_RDONLY, 0600)
+		reader := bufio.NewReader(stdout)
+		for {
+			text, err := reader.ReadString('\n')
+			if strings.HasSuffix(text, "<[<end>]>\n") {
+				text = strings.TrimSuffix(text, "<[<end>]>\n")
+				fmt.Print(text)
+				break
+			}
+			if err == io.EOF {
+				fmt.Println(text)
+				break
+			}
+			if err != nil && err != io.EOF {
+				log.Fatal(err)
+			}
+			fmt.Print(text)
+		}
+		wg.Done()
+	}()
+	_, err := yottadb.CallMT(yottadb.NOTTP, nil, 0, "xecutew", text, &out)
+	wg.Wait()
+	qutil.RestoreEnvvars(&envvarSave, "ydb_ci", "ydb_routines")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func Exec(text string) error {
-	fmtable := "/home/rphilips/.yottadb/ydbaccess.ci"
+	RoDir := os.Getenv("GOYO_DIR")
+	fmtable := filepath.Join(RoDir, "ydbaccess.ci")
 	envvarSave := make(map[string]string)
 	qutil.SaveEnvvars(&envvarSave, "ydb_ci", "ydb_routines")
 	os.Setenv("ydb_ci", fmtable)
 	out := Space
+
 	_, err := yottadb.CallMT(yottadb.NOTTP, nil, 0, "xecute", text, &out)
 	qutil.RestoreEnvvars(&envvarSave, "ydb_ci", "ydb_routines")
 	if err != nil {

@@ -54,16 +54,16 @@ func init() {
 }
 
 func sourceRename(cmd *cobra.Command, args []string) error {
-	if Fwith == "" {
-		err := fmt.Errorf("`--with=...` flag should not be empty")
-		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+	if Freplace == "" {
+		err := fmt.Errorf("`--replace=...` flag should not be empty")
+		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "source-rename-empty")
 		return nil
 	}
-	if Fregexp && Freplace != "" {
+	if Fregexp {
 		_, e := regexp.Compile(Freplace)
 		if e != nil {
 			err := fmt.Errorf("`--replace=...` flag is not a valid regular expression")
-			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
+			Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "source-rename-regexp")
 			return nil
 		}
 	}
