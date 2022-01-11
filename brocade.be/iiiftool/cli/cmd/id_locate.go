@@ -9,10 +9,9 @@ import (
 )
 
 var idLocateCmd = &cobra.Command{
-	Use:   "locate",
-	Short: "Locate a IIIF id",
-	Long: `Given a IIIF id formulate an appropriate SQLite filepath
--- regardless of whether this location actually exists or not.`,
+	Use:     "locate",
+	Short:   "Locate a IIIF id",
+	Long:    `Locate a IIIF id in the index database.`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `iiiftool id locate dg:ua:9`,
 	RunE:    idLocate,
