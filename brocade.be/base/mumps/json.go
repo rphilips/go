@@ -28,7 +28,10 @@ func Reader(action string, payload map[string]string) (io.Reader, io.Reader, err
 	if err != nil {
 		return nil, nil, err
 	}
-	cmd.Start()
+	err = cmd.Start()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	go func() {
 		defer stdin.Close()
