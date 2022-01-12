@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"brocade.be/base/mumps"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
@@ -24,7 +25,7 @@ func safe(id string) string {
 	return id
 }
 
-// Rebuild IIIF index
+// Rebuild IIIF index (SQLite and MUMPS)
 func Rebuild() error {
 
 	os.Remove(iiifIndexDb)
@@ -78,6 +79,11 @@ func Rebuild() error {
 		for _, index := range indexes {
 			if index == "" {
 				continue
+			}
+			err := SetMIndex(index, meta.Digest)
+			if err != nil {
+				// do not throw error
+				fmt.Printf("Error executing stmt1: %v: %s\n", err, index)
 			}
 			index = safe(index)
 			_, err = stmt1.Exec(nil, index, meta.Digest, path)
@@ -137,4 +143,14 @@ func Search(search string) ([][]string, error) {
 	}
 
 	return result, nil
+}
+
+// Log index info in MUMPS
+func SetMIndex(loi string, digest string) error {
+	payload := map[string]string{"loi": loi, "digest": digest}
+	_, _, err := mumps.Reader("d %SetInx^gbiiif(.RApayload)", payload)
+	if err != nil {
+		return fmt.Errorf("mumps error:\n%s", err)
+	}
+	return nil
 }
