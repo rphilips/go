@@ -19,6 +19,73 @@ import (
 	qregistry "brocade.be/base/registry"
 )
 
+// MPipe primitive facility to send data to M
+// Usage:
+// 1. Open a connection:
+//        mpipe, err := Open("")
+// 2. Take care that the connection will be closed:
+//        defer mpipe.Close()
+// 3. Send statement to M
+//        err := mpipe.WriteExec(`s ^ZBCAT("abc")="ABC"`)
+
+type MPipe struct {
+	DB     string
+	stdin  io.WriteCloser
+	stdout io.ReadCloser
+	stderr io.ReadCloser
+}
+
+func Open(db string) (mpipe MPipe, err error) {
+	// db is UCI ("" == registry("m-db"))
+	mpipe = MPipe{
+		DB: db,
+	}
+	cmd, err := newMCMD(db)
+	if err != nil {
+		return mpipe, err
+	}
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return mpipe, err
+	}
+	outs, err := cmd.StdoutPipe()
+	if err != nil {
+		return mpipe, err
+	}
+	errs, err := cmd.StderrPipe()
+	if err != nil {
+		return mpipe, err
+	}
+	err = cmd.Start()
+	if err != nil {
+		return mpipe, err
+	}
+	mpipe.stdin = stdin
+	mpipe.stdout = outs
+	mpipe.stderr = errs
+	return mpipe, nil
+}
+
+func (mpipe *MPipe) Close() {
+	// idempotent operation
+	if mpipe.stdin != nil {
+		io.WriteString(mpipe.stdin, "\n\nq\nh\n")
+		mpipe.stdin = nil
+	}
+}
+
+func (mpipe *MPipe) WriteExec(s string) error {
+	if mpipe.stdin != nil {
+		s = strings.TrimSpace(s)
+		if s == "" || strings.HasPrefix(s, "#") || strings.HasPrefix(s, "/") || strings.HasPrefix(s, ";") {
+			return nil
+		}
+		_, err := io.WriteString(mpipe.stdin, s+"\n")
+		return err
+	}
+	return errors.New("connection to M is closed")
+}
+
 type MUMPS []M
 
 type M struct {
@@ -134,8 +201,10 @@ func Exec(mumps MUMPS, statement string) MUMPS {
 		Value:  statement,
 		Action: "exec",
 	}
-	x := append(mumps, msub)
-	return x
+	if mumps == nil {
+		return MUMPS{msub}
+	}
+	return append(mumps, msub)
 }
 
 func Println(w io.Writer, mumps MUMPS) {
