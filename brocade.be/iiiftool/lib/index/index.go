@@ -48,6 +48,8 @@ func Rebuild() error {
 		return fmt.Errorf("cannot create index database: %v", err)
 	}
 
+	indices := make(map[string]string)
+
 	fn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("error walking over file: %v", err)
@@ -80,7 +82,7 @@ func Rebuild() error {
 			if index == "" {
 				continue
 			}
-			err := SetMIndex(index, meta.Digest)
+			indices[index] = meta.Digest
 			if err != nil {
 				// do not throw error
 				fmt.Printf("Error executing stmt1: %v: %s\n", err, index)
@@ -101,6 +103,13 @@ func Rebuild() error {
 		return fmt.Errorf("error: %v", err)
 	}
 
+	if len(indices) > 0 {
+		err = SetMIndex(indices)
+		if err != nil {
+			return fmt.Errorf("error: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -114,7 +123,7 @@ func LookupId(id string) (string, error) {
 	defer index.Close()
 
 	id = safe(id)
-	row := index.QueryRow("SELECT * FROM indexes where id=?", id)
+	row := index.QueryRow("SELECT digest FROM indexes where id=?", id)
 	digest := util.ReadStringRow(row)
 
 	return digest, nil
@@ -146,11 +155,31 @@ func Search(search string) ([][]string, error) {
 }
 
 // Log index info in MUMPS
-func SetMIndex(loi string, digest string) error {
-	payload := map[string]string{"loi": loi, "digest": digest}
-	_, _, err := mumps.Reader("d %SetInx^gbiiif(.RApayload)", payload)
+func SetMIndex(indices map[string]string) error {
+	mpipe, err := mumps.Open("")
 	if err != nil {
 		return fmt.Errorf("mumps error:\n%s", err)
 	}
+	defer mpipe.Close()
+
+	for index, value := range indices {
+		cmd := `s ^BIIIF("index",2,"` + index + `")="` + value + `"`
+		err = mpipe.WriteExec(cmd)
+		if err != nil {
+			return fmt.Errorf("mumps error:\n%s", err)
+		}
+	}
+
+	cmds := []string{
+		`k ^BIIIF("index",1)`,
+		`m ^BIIIF("index",1)=^BIIIF("index",2)`,
+		`k ^BIIIF("index",2)`}
+	for _, cmd := range cmds {
+		err = mpipe.WriteExec(cmd)
+		if err != nil {
+			return fmt.Errorf("mumps error:\n%s", err)
+		}
+	}
+
 	return nil
 }

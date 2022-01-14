@@ -42,7 +42,7 @@ func init() {
 	idArchiveCmd.PersistentFlags().StringVar(&Fimgty, "imgty", "", "Image type")
 	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
-	idArchiveCmd.PersistentFlags().StringVar(&Fiiifsys, "iiif", "test", "IIIF system")
+	idArchiveCmd.PersistentFlags().StringVar(&Fiiifsys, "iiifsys", "test", "IIIF system")
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
 }
