@@ -86,6 +86,24 @@ func (mpipe *MPipe) WriteExec(s string) error {
 	return errors.New("connection to M is closed")
 }
 
+func (mpipe *MPipe) WriteSet(subs []string, value string) error {
+	if mpipe.stdin != nil {
+		mps := Set(nil, subs, value)
+		Println(mpipe.stdin, mps)
+		return nil
+	}
+	return errors.New("connection to M is closed")
+}
+
+func (mpipe *MPipe) WriteKill(subs []string) error {
+	if mpipe.stdin != nil {
+		mps := Kill(nil, subs)
+		Println(mpipe.stdin, mps)
+		return nil
+	}
+	return errors.New("connection to M is closed")
+}
+
 type MUMPS []M
 
 type M struct {
@@ -183,8 +201,10 @@ func Set(mumps MUMPS, subs []string, value string) MUMPS {
 		Value:  value,
 		Action: "set",
 	}
-	x := append(mumps, msub)
-	return x
+	if mumps == nil {
+		return MUMPS{msub}
+	}
+	return append(mumps, msub)
 }
 
 func Kill(mumps MUMPS, subs []string) MUMPS {
@@ -192,8 +212,10 @@ func Kill(mumps MUMPS, subs []string) MUMPS {
 		Subs:   subs[:],
 		Action: "kill",
 	}
-	x := append(mumps, msub)
-	return x
+	if mumps == nil {
+		return MUMPS{msub}
+	}
+	return append(mumps, msub)
 }
 
 func Exec(mumps MUMPS, statement string) MUMPS {
