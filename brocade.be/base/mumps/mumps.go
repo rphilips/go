@@ -80,8 +80,9 @@ func (mpipe *MPipe) WriteExec(s string) error {
 		if s == "" || strings.HasPrefix(s, "#") || strings.HasPrefix(s, "/") || strings.HasPrefix(s, ";") {
 			return nil
 		}
-		_, err := io.WriteString(mpipe.stdin, s+"\n")
-		return err
+		mps := Exec(nil, s)
+		Println(mpipe.stdin, mps)
+		return nil
 	}
 	return errors.New("connection to M is closed")
 }
