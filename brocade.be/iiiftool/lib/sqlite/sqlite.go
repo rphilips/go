@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"brocade.be/base/fs"
 	basefs "brocade.be/base/fs"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/iiif"
@@ -63,16 +62,20 @@ func Store(sqlitefile string,
 		sqlitefile = filepath.Join(cwd, filepath.Base(sqlitefile))
 	}
 
+	if basefs.Exists(sqlitefile) {
+		err := basefs.Rmpath(sqlitefile)
+		if err != nil {
+			return fmt.Errorf("cannot remove file: %v", err)
+		}
+	}
+
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
 		return fmt.Errorf("cannot open file: %v", err)
 	}
 	defer db.Close()
 
-	append := basefs.Exists(sqlitefile)
-	if !append {
-
-		if _, err = db.Exec(`
+	if _, err = db.Exec(`
 		CREATE TABLE sqlar (
 			name TEXT PRIMARY KEY,
 			mode INT,
@@ -80,29 +83,29 @@ func Store(sqlitefile string,
   			sz INT,
   			data BLOB
 		);`); err != nil {
-			return fmt.Errorf("cannot create table sqlar: %v", err)
-		}
+		return fmt.Errorf("cannot create table sqlar: %v", err)
+	}
 
-		if _, err = db.Exec(`
+	if _, err = db.Exec(`
 		CREATE TABLE admin (
 			key INTEGER PRIMARY KEY AUTOINCREMENT,
 			time TEXT,
 			action TEXT,
 			user TEXT
 		);`); err != nil {
-			return fmt.Errorf("cannot create table admin: %v", err)
-		}
+		return fmt.Errorf("cannot create table admin: %v", err)
+	}
 
-		if _, err = db.Exec(`
+	if _, err = db.Exec(`
 		CREATE TABLE files (
 			key INTEGER PRIMARY KEY AUTOINCREMENT,
 			docman TEXT,
 			name TEXT
 		);`); err != nil {
-			return fmt.Errorf("cannot create table files: %v", err)
-		}
+		return fmt.Errorf("cannot create table files: %v", err)
+	}
 
-		if _, err = db.Exec(`
+	if _, err = db.Exec(`
 		CREATE TABLE meta (
 			key INTEGER PRIMARY KEY AUTOINCREMENT,
 			digest TEXT,
@@ -112,8 +115,7 @@ func Store(sqlitefile string,
 			iiifsys TEXT,
 			manifest TEXT
 		);`); err != nil {
-			return fmt.Errorf("cannot create table meta: %v", err)
-		}
+		return fmt.Errorf("cannot create table meta: %v", err)
 	}
 
 	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, sz, data) Values($1,$2,$3,$4,$5)")
@@ -128,12 +130,8 @@ func Store(sqlitefile string,
 	}
 	defer stmt2.Close()
 
-	if !append {
-		h := time.Now()
-		_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user)
-	}
 	h := time.Now()
-	stmt2.Exec(nil, h.Format(time.RFC3339), "modified", user)
+	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user)
 
 	stmt3, err := db.Prepare("INSERT INTO files (key, docman, name) Values($1,$2,$3)")
 	if err != nil {
@@ -168,7 +166,7 @@ func Store(sqlitefile string,
 
 		data, _ := ioutil.ReadAll(stream)
 		mtime := time.Now().Unix()
-		props, _ := fs.Properties("nakedfile")
+		props, _ := basefs.Properties("nakedfile")
 		mode := int64(props.PERM)
 		sz := int64(len(data))
 		_, err = stmt1.Exec(name, mode, mtime, sz, data)
