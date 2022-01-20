@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"brocade.be/base/fs"
 	basefs "brocade.be/base/fs"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/iiif"
@@ -167,7 +166,7 @@ func Store(sqlitefile string,
 
 		data, _ := ioutil.ReadAll(stream)
 		mtime := time.Now().Unix()
-		props, _ := fs.Properties("nakedfile")
+		props, _ := basefs.Properties("nakedfile")
 		mode := int64(props.PERM)
 		sz := int64(len(data))
 		_, err = stmt1.Exec(name, mode, mtime, sz, data)
