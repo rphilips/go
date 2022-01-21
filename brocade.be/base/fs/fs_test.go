@@ -177,6 +177,7 @@ func TestCalcPerm(t *testing.T) {
 	tests := []tst{
 		{readable: "rwxrwxrwx", number: 0777},
 		{readable: "rwsrwxrwx", number: 04777},
+		{readable: "rw-rw-r--", number: 436},
 	}
 
 	for _, test := range tests {
@@ -185,9 +186,12 @@ func TestCalcPerm(t *testing.T) {
 		if expected == calc {
 			continue
 		}
-		t.Errorf("\nFail:\n%s\n%s\n%s\n\n", test.readable, expected, calc)
+		t.Errorf("\nFail:\n%s\n%s\n%s\n%d\n", test.readable, expected, calc, int64(calc))
 	}
-
+	fname := "/home/rphilips/tmp/a"
+	props, _ := Properties("webfile")
+	perm := props.PERM
+	os.Chmod(fname, perm)
 }
 
 func TestChangedAfter(t *testing.T) {

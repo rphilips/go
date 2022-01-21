@@ -698,7 +698,9 @@ func glob(cwd string, args []string, recurse bool, patterns []string, fils bool,
 				break
 			}
 		}
-		files = append(files, arg)
+		if ok {
+			files = append(files, arg)
+		}
 	}
 	if !onlyutf8 {
 		return

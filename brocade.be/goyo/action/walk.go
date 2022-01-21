@@ -38,10 +38,28 @@ func walk(text string) []string {
 			panic(err)
 		}
 		//fmt.Printf("You pressed: rune %q, key %X\r\n", char, key)
-		if key == keyboard.KeyEsc || char == 'h' || (char == 0 && (key == 3 || key == 4)) {
+		if key == keyboard.KeyEsc || (char == 0 && (key == 3 || key == 4)) {
 			stop = true
 		}
-		if (char == 'd') || (char == 'n') || (char == 0 && fmt.Sprintf("%X", key) == "FFEC") {
+		if char == 'h' {
+			fmt.Println(`ESC: stop walking
+d(own), n(ext), o(rder), ARROW-DOWN: $O(,+1)
+u(p), p(prev), ARROW-UP            : $O(,-1)
+r(ight), ARROW-RIGHT               : next level
+l(eft), ARROW-LEFT                 : previous level
+s(et)                              : set node
+k(ill)                             : kill node
+z(wr)                              : show node
+e(dit)                             : edit node=value
+/(search)                          : searches both on needle and regexp of needle
+`)
+			gloref, _, err = qyottadb.Next(gloref)
+			if err != nil {
+				qutil.Error(err)
+			}
+			continue
+		}
+		if (char == 'd') || (char == 'n') || (char == 'o') || (char == 0 && fmt.Sprintf("%X", key) == "FFEC") {
 			gloref, _, err = qyottadb.Next(gloref)
 			if err != nil {
 				qutil.Error(err)
@@ -100,7 +118,7 @@ func walk(text string) []string {
 			if needle == "" {
 				continue
 			}
-			result := Search(gloref, needle)
+			result := Search(gloref, needle, true)
 			if result != "" {
 				gloref = result
 			}

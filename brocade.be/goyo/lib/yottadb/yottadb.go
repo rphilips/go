@@ -558,7 +558,7 @@ type VarReport struct {
 	Err    error
 }
 
-func ZWR(gloref string, report chan VarReport, needle string) {
+func ZWR(gloref string, report chan VarReport, needle string, forward bool) {
 	rex := new(regexp.Regexp)
 	var err error
 	if needle != "" {

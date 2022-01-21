@@ -14,7 +14,7 @@ func ZWR(text string) []string {
 	gloref, _ := SplitRefValue(text)
 	gloref2 := qyottadb.N(gloref)
 	show := make(chan qyottadb.VarReport, 100)
-	go qyottadb.ZWR(gloref2, show, "")
+	go qyottadb.ZWR(gloref2, show, "", true)
 	for report := range show {
 		if report.Err != nil {
 			qutil.Error(report.Err)
