@@ -9,6 +9,7 @@ import (
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
 	"brocade.be/iiiftool/lib/iiif"
+	"brocade.be/iiiftool/lib/index"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
 
@@ -35,6 +36,7 @@ var Fimgty string
 var Faccess string
 var Fmime string
 var Fiiifsys string
+var Findex bool
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
@@ -43,8 +45,9 @@ func init() {
 	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fiiifsys, "iiifsys", "test", "IIIF system")
-	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "quality parameter")
-	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "tile parameter")
+	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "Quality parameter")
+	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "Tile parameter")
+	idArchiveCmd.PersistentFlags().BoolVar(&Findex, "index", true, "Rebuild IIIF index")
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
@@ -135,6 +138,14 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	err = sqlite.Store(sqlitefile, convertedStream, Fcwd, mResponse)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
+	}
+
+	// update IIIF archive
+	if Findex {
+		err = index.Rebuild()
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: cannot rebuild index:\n%s", err)
+		}
 	}
 
 	return nil
