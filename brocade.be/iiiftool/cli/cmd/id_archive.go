@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"brocade.be/base/docman"
+	"brocade.be/base/fs"
 	"brocade.be/base/parallel"
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/index"
@@ -49,7 +50,9 @@ func init() {
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "Quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "Tile parameter")
 	idArchiveCmd.PersistentFlags().BoolVar(&Findex, "index", true, "Rebuild IIIF index")
-	idArchiveCmd.PersistentFlags().BoolVar(&Fmetaonly, "metaonly", false, "Only replace meta information (including manifest)")
+	idArchiveCmd.PersistentFlags().BoolVar(&Fmetaonly, "metaonly", false,
+		`If images are present, only the meta information (including manifest) is replaced.
+	If there are no images present, the usual archiving routine is used.`)
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
@@ -79,7 +82,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
-	if Fmetaonly {
+	if Fmetaonly && fs.Exists(sqlitefile) {
 		err = sqlite.ReplaceMeta(sqlitefile, mResponse)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: replace error:\n%s", err)
@@ -155,7 +158,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	// update IIIF archive
 	if Findex {
-		err = index.Rebuild()
+		err = index.Update(sqlitefile)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: cannot rebuild index:\n%s", err)
 		}

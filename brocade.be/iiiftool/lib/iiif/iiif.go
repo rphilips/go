@@ -20,7 +20,7 @@ type MResponse struct {
 	Iiifsys    string              `json:"iiifsys"`
 	Images     []map[string]string `json:"images"`
 	Imgloi     string              `json:"imgloi"`
-	Index      []string            `json:"index"`
+	Indexes    []string            `json:"index"`
 	Manifest   interface{}         `json:"manifest"`
 }
 
@@ -56,7 +56,6 @@ func Meta(
 		return mResponse, fmt.Errorf("mumps error:\n%s", err)
 	}
 	out, err := ioutil.ReadAll(oreader)
-	fs.Store("/library/tmp/iiiftooltest.json", out, "process") // debug
 	if err != nil {
 		return mResponse, fmt.Errorf("mumps error:\n%s", err)
 	}
