@@ -150,8 +150,8 @@ func Create(sqlitefile string,
 	if err != nil {
 		return fmt.Errorf("json error on stmt4: %v", err)
 	}
-	index := strings.Join(mResponse.Index, "^")
-	_, err = stmt4.Exec(nil, mResponse.Digest, mResponse.Identifier, index, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
+	indexes := strings.Join(mResponse.Indexes, "^")
+	_, err = stmt4.Exec(nil, mResponse.Digest, mResponse.Identifier, indexes, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
 	if err != nil {
 		return fmt.Errorf("cannot exec stmt4: %v", err)
 	}
@@ -333,8 +333,8 @@ func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 	if err != nil {
 		return fmt.Errorf("json error on replacemeta: %v", err)
 	}
-	index := strings.Join(mResponse.Index, "^")
-	_, err = stmt.Exec(nil, mResponse.Digest, mResponse.Identifier, index, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
+	indexes := strings.Join(mResponse.Indexes, "^")
+	_, err = stmt.Exec(nil, mResponse.Digest, mResponse.Identifier, indexes, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
 	if err != nil {
 		return fmt.Errorf("cannot exec stmt: %v", err)
 	}
