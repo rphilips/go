@@ -129,6 +129,22 @@ func LookupId(id string) (string, error) {
 	return digest, nil
 }
 
+// Remove a IIIF digest and its entries from the index database
+func RemoveDigest(digest string) error {
+	index, err := sql.Open("sqlite", iiifIndexDb)
+	if err != nil {
+		return fmt.Errorf("cannot open index database: %v", err)
+	}
+	defer index.Close()
+
+	_, err = index.Exec("DELETE FROM indexes where digest=?", digest)
+	if err != nil {
+		return fmt.Errorf("cannot delete digest from index database: %v", err)
+	}
+
+	return nil
+}
+
 // Search the index database for a search string
 func Search(search string) ([][]string, error) {
 

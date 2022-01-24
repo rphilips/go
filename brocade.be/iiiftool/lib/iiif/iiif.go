@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"brocade.be/base/fs"
 	"brocade.be/base/mumps"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/util"
@@ -70,4 +71,20 @@ func Digest2Location(digest string) string {
 	subfolder := digest[2:4]
 	location := filepath.Join(iifBaseDir, folder[0:2], subfolder, digest, "db.sqlite")
 	return location
+}
+
+// Delete a IIIF archive
+func DigestDelete(digest string) error {
+	location := Digest2Location(digest)
+	if !fs.Exists(location) {
+		return fmt.Errorf("invalid location:\n%s", location)
+	}
+
+	directory := filepath.Dir(location)
+	err := fs.Rmpath(directory)
+	if err != nil {
+		return fmt.Errorf("mumps error:\n%s", err)
+	}
+
+	return nil
 }
