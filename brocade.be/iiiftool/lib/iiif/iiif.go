@@ -56,10 +56,14 @@ func Meta(
 		return mResponse, fmt.Errorf("mumps error:\n%s", err)
 	}
 	out, err := ioutil.ReadAll(oreader)
+	fs.Store("/library/tmp/iiiftooltest.json", out, "process") // debug
 	if err != nil {
 		return mResponse, fmt.Errorf("mumps error:\n%s", err)
 	}
-	json.Unmarshal(out, &mResponse)
+	err = json.Unmarshal(out, &mResponse)
+	if err != nil {
+		return mResponse, fmt.Errorf("json error:\n%s", err)
+	}
 	return mResponse, nil
 }
 
