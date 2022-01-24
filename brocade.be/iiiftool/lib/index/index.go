@@ -48,14 +48,13 @@ func Rebuild() error {
 		return fmt.Errorf("cannot create index database: %v", err)
 	}
 
-	indices := make(map[string]string)
+	Mindices := make(map[string]string)
 
 	fn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("error walking over file: %v", err)
 		}
-		ext := filepath.Ext(path)
-		if ext != ".sqlite" {
+		if filepath.Ext(path) != ".sqlite" {
 			return nil
 		}
 
@@ -82,11 +81,7 @@ func Rebuild() error {
 			if index == "" {
 				continue
 			}
-			indices[index] = meta.Digest
-			if err != nil {
-				// do not throw error
-				fmt.Printf("Error executing stmt1: %v: %s\n", err, index)
-			}
+			Mindices[index] = meta.Digest
 			index = safe(index)
 			_, err = stmt1.Exec(nil, index, meta.Digest, path)
 			if err != nil {
@@ -103,8 +98,8 @@ func Rebuild() error {
 		return fmt.Errorf("error: %v", err)
 	}
 
-	if len(indices) > 0 {
-		err = SetMIndex(indices)
+	if len(Mindices) > 0 {
+		err = SetMIndex(Mindices)
 		if err != nil {
 			return fmt.Errorf("error: %v", err)
 		}
@@ -127,6 +122,22 @@ func LookupId(id string) (string, error) {
 	digest := util.ReadStringRow(row)
 
 	return digest, nil
+}
+
+// Remove a IIIF digest and its entries from the index database
+func RemoveDigest(digest string) error {
+	index, err := sql.Open("sqlite", iiifIndexDb)
+	if err != nil {
+		return fmt.Errorf("cannot open index database: %v", err)
+	}
+	defer index.Close()
+
+	_, err = index.Exec("DELETE FROM indexes where digest=?", digest)
+	if err != nil {
+		return fmt.Errorf("cannot delete digest from index database: %v", err)
+	}
+
+	return nil
 }
 
 // Search the index database for a search string

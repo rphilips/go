@@ -42,8 +42,9 @@ type Meta struct {
 }
 
 // Given a IIIF identifier and some io.Readers
-// store the contents in the appropriate SQLite archive
-func Store(sqlitefile string,
+// create the appropriate SQLite archive
+// and store the contents.
+func Create(sqlitefile string,
 	filestream []io.Reader,
 	cwd string,
 	mResponse iiif.MResponse) error {
@@ -146,6 +147,9 @@ func Store(sqlitefile string,
 	defer stmt4.Close()
 
 	manifest, err := json.Marshal(mResponse.Manifest)
+	if err != nil {
+		return fmt.Errorf("json error on stmt4: %v", err)
+	}
 	index := strings.Join(mResponse.Index, "^")
 	_, err = stmt4.Exec(nil, mResponse.Digest, mResponse.Identifier, index, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
 	if err != nil {
@@ -305,4 +309,36 @@ func Harvest(harvestcode string, sqlar *Sqlar) error {
 	}
 
 	return nil
+}
+
+func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
+	db, err := sql.Open("sqlite", sqlitefile)
+	if err != nil {
+		return fmt.Errorf("cannot open file: %v", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("DELETE FROM meta")
+	if err != nil {
+		return fmt.Errorf("cannot delete meta from archive: %v", err)
+	}
+
+	stmt, err := db.Prepare("INSERT INTO meta (key, digest, identifier, indexes, iiifsys, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)")
+	if err != nil {
+		return fmt.Errorf("cannot prepare replacemeta: %v", err)
+	}
+	defer stmt.Close()
+
+	manifest, err := json.Marshal(mResponse.Manifest)
+	if err != nil {
+		return fmt.Errorf("json error on replacemeta: %v", err)
+	}
+	index := strings.Join(mResponse.Index, "^")
+	_, err = stmt.Exec(nil, mResponse.Digest, mResponse.Identifier, index, mResponse.Iiifsys, mResponse.Imgloi, string(manifest))
+	if err != nil {
+		return fmt.Errorf("cannot exec stmt: %v", err)
+	}
+
+	return nil
+
 }

@@ -27,7 +27,7 @@ Various additional parameters are in use and sometimes required:
 --access:	access type (space separated)
 --mime:		mime type (space separated)`,
 	Args:    cobra.ExactArgs(1),
-	Example: `iiiftool id archive dg:ua:1`,
+	Example: `iiiftool id archive c:stcv:12915850 --iiifsys=stcv --urlty=stcv`,
 	RunE:    idArchive,
 }
 
@@ -37,6 +37,7 @@ var Faccess string
 var Fmime string
 var Fiiifsys string
 var Findex bool
+var Fmetaonly bool
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
@@ -48,6 +49,7 @@ func init() {
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "Quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "Tile parameter")
 	idArchiveCmd.PersistentFlags().BoolVar(&Findex, "index", true, "Rebuild IIIF index")
+	idArchiveCmd.PersistentFlags().BoolVar(&Fmetaonly, "metaonly", false, "Only replace meta information (including manifest)")
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
@@ -75,69 +77,80 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
-	// get file contents from docman ids
-	imgLen := len(mResponse.Images)
-	originalStream := make([]io.Reader, imgLen)
-
-	empty := true
-	for i, image := range mResponse.Images {
-		docid := docman.DocmanID(image["loc"])
-		reader, err := docid.Reader()
-		if err != nil {
-			log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
-		}
-		empty = false
-		originalStream[i] = reader
-	}
-	if empty {
-		log.Fatalf("iiiftool ERROR: no docman images found")
-	}
-
-	// convert file contents from TIFF/JPG to JP2K
-	convertedStream := make([]io.Reader, imgLen)
-
-	fn := func(n int) (interface{}, error) {
-		old := originalStream[n]
-		args := util.GmConvertArgs(Fquality, Ftile)
-		// "Specify input_file as - for standard input, output_file as - for standard output",
-		// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
-		// but it needs to be "- jp2:-"!
-		args = append(args, "-", "jp2:-")
-		cmd := exec.Command("gm", args...)
-		stdin, err := cmd.StdinPipe()
-		if err != nil {
-			return nil, err
-		}
-		out, err := cmd.StdoutPipe()
-		if err != nil {
-			return nil, err
-		}
-		_, err = cmd.StderrPipe()
-		if err != nil {
-			return nil, err
-		}
-		cmd.Start()
-
-		go func() {
-			defer stdin.Close()
-			io.Copy(stdin, old)
-		}()
-		convertedStream[n] = out
-		return out, nil
-	}
-
-	_, mapErr := parallel.NMap(len(originalStream), -1, fn)
-	for _, e := range mapErr {
-		if e != nil {
-			log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
-		}
-	}
-
-	// store file contents in SQLite archive
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
-	err = sqlite.Store(sqlitefile, convertedStream, Fcwd, mResponse)
-	if err != nil {
-		log.Fatalf("iiiftool ERROR: store error:\n%s", err)
+
+	if Fmetaonly {
+		err = sqlite.ReplaceMeta(sqlitefile, mResponse)
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: replace error:\n%s", err)
+		}
+		return nil
+	} else {
+
+		// get file contents from docman ids
+		imgLen := len(mResponse.Images)
+		originalStream := make([]io.Reader, imgLen)
+
+		empty := true
+		for i, image := range mResponse.Images {
+			docid := docman.DocmanID(image["loc"])
+			reader, err := docid.Reader()
+			if err != nil {
+				log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
+			}
+			empty = false
+			originalStream[i] = reader
+		}
+		if empty {
+			log.Fatalf("iiiftool ERROR: no docman images found")
+		}
+
+		// convert file contents from TIFF/JPG to JP2K
+		convertedStream := make([]io.Reader, imgLen)
+
+		fn := func(n int) (interface{}, error) {
+			old := originalStream[n]
+			args := util.GmConvertArgs(Fquality, Ftile)
+			// "Specify input_file as - for standard input, output_file as - for standard output",
+			// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
+			// but it needs to be "- jp2:-"!
+			args = append(args, "-", "jp2:-")
+			cmd := exec.Command("gm", args...)
+			stdin, err := cmd.StdinPipe()
+			if err != nil {
+				return nil, err
+			}
+			out, err := cmd.StdoutPipe()
+			if err != nil {
+				return nil, err
+			}
+			_, err = cmd.StderrPipe()
+			if err != nil {
+				return nil, err
+			}
+			cmd.Start()
+
+			go func() {
+				defer stdin.Close()
+				io.Copy(stdin, old)
+			}()
+			convertedStream[n] = out
+			return out, nil
+		}
+
+		_, mapErr := parallel.NMap(len(originalStream), -1, fn)
+		for _, e := range mapErr {
+			if e != nil {
+				log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
+			}
+		}
+
+		// store file contents in SQLite archive
+
+		err = sqlite.Create(sqlitefile, convertedStream, Fcwd, mResponse)
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: store error:\n%s", err)
+		}
 	}
 
 	// update IIIF archive

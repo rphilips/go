@@ -51,7 +51,7 @@ func fileStore(cmd *cobra.Command, args []string) error {
 
 	}
 
-	err := sqlite.Store(sqlitefile, files, Fcwd, dummyMeta)
+	err := sqlite.Create(sqlitefile, files, Fcwd, dummyMeta)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot store:\n%s", err)
 	}
