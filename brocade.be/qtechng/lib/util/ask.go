@@ -25,6 +25,9 @@ var Askit = map[string]Ask{
 	"search": {
 		Prompt: "Search for",
 	},
+	"indent": {
+		Prompt: "Indention length",
+	},
 	"replacement": {
 		Prompt: "Replacement string",
 	},
