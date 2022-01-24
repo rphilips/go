@@ -27,7 +27,7 @@ Various additional parameters are in use and sometimes required:
 --access:	access type (space separated)
 --mime:		mime type (space separated)`,
 	Args:    cobra.ExactArgs(1),
-	Example: `iiiftool id archive dg:ua:1`,
+	Example: `iiiftool id archive c:stcv:12915850 --iiifsys=stcv --urlty=stcv`,
 	RunE:    idArchive,
 }
 
