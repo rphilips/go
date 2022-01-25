@@ -37,6 +37,7 @@ export BINDIR=$(qtechng registry get bindir)
 mv $BINARY $BINDIR/iiiftool
 chmod a+x $BINDIR/iiiftool
 iiiftool about
+go test ./...
 echo
 echo
 echo "qtechng file ci --cwd=$QTECHDIR"

@@ -161,7 +161,7 @@ func LookupId(id string) (string, error) {
 	defer index.Close()
 
 	row := index.QueryRow("SELECT digest FROM indexes where id=?", id)
-	digest, err := util.ReadStringRow(row)
+	digest, err := sqlite.ReadStringRow(row)
 	if err != nil {
 		return "", fmt.Errorf("error selecting digest: %v", err)
 	}
