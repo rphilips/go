@@ -32,14 +32,9 @@ func idLocate(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: error searching index:\n%s", err)
 	}
 
-	result := make(map[string]bool)
-
+	// one id can be associated with several digests/locations
 	for _, res := range search {
 		location := res[3]
-		result[location] = true
-	}
-
-	for location := range result {
 		fmt.Println(location)
 	}
 	return nil
