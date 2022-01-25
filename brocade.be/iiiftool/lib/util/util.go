@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 // Function that takes a string as argument
@@ -27,13 +29,13 @@ func GmConvertArgs(quality int, tile int) []string {
 }
 
 // Function that reads a single string data sql.Row
-func ReadStringRow(row *sql.Row) string {
+func ReadStringRow(row *sql.Row) (string, error) {
 	var data string
 	err := row.Scan(&data)
 	if err != nil {
-		return data
+		return data, err
 	}
-	return data
+	return data, nil
 }
 
 // Function that standardizes image filenames
@@ -41,4 +43,12 @@ func ImageName(name string, index int) string {
 	ext := filepath.Ext(name)
 	base := fmt.Sprintf("%08d", index)
 	return base + ext
+}
+
+// Make string URL-safe
+func URLSafe(data string) string {
+	data = strings.ToLower(data)
+	unsafeRegexp := regexp.MustCompile(`[^a-z0-9]`)
+	data = unsafeRegexp.ReplaceAllString(data, "_")
+	return data
 }

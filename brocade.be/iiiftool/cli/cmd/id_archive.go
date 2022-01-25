@@ -3,16 +3,14 @@ package cmd
 import (
 	"io"
 	"log"
-	"os/exec"
 	"strings"
 
 	"brocade.be/base/docman"
 	"brocade.be/base/fs"
-	"brocade.be/base/parallel"
+	"brocade.be/iiiftool/lib/convert"
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/index"
 	"brocade.be/iiiftool/lib/sqlite"
-	"brocade.be/iiiftool/lib/util"
 
 	"github.com/spf13/cobra"
 )
@@ -56,7 +54,7 @@ func init() {
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
-	// verify input
+	// Verify input
 	id := args[0]
 	if id == "" {
 		log.Fatalf("iiiftool ERROR: argument is empty")
@@ -74,7 +72,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// get IIIF metadata from MUMPS
+	// Get IIIF metadata from MUMPS
 	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
@@ -109,47 +107,14 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 
 		// convert file contents from TIFF/JPG to JP2K
-		convertedStream := make([]io.Reader, imgLen)
-
-		fn := func(n int) (interface{}, error) {
-			old := originalStream[n]
-			args := util.GmConvertArgs(Fquality, Ftile)
-			// "Specify input_file as - for standard input, output_file as - for standard output",
-			// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
-			// but it needs to be "- jp2:-"!
-			args = append(args, "-", "jp2:-")
-			cmd := exec.Command("gm", args...)
-			stdin, err := cmd.StdinPipe()
-			if err != nil {
-				return nil, err
-			}
-			out, err := cmd.StdoutPipe()
-			if err != nil {
-				return nil, err
-			}
-			_, err = cmd.StderrPipe()
-			if err != nil {
-				return nil, err
-			}
-			cmd.Start()
-
-			go func() {
-				defer stdin.Close()
-				io.Copy(stdin, old)
-			}()
-			convertedStream[n] = out
-			return out, nil
-		}
-
-		_, mapErr := parallel.NMap(len(originalStream), -1, fn)
-		for _, e := range mapErr {
+		convertedStream, errors := convert.ConvertStreamToJP2K(originalStream, Fquality, Ftile)
+		for _, e := range errors {
 			if e != nil {
 				log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
 			}
 		}
 
 		// store file contents in SQLite archive
-
 		err = sqlite.Create(sqlitefile, convertedStream, Fcwd, mResponse)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: store error:\n%s", err)
@@ -160,7 +125,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	if Findex {
 		err = index.Update(sqlitefile)
 		if err != nil {
-			log.Fatalf("iiiftool ERROR: cannot rebuild index:\n%s", err)
+			log.Fatalf("iiiftool ERROR: cannot update index:\n%s", err)
 		}
 	}
 

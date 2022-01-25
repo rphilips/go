@@ -32,7 +32,7 @@ func fileConvert(cmd *cobra.Command, args []string) error {
 			log.Fatalf("iiiftool ERROR: file is not valid: %v", file)
 		}
 	}
-	err := convert.ConvertImageToJP2K(files, Fquality, Ftile, Fcwd)
+	err := convert.ConvertFileToJP2K(files, Fquality, Ftile, Fcwd)
 	for _, e := range err {
 		if e != nil {
 			log.Fatalf("iiiftool ERROR: error converting: %v", e)

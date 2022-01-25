@@ -20,7 +20,6 @@ var digestHarvestCmd = &cobra.Command{
 
 func init() {
 	digestCmd.AddCommand(digestHarvestCmd)
-	// to do --raw voor PHP gewoon de bytes op stdout spuwen
 }
 
 func digestHarvest(cmd *cobra.Command, args []string) error {

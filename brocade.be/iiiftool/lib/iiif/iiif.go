@@ -53,11 +53,11 @@ func Meta(
 	var mResponse MResponse
 	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
 	if err != nil {
-		return mResponse, fmt.Errorf("mumps error:\n%s", err)
+		return mResponse, fmt.Errorf("mumps reader error:\n%s", err)
 	}
 	out, err := ioutil.ReadAll(oreader)
 	if err != nil {
-		return mResponse, fmt.Errorf("mumps error:\n%s", err)
+		return mResponse, fmt.Errorf("cannot read MUMPS response:\n%s", err)
 	}
 	err = json.Unmarshal(out, &mResponse)
 	if err != nil {
@@ -86,7 +86,7 @@ func DigestDelete(digest string) error {
 	directory := filepath.Dir(location)
 	err := fs.Rmpath(directory)
 	if err != nil {
-		return fmt.Errorf("mumps error:\n%s", err)
+		return fmt.Errorf("error deleting directory:\n%s", err)
 	}
 
 	return nil
