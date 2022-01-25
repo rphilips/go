@@ -234,88 +234,6 @@ func Inspect(sqlitefile string, table string) (interface{}, error) {
 	return string(out), nil
 }
 
-// Function that reads a single sqlar row sql.Row
-func readSqlarRow(row *sql.Row, sqlar *Sqlar) error {
-	var data []byte
-	var mtime int64
-
-	err := row.Scan(
-		&sqlar.Name,
-		&sqlar.Mode,
-		&mtime,
-		&sqlar.Sz,
-		&data)
-	if err != nil {
-		return err
-	}
-
-	sqlar.Reader = bytes.NewReader(data)
-	sqlar.Mtime = time.Unix(0, mtime)
-
-	return nil
-}
-
-// Function that reads a single meta row sql.Row
-func ReadMetaRow(row *sql.Row, meta *Meta) error {
-	err := row.Scan(
-		&meta.Key,
-		&meta.Digest,
-		&meta.Identifier,
-		&meta.Indexes,
-		&meta.Imgloi,
-		&meta.Iiifsys,
-		&meta.Manifest)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Read IIIF meta table from archive
-func ReadMetaTable(path string) (Meta, error) {
-	var meta Meta
-
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		return meta, fmt.Errorf("cannot open archive: %v", err)
-	}
-	defer db.Close()
-
-	row := db.QueryRow("SELECT * FROM meta")
-
-	// do not throw error, to let "sql: no rows in result set" pass
-	_ = ReadMetaRow(row, &meta)
-
-	return meta, nil
-}
-
-// Function that reads multiple Index sql.Rows
-func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
-
-	result := make([][]string, 0)
-
-	// key|id|digest|location
-	columns, err := rows.Columns()
-	if err != nil {
-		return result, err
-	}
-
-	for rows.Next() {
-
-		data := make([]string, len(columns))
-		err := rows.Scan(&data[0], &data[1], &data[2], &data[3])
-		if err != nil {
-			return result, err
-		}
-
-		result = append(result, data)
-	}
-	if err := rows.Err(); err != nil {
-		return result, err
-	}
-	return result, nil
-}
-
 // Given a IIIF harvest code, i.e. digest with filepath,
 // e.g. a42f98d253ea3dd019de07870862cbdc62d6077c00000001.jp2.
 // Return that filename as a stream
@@ -332,7 +250,7 @@ func Harvest(harvestcode string, sqlar *Sqlar) error {
 	defer db.Close()
 
 	row := db.QueryRow("SELECT * FROM sqlar WHERE name =?", file)
-	err = readSqlarRow(row, sqlar)
+	err = ReadSqlarRow(row, sqlar)
 	if err != nil {
 		return fmt.Errorf("cannot read file contents from archive: %v", err)
 	}
