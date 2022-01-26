@@ -235,7 +235,7 @@ func format(in *os.File, src string, ext string, lindent int) error {
 			fmt.Fprintf(out, "\n%s%c", indent, delim)
 			level--
 			written[level] = true
-		case string, bool, float64, json.Number, nil:
+		default:
 
 			if isobject[level] && !iskey[level] {
 				iskey[level] = true
