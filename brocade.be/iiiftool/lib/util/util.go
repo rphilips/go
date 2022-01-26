@@ -1,9 +1,11 @@
 package util
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+	"testing"
 )
 
 // Function that takes a string as argument
@@ -31,4 +33,11 @@ func URLSafe(data string) string {
 	unsafeRegexp := regexp.MustCompile(`[^a-z0-9]`)
 	data = unsafeRegexp.ReplaceAllString(data, "_")
 	return data
+}
+
+// Compare result and expected for tests
+func Check(result string, expected string, t *testing.T) {
+	if result != expected {
+		t.Errorf(fmt.Sprintf("\nResult: \n[%s]\nExpected: \n[%s]\n", result, expected))
+	}
 }

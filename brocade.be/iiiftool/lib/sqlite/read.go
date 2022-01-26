@@ -66,8 +66,10 @@ func ReadMetaTable(path string) (Meta, error) {
 
 	row := db.QueryRow("SELECT * FROM meta")
 
-	// do not throw error, to let "sql: no rows in result set" pass
-	_ = ReadMetaRow(row, &meta)
+	err = ReadMetaRow(row, &meta)
+	if err != nil {
+		return meta, fmt.Errorf("cannot read meta: %v", err)
+	}
 
 	return meta, nil
 }
