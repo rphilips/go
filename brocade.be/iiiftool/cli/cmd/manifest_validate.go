@@ -12,7 +12,7 @@ import (
 var manifestValidateCmd = &cobra.Command{
 	Use:     "validate",
 	Short:   "Validate manifest for a IIIF identifier",
-	Long:    `Validate a IIIF manifest URL given a certain version`,
+	Long:    `Validate a IIIF manifest URL given a certain version (default: 3.0)`,
 	Args:    cobra.ExactArgs(1),
 	Example: `iiiftool manifest validate https://dev.anet.be/iiif/e0f4d5d32a3dd5a341ec84a2ae8e9c69e2666fca/manifest --version=2.1`,
 	RunE:    manifestValidate,

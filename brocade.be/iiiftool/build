@@ -2,7 +2,7 @@
 
 export package=iiiftool
 
-
+export STARTDIR=$PWD
 export IIIFTOOL_BUILDTIME=$(date +%Y.%m.%d-%H:%M:%S)
 export IIIFTOOL_GOVERSION=$(go version | cut -d " " -f 3)
 export IIIFTOOL_BUILDHOST=$(hostname)
@@ -11,6 +11,7 @@ export BASEDIR="$(dirname "${BASEDIR}")"
 export BASEDIR=$BASEDIR/brocade.be
 export QTECHDIR=$(qtechng registry get qtechng-work-dir)
 export QTECHDIR=$QTECHDIR/iiif/iiiftool
+
 if [ ! -d "$QTECHDIR/" ]; then
     qtechng source co /iiif/iiiftool --auto
 fi
@@ -37,7 +38,6 @@ export BINDIR=$(qtechng registry get bindir)
 mv $BINARY $BINDIR/iiiftool
 chmod a+x $BINDIR/iiiftool
 iiiftool about
+cd $STARTDIR
 go test ./...
-echo
-echo
 echo "qtechng file ci --cwd=$QTECHDIR"
