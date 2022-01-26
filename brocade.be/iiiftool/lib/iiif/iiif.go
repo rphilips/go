@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"brocade.be/base/fs"
 	"brocade.be/base/mumps"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/util"
@@ -19,7 +20,7 @@ type MResponse struct {
 	Iiifsys    string              `json:"iiifsys"`
 	Images     []map[string]string `json:"images"`
 	Imgloi     string              `json:"imgloi"`
-	Index      []string            `json:"index"`
+	Indexes    []string            `json:"index"`
 	Manifest   interface{}         `json:"manifest"`
 }
 
@@ -52,13 +53,16 @@ func Meta(
 	var mResponse MResponse
 	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
 	if err != nil {
-		return mResponse, fmt.Errorf("mumps error:\n%s", err)
+		return mResponse, fmt.Errorf("mumps reader error:\n%s", err)
 	}
 	out, err := ioutil.ReadAll(oreader)
 	if err != nil {
-		return mResponse, fmt.Errorf("mumps error:\n%s", err)
+		return mResponse, fmt.Errorf("cannot read MUMPS response:\n%s", err)
 	}
-	json.Unmarshal(out, &mResponse)
+	err = json.Unmarshal(out, &mResponse)
+	if err != nil {
+		return mResponse, fmt.Errorf("json error:\n%s", err)
+	}
 	return mResponse, nil
 }
 
@@ -70,4 +74,20 @@ func Digest2Location(digest string) string {
 	subfolder := digest[2:4]
 	location := filepath.Join(iifBaseDir, folder[0:2], subfolder, digest, "db.sqlite")
 	return location
+}
+
+// Delete a IIIF archive
+func DigestDelete(digest string) error {
+	location := Digest2Location(digest)
+	if !fs.Exists(location) {
+		return fmt.Errorf("invalid location:\n%s", location)
+	}
+
+	directory := filepath.Dir(location)
+	err := fs.Rmpath(directory)
+	if err != nil {
+		return fmt.Errorf("error deleting directory:\n%s", err)
+	}
+
+	return nil
 }

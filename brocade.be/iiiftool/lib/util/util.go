@@ -1,10 +1,11 @@
 package util
 
 import (
-	"database/sql"
 	"fmt"
-	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
+	"testing"
 )
 
 // Function that takes a string as argument
@@ -26,19 +27,17 @@ func GmConvertArgs(quality int, tile int) []string {
 	return args
 }
 
-// Function that reads a single string data sql.Row
-func ReadStringRow(row *sql.Row) string {
-	var data string
-	err := row.Scan(&data)
-	if err != nil {
-		return data
-	}
+// Make string URL-safe
+func URLSafe(data string) string {
+	data = strings.ToLower(data)
+	unsafeRegexp := regexp.MustCompile(`[^a-z0-9]`)
+	data = unsafeRegexp.ReplaceAllString(data, "_")
 	return data
 }
 
-// Function that standardizes image filenames
-func ImageName(name string, index int) string {
-	ext := filepath.Ext(name)
-	base := fmt.Sprintf("%08d", index)
-	return base + ext
+// Compare result and expected for tests
+func Check(result string, expected string, t *testing.T) {
+	if result != expected {
+		t.Errorf(fmt.Sprintf("\nResult: \n[%s]\nExpected: \n[%s]\n", result, expected))
+	}
 }

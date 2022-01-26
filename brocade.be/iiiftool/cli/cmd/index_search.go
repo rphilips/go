@@ -12,7 +12,7 @@ var indexSearchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search IIIF index",
 	Long: `Search the IIIF index which stores the translation table
-	for IIIF identifiers and IIIF digests`,
+	for IIIF identifiers, IIIF digests and archive locations`,
 	Args:    cobra.ExactArgs(1),
 	Example: `iiiftool index search`,
 	RunE:    indexSearch,
