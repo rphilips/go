@@ -17,7 +17,7 @@ var testStressCmd = &cobra.Command{
 	Short: "Stress test",
 	Long: `Perform a IIIF stress test.
 	The argument is the number of request to perform.
-	With the --rais flag the RAIS image serveer is tested,
+	With the --rais flag the RAIS image server is tested,
 	without this flag (default) the default Apache webserver is tested`,
 	Args:    cobra.ExactArgs(1),
 	Example: "iiiftool test stress 100",
