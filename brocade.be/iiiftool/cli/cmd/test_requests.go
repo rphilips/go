@@ -5,13 +5,14 @@ import (
 	"log"
 	"os/exec"
 
+	"brocade.be/base/registry"
 	"github.com/spf13/cobra"
 )
 
 var testRequestsCmd = &cobra.Command{
 	Use:     "requests",
 	Short:   "Image requests test",
-	Long:    `Perform a IIIF image requests test`,
+	Long:    `Perform RAIS IIIF image requests test`,
 	Args:    cobra.NoArgs,
 	Example: "iiiftool test requests",
 	RunE:    testRequests,
@@ -23,13 +24,15 @@ func init() {
 
 func testRequests(cmd *cobra.Command, args []string) error {
 
+	prefix := registry.Registry["web-base-url"] + registry.Registry["iiif-base-url"]
+
 	URLs := []string{
-		"https://dev.anet.be/iiif/e1e53b3d6b74c2e7ed0615ec687e68fdb61de24200000001.jp2/full/max/0/default.jpg",            // default
-		"https://dev.anet.be/iiif/e1e53b3d6b74c2e7ed0615ec687e68fdb61de24200000001.jp2/100,200,300,400/max/0/default.jpg", // region
-		"https://dev.anet.be/iiif/e1e53b3d6b74c2e7ed0615ec687e68fdb61de24200000001.jp2/full/300,/0/default.jpg",           // size
-		"https://dev.anet.be/iiif/e1e53b3d6b74c2e7ed0615ec687e68fdb61de24200000001.jp2/full/max/180/default.jpg",          // rotation
-		"https://dev.anet.be/iiif/e1e53b3d6b74c2e7ed0615ec687e68fdb61de24200000001.jp2/full/max/0/bitonal.jpg",            // quality
-		"https://dev.anet.be/iiif/e1e53b3d6b74c2e7ed0615ec687e68fdb61de24200000001.jp2/full/max/0/default.png",            //format
+		prefix + testId + "00000001.jp2/full/max/0/default.jpg",            // default
+		prefix + testId + "00000001.jp2/100,200,300,400/max/0/default.jpg", // region
+		prefix + testId + "00000001.jp2/full/300,/0/default.jpg",           // size
+		prefix + testId + "00000001.jp2/full/max/180/default.jpg",          // rotation
+		prefix + testId + "00000001.jp2/full/max/0/bitonal.jpg",            // quality
+		prefix + testId + "00000001.jp2/full/max/0/default.png",            //format
 	}
 
 	for _, URL := range URLs {
