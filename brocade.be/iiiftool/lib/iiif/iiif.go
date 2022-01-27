@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 
 	"brocade.be/base/fs"
@@ -14,6 +15,14 @@ import (
 
 var iifBaseDir = registry.Registry["iiif-base-dir"]
 
+const validator = "https://presentation-validator.iiif.io/validate?"
+
+type validateResponse struct {
+	Okay     int         `json:"okay"`
+	Warnings interface{} `json:"warnings"`
+	Error    string      `json:"error"`
+	Url      string      `json:"url"`
+}
 type MResponse struct {
 	Digest     string              `json:"digest"`
 	Identifier string              `json:"identifier"`
@@ -90,4 +99,31 @@ func DigestDelete(digest string) error {
 	}
 
 	return nil
+}
+
+// Function that validates a IIIF manifest
+func Validate(manifestUrl string, version string) (validateResponse, error) {
+
+	var result validateResponse
+
+	URL := validator + version + "&url=" + manifestUrl
+
+	response, err := http.Get(URL)
+	if err != nil {
+		return result, fmt.Errorf("error validating:%s", err)
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return result, fmt.Errorf("error reading response:%s", err)
+	}
+
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return result, fmt.Errorf("json error:%s", err)
+	}
+
+	return result, nil
+
 }
