@@ -1,10 +1,13 @@
 package cmd
 
 import (
-	"fmt"
+	"io/ioutil"
 	"log"
-	"os/exec"
+	"net/http"
+	"path/filepath"
+	"strconv"
 
+	fs "brocade.be/base/fs"
 	"brocade.be/base/registry"
 	"github.com/spf13/cobra"
 )
@@ -35,10 +38,30 @@ func testRequests(cmd *cobra.Command, args []string) error {
 		prefix + testId + "00000001.jp2/full/max/0/default.png",            //format
 	}
 
-	for _, URL := range URLs {
-		cmd := exec.Command("curl", "-O", URL)
-		fmt.Println("curl", "-O", URL)
-		_, err := cmd.Output()
+	download := func(URL string) ([]byte, error) {
+		response, err := http.Get(URL)
+		if err != nil {
+			return nil, err
+		}
+		defer response.Body.Close()
+
+		content, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+		return content, nil
+	}
+
+	for index, URL := range URLs {
+		out, err := download(URL)
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: error downloading %s: %v", URL, err)
+		}
+		fname := strconv.Itoa(index) + filepath.Ext(URL)
+		err = fs.Store(fname, out, "webfile")
+		if err != nil {
+			log.Fatalf("iiiftool ERROR: error storing %s: %v", URL, err)
+		}
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: error downloading %s: %v", URL, err)
 		}
