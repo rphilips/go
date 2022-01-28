@@ -1,15 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"os"
 	"strconv"
-	"strings"
 
 	qfs "brocade.be/base/fs"
+	qjson "brocade.be/base/json"
 	qparallel "brocade.be/base/parallel"
 	qerror "brocade.be/qtechng/lib/error"
 	qreport "brocade.be/qtechng/lib/report"
@@ -160,9 +157,7 @@ func jsonFormat(cmd *cobra.Command, args []string) error {
 }
 
 func format(in *os.File, src string, ext string, lindent int) error {
-	if lindent < 2 {
-		lindent = 2
-	}
+
 	out := os.Stdout
 	var err error
 	tmpfile := ""
@@ -179,92 +174,11 @@ func format(in *os.File, src string, ext string, lindent int) error {
 		defer out.Close()
 	}
 
-	// formatting
-
-	dec := json.NewDecoder(in)
-
-	level := 0
-
-	written := make(map[int]bool)
-	isobject := make(map[int]bool)
-	iskey := make(map[int]bool)
-	key := make(map[int]string)
-
-	for {
-		t, err := dec.Token()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		switch ty := t.(type) {
-		case json.Delim:
-			delim := rune(ty)
-			indent := ""
-			if delim == '[' || delim == '{' {
-				if level > 0 {
-					indent = strings.Repeat(" ", level*lindent)
-				}
-			} else {
-				if level > 1 {
-					indent = strings.Repeat(" ", (level-1)*lindent)
-				}
-			}
-			if delim == '[' || delim == '{' {
-				if written[level] {
-					fmt.Fprint(out, ",\n")
-				} else {
-					if level != 0 {
-						fmt.Fprint(out, "\n")
-					}
-				}
-				if isobject[level] {
-					fmt.Fprintf(out, "%s%s: ", indent, key[level])
-					iskey[level] = false
-					indent = ""
-				}
-				fmt.Fprintf(out, "%s%c", indent, delim)
-				level++
-				isobject[level] = delim == '{'
-				iskey[level] = false
-				written[level] = false
-				continue
-			}
-			fmt.Fprintf(out, "\n%s%c", indent, delim)
-			level--
-			written[level] = true
-		default:
-
-			if isobject[level] && !iskey[level] {
-				iskey[level] = true
-				b, _ := json.Marshal(ty)
-				key[level] = string(b)
-				continue
-			}
-			if written[level] {
-				fmt.Fprint(out, ",\n")
-			} else {
-				fmt.Fprintf(out, "\n")
-			}
-
-			indent := ""
-			if level != 0 {
-				indent = strings.Repeat(" ", level*lindent)
-			}
-
-			if isobject[level] {
-				fmt.Fprintf(out, "%s%s: ", indent, key[level])
-				iskey[level] = false
-				indent = ""
-			}
-			show, _ := json.Marshal(ty)
-			fmt.Fprintf(out, "%s%s", indent, show)
-			written[level] = true
-		}
-
+	err = qjson.Format(in, out, lindent)
+	if err != nil {
+		return err
 	}
+
 	if src != "" {
 		qfs.CopyMeta(src, tmpfile, false)
 		err = qfs.CopyFile(tmpfile, src+ext, "=", false)
