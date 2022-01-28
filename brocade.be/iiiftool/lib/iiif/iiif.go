@@ -18,19 +18,19 @@ var iifBaseDir = registry.Registry["iiif-base-dir"]
 const validator = "https://presentation-validator.iiif.io/validate?"
 
 type validateResponse struct {
-	Okay     int         `json:"okay"`
-	Warnings interface{} `json:"warnings"`
-	Error    string      `json:"error"`
 	Url      string      `json:"url"`
+	Okay     int         `json:"okay"`
+	Error    string      `json:"error"`
+	Warnings interface{} `json:"warnings"`
 }
 type MResponse struct {
 	Digest     string              `json:"digest"`
-	Identifier string              `json:"identifier"`
-	Iiifsys    string              `json:"iiifsys"`
 	Images     []map[string]string `json:"images"`
 	Imgloi     string              `json:"imgloi"`
 	Indexes    []string            `json:"index"`
+	Iiifsys    string              `json:"iiifsys"`
 	Manifest   interface{}         `json:"manifest"`
+	Identifier string              `json:"identifier"`
 }
 
 // Harvest IIIF metadata from MUMPS
