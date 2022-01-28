@@ -67,21 +67,21 @@ const selectSqlar = "SELECT name, mode, mtime, sz FROM sqlar"
 // Structs
 
 type Sqlar struct {
+	Sz     int64
 	Name   string
 	Mode   int64
 	Mtime  time.Time
-	Sz     int64
 	Reader *bytes.Reader
 }
 
 type Meta struct {
 	Key        string
 	Digest     string
-	Identifier string
-	Indexes    string
 	Imgloi     string
+	Indexes    string
 	Iiifsys    string
 	Manifest   string
+	Identifier string
 }
 
 // Given a IIIF identifier and an io.Reader
