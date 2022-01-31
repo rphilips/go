@@ -21,7 +21,6 @@ import (
 	qclient "brocade.be/qtechng/lib/client"
 	qerror "brocade.be/qtechng/lib/error"
 	qlfile "brocade.be/qtechng/lib/file/lfile"
-	qmeta "brocade.be/qtechng/lib/meta"
 	qobject "brocade.be/qtechng/lib/object"
 	qreport "brocade.be/qtechng/lib/report"
 	qserver "brocade.be/qtechng/lib/server"
@@ -291,6 +290,7 @@ func handleCSV(version string, csvfile string) (filename string, numbers map[str
 }
 
 func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf bool, delim rune) (filename string, numbers map[string]int, backupdir string, errs []error) {
+	targetdir := ""
 	if len(records) == 0 {
 		return "", nil, "", []error{errors.New("no translations found")}
 	}
@@ -364,18 +364,8 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 			return record, nil
 		}
 
-		ok = true
-		for _, lg := range lgs {
-			i := lgmap[lg]
-			if qutil.Simplify(record[i], false) != qutil.Simplify(m[lg], false) {
-				ok = false
-				break
-			}
-		}
-		if ok {
-			record[index] = "UNCHANGED"
-			return record, nil
-		}
+		record[index] = ""
+
 		return record, nil
 	}
 
@@ -405,10 +395,6 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 
 	// handle lfiles
 	stamp := time.Now().Format(time.RFC3339)
-	meta := qmeta.Meta{
-		Fu: "translation",
-		Ft: stamp,
-	}
 	stamp = strings.ReplaceAll(stamp, ":", "")
 	stamp = strings.ReplaceAll(stamp, "-", "")
 	stamp = strings.ReplaceAll(stamp, "+", "")
@@ -421,13 +407,16 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 			"co",
 			"--version=" + v,
 			"--tree",
-			"--copyonly",
 		}
+		targetdir, _ = qfs.TempDir("", "tlfiles-")
 		args = append(args, lfiles...)
+		qutil.QtechNG(args, nil, false, targetdir)
 		qutil.QtechNG(args, nil, false, backupdir)
 	}
 
 	fl := func(n int) (interface{}, error) {
+		stati := make(map[int]string)
+		changed := false
 		qpath := lfiles[n]
 		source, _ := qsource.Source{}.New(v, qpath, false)
 		blob, err := source.Fetch()
@@ -455,27 +444,57 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 				continue
 			}
 			record := records[inx]
-			for _, lg := range lgs {
-				j := lgmap[lg]
-				newtr := qutil.Simplify(record[j], false)
-				switch lg {
-				case "dut":
-					lgcode.N = newtr
-				case "eng":
-					lgcode.E = newtr
-				case "fre":
-					lgcode.F = newtr
-				case "ger":
-					lgcode.D = newtr
-				case "unv":
-					lgcode.U = newtr
+			if record[index] == "" {
+				oncechange := false
+				for _, lg := range lgs {
+					j := lgmap[lg]
+					newtr := qutil.Simplify(record[j], false)
+					switch lg {
+					case "dut":
+						if lgcode.N != newtr {
+							lgcode.N = newtr
+							changed = true
+							oncechange = true
+						}
+					case "eng":
+						if lgcode.E != newtr {
+							lgcode.E = newtr
+							changed = true
+							oncechange = true
+						}
+					case "fre":
+						if lgcode.F != newtr {
+							lgcode.F = newtr
+							changed = true
+							oncechange = true
+						}
+					case "ger":
+						if lgcode.D != newtr {
+							lgcode.D = newtr
+							changed = true
+							oncechange = true
+						}
+					case "unv":
+						if lgcode.D != newtr {
+							lgcode.U = newtr
+							changed = true
+							oncechange = true
+						}
+					}
 				}
+				if oncechange {
+					stati[inx] = "IMPORTED"
+				}
+				lfile.Lgcodes[i] = lgcode
 			}
-			lfile.Lgcodes[i] = lgcode
 		}
-		output := lfile.Format()
-		_, _, _, err = source.Store(meta, output.Bytes(), false)
-		return nil, err
+		if changed {
+			output := lfile.Format()
+			target := filepath.Join(targetdir, filepath.FromSlash(qpath[1:]))
+			err = qfs.Store(target, output, "process")
+			return qpath, err
+		}
+		return nil, nil
 	}
 
 	_, errlist := qparallel.NMap(len(lfiles), -1, fl)
@@ -487,6 +506,28 @@ func rewriteCVS(v string, records [][]string, baselg string, lgs []string, crlf 
 	}
 	if len(errs) == 0 {
 		errs = nil
+	}
+
+	if errs != nil {
+		return
+	}
+
+	args := []string{
+		"file",
+		"ci",
+		"--version=" + v,
+		"--recurse",
+		"--uid=translation",
+	}
+	stdout, _, _ := qutil.QtechNG(args, []string{"$..ERRORS"}, false, targetdir)
+	if stdout != "null" {
+		e := &qerror.QError{
+			Ref:  []string{"text.import.lfiles"},
+			Type: "Error",
+			Msg:  []string{"In " + targetdir + ", execute:\n", "   qtechng " + strings.Join(args, " ") + "\n\n", stdout},
+		}
+		errs = append(errs, e)
+		return
 	}
 
 	numbers = make(map[string]int)

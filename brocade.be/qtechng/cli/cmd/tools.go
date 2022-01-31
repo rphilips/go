@@ -581,6 +581,9 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 		}
 	}
 
+	dur, _ := time.ParseDuration("-1s")
+	stamp := time.Now().Add(dur)
+
 	fn := func(n int) (interface{}, error) {
 		errlist := make([]error, 0)
 		dir := idirs[n]
@@ -614,6 +617,7 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 				errlist = append(errlist, err)
 				continue
 			}
+			os.Chtimes(place, stamp, stamp)
 			mt, e := qfs.GetMTime(place)
 			if e == nil {
 				touch := mt.Format(time.RFC3339)
