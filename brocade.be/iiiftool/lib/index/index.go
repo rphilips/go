@@ -114,7 +114,7 @@ func Rebuild() error {
 
 	handleFile := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("error walking over file: %v", err)
+			return fmt.Errorf("error walking over file %s: %v", path, err)
 		}
 		if filepath.Ext(path) != ".sqlite" {
 			return nil
@@ -122,7 +122,7 @@ func Rebuild() error {
 
 		meta, err := sqlite.ReadMetaTable(path)
 		if err != nil {
-			return fmt.Errorf("cannot read meta: %v", err)
+			return fmt.Errorf("error reading meta in file: %s: %v", path, err)
 		}
 
 		Mindex, err := WriteIndexes(index, meta, path)
