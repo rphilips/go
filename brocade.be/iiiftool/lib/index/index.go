@@ -113,6 +113,9 @@ func Rebuild() error {
 	Mindices := make(map[string]string)
 
 	handleFile := func(path string, info os.FileInfo, err error) error {
+		if path == iiifIndexDb {
+			return nil
+		}
 		if err != nil {
 			return fmt.Errorf("error walking over file %s: %v", path, err)
 		}
