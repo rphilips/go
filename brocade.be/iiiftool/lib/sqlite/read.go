@@ -68,7 +68,7 @@ func ReadMetaTable(path string) (Meta, error) {
 
 	err = ReadMetaRow(row, &meta)
 	if err != nil {
-		return meta, fmt.Errorf("cannot read meta: %v", err)
+		return meta, fmt.Errorf("cannot read meta: %v for file %s", err, path)
 	}
 
 	return meta, nil
