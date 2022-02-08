@@ -17,7 +17,7 @@ func ReadStringRow(row *sql.Row) (string, error) {
 	return data, nil
 }
 
-// Function that reads a single sqlar row sql.Row
+// Function that reads a single sqlar sql.Row
 func ReadSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	var data []byte
 	var mtime int64
@@ -38,7 +38,7 @@ func ReadSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	return nil
 }
 
-// Function that reads a single meta row sql.Row
+// Function that reads a single meta sql.Row
 func ReadMetaRow(row *sql.Row, meta *Meta) error {
 	err := row.Scan(
 		&meta.Key,
@@ -68,7 +68,7 @@ func ReadMetaTable(path string) (Meta, error) {
 
 	err = ReadMetaRow(row, &meta)
 	if err != nil {
-		return meta, fmt.Errorf("cannot read meta: %v", err)
+		return meta, fmt.Errorf("cannot read meta: %v for file %s", err, path)
 	}
 
 	return meta, nil
