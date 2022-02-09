@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
 	"brocade.be/iiiftool/lib/util"
 )
@@ -43,13 +44,16 @@ func ConvertFileToJP2K(files []string, quality int, tile int, cwd string) []erro
 	return errors
 }
 
-// Convert streams for IIIF in parallel using `gm` (GraphicsMagick)
-func ConvertStreamToJP2K(originalStream []io.Reader, quality int, tile int) ([]io.Reader, []error) {
+// Convert docman ids for IIIF in parallel using `gm` (GraphicsMagick)
+func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]io.Reader, []error) {
 
-	convertedStream := make([]io.Reader, len(originalStream))
+	convertedStream := make([]io.Reader, len(docIds))
 
 	fn := func(n int) (interface{}, error) {
-		old := originalStream[n]
+		old, err := docIds[n].Reader()
+		if err != nil {
+			return nil, err
+		}
 		args := util.GmConvertArgs(quality, tile)
 		// "Specify input_file as - for standard input, output_file as - for standard output",
 		// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
@@ -78,6 +82,6 @@ func ConvertStreamToJP2K(originalStream []io.Reader, quality int, tile int) ([]i
 		return out, nil
 	}
 
-	_, errors := parallel.NMap(len(originalStream), parMax, fn)
+	_, errors := parallel.NMap(len(docIds), parMax, fn)
 	return convertedStream, errors
 }
