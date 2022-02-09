@@ -5,15 +5,17 @@ import (
 	"io"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
+	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/util"
 )
 
 var formatsAllowed = map[string]bool{".jpg": true, ".jpeg": true, ".tif": true}
-var parMax = 10 // maximum paralel for files/streams
+var iiifMaxPar, _ = strconv.Atoi(registry.Registry["iiif-max-parallel"])
 
 // Convert files for IIIF in parallel using `gm` (GraphicsMagick)
 // gm convert -flatten -quality 70 -define jp2:prg=rlcp -define jp2:numrlvls=7 -define jp2:tilewidth=256 -define jp2:tileheight=256 s.tif o.jp2
@@ -40,7 +42,7 @@ func ConvertFileToJP2K(files []string, quality int, tile int, cwd string) []erro
 		return newFile, err
 	}
 
-	_, errors := parallel.NMap(len(files), parMax, fn)
+	_, errors := parallel.NMap(len(files), iiifMaxPar, fn)
 	return errors
 }
 
@@ -82,6 +84,6 @@ func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]
 		return out, nil
 	}
 
-	_, errors := parallel.NMap(len(docIds), parMax, fn)
+	_, errors := parallel.NMap(len(docIds), iiifMaxPar, fn)
 	return convertedStream, errors
 }
