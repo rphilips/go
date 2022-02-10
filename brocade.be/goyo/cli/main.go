@@ -54,6 +54,7 @@ func main() {
 	// See the License for the specific language governing permissions and
 	// limitations under the License.
 
+	defer qyottadb.Exit()
 	RoDir = Setup()
 	defer os.RemoveAll(RoDir)
 
@@ -159,7 +160,6 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
-	defer qyottadb.Exit()
 	cmd.Execute(buildTime, goVersion, buildHost, os.Args)
 
 }

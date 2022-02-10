@@ -11,6 +11,7 @@ import (
 	qfs "brocade.be/base/fs"
 	qregistry "brocade.be/base/registry"
 	qerror "brocade.be/qtechng/lib/error"
+	qobject "brocade.be/qtechng/lib/object"
 	qserver "brocade.be/qtechng/lib/server"
 	qutil "brocade.be/qtechng/lib/util"
 )
@@ -183,7 +184,6 @@ func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []str
 		runargs[i] = arg
 	}
 
-	//fmt.Println("runargs:", runargs)
 	inm := runargs[0]
 	inm, _ = exec.LookPath(inm)
 
@@ -205,9 +205,11 @@ func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []str
 	}
 	sout := string(out)
 
-	changed = make([]string, 0)
 	deleted = make([]string, 0)
 
+	mchanged := make(map[string]bool)
+
+	targetVersion, _ := qserver.Release{}.New(vtarget, true)
 	for _, line := range strings.SplitN(sout, "\n", -1) {
 		switch {
 		case strings.HasPrefix(line, ">f"):
@@ -217,14 +219,50 @@ func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []str
 			}
 			f := strings.TrimSpace(parts[1])
 			f = filepath.ToSlash(f)
-			if !strings.HasPrefix(f, "source/data") {
-				break
+			if strings.HasPrefix(f, "source/data") {
+				f = strings.TrimPrefix(f, "source/data")
+				if f == "" || f == "/" {
+					break
+				}
+				mchanged[f] = true
+				continue
 			}
-			f = strings.TrimPrefix(f, "source/data")
-			if f == "" || f == "/" {
-				break
+			if strings.HasPrefix(f, "object/") && strings.HasSuffix(f, "/obj.json") {
+				fname := filepath.Join(qregistry.Registry["qtechng-repository-dir"], vtarget, f)
+				blob, e := qfs.Fetch(fname)
+				if e != nil {
+					continue
+				}
+				var r map[string]interface{}
+				e = json.Unmarshal(blob, &r)
+				if e != nil {
+					continue
+				}
+				id := r["id"].(string)
+				if id == "" {
+					continue
+				}
+				parts := strings.SplitN(f, "/", -1)
+				if len(parts) < 2 {
+					continue
+				}
+				ty := parts[1]
+				if !strings.HasSuffix(ty, "4") {
+					continue
+				}
+				deps, e := qobject.GetDependenciesDeep(targetVersion, ty+"_"+id)
+				if e != nil {
+					continue
+				}
+				for _, fils := range deps {
+					for _, fil := range fils {
+						if strings.HasPrefix(fil, "/") {
+							mchanged[fil] = true
+						}
+					}
+				}
 			}
-			changed = append(changed, f)
+
 		case strings.HasPrefix(line, "*deleting"):
 			line = strings.TrimPrefix(line, "*deleting")
 			line = strings.TrimSpace(line)
@@ -238,6 +276,13 @@ func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []str
 			}
 			deleted = append(deleted, f)
 		}
+	}
+
+	changed = make([]string, len(mchanged))
+	count := 0
+	for f := range mchanged {
+		changed[count] = f
+		count++
 	}
 	stamp := ""
 	if shallow {

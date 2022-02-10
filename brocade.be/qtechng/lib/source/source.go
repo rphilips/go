@@ -454,7 +454,6 @@ func (source *Source) Store(meta qmeta.Meta, data interface{}, reset bool) (nmet
 		before = []byte{}
 		changed = true
 	}
-
 	if !changed {
 		return
 	}

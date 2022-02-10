@@ -1,7 +1,6 @@
 package docman
 
 import (
-	"bufio"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -109,7 +108,7 @@ func getFile(file string) (place string) {
 	return matches[0]
 }
 
-func (id DocmanID) Reader() (io.Reader, error) {
+func (id DocmanID) Reader() (io.ReadCloser, error) {
 	ids := string(id)
 	if strings.HasPrefix(ids, "/docman/") {
 		ids = ids[7:]
@@ -119,7 +118,7 @@ func (id DocmanID) Reader() (io.Reader, error) {
 		if qfs.IsFile(location) {
 			file, err := os.Open(location)
 			if err == nil {
-				return bufio.NewReader(file), err
+				return file, err
 			}
 			if qregistry.Registry["docman-secondary-url"] == "" {
 				return nil, err

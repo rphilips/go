@@ -26,7 +26,7 @@ func FileCreate(fname string, hint string) error {
 
 	blob, err := qfs.Fetch(profilefile)
 	if err != nil {
-		return err
+		blob = []byte("[]")
 	}
 	profiles := make([]Profile, 0)
 	err = json.Unmarshal(blob, &profiles)

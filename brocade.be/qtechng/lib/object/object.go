@@ -628,12 +628,14 @@ func StoreLinks(r string, name string, before []byte, actual []byte) {
 
 		if !obefore[obj] {
 			Link(r, name, obj)
+			// /fmt.Println("link:", r, name, obj)
 		}
 	}
 
 	for obj := range obefore {
 		if !oactual[obj] {
 			UnLink(r, name, obj)
+			//fmt.Println("unlink:", r, name, obj)
 		}
 	}
 }
