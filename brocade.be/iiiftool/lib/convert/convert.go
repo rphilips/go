@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
@@ -53,6 +54,8 @@ func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]
 
 	fn := func(n int) (interface{}, error) {
 		old, err := docIds[n].Reader()
+		// defer old.Close()
+		// fmt.Println(docIds[n])
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +83,11 @@ func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]
 			defer stdin.Close()
 			io.Copy(stdin, old)
 		}()
+
+		time.Sleep(3 * time.Second)
+
 		convertedStream[n] = out
+
 		return out, nil
 	}
 

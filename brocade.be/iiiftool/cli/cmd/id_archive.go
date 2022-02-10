@@ -77,6 +77,10 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
+	if len(mResponse.Digest) == 0 {
+		log.Fatalf("iiiftool ERROR: no digest")
+	}
+
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
 	if Fmetaonly && fs.Exists(sqlitefile) {
