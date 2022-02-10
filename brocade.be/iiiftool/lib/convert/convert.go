@@ -5,13 +5,18 @@ import (
 	"io"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
+	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
+	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/util"
 )
 
 var formatsAllowed = map[string]bool{".jpg": true, ".jpeg": true, ".tif": true}
+var iiifMaxPar, _ = strconv.Atoi(registry.Registry["iiif-max-parallel"])
 
 // Convert files for IIIF in parallel using `gm` (GraphicsMagick)
 // gm convert -flatten -quality 70 -define jp2:prg=rlcp -define jp2:numrlvls=7 -define jp2:tilewidth=256 -define jp2:tileheight=256 s.tif o.jp2
@@ -38,17 +43,22 @@ func ConvertFileToJP2K(files []string, quality int, tile int, cwd string) []erro
 		return newFile, err
 	}
 
-	_, errors := parallel.NMap(len(files), -1, fn)
+	_, errors := parallel.NMap(len(files), iiifMaxPar, fn)
 	return errors
 }
 
-// Convert streams for IIIF in parallel using `gm` (GraphicsMagick)
-func ConvertStreamToJP2K(originalStream []io.Reader, quality int, tile int) ([]io.Reader, []error) {
+// Convert docman ids for IIIF in parallel using `gm` (GraphicsMagick)
+func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]io.Reader, []error) {
 
-	convertedStream := make([]io.Reader, len(originalStream))
+	convertedStream := make([]io.Reader, len(docIds))
 
 	fn := func(n int) (interface{}, error) {
-		old := originalStream[n]
+		old, err := docIds[n].Reader()
+		// defer old.Close()
+		// fmt.Println(docIds[n])
+		if err != nil {
+			return nil, err
+		}
 		args := util.GmConvertArgs(quality, tile)
 		// "Specify input_file as - for standard input, output_file as - for standard output",
 		// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
@@ -73,10 +83,14 @@ func ConvertStreamToJP2K(originalStream []io.Reader, quality int, tile int) ([]i
 			defer stdin.Close()
 			io.Copy(stdin, old)
 		}()
+
+		time.Sleep(3 * time.Second)
+
 		convertedStream[n] = out
+
 		return out, nil
 	}
 
-	_, errors := parallel.NMap(len(originalStream), -1, fn)
+	_, errors := parallel.NMap(len(docIds), iiifMaxPar, fn)
 	return convertedStream, errors
 }

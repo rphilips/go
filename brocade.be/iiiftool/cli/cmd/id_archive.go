@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"io"
 	"log"
 	"strings"
 
@@ -78,6 +77,10 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
+	if len(mResponse.Digest) == 0 {
+		log.Fatalf("iiiftool ERROR: no digest")
+	}
+
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
 	if Fmetaonly && fs.Exists(sqlitefile) {
@@ -90,24 +93,19 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 		// get file contents from docman ids
 		imgLen := len(mResponse.Images)
-		originalStream := make([]io.Reader, imgLen)
+		docIds := make([]docman.DocmanID, imgLen)
 
 		empty := true
 		for i, image := range mResponse.Images {
-			docid := docman.DocmanID(image["loc"])
-			reader, err := docid.Reader()
-			if err != nil {
-				log.Fatalf("iiiftool ERROR: docman error:\n%s", err)
-			}
 			empty = false
-			originalStream[i] = reader
+			docIds[i] = docman.DocmanID(image["loc"])
 		}
 		if empty {
 			log.Fatalf("iiiftool ERROR: no docman images found")
 		}
 
-		// convert file contents from TIFF/JPG to JP2K
-		convertedStream, errors := convert.ConvertStreamToJP2K(originalStream, Fquality, Ftile)
+		// convert docman files from TIFF/JPG to JP2K
+		convertedStream, errors := convert.ConvertDocmanIdsToJP2K(docIds, Fquality, Ftile)
 		for _, e := range errors {
 			if e != nil {
 				log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
