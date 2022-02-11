@@ -16,6 +16,7 @@ type Keys struct {
 	BaseURL   string
 	Name      string
 	Qfiles    []string
+	Qpaths    []string
 	Workdir   string
 	Qresponse string
 }
@@ -38,11 +39,14 @@ func Start(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(path, ".vscode") {
 			return nil
 		}
+
 		qpath := strings.Split(path, workdir)[1]
 		element := `<span style="cursor:pointer;" onclick="document.getElementById('path').value='` + path + `'">` + qpath + `</span><br>`
-		keys.Qfiles = append(keys.Qfiles, element)
+		keys.Qpaths = append(keys.Qpaths, element)
+		keys.Qfiles = append(keys.Qfiles, path)
 		return nil
 	}
+
 	err := filepath.WalkDir(workdir, fn)
 	if err != nil {
 		fmt.Println(err)

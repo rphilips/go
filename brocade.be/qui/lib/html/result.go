@@ -3,6 +3,8 @@ package html
 import (
 	"bytes"
 	"text/template"
+
+	css "brocade.be/qui/lib/css"
 )
 
 // Make HTML result page
@@ -12,6 +14,7 @@ func Result(keys interface{}) string {
 
 	<head>
 		<meta charset="UTF-8" />
+		<style>` + css.CSS + `</style>
 	</head>
 
 	<body>
