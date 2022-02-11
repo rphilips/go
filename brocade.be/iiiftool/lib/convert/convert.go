@@ -1,13 +1,13 @@
 package convert
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"brocade.be/base/docman"
 	"brocade.be/base/parallel"
@@ -54,41 +54,32 @@ func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]
 
 	fn := func(n int) (interface{}, error) {
 		old, err := docIds[n].Reader()
-		// defer old.Close()
-		// fmt.Println(docIds[n])
 		if err != nil {
 			return nil, err
 		}
+
 		args := util.GmConvertArgs(quality, tile)
 		// "Specify input_file as - for standard input, output_file as - for standard output",
 		// so says http://www.graphicsmagick.org/GraphicsMagick.html#files,
 		// but it needs to be "- jp2:-"!
 		args = append(args, "-", "jp2:-")
 		cmd := exec.Command("gm", args...)
-		stdin, err := cmd.StdinPipe()
-		if err != nil {
-			return nil, err
-		}
-		out, err := cmd.StdoutPipe()
-		if err != nil {
-			return nil, err
-		}
+		cmd.Stdin = old
+
 		_, err = cmd.StderrPipe()
 		if err != nil {
 			return nil, err
 		}
-		cmd.Start()
 
-		go func() {
-			defer stdin.Close()
-			io.Copy(stdin, old)
-		}()
+		blob, err := cmd.Output()
+		old.Close()
+		if err != nil {
+			return nil, err
+		}
 
-		time.Sleep(3 * time.Second)
+		convertedStream[n] = bytes.NewReader(blob)
 
-		convertedStream[n] = out
-
-		return out, nil
+		return nil, nil
 	}
 
 	_, errors := parallel.NMap(len(docIds), iiifMaxPar, fn)
