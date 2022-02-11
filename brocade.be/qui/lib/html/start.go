@@ -3,6 +3,9 @@ package html
 import (
 	"bytes"
 	"text/template"
+
+	css "brocade.be/qui/lib/css"
+	"brocade.be/qui/lib/js"
 )
 
 // Make HTML start page
@@ -12,15 +15,16 @@ func Start(keys interface{}) string {
 
 	<head>
 		<meta charset="UTF-8" />
+		<style>` + css.CSS + `</style>
 	</head>
 
 	<body>
 		<table>
-		<tr><td><div style=overflow-y:auto;height:300px;width:200px">{{ range .Qfiles }}{{ . }}{{ end }}</div></td>
+		<tr><td><div style=overflow-y:auto;height:300px;width:200px">{{ range .Qpaths }}{{ . }}{{ end }}</div></td>
 		<td style=vertical-align:top>
 			<h1>QtechNG</h1>
 			{{ .Name}}
-			 <form method="POST" action="/result">
+			 <form method="POST" action="/result" autocomplete="off">
 				<input name="cmd" id="cmd" type="hidden" value="" />
 
 				<fieldset><legend><b>Info</b></legend>
@@ -28,7 +32,9 @@ func Start(keys interface{}) string {
 				</fieldset>
 
 				<fieldset><legend><b>Files</b></legend>
-				<input name="path" id="path" type="text" value="" size="100"/>
+				<div class="autocomplete">
+					<input id="path" type="text" name="path" size="100">
+				</div>
 				<p>
 
 				<input type="submit" value="tell" onclick="document.getElementById('cmd').value='tell'" />
@@ -55,8 +61,13 @@ func Start(keys interface{}) string {
 				</fieldset>
 
 			</form>
+
 		</td></tr>
 		</table>
+			<script>` + js.JS + `
+				var qfiles = [{{ range .Qfiles }}{{ print "\"" }}{{ . }}{{ print "\"" }}{{ print "," }}{{ end }}];
+				autocomplete(document.getElementById("path"), qfiles);
+			</script>
 	</body>
 
 	</html>`
