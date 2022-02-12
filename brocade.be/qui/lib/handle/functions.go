@@ -3,6 +3,7 @@ package handle
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -22,7 +23,7 @@ func About(r *http.Request, keys Keys) (Keys, error) {
 
 func CheckIn(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
+	path := r.FormValue("file")
 	cmd := []string{"file", "ci", path}
 	keys.Qresponse = Qcmd(cmd)
 
@@ -31,7 +32,7 @@ func CheckIn(r *http.Request, keys Keys) (Keys, error) {
 
 func CheckOut(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
+	path := r.FormValue("file")
 	qpath := strings.Split(path, keys.Workdir)[1]
 	cmd := []string{"source", "co", qpath, "--auto"}
 
@@ -42,13 +43,17 @@ func CheckOut(r *http.Request, keys Keys) (Keys, error) {
 
 func Open(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
-	// to do check if file exists
+	path := r.FormValue("file")
+	if !qfs.Exists(path) {
+		keys.Qresponse = "ERROR: " + path + " does not exist"
+		return keys, nil
+	}
 
 	cmd := exec.Command(registry.Registry["qtechng-editor-exe"], path)
 	err := cmd.Run()
 	if err != nil {
 		keys.Qresponse = "error" // to do: error handling
+		return keys, nil
 	}
 
 	keys.Qresponse = "Opening file: " + path
@@ -58,7 +63,7 @@ func Open(r *http.Request, keys Keys) (Keys, error) {
 
 func Touch(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
+	path := r.FormValue("file")
 	cmd := []string{"fs", "touch", path}
 	keys.Qresponse = Qcmd(cmd)
 
@@ -67,7 +72,7 @@ func Touch(r *http.Request, keys Keys) (Keys, error) {
 
 func Tell(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
+	path := r.FormValue("file")
 	cmd := []string{"file", "tell", path}
 	keys.Qresponse = Qcmd(cmd)
 
@@ -76,7 +81,7 @@ func Tell(r *http.Request, keys Keys) (Keys, error) {
 
 func Previous(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
+	path := r.FormValue("file")
 	version := "5.60" // to do get from registry
 	qpath := strings.Split(path, keys.Workdir)[1]
 	base := filepath.Base(path)
@@ -119,6 +124,21 @@ func Setup(r *http.Request, keys Keys) (Keys, error) {
 	return keys, nil
 }
 
+func All(r *http.Request, keys Keys) (Keys, error) {
+
+	cmd := []string{"source", "co", "--auto"}
+	keys.Qresponse = Qcmd(cmd)
+
+	return keys, nil
+}
+
+func Quit(r *http.Request, keys Keys) (Keys, error) {
+
+	os.Exit(0)
+
+	return keys, nil
+}
+
 func Commands(r *http.Request, keys Keys) (Keys, error) {
 
 	cmd := []string{"command", "list"}
@@ -129,7 +149,7 @@ func Commands(r *http.Request, keys Keys) (Keys, error) {
 
 func Git(r *http.Request, keys Keys) (Keys, error) {
 
-	path := r.FormValue("path")
+	path := r.FormValue("file")
 	qpath := strings.Split(path, keys.Workdir)[1]
 	link := strings.ReplaceAll(registry.Registry["qtechng-vc-url"], "{qpath}", qpath)
 	keys.Qresponse = "Version control at: " + link + "<br>"

@@ -12,6 +12,9 @@ import (
 	util "brocade.be/qui/lib/util"
 )
 
+const port = ":8081"
+const baseURL = "http://localhost" + port + "/"
+
 type Keys struct {
 	BaseURL   string
 	Name      string
@@ -21,14 +24,11 @@ type Keys struct {
 	Qresponse string
 }
 
-const port = ":8081"
-const baseURL = "http://localhost" + port + "/"
-
 // Handler function for start screen
 func Start(w http.ResponseWriter, r *http.Request) {
 	var keys Keys
-
 	workdir := registry.Registry["qtechng-work-dir"]
+
 	fn := func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -39,10 +39,10 @@ func Start(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(path, ".vscode") {
 			return nil
 		}
-
+		// no new variables for performance
 		qpath := strings.Split(path, workdir)[1]
-		element := `<span style="cursor:pointer;" onclick="document.getElementById('path').value='` + path + `'">` + qpath + `</span><br>`
-		keys.Qpaths = append(keys.Qpaths, element)
+		keys.Qpaths = append(keys.Qpaths, (`<span style="cursor:pointer;" onclick="document.getElementById('file').value='` +
+			path + `';document.getElementById('path').value='` + qpath + `'">` + qpath + `</span><br>`))
 		keys.Qfiles = append(keys.Qfiles, path)
 		return nil
 	}
@@ -51,8 +51,27 @@ func Start(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	start := html.Start(keys)
 	fmt.Fprintln(w, start)
+}
+
+// Handler function for rename screen
+func Rename(w http.ResponseWriter, r *http.Request) {
+	var keys Keys
+	keys.BaseURL = baseURL
+
+	rename := html.Rename(keys)
+	fmt.Fprintln(w, rename)
+}
+
+// Handler function for delete screen
+func Delete(w http.ResponseWriter, r *http.Request) {
+	var keys Keys
+	keys.BaseURL = baseURL
+
+	rename := html.Delete(keys)
+	fmt.Fprintln(w, rename)
 }
 
 // Handler function for result screen
@@ -92,6 +111,10 @@ func Result(w http.ResponseWriter, r *http.Request) {
 		keys, err = Git(r, keys)
 	case "previous":
 		keys, err = Previous(r, keys)
+	case "all":
+		keys, err = All(r, keys)
+	case "quit":
+		keys, err = Quit(r, keys)
 	}
 
 	if err != nil {
