@@ -1,6 +1,11 @@
 package js
 
-const JS = `function autocomplete(inp, arr) {
+const JS = `function copy(file, path){
+	document.getElementById('file').value=file;
+	document.getElementById('path').value=path;
+	}
+
+	function autocomplete(inp, arr) {
 	/*https://www.w3schools.com/howto/howto_js_autocomplete.asp*/
 	/*the autocomplete function takes two arguments,
 	the text field element and an array of possible autocompleted values:*/

@@ -29,25 +29,24 @@ func Start(w http.ResponseWriter, r *http.Request) {
 	var keys Keys
 	workdir := registry.Registry["qtechng-work-dir"]
 
-	fn := func(path string, info fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.Name() == ".qtechng" {
+	// this needs to be as efficient as possible
+	err := filepath.WalkDir(workdir,
+		func(path string, info fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.Name() == ".qtechng" {
+				return nil
+			}
+			if strings.Contains(path, ".vscode") {
+				return nil
+			}
+			qpath := strings.Split(path, workdir)[1]
+			keys.Qpaths = append(keys.Qpaths,
+				(`<span style="cursor:pointer;" onclick="copy('` + path + `','` + qpath + `')">` + qpath + `</span><br>`))
+			keys.Qfiles = append(keys.Qfiles, path)
 			return nil
-		}
-		if strings.Contains(path, ".vscode") {
-			return nil
-		}
-		// no new variables for performance
-		qpath := strings.Split(path, workdir)[1]
-		keys.Qpaths = append(keys.Qpaths, (`<span style="cursor:pointer;" onclick="document.getElementById('file').value='` +
-			path + `';document.getElementById('path').value='` + qpath + `'">` + qpath + `</span><br>`))
-		keys.Qfiles = append(keys.Qfiles, path)
-		return nil
-	}
-
-	err := filepath.WalkDir(workdir, fn)
+		})
 	if err != nil {
 		fmt.Println(err)
 	}
