@@ -48,11 +48,14 @@ func ConvertFileToJP2K(files []string, quality int, tile int, cwd string) []erro
 }
 
 // Convert docman ids for IIIF in parallel using `gm` (GraphicsMagick)
-func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]io.Reader, []error) {
+func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int, verbose bool) ([]io.Reader, []error) {
 
 	convertedStream := make([]io.Reader, len(docIds))
 
 	fn := func(n int) (interface{}, error) {
+		if verbose {
+			fmt.Println(docIds[n])
+		}
 		old, err := docIds[n].Reader()
 		if err != nil {
 			return nil, err
