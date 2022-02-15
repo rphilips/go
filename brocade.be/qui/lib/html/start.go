@@ -56,25 +56,25 @@ func Start(keys interface{}) string {
 				<input id="path" type="text" name="path" size="100">
 
 				<form method="POST" action="/rename" autocomplete="off">
-					<input name="cmd" id="cmd" type="hidden" value="" />
-					<input type="submit" value="rename" onclick="document.getElementById('cmd').value='rename'" />
+					<input name="cmd" id="rcmd" type="hidden" value="" />
+					<input type="submit" value="rename" onclick="document.getElementById('rcmd').value='rename'" />
 				</form> <br>
 
 				<form method="POST" action="/delete" autocomplete="off">
-					<input name="cmd" id="cmd" type="hidden" value="" />
-					<input type="submit" value="delete" onclick="document.getElementById('cmd').value='delete'" />
+					<input name="cmd" id="dcmd" type="hidden" value="" />
+					<input type="submit" value="delete" onclick="document.getElementById('dcmd').value='delete'" />
 				</form>
 
 			</fieldset>
 
 			<form method="POST" action="/result" autocomplete="off">
-				<input name="cmd" id="cmd" type="hidden" value="" />
+				<input name="cmd" id="scmd" type="hidden" value="" />
 
 				<fieldset><legend><b>System</b></legend>
-				<input type="submit" value="registry" onclick="document.getElementById('cmd').value='registry'" />
-				<input type="submit" value="setup" onclick="document.getElementById('cmd').value='setup'" />
-				<input type="submit" value="commands" onclick="document.getElementById('cmd').value='commands'" />
-				<input type="submit" value="checkout all" onclick="document.getElementById('cmd').value='all'" />
+				<input type="submit" value="registry" onclick="document.getElementById('scmd').value='registry'" />
+				<input type="submit" value="setup" onclick="document.getElementById('scmd').value='setup'" />
+				<input type="submit" value="commands" onclick="document.getElementById('scmd').value='commands'" />
+				<input type="submit" value="checkout all" onclick="document.getElementById('scmd').value='all'" />
 				</fieldset>
 
 				<fieldset><legend><b>Links</b></legend>

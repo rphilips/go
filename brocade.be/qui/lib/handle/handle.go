@@ -87,6 +87,8 @@ func Result(w http.ResponseWriter, r *http.Request) {
 
 	err = nil
 
+	fmt.Println(r.FormValue("scmd"))
+
 	switch r.FormValue("cmd") {
 	case "about":
 		keys, err = About(r, keys)
