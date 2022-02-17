@@ -20,8 +20,8 @@ func Start(keys interface{}) string {
 
 	<body>
 		<table>
-		<tr><td><div style=overflow-y:auto;height:300px;width:200px">{{ range .Qpaths }}{{ . }}{{ end }}</div></td>
-		<td style=vertical-align:top>
+		<tr><td style="vertical-align:top"><div style=overflow-y:auto;height:400px;width:200px">{{ range .Qpaths }}{{ . }}{{ end }}</div></td>
+		<td style="vertical-align:top">
 			<h1>QtechNG</h1>
 			{{ .Name}}
 			 <form method="POST" action="/result" autocomplete="off">
@@ -43,46 +43,47 @@ func Start(keys interface{}) string {
 				<input type="submit" value="open" onclick="document.getElementById('cmd').value='open'" />
 				<input type="submit" value="checkin" onclick="document.getElementById('cmd').value='checkin'" />
 				<input type="submit" value="checkout" onclick="document.getElementById('cmd').value='checkout'" />
-				</fieldset>
-
-				<fieldset><legend><b>Compare</b></legend>
 				<input type="submit" value="previous" onclick="document.getElementById('cmd').value='previous'" />
 				<input type="submit" value="git" onclick="document.getElementById('cmd').value='git'" />
 				</fieldset>
 
-			</form>
+				<fieldset><legend><b>Create</b></legend>
+				<input type="submit" value="create" onclick="document.getElementById('cmd').value='create'" />
+				hint: <input id="hint" type="text" name="hint" style="width:100px">
+				checkin? <input type="checkbox" id="autocheckin" name="autocheckin">
+				</fieldset>
+				<fieldset><legend><b>Add</b></legend>
+				<input type="submit" value="add" onclick="document.getElementById('cmd').value='add'" />
+				</fieldset>
 
 			<fieldset><legend><b>Repository</b></legend>
 				<input id="path" type="text" name="path" size="100">
+				<p>
+				version: <input id="version" type="text" name="version" value="0.00" style="width:100px">
+				<p>
 
-				<form method="POST" action="/rename" autocomplete="off">
-					<input name="cmd" id="rcmd" type="hidden" value="" />
-					<input type="submit" value="rename" onclick="document.getElementById('rcmd').value='rename'" />
-				</form> <br>
+				<input type="submit" value="rename" onclick="document.getElementById('cmd').value='rename'" />
+				replace: <input id="replace" type="text" name="replace" style="width:150px">
+				with: <input id="with" type="text" name="with" style="width:150px">
+				<p>
 
-				<form method="POST" action="/delete" autocomplete="off">
-					<input name="cmd" id="dcmd" type="hidden" value="" />
-					<input type="submit" value="delete" onclick="document.getElementById('dcmd').value='delete'" />
-				</form>
-
+				<input type="submit" value="delete" onclick="document.getElementById('cmd').value='delete'" />
+				number: <input id="number" type="text" name="number" value="0" style="width:100px">
 			</fieldset>
 
-			<form method="POST" action="/result" autocomplete="off">
-				<input name="cmd" id="scmd" type="hidden" value="" />
+			<fieldset><legend><b>System</b></legend>
+				<input type="submit" value="registry" onclick="document.getElementById('cmd').value='registry'" />
+				<input type="submit" value="setup" onclick="document.getElementById('cmd').value='setup'" />
+				<input type="submit" value="commands" onclick="document.getElementById('cmd').value='commands'" />
+				<input type="submit" value="checkout all" onclick="document.getElementById('cmd').value='all'" />
+			</fieldset>
 
-				<fieldset><legend><b>System</b></legend>
-				<input type="submit" value="registry" onclick="document.getElementById('scmd').value='registry'" />
-				<input type="submit" value="setup" onclick="document.getElementById('scmd').value='setup'" />
-				<input type="submit" value="commands" onclick="document.getElementById('scmd').value='commands'" />
-				<input type="submit" value="checkout all" onclick="document.getElementById('scmd').value='all'" />
-				</fieldset>
-
-				<fieldset><legend><b>Links</b></legend>
+			<fieldset><legend><b>Links</b></legend>
 				<a href="https://dev.anet.be/brocade">presto</a><br>
 				<a href="https://anet.be/brocade">moto</a><br>
 				<a href="https://anetbrocade.slack.com/">slack</a><br>
 				<a href="https://anet.be/probes/probes.phtml">probes</a>
-				</fieldset>
+			</fieldset>
 
 			</form>
 
@@ -90,7 +91,7 @@ func Start(keys interface{}) string {
 		</table>
 			<script>` + js.JS + `
 				var qfiles = [{{ range .Qfiles }}{{ print "\"" }}{{ . }}{{ print "\"" }}{{ print "," }}{{ end }}];
-				autocomplete(document.getElementById("file"), qfiles);
+				autocomplete(document.getElementById("file"), qfiles, "{{ .Workdir }}");
 			</script>
 	</body>
 

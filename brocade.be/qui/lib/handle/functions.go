@@ -139,6 +139,35 @@ func Quit(r *http.Request, keys Keys) (Keys, error) {
 	return keys, nil
 }
 
+func Create(r *http.Request, keys Keys) (Keys, error) {
+
+	file := r.FormValue("file")
+	base := filepath.Base(file)
+	currdir := strings.Split(file, base)[0]
+	cmd := []string{"file", "new", file, "--create", "--cwd=" + currdir}
+	hint := r.FormValue("hint")
+	ci := r.FormValue("autocheckin")
+	if hint != "" {
+		cmd = append(cmd, "--hint="+hint)
+	}
+	keys.Qresponse = Qcmd(cmd)
+	if ci == "on" {
+		ciCmd := []string{"file", "ci", file}
+		keys.Qresponse += Qcmd(ciCmd)
+	}
+
+	return keys, nil
+}
+
+func Delete(r *http.Request, keys Keys) (Keys, error) {
+
+	qpath := r.FormValue("path")
+	cmd := []string{"source", "delete", qpath, "--number=" + r.FormValue("number")}
+	keys.Qresponse = Qcmd(cmd)
+
+	return keys, nil
+}
+
 func Commands(r *http.Request, keys Keys) (Keys, error) {
 
 	cmd := []string{"command", "list"}

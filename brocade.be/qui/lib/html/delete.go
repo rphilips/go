@@ -20,7 +20,14 @@ func Delete(keys interface{}) string {
 	<body>
 		<div><input type="button" onclick="location.href='{{ .BaseURL}}';" value="back" /></div>
 		<br>
-		<div><tt>{{ .Qresponse}}</tt></div>
+		<form method="POST" action="/result" autocomplete="off">
+			<input name="cmd" id="cmd" type="hidden" value="" />
+
+			<fieldset><legend><b>Delete</b></legend>
+				<input type="submit" value="delete" onclick="document.getElementById('cmd').value='delete'" />
+			</fieldset>
+
+		</form>
 	</body>
 
 	</html>`
