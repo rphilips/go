@@ -27,27 +27,27 @@ type Keys struct {
 // Handler function for start screen
 func Start(w http.ResponseWriter, r *http.Request) {
 	var keys Keys
-	workdir := registry.Registry["qtechng-work-dir"]
+	keys.Workdir = registry.Registry["qtechng-work-dir"]
 
-	fn := func(path string, info fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.Name() == ".qtechng" {
+	// this needs to be as efficient as possible
+	err := filepath.WalkDir(keys.Workdir,
+		func(path string, info fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.Name() == ".qtechng" {
+				return nil
+			}
+			if strings.Contains(path, ".vscode") {
+				return nil
+			}
+			qpath := strings.Split(path, keys.Workdir)[1]
+			// qpath = strings.Replace(qpath, "\\", "/", -1)
+			keys.Qpaths = append(keys.Qpaths,
+				(`<span style="cursor:pointer;" onclick="copy('` + path + `','` + qpath + `')">` + qpath + `</span><br>`))
+			keys.Qfiles = append(keys.Qfiles, path)
 			return nil
-		}
-		if strings.Contains(path, ".vscode") {
-			return nil
-		}
-		// no new variables for performance
-		qpath := strings.Split(path, workdir)[1]
-		keys.Qpaths = append(keys.Qpaths, (`<span style="cursor:pointer;" onclick="document.getElementById('file').value='` +
-			path + `';document.getElementById('path').value='` + qpath + `'">` + qpath + `</span><br>`))
-		keys.Qfiles = append(keys.Qfiles, path)
-		return nil
-	}
-
-	err := filepath.WalkDir(workdir, fn)
+		})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -56,23 +56,23 @@ func Start(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, start)
 }
 
-// Handler function for rename screen
-func Rename(w http.ResponseWriter, r *http.Request) {
-	var keys Keys
-	keys.BaseURL = baseURL
+// // Handler function for rename screen
+// func Rename(w http.ResponseWriter, r *http.Request) {
+// 	var keys Keys
+// 	keys.BaseURL = baseURL
 
-	rename := html.Rename(keys)
-	fmt.Fprintln(w, rename)
-}
+// 	rename := html.Rename(keys)
+// 	fmt.Fprintln(w, rename)
+// }
 
-// Handler function for delete screen
-func Delete(w http.ResponseWriter, r *http.Request) {
-	var keys Keys
-	keys.BaseURL = baseURL
+// // Handler function for delete screen
+// func Delete(w http.ResponseWriter, r *http.Request) {
+// 	var keys Keys
+// 	keys.BaseURL = baseURL
 
-	rename := html.Delete(keys)
-	fmt.Fprintln(w, rename)
-}
+// 	rename := html.Delete(keys)
+// 	fmt.Fprintln(w, rename)
+// }
 
 // Handler function for result screen
 func Result(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +115,10 @@ func Result(w http.ResponseWriter, r *http.Request) {
 		keys, err = All(r, keys)
 	case "quit":
 		keys, err = Quit(r, keys)
+	case "create":
+		keys, err = Create(r, keys)
+	case "delete":
+		keys, err = Delete(r, keys)
 	}
 
 	if err != nil {

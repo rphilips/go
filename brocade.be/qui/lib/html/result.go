@@ -20,7 +20,7 @@ func Result(keys interface{}) string {
 	<body>
 		<div><input type="button" onclick="location.href='{{ .BaseURL}}';" value="back" /></div>
 		<br>
-		<div><tt>{{ .Qresponse}}</tt></div>
+		<div><tt>{{ .Qresponse }}</tt></div>
 	</body>
 
 	</html>`

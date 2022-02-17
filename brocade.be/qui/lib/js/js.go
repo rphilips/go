@@ -1,9 +1,16 @@
 package js
 
-const JS = `function autocomplete(inp, arr) {
+const JS = `function copy(file, path){
+	document.getElementById('file').value=file;
+	document.getElementById('path').value=path;
+	}
+
+	function autocomplete(inp, arr, workdir) {
 	/*https://www.w3schools.com/howto/howto_js_autocomplete.asp*/
-	/*the autocomplete function takes two arguments,
-	the text field element and an array of possible autocompleted values:*/
+	/*the autocomplete function takes three arguments,
+	the text field element,
+	an array of possible autocompleted values,
+	and the Brocade workdir to construct qpaths:*/
 	var currentFocus;
 	/*execute a function when someone writes in the text field:*/
 	inp.addEventListener("input", function(e) {
@@ -35,7 +42,11 @@ const JS = `function autocomplete(inp, arr) {
 				/*execute a function when someone clicks on the item value (DIV element):*/
 				b.addEventListener("click", function(e) {
 					/*insert the value for the autocomplete text field:*/
-					inp.value = this.getElementsByTagName("input")[0].value;
+					data = this.getElementsByTagName("input")[0].value;
+					inp.value = data;
+					qpath = data.split(workdir)[1];
+					qpath = qpath.replaceAll("\\","/");
+					document.getElementById('path').value = qpath;
 					/*close the list of autocompleted values,
 					(or any other open lists of autocompleted values:*/
 					closeAllLists();

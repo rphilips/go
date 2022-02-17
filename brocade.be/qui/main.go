@@ -23,8 +23,8 @@ func main() {
 	}()
 
 	http.HandleFunc("/", handle.Start)
-	http.HandleFunc("/rename", handle.Rename)
-	http.HandleFunc("/delete", handle.Delete)
+	// http.HandleFunc("/rename", handle.Rename)
+	// http.HandleFunc("/delete", handle.Delete)
 	http.HandleFunc("/result", handle.Result)
 
 	err := http.ListenAndServe(port, nil)
