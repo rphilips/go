@@ -26,8 +26,8 @@ CREATE TABLE sqlar (
 	name TEXT PRIMARY KEY,
 	mode INT,
 	mtime INT,
-	  sz INT,
-	  data BLOB
+	sz INT,
+	data BLOB
 );`
 
 const createAdmin = `
@@ -182,7 +182,7 @@ func Create(sqlitefile string,
 		if err != nil {
 			return fmt.Errorf("cannot read stream: %v", err)
 		}
-		mtime := time.Now().Unix()
+		mtime := time.Now().Unix() // must be int in sqlar specification!
 		props, _ := basefs.Properties("nakedfile")
 		mode := int64(props.PERM)
 		sz := int64(len(data))
@@ -214,6 +214,10 @@ func Create(sqlitefile string,
 // Given a SQLite archive and a table name show the contents of that table
 // version with sqlite3
 func Inspect(sqlitefile string, table string) (interface{}, error) {
+
+	if !basefs.Exists(sqlitefile) {
+		return "", fmt.Errorf("file does not exist: %s", sqlitefile)
+	}
 
 	var query string
 	switch {
@@ -258,6 +262,39 @@ func Harvest(harvestcode string, sqlar *Sqlar) error {
 	return nil
 }
 
+// Query IIIF sqlitefile for update times
+func QueryTime(sqlitefile string, mode string) (string, error) {
+	db, err := sql.Open("sqlite", sqlitefile)
+	if err != nil {
+		return "", fmt.Errorf("cannot open file: %v", err)
+	}
+	defer db.Close()
+
+	result := ""
+
+	if mode == "meta" {
+		row := db.QueryRow("SELECT time FROM admin WHERE action='update meta' ORDER BY time DESC LIMIT 1", sqlitefile)
+		result, err = ReadStringRow(row)
+		if err != nil {
+			row = db.QueryRow("SELECT time FROM admin WHERE action='created'", sqlitefile)
+			result, err = ReadStringRow(row)
+			if err != nil {
+				return "", fmt.Errorf("cannot query meta update time from archive: %v", err)
+			}
+		}
+	} else if mode == "sqlar" {
+		var sqlar Sqlar
+		row := db.QueryRow("SELECT * FROM sqlar ORDER BY mtime DESC LIMIT 1", sqlitefile)
+		err = ReadSqlarRow(row, &sqlar)
+		if err != nil {
+			return "", fmt.Errorf("cannot query sqlar time from archive: %v", err)
+		}
+		result = (sqlar.Mtime).Format(time.RFC3339)
+	}
+
+	return result, nil
+}
+
 func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
@@ -265,6 +302,7 @@ func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 	}
 	defer db.Close()
 
+	// update meta
 	_, err = db.Exec("DELETE FROM meta")
 	if err != nil {
 		return fmt.Errorf("cannot delete meta from archive: %v", err)
@@ -285,6 +323,19 @@ func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 	_, err = stmt.Exec(nil, mResponse.Digest, mResponse.Identifier, indexes, mResponse.Iiifsys, mResponse.Imgloi, manifest)
 	if err != nil {
 		return fmt.Errorf("cannot execute replacemeta statement: %v", err)
+	}
+
+	// update admin
+	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)")
+	if err != nil {
+		return fmt.Errorf("cannot prepare insert2: %v", err)
+	}
+	defer stmt2.Close()
+
+	h := time.Now()
+	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "update meta", user)
+	if err != nil {
+		return fmt.Errorf("cannot execute insert2: %v", err)
 	}
 
 	return nil

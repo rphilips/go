@@ -33,7 +33,7 @@ func ReadSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	}
 
 	sqlar.Reader = bytes.NewReader(data)
-	sqlar.Mtime = time.Unix(0, mtime)
+	sqlar.Mtime = time.Unix(mtime, 0)
 
 	return nil
 }
