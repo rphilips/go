@@ -183,7 +183,7 @@ func Create(sqlitefile string,
 		if err != nil {
 			return fmt.Errorf("cannot read stream: %v", err)
 		}
-		mtime := time.Now().Unix()
+		mtime := time.Now().Unix() // must be int in sqlar specification!
 		props, _ := basefs.Properties("nakedfile")
 		mode := int64(props.PERM)
 		sz := int64(len(data))
@@ -270,6 +270,7 @@ func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 	}
 	defer db.Close()
 
+	// update meta
 	_, err = db.Exec("DELETE FROM meta")
 	if err != nil {
 		return fmt.Errorf("cannot delete meta from archive: %v", err)
@@ -290,6 +291,19 @@ func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 	_, err = stmt.Exec(nil, mResponse.Digest, mResponse.Identifier, indexes, mResponse.Iiifsys, mResponse.Imgloi, manifest)
 	if err != nil {
 		return fmt.Errorf("cannot execute replacemeta statement: %v", err)
+	}
+
+	// update admin
+	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)")
+	if err != nil {
+		return fmt.Errorf("cannot prepare insert2: %v", err)
+	}
+	defer stmt2.Close()
+
+	h := time.Now()
+	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "update meta", user)
+	if err != nil {
+		return fmt.Errorf("cannot execute insert2: %v", err)
 	}
 
 	return nil
