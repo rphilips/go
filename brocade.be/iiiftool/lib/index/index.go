@@ -346,13 +346,15 @@ func SetMIndex(indices map[string][]string, kill bool) error {
 	defer mpipe.Close()
 
 	for id, values := range indices {
+		loi := strings.Split(id, ",")[0]
+		loi = strings.TrimRight(loi, ",")
 		digest := values[0]
 		metatime := values[1]
 		sqlartime := values[2]
 
 		cmds := []string{
-			`s ^BIIIF("index",2,"id2digest","` + id + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
-			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + id + `")="` + metatime + `^` + sqlartime + `"`}
+			`s ^BIIIF("index",2,"id2digest","` + loi + `","` + id + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
+			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + loi + `","` + id + `")="` + metatime + `^` + sqlartime + `"`}
 
 		for _, cmd := range cmds {
 			err = mpipe.WriteExec(cmd)
