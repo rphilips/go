@@ -37,7 +37,13 @@ func TestReadIndexRows(t *testing.T) {
 	rows, _ := db.Query(query)
 	result, _ := ReadIndexRows(rows)
 	expected := make([][]string, 0)
-	expected = append(expected, []string{"1", "dg:ua:9", "e1e53b3d6b74c2e7ed0615ec687e68fdb61de242", "/library/database/iiif/24/2e/242ed16bdf86e786ce5160de7e2c47b6d3b35e1e/db.sqlite"})
+
+	expected = append(expected, []string{"1",
+		"tg:uapr:1307",
+		"14b785df369f240c6ebc157d9d8fcb131acc0910",
+		"/library/database/iiif/01/90/0190cca131bcf8d9d751cbe6c042f963fd587b41/db.sqlite",
+		"2022-02-16T16:55:06+01:00",
+		"2022-02-16T16:55:06+01:00"})
 	util.Check(strings.Join(result[0], ""), strings.Join(expected[0], ""), t)
 }
 
