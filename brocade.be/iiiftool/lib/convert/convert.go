@@ -65,14 +65,14 @@ func ConvertDocmanIdsToJP2K(docIds []docman.DocmanID, quality int, tile int) ([]
 		// but it needs to be "- jp2:-"!
 		args = append(args, "-", "jp2:-")
 		cmd := exec.Command("gm", args...)
-		stdin, err := cmd.StdinPipe()
-		if err != nil {
-			return nil, err
-		}
+
+		cmd.Stdin = old
 		out, err := cmd.StdoutPipe()
 		if err != nil {
 			return nil, err
 		}
+
+		
 		_, err = cmd.StderrPipe()
 		if err != nil {
 			return nil, err
