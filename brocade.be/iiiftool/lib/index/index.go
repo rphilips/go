@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"brocade.be/base/mumps"
+	"brocade.be/base/parallel"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
@@ -17,6 +19,7 @@ import (
 
 var iifBaseDir = registry.Registry["iiif-base-dir"]
 var iiifIndexDb = registry.Registry["iiif-index-db"]
+var iiifMaxPar, _ = strconv.Atoi(registry.Registry["iiif-max-parallel"])
 
 const createIndexes = `
 CREATE TABLE indexes (
@@ -28,21 +31,28 @@ CREATE TABLE indexes (
 	sqlartime TEXT
 );`
 
+type IndexData struct {
+	Index     *sql.DB
+	Meta      sqlite.Meta
+	Metatime  string
+	Sqlartime string
+	Path      string
+}
+
 // Write IIIF index information to SQLite index database
 // Return Mindices to store in MUMPS index db
-func WriteIndexes(index *sql.DB,
-	meta sqlite.Meta,
-	metatime string,
-	sqlartime string,
-	path string) (map[string][]string, error) {
+func WriteIndexes(index IndexData) (map[string][]string, error) {
 
 	Mindices := make(map[string][]string)
 
-	insert, err := index.Prepare("INSERT INTO indexes (key, id, digest, location, metatime, sqlartime) Values($1,$2,$3,$4,$5,$6)")
+	db := index.Index
+	insert, err := db.Prepare("INSERT INTO indexes (key, id, digest, location, metatime, sqlartime) Values($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		return Mindices, fmt.Errorf("cannot prepare insert: %v", err)
 	}
 	defer insert.Close()
+
+	meta := index.Meta
 
 	indexes := strings.Split(meta.Indexes, "^")
 	for _, id := range indexes {
@@ -50,12 +60,12 @@ func WriteIndexes(index *sql.DB,
 			continue
 		}
 
-		Mindices[id] = []string{meta.Digest, metatime, sqlartime}
+		Mindices[id] = []string{meta.Digest, index.Metatime, index.Sqlartime}
 
 		// log both original and URL-safe version (for PHP endpoint)
 		versions := []string{id, util.URLSafe(id)}
 		for _, version := range versions {
-			_, err = insert.Exec(nil, version, meta.Digest, path, metatime, sqlartime)
+			_, err = insert.Exec(nil, version, meta.Digest, index.Path, index.Metatime, index.Sqlartime)
 			if err != nil {
 				// do not throw error, but allow to continue
 				fmt.Printf("error executing insert: %v: %s\n", err, id)
@@ -96,7 +106,14 @@ func Update(sqlitefile string) error {
 		return fmt.Errorf("error reading sqlar update time in file: %s: %v", sqlitefile, err)
 	}
 
-	Mindices, err := WriteIndexes(index, meta, metatime, sqlartime, sqlitefile)
+	var indexInfo IndexData
+	indexInfo.Index = index
+	indexInfo.Meta = meta
+	indexInfo.Metatime = metatime
+	indexInfo.Sqlartime = sqlartime
+	indexInfo.Path = sqlitefile
+
+	Mindices, err := WriteIndexes(indexInfo)
 	if err != nil {
 		return fmt.Errorf("cannot write index data in index database: %v", err)
 	}
@@ -126,9 +143,9 @@ func Rebuild(verbose bool) error {
 		return fmt.Errorf("cannot create index database: %v", err)
 	}
 
-	Mindices := make(map[string][]string)
-
-	handleFile := func(path string, info os.FileInfo, err error) error {
+	// Collect archives
+	var archives []string
+	err = filepath.Walk(iifBaseDir, func(path string, info os.FileInfo, err error) error {
 		if path == iiifIndexDb {
 			return nil
 		}
@@ -138,46 +155,70 @@ func Rebuild(verbose bool) error {
 		if filepath.Ext(path) != ".sqlite" {
 			return nil
 		}
+		archives = append(archives, path)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error: %v", err)
+	}
+
+	// Collect index information
+	indexInfos := make([]IndexData, len(archives))
+	handleFile := func(n int) (interface{}, error) {
 
 		if verbose {
-			fmt.Println(path)
+			fmt.Println(archives[n])
 		}
 
-		meta, err := sqlite.ReadMetaTable(path)
+		meta, err := sqlite.ReadMetaTable(archives[n])
 		if err != nil {
-			return fmt.Errorf("error reading meta in file: %s: %v", path, err)
+			return nil, fmt.Errorf("error reading meta in file: %s: %v", archives[n], err)
 		}
 
-		metatime, err := sqlite.QueryTime(path, "meta")
+		metatime, err := sqlite.QueryTime(archives[n], "meta")
 		if err != nil {
-			return fmt.Errorf("error reading meta update time in file: %s: %v", path, err)
+			return nil, fmt.Errorf("error reading meta update time in file: %s: %v", archives[n], err)
 		}
 
-		sqlartime, err := sqlite.QueryTime(path, "sqlar")
+		sqlartime, err := sqlite.QueryTime(archives[n], "sqlar")
 		if err != nil {
-			return fmt.Errorf("error reading sqlar update time in file: %s: %v", path, err)
+			return nil, fmt.Errorf("error reading sqlar update time in file: %s: %v", archives[n], err)
 		}
 
-		Mindex, err := WriteIndexes(index, meta, metatime, sqlartime, path)
+		indexInfos[n].Index = index
+		indexInfos[n].Meta = meta
+		indexInfos[n].Metatime = metatime
+		indexInfos[n].Sqlartime = sqlartime
+		indexInfos[n].Path = archives[n]
+
+		return nil, nil
+	}
+
+	// Read in parallel
+	_, errors := parallel.NMap(len(archives), iiifMaxPar, handleFile)
+	for _, err := range errors {
+		if err != nil {
+			return fmt.Errorf("cannot read data in from databases: %v", errors)
+		}
+	}
+
+	// Write sequentially
+	Mindices := make(map[string][]string)
+	for _, info := range indexInfos {
+		Mindex, err := WriteIndexes(info)
 		if err != nil {
 			return fmt.Errorf("cannot write index data in index database: %v", err)
 		}
 		for key, values := range Mindex {
 			Mindices[key] = values
 		}
-
-		return nil
 	}
 
-	err = filepath.Walk(iifBaseDir, handleFile)
-	if err != nil {
-		return fmt.Errorf("error: %v", err)
-	}
-
+	// Set M index
 	if len(Mindices) > 0 {
 		err = SetMIndex(Mindices, true)
 		if err != nil {
-			return fmt.Errorf("error: %v", err)
+			return fmt.Errorf("cannot write index data to M: %v", err)
 		}
 	}
 
