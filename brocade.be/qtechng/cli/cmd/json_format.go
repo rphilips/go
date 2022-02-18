@@ -63,7 +63,7 @@ func jsonFormat(cmd *cobra.Command, args []string) error {
 			"ext:files:" + Fext,
 			"indent:files:" + strconv.Itoa(Findent),
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "json-format-abort")
 			return nil

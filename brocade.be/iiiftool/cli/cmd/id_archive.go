@@ -47,6 +47,7 @@ func init() {
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "Quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "Tile parameter")
 	idArchiveCmd.PersistentFlags().BoolVar(&Findex, "index", true, "Rebuild IIIF index")
+	idArchiveCmd.PersistentFlags().BoolVar(&Fverbose, "verbose", false, "Display information")
 	idArchiveCmd.PersistentFlags().BoolVar(&Fmetaonly, "metaonly", false,
 		`If images are present, only the meta information (including manifest) is replaced.
 	If there are no images present, the usual archiving routine is used.`)
@@ -83,12 +84,11 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
-	if Fmetaonly && fs.Exists(sqlitefile) {
+	if Fmetaonly && fs.Exists(sqlitefile) { // to do: check more than just existing sqlitefile!
 		err = sqlite.ReplaceMeta(sqlitefile, mResponse)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: replace error:\n%s", err)
 		}
-		return nil
 	} else {
 
 		// get file contents from docman ids
@@ -105,7 +105,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 
 		// convert docman files from TIFF/JPG to JP2K
-		convertedStream, errors := convert.ConvertDocmanIdsToJP2K(docIds, Fquality, Ftile)
+		convertedStream, errors := convert.ConvertDocmanIdsToJP2K(docIds, Fquality, Ftile, Fverbose)
 		for _, e := range errors {
 			if e != nil {
 				log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)

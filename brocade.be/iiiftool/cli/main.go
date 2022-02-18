@@ -6,14 +6,19 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
+	"brocade.be/base/registry"
 	"brocade.be/iiiftool/cli/cmd"
 )
 
 var buildTime string
 var goVersion string
 var buildHost string
+
+// FiiifMaxPar is the parameter for parallel processing
+var FiiifMaxPar, _ = strconv.Atoi(registry.Registry["iiif-max-parallel"])
 
 func main() {
 	//

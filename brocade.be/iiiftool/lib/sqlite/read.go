@@ -33,7 +33,7 @@ func ReadSqlarRow(row *sql.Row, sqlar *Sqlar) error {
 	}
 
 	sqlar.Reader = bytes.NewReader(data)
-	sqlar.Mtime = time.Unix(0, mtime)
+	sqlar.Mtime = time.Unix(mtime, 0)
 
 	return nil
 }
@@ -79,7 +79,7 @@ func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
 
 	result := make([][]string, 0)
 
-	// key|id|digest|location
+	// key|id|digest|location|metatime|sqlartime
 	columns, err := rows.Columns()
 	if err != nil {
 		return result, err
@@ -88,7 +88,7 @@ func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
 	for rows.Next() {
 
 		data := make([]string, len(columns))
-		err := rows.Scan(&data[0], &data[1], &data[2], &data[3])
+		err := rows.Scan(&data[0], &data[1], &data[2], &data[3], &data[4], &data[5])
 		if err != nil {
 			return result, err
 		}

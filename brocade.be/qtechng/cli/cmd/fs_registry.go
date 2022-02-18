@@ -55,7 +55,7 @@ func fsRegistry(cmd *cobra.Command, args []string) error {
 			"patterns:files:",
 			"utf8only:files:" + qutil.UnYes(Futf8only),
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-registry-abort")
 			return nil

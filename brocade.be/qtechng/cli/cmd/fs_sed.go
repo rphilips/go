@@ -60,21 +60,20 @@ func fsSed(cmd *cobra.Command, args []string) error {
 	if Fask {
 		askfor := []string{
 			"sed::" + Fsed,
-			"isfile:sed:" + qutil.UnYes(Fisfile),
 			"files:sed",
 			"recurse:sed,files:" + qutil.UnYes(Frecurse),
 			"patterns:sed,files:",
 			"utf8only:sed,files:" + qutil.UnYes(Futf8only),
 			"ext:sed,files:" + Fext,
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-sed-abort")
 			return nil
 		}
 		Fsed = argums["sed"].(string)
 		args = argums["files"].([]string)
-		Fisfile = argums["isfile"].(bool)
+		Fisfile = Fsed != "" && qfs.IsFile(qutil.AbsPath(Fsed, Fcwd))
 		Frecurse = argums["recurse"].(bool)
 		Fpattern = argums["patterns"].([]string)
 		Futf8only = argums["utf8only"].(bool)

@@ -58,6 +58,9 @@ var Fquality int
 // Ftile is the tiling parameter for image conversion
 var Ftile int
 
+// Fverbose is the parameter for verbose processing
+var Fverbose bool
+
 func preRun(cmd *cobra.Command, args []string) (err error) {
 
 	if len(Fenv) != 0 {

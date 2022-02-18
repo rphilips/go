@@ -64,7 +64,7 @@ func fsBackup(cmd *cobra.Command, args []string) error {
 			"patterns:backup,files:",
 			"utf8only:backup,files:" + qutil.UnYes(Futf8only),
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-backup-abort")
 			return nil

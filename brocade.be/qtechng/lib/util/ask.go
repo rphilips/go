@@ -3,6 +3,7 @@ package util
 import (
 	"strings"
 
+	qfs "brocade.be/base/fs"
 	qliner "github.com/peterh/liner"
 )
 
@@ -10,6 +11,8 @@ type Ask struct {
 	Prompt  string
 	Repeat  bool
 	IsBoole bool
+	IfDir   bool
+	IfFiles bool
 }
 
 var Askit = map[string]Ask{
@@ -44,6 +47,7 @@ var Askit = map[string]Ask{
 	"recurse": {
 		Prompt:  "Recurse through directories ?",
 		IsBoole: true,
+		IfDir:   true,
 	},
 	"windows": {
 		Prompt:  "Windows EOL convention ?",
@@ -80,21 +84,25 @@ var Askit = map[string]Ask{
 	"patterns": {
 		Prompt: "File basename pattern",
 		Repeat: true,
+		IfDir:  true,
 	},
 	"utf8only": {
 		Prompt:  "Restrict to UTF-8 files ?",
 		IsBoole: true,
+		IfDir:   true,
 	},
 	"ext": {
-		Prompt: "Extension to basename",
+		Prompt:  "Extension to basename",
+		IfFiles: true,
 	},
 }
 
-func AskArgs(codes []string) (result map[string]interface{}, aborted bool) {
+func AskArgs(codes []string, cwd string) (result map[string]interface{}, aborted bool) {
 	asker := qliner.NewLiner()
 	asker.SetCtrlCAborts(true)
 	defer asker.Close()
-
+	foundDir := false
+	foundFiles := false
 	result = make(map[string]interface{})
 
 	for _, code := range codes {
@@ -105,9 +113,27 @@ func AskArgs(codes []string) (result map[string]interface{}, aborted bool) {
 		defa := strings.TrimSpace(parts[2])
 		code := strings.TrimSpace(code)
 		ask := Askit[code]
+		isboole := ask.IsBoole
 		repeat := ask.Repeat
 		prompt := ask.Prompt + ": "
+		ifdir := ask.IfDir
+		iffiles := ask.IfFiles
 		if prompt == "" {
+			continue
+		}
+		if isboole {
+			result[code] = false
+		}
+		if repeat {
+			result[code] = make([]string, 0)
+		}
+		if !repeat && !isboole {
+			result[code] = ""
+		}
+		if ifdir && !foundDir {
+			continue
+		}
+		if iffiles && !foundFiles {
 			continue
 		}
 		if !IsTrue(checks, result) {
@@ -123,6 +149,7 @@ func AskArgs(codes []string) (result map[string]interface{}, aborted bool) {
 			}
 			continue
 		}
+
 		if repeat {
 			give := make([]string, 0)
 			for {
@@ -136,6 +163,14 @@ func AskArgs(codes []string) (result map[string]interface{}, aborted bool) {
 					break
 				}
 				give = append(give, giv)
+				if code == "files" {
+					foundFiles = true
+					if code == "files" {
+						if qfs.IsDir(AbsPath(giv, cwd)) {
+							foundDir = true
+						}
+					}
+				}
 			}
 		} else {
 			give, err := asker.PromptWithSuggestion(prompt, defa, -1)

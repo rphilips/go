@@ -83,7 +83,7 @@ func fsCopy(cmd *cobra.Command, args []string) error {
 			"confirm:search,files:" + qutil.UnYes(Fconfirm),
 			"delete:search,files:" + qutil.UnYes(Fdelete),
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-copy-abort")
 			return nil

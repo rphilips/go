@@ -66,14 +66,13 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	if Fask {
 		askfor := []string{
 			"awk::" + Fawk,
-			"isfile:awk:" + qutil.UnYes(Fisfile),
 			"files:awk",
 			"recurse:awk,files:" + qutil.UnYes(Frecurse),
 			"patterns:awk,files:",
 			"utf8only:awk,files:" + qutil.UnYes(Futf8only),
 			"ext:awk,files:" + Fext,
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-abort")
 			return nil
@@ -81,10 +80,8 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		Fawk = argums["awk"].(string)
 		args = argums["files"].([]string)
 		Frecurse = argums["recurse"].(bool)
-		Fisfile = argums["isfile"].(bool)
-		Fpattern = argums["patterns"].([]string)
+		Fisfile = Fawk != "" && qfs.IsFile(qutil.AbsPath(Fawk, Fcwd))
 		Futf8only = argums["utf8only"].(bool)
-		Fext = argums["ext"].(string)
 	}
 	if Fawk == "" {
 		Fmsg = qreport.Report(nil, errors.New("missing AWK statement"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-cmd")

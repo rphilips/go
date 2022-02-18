@@ -73,7 +73,7 @@ func fsRStrip(cmd *cobra.Command, args []string) error {
 			"unix:files,!windows:" + qutil.UnYes(Fwindows),
 			"ext:awk,files:" + Fext,
 		}
-		argums, abort := qutil.AskArgs(askfor)
+		argums, abort := qutil.AskArgs(askfor, Fcwd)
 		if abort {
 			Fmsg = qreport.Report(nil, errors.New("command aborted"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-rstrip-abort")
 			return nil
