@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"brocade.be/base/fs"
 	basefs "brocade.be/base/fs"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/iiif"
@@ -27,8 +26,8 @@ CREATE TABLE sqlar (
 	name TEXT PRIMARY KEY,
 	mode INT,
 	mtime INT,
-	  sz INT,
-	  data BLOB
+	sz INT,
+	data BLOB
 );`
 
 const createAdmin = `
@@ -216,7 +215,7 @@ func Create(sqlitefile string,
 // version with sqlite3
 func Inspect(sqlitefile string, table string) (interface{}, error) {
 
-	if !fs.Exists(sqlitefile) {
+	if !basefs.Exists(sqlitefile) {
 		return "", fmt.Errorf("file does not exist: %s", sqlitefile)
 	}
 
@@ -261,6 +260,39 @@ func Harvest(harvestcode string, sqlar *Sqlar) error {
 	}
 
 	return nil
+}
+
+// Query IIIF sqlitefile for update times
+func QueryTime(sqlitefile string, mode string) (string, error) {
+	db, err := sql.Open("sqlite", sqlitefile)
+	if err != nil {
+		return "", fmt.Errorf("cannot open file: %v", err)
+	}
+	defer db.Close()
+
+	result := ""
+
+	if mode == "meta" {
+		row := db.QueryRow("SELECT time FROM admin WHERE action='update meta' ORDER BY time DESC LIMIT 1", sqlitefile)
+		result, err = ReadStringRow(row)
+		if err != nil {
+			row = db.QueryRow("SELECT time FROM admin WHERE action='created'", sqlitefile)
+			result, err = ReadStringRow(row)
+			if err != nil {
+				return "", fmt.Errorf("cannot query meta update time from archive: %v", err)
+			}
+		}
+	} else if mode == "sqlar" {
+		var sqlar Sqlar
+		row := db.QueryRow("SELECT * FROM sqlar ORDER BY mtime DESC LIMIT 1", sqlitefile)
+		err = ReadSqlarRow(row, &sqlar)
+		if err != nil {
+			return "", fmt.Errorf("cannot query sqlar time from archive: %v", err)
+		}
+		result = (sqlar.Mtime).Format(time.RFC3339)
+	}
+
+	return result, nil
 }
 
 func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {

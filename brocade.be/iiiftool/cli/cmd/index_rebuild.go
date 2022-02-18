@@ -19,11 +19,12 @@ var indexRebuildCmd = &cobra.Command{
 
 func init() {
 	indexCmd.AddCommand(indexRebuildCmd)
+	indexRebuildCmd.PersistentFlags().BoolVar(&Fverbose, "verbose", false, "Display information")
 }
 
 func indexRebuild(cmd *cobra.Command, args []string) error {
 
-	err := index.Rebuild()
+	err := index.Rebuild(Fverbose)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: cannot rebuild index:\n%s", err)
 	}

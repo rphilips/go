@@ -23,36 +23,42 @@ CREATE TABLE indexes (
 	key INTEGER PRIMARY KEY AUTOINCREMENT,
 	id TEXT,
 	digest TEXT,
-	location TEXT
+	location TEXT,
+	metatime TEXT,
+	sqlartime TEXT
 );`
 
 // Write IIIF index information to SQLite index database
 // Return Mindices to store in MUMPS index db
-func WriteIndexes(index *sql.DB, meta sqlite.Meta, path string) (map[string]string, error) {
+func WriteIndexes(index *sql.DB,
+	meta sqlite.Meta,
+	metatime string,
+	sqlartime string,
+	path string) (map[string][]string, error) {
 
-	Mindices := make(map[string]string)
+	Mindices := make(map[string][]string)
 
-	insert, err := index.Prepare("INSERT INTO indexes (key, id, digest, location) Values($1,$2,$3,$4)")
+	insert, err := index.Prepare("INSERT INTO indexes (key, id, digest, location, metatime, sqlartime) Values($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		return Mindices, fmt.Errorf("cannot prepare insert: %v", err)
 	}
 	defer insert.Close()
 
 	indexes := strings.Split(meta.Indexes, "^")
-	for _, entry := range indexes {
-		if entry == "" {
+	for _, id := range indexes {
+		if id == "" {
 			continue
 		}
 
-		Mindices[entry] = meta.Digest
+		Mindices[id] = []string{meta.Digest, metatime, sqlartime}
 
 		// log both original and URL-safe version (for PHP endpoint)
-		versions := []string{entry, util.URLSafe(entry)}
+		versions := []string{id, util.URLSafe(id)}
 		for _, version := range versions {
-			_, err = insert.Exec(nil, version, meta.Digest, path)
+			_, err = insert.Exec(nil, version, meta.Digest, path, metatime, sqlartime)
 			if err != nil {
 				// do not throw error, but allow to continue
-				fmt.Printf("error executing insert: %v: %s\n", err, entry)
+				fmt.Printf("error executing insert: %v: %s\n", err, id)
 			}
 		}
 	}
@@ -80,7 +86,17 @@ func Update(sqlitefile string) error {
 		return fmt.Errorf("cannot delete rows in index database: %v", err)
 	}
 
-	Mindices, err := WriteIndexes(index, meta, sqlitefile)
+	metatime, err := sqlite.QueryTime(sqlitefile, "meta")
+	if err != nil {
+		return fmt.Errorf("error reading meta update time in file: %s: %v", sqlitefile, err)
+	}
+
+	sqlartime, err := sqlite.QueryTime(sqlitefile, "sqlar")
+	if err != nil {
+		return fmt.Errorf("error reading sqlar update time in file: %s: %v", sqlitefile, err)
+	}
+
+	Mindices, err := WriteIndexes(index, meta, metatime, sqlartime, sqlitefile)
 	if err != nil {
 		return fmt.Errorf("cannot write index data in index database: %v", err)
 	}
@@ -94,7 +110,7 @@ func Update(sqlitefile string) error {
 }
 
 // Rebuild IIIF index (all archives, SQLite and MUMPS)
-func Rebuild() error {
+func Rebuild(verbose bool) error {
 
 	os.Remove(iiifIndexDb)
 
@@ -104,13 +120,13 @@ func Rebuild() error {
 	}
 	defer index.Close()
 
-	// Caution: do not use "index" (= reserverd keyword) as table name!
+	// Caution: do not use "index" (= reserved keyword) as table name!
 	_, err = index.Exec(createIndexes)
 	if err != nil {
 		return fmt.Errorf("cannot create index database: %v", err)
 	}
 
-	Mindices := make(map[string]string)
+	Mindices := make(map[string][]string)
 
 	handleFile := func(path string, info os.FileInfo, err error) error {
 		if path == iiifIndexDb {
@@ -123,17 +139,31 @@ func Rebuild() error {
 			return nil
 		}
 
+		if verbose {
+			fmt.Println(path)
+		}
+
 		meta, err := sqlite.ReadMetaTable(path)
 		if err != nil {
 			return fmt.Errorf("error reading meta in file: %s: %v", path, err)
 		}
 
-		Mindex, err := WriteIndexes(index, meta, path)
+		metatime, err := sqlite.QueryTime(path, "meta")
+		if err != nil {
+			return fmt.Errorf("error reading meta update time in file: %s: %v", path, err)
+		}
+
+		sqlartime, err := sqlite.QueryTime(path, "sqlar")
+		if err != nil {
+			return fmt.Errorf("error reading sqlar update time in file: %s: %v", path, err)
+		}
+
+		Mindex, err := WriteIndexes(index, meta, metatime, sqlartime, path)
 		if err != nil {
 			return fmt.Errorf("cannot write index data in index database: %v", err)
 		}
-		for key, value := range Mindex {
-			Mindices[key] = value
+		for key, values := range Mindex {
+			Mindices[key] = values
 		}
 
 		return nil
@@ -267,17 +297,21 @@ func KillinMIndex(digest string, identifiers []string) error {
 
 // Log index info in MUMPS
 // kill=true rebuild the index from scratch
-func SetMIndex(indices map[string]string, kill bool) error {
+func SetMIndex(indices map[string][]string, kill bool) error {
 	mpipe, err := mumps.Open("")
 	if err != nil {
 		return fmt.Errorf("mumps open error:\n%s", err)
 	}
 	defer mpipe.Close()
 
-	for id, digest := range indices {
+	for id, values := range indices {
+		digest := values[0]
+		metatime := values[1]
+		sqlartime := values[2]
+
 		cmds := []string{
-			`s ^BIIIF("index",2,"id2digest","` + id + `","` + digest + `")=""`,
-			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + id + `")=""`}
+			`s ^BIIIF("index",2,"id2digest","` + id + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
+			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + id + `")="` + metatime + `^` + sqlartime + `"`}
 
 		for _, cmd := range cmds {
 			err = mpipe.WriteExec(cmd)
