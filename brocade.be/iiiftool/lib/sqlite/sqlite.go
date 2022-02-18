@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"brocade.be/base/fs"
 	basefs "brocade.be/base/fs"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/iiif"
@@ -214,6 +215,10 @@ func Create(sqlitefile string,
 // Given a SQLite archive and a table name show the contents of that table
 // version with sqlite3
 func Inspect(sqlitefile string, table string) (interface{}, error) {
+
+	if !fs.Exists(sqlitefile) {
+		return "", fmt.Errorf("file does not exist: %s", sqlitefile)
+	}
 
 	var query string
 	switch {
