@@ -25,7 +25,7 @@ import (
 	qproject "brocade.be/qtechng/lib/project"
 	qserver "brocade.be/qtechng/lib/server"
 	qutil "brocade.be/qtechng/lib/util"
-	qyaml "gopkg.in/yaml.v2"
+	qyaml "gopkg.in/yaml.v3"
 )
 
 // FetchList gets a number of paths

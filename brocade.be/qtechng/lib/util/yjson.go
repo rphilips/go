@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/spyzhov/ajson"
-	qyaml "gopkg.in/yaml.v2"
+	qyaml "gopkg.in/yaml.v3"
 )
 
 func JSONpath(b []byte, jsonpath string) (string, error) {

@@ -26,7 +26,6 @@ require (
 	google.golang.org/api v0.60.0 // indirect
 	google.golang.org/genproto v0.0.0-20211102202547-e9cf271f7f2c
 	google.golang.org/grpc v1.42.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0
 	lang.yottadb.com/go/yottadb v1.1.0
 
 )
@@ -47,6 +46,7 @@ require (
 require (
 	cloud.google.com/go/translate v1.0.0
 	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	modernc.org/sqlite v1.13.3
 )
 
