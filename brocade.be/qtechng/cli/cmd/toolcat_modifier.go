@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var toolcatAppCmd = &cobra.Command{
-	Use:   "app",
-	Short: "Docstring for a toolcatng app",
-	Long: `This command generates a docstring for a toolcatng App to be used in
+var toolcatModifierCmd = &cobra.Command{
+	Use:   "modifier",
+	Short: "toolcat modifier",
+	Long: `This command generates the outline for a toolcatng modifier to be used in
 a python module.
 
 The information is provided as a JSON object
@@ -21,8 +21,8 @@ Without arguments the JSON string is read from stdin.
 
 `,
 	Args:    cobra.MaximumNArgs(1),
-	Example: `qtechng toolcat app`,
-	RunE:    toolcatApp,
+	Example: `qtechng toolcat modifier`,
+	RunE:    toolcatModifier,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
 		"with-qtechtype": "BWP",
@@ -30,10 +30,10 @@ Without arguments the JSON string is read from stdin.
 }
 
 func init() {
-	toolcatCmd.AddCommand(toolcatAppCmd)
+	toolcatCmd.AddCommand(toolcatModifierCmd)
 }
 
-func toolcatApp(cmd *cobra.Command, args []string) error {
+func toolcatModifier(cmd *cobra.Command, args []string) error {
 	jsono := ""
 	if len(args) != 0 {
 		jsono = args[0]
@@ -44,12 +44,13 @@ func toolcatApp(cmd *cobra.Command, args []string) error {
 		}
 		jsono = string(data)
 	}
-	app := &qtoolcat.App{}
-	err := app.Load(jsono)
+	modifier := &qtoolcat.Modifier{}
+	err := modifier.Load(jsono)
 	if err != nil {
 		return err
 	}
 
-	_, err = qtoolcat.Display(Fstdout, Fcwd, app, "", "", "", nil, Ftcclip, true)
+	_, err = qtoolcat.Display(Fstdout, Fcwd, modifier, "", "        ", "", nil, Ftcclip, false)
+
 	return err
 }

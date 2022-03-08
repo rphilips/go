@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 
-	"brocade.be/qtechng/lib/toolcat"
 	qtoolcat "brocade.be/qtechng/lib/toolcat"
 	"github.com/spf13/cobra"
 )
@@ -51,11 +50,12 @@ func toolcatVerb(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	sign := "def " + verb.Signature() + ":"
+	sign := verb.Signature() + ":"
 
 	replacements := make(map[string]string)
 	replacements["\n    Argumenten: \"\"\n"] = "\n    Argumenten:\n"
 	replacements["\n    Modifiers: \"\"\n"] = "\n    Modifiers:\n"
 
-	return toolcat.Display(Fstdout, Fcwd, verb, sign, "    ", "    pass\n", replacements, Ftcclip, true)
+	_, err = qtoolcat.Display(Fstdout, Fcwd, verb, sign, "    ", "    pass\n", replacements, Ftcclip, true)
+	return err
 }

@@ -532,9 +532,7 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 	idirs := make([]string, 0)
 
 	coredir := dirname
-	if !Froot {
-		qdir = ""
-	}
+
 	if Fauto {
 		Ftree = true
 	}
@@ -550,13 +548,49 @@ func storeTransport(dirname string, qdir string) ([]string, []storer, []error) {
 			Fauto = false
 		}
 	}
+	root := ""
+	if Froot {
+		for _, transport := range Fcargo.Transports {
+			locfil := transport.LocFile
+			qpath := locfil.QPath
+			dir, _ := qutil.QPartition(qpath)
+			dir += "/"
+			if root == "" {
+				root = dir
+				continue
+			}
+			if strings.HasPrefix(dir, root) {
+				continue
+			}
+			for {
+				if root == "/" {
+					break
+				}
+				root = strings.TrimRight(root, "/")
+				qroot, _ := qutil.QPartition(root)
+				if len(qroot) < 2 {
+					root = "/"
+					break
+				} else {
+					root = qroot + "/"
+				}
+				if strings.HasPrefix(dir, root) {
+					break
+				}
+			}
+		}
+		root = strings.TrimRight(root, "/")
+	}
 
 	for i, transport := range Fcargo.Transports {
 		locfil := transport.LocFile
 		qpath := locfil.QPath
 		place := ""
 		if Ftree {
-			qp := strings.TrimPrefix(qpath, qdir)
+			qp := qpath
+			if root != "" {
+				qp = strings.TrimPrefix(qpath, root)
+			}
 			parts := strings.SplitN(qp, "/", -1)
 			parts[0] = coredir
 			place = filepath.Join(parts...)

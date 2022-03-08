@@ -8,10 +8,9 @@ import (
 	qyaml "gopkg.in/yaml.v3"
 )
 
-type Arg struct {
-	Name        string      `json:"arg"`
+type Modifier struct {
+	Name        string      `json:"modifier"`
 	Description string      `json:"description"`
-	Modifier    string      `json:"modifier"`
 	Expand      bool        `json:"expand"`
 	Number      interface{} `json:"number"`
 	WithDefault bool        `json:"withdefault"`
@@ -21,14 +20,14 @@ type Arg struct {
 	EM          ExtraM      `json:"extramap"`
 }
 
-func (arg Arg) ArgYaml() (m *qyaml.Node) {
+func (modifier Modifier) ModifierYaml() (m *qyaml.Node) {
 
 	m = &qyaml.Node{
 		Kind:    qyaml.MappingNode,
 		Content: []*qyaml.Node{},
 	}
 
-	if arg.Name == "" {
+	if modifier.Name == "" {
 		return nil
 	}
 	this := &qyaml.Node{
@@ -42,18 +41,12 @@ func (arg Arg) ArgYaml() (m *qyaml.Node) {
 	m.Content = append(m.Content,
 		&qyaml.Node{
 			Kind:  qyaml.ScalarNode,
-			Value: "Argumenten",
+			Value: "Modifiers",
 			Tag:   "!!str",
 		},
 		this)
 
-	name := arg.Name
-	if strings.ContainsRune(name, '*') {
-		name = "arg*"
-	} else {
-		name = strings.TrimLeft(name, " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-		name = "arg" + name
-	}
+	name := modifier.Name
 
 	this.Content = append(this.Content,
 		&qyaml.Node{
@@ -71,29 +64,12 @@ func (arg Arg) ArgYaml() (m *qyaml.Node) {
 		},
 		&qyaml.Node{
 			Kind:  qyaml.ScalarNode,
-			Value: strings.TrimSpace(arg.Description),
+			Value: strings.TrimSpace(modifier.Description),
 			Tag:   "!!str",
 		},
 	)
 
-	mod := strings.TrimSpace(arg.Modifier)
-
-	if mod != "" {
-		props.Content = append(props.Content,
-			&qyaml.Node{
-				Kind:  qyaml.ScalarNode,
-				Value: "modifier",
-				Tag:   "!!str",
-			},
-			&qyaml.Node{
-				Kind:  qyaml.ScalarNode,
-				Value: mod,
-				Tag:   "!!str",
-			},
-		)
-	}
-
-	if arg.Expand {
+	if modifier.Expand {
 		props.Content = append(props.Content,
 			&qyaml.Node{
 				Kind:  qyaml.ScalarNode,
@@ -108,52 +84,50 @@ func (arg Arg) ArgYaml() (m *qyaml.Node) {
 		)
 	}
 
-	if arg.Name == "arg*" {
-		switch nr := arg.Number.(type) {
-		case string:
-			number := strings.TrimSpace(nr)
-			if number == "" {
-				number = "0.."
-			}
-			props.Content = append(props.Content,
-				&qyaml.Node{
-					Kind:  qyaml.ScalarNode,
-					Value: "aantal",
-					Tag:   "!!str",
-				},
-				&qyaml.Node{
-					Kind:  qyaml.ScalarNode,
-					Value: number,
-					Tag:   "!!str",
-				},
-			)
-		case float64:
-			props.Content = append(props.Content,
-				&qyaml.Node{
-					Kind:  qyaml.ScalarNode,
-					Value: "aantal",
-					Tag:   "!!str",
-				},
-				&qyaml.Node{
-					Kind:  qyaml.ScalarNode,
-					Value: strconv.Itoa(int(nr)),
-				},
-			)
+	switch nr := modifier.Number.(type) {
+	case string:
+		number := strings.TrimSpace(nr)
+		if number == "" {
+			number = "0.."
 		}
+		props.Content = append(props.Content,
+			&qyaml.Node{
+				Kind:  qyaml.ScalarNode,
+				Value: "aantal",
+				Tag:   "!!str",
+			},
+			&qyaml.Node{
+				Kind:  qyaml.ScalarNode,
+				Value: number,
+				Tag:   "!!str",
+			},
+		)
+	case float64:
+		props.Content = append(props.Content,
+			&qyaml.Node{
+				Kind:  qyaml.ScalarNode,
+				Value: "aantal",
+				Tag:   "!!str",
+			},
+			&qyaml.Node{
+				Kind:  qyaml.ScalarNode,
+				Value: strconv.Itoa(int(nr)),
+			},
+		)
 	}
 
-	switch df := arg.Default.(type) {
+	switch df := modifier.Default.(type) {
 	case string:
 		if strings.TrimSpace(df) != "" {
-			arg.WithDefault = true
+			modifier.WithDefault = true
 		}
 	case nil:
 	default:
-		arg.WithDefault = true
+		modifier.WithDefault = true
 	}
 
-	if arg.WithDefault {
-		switch df := arg.Default.(type) {
+	if modifier.WithDefault {
+		switch df := modifier.Default.(type) {
 
 		case string:
 			df = strings.TrimSpace(df)
@@ -183,7 +157,7 @@ func (arg Arg) ArgYaml() (m *qyaml.Node) {
 			)
 		}
 	}
-	nature := strings.ToLower(strings.TrimSpace(arg.Type))
+	nature := strings.ToLower(strings.TrimSpace(modifier.Type))
 	if nature != "" && nature != "string" {
 		props.Content = append(props.Content,
 			&qyaml.Node{
@@ -198,24 +172,24 @@ func (arg Arg) ArgYaml() (m *qyaml.Node) {
 			},
 		)
 	}
-	arg.ES.ESYaml(props)
-	arg.EM.EMYaml(props)
+	modifier.ES.ESYaml(props)
+	modifier.EM.EMYaml(props)
 
 	return
 }
 
-func (arg *Arg) Load(s string) error {
+func (arg *Modifier) Load(s string) error {
 	return json.Unmarshal([]byte(s), arg)
 }
 
-func (arg Arg) String() string {
-	m := arg.ArgYaml()
+func (modifier Modifier) String() string {
+	m := modifier.ModifierYaml()
 	s := yaml(m)
 	lines := strings.SplitN(s, "\n", -1)
 	j := -1
 	for i, line := range lines {
 		line := strings.TrimSpace(line)
-		if strings.HasPrefix(line, "Argumenten:") {
+		if strings.HasPrefix(line, "Modifiers:") {
 			if len(line) == i+1 {
 				return ""
 			}

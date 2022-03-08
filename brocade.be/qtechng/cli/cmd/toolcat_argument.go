@@ -4,14 +4,13 @@ import (
 	"io"
 	"os"
 
-	"brocade.be/qtechng/lib/toolcat"
 	qtoolcat "brocade.be/qtechng/lib/toolcat"
 	"github.com/spf13/cobra"
 )
 
 var toolcatArgCmd = &cobra.Command{
-	Use:   "arg",
-	Short: "toolcat arg",
+	Use:   "argument",
+	Short: "toolcat argument",
 	Long: `This command generates the outline for a toolcatng arg to be used in
 a python module.
 
@@ -22,7 +21,7 @@ Without arguments the JSON string is read from stdin.
 
 `,
 	Args:    cobra.MaximumNArgs(1),
-	Example: `qtechng toolcat arg`,
+	Example: `qtechng toolcat argument`,
 	RunE:    toolcatArg,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -51,6 +50,7 @@ func toolcatArg(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = toolcat.Display(Fstdout, Fcwd, arg, "", "        ", "", nil, Ftcclip, false)
+	_, err = qtoolcat.Display(Fstdout, Fcwd, arg, "", "        ", "", nil, Ftcclip, false)
+
 	return err
 }

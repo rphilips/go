@@ -40,9 +40,6 @@ func init() {
 
 func sourceCo(cmd *cobra.Command, args []string) error {
 	qdir := ""
-	if Froot {
-		_, qdir = dirProps(Fcwd)
-	}
 	qpaths, result, errlist := storeTransport(Fcwd, qdir)
 	errs := make([]error, 0)
 	for _, e := range errlist {

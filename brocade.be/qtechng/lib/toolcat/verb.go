@@ -28,7 +28,7 @@ func (verb *Verb) Load(s string) error {
 
 func (verb Verb) Signature() string {
 
-	sign := "@toolcat.toolcat\n" + verb.Name + "("
+	sign := "@toolcat.toolcat\ndef " + verb.Name + "("
 	star := true
 	count := 0
 

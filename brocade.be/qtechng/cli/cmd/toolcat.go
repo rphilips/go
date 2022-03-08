@@ -7,7 +7,7 @@ import (
 var toolcatCmd = &cobra.Command{
 	Use:     "toolcat",
 	Short:   "Toolcat functions",
-	Long:    `Producing docstrings for toolcat aplication`,
+	Long:    `Producing docstrings for toolcat application`,
 	Args:    cobra.NoArgs,
 	Example: "qtechng toolcat",
 }

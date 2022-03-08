@@ -64,81 +64,103 @@ func OMatch(pattern string, objname string) bool {
 // About changes the comment form to '//'
 func About(blob []byte) (result []byte) {
 	buffer := bytes.NewBuffer(blob)
+	comment := make([]string, 0)
+	body := make([]byte, 0)
 	eol := byte('\n')
-	slash := []byte("//")
 	delim := ""
-	ok := -1
 	stop := false
 	for {
 		if stop {
-			if ok == 1 {
-				return
-			}
-			return blob[:]
+			break
 		}
-		if ok == 1 {
-			line := buffer.Bytes()
-			result = append(result, line...)
-			return
+		if delim == "??" {
+			body = append(body, buffer.Bytes()...)
+			break
 		}
+
 		line, err := buffer.ReadBytes(eol)
 		if err != nil && err != io.EOF {
 			return blob[:]
 		}
-		if err == io.EOF {
-			stop = true
-		}
+		stop = err == io.EOF
 		s := string(line)
-		if ok == -1 {
-			s = strings.TrimSpace(s)
-			if strings.HasPrefix(s, `"""`) || strings.HasPrefix(s, `'''`) {
-				delim = s[:3]
-				bdelim := []byte(delim)
-				k := bytes.Index(line, bdelim)
-				line = line[k+3:]
-				s = s[3:]
-				ok = 0
-			}
-			if delim == "" {
-				result = append(result, line...)
-				if s != "" {
-					ok = 1
-				}
+		s = strings.ReplaceAll(s, "-*- coding: utf-8 -*-", "")
+		s = strings.ReplaceAll(s, "About: ", "")
+		t := strings.TrimSpace(s)
+		if delim == "//" && !strings.HasPrefix(t, "//") {
+			body = append(body, line...)
+			delim = "??"
+			continue
+		}
+		if delim == "" {
+			if t == "" {
 				continue
 			}
-			if strings.HasSuffix(s, delim) {
-				bdelim := []byte(delim)
-				k := bytes.LastIndex(line, bdelim)
-				line = append(line[:k], line[k+3:]...)
-				ok = 1
+			if strings.HasPrefix(t, "//") {
+				delim = "//"
 			}
-			result = append(result, slash...)
-			result = append(result, line...)
+			if delim == "" && strings.HasPrefix(t, "'''") {
+				delim = "'''"
+				s = strings.TrimPrefix(t, delim)
+				t = strings.TrimSpace(s)
+			}
+			if delim == "" && strings.HasPrefix(t, `"""`) {
+				delim = `"""`
+				s = strings.TrimPrefix(t, delim)
+				t = strings.TrimSpace(s)
+			}
+		}
+		if delim == "" {
+			return blob[:]
+		}
+		if delim != "//" && strings.Contains(t, delim) {
+			s = strings.SplitN(s, delim, 2)[0]
+			delim = "??"
+		}
+		comment = append(comment, s)
+	}
+	cmt := make([]string, 0)
+	for _, s := range comment {
+		s = RStrip(s)
+		t := strings.TrimSpace(s)
+		if strings.HasPrefix(t, "//") {
+			s = strings.TrimLeft(t, "/")
+		}
+		if len(cmt) == 0 && s == "" {
 			continue
 		}
-		if ok == 0 {
+		if len(cmt) == 0 {
 			s = strings.TrimSpace(s)
-			if strings.HasSuffix(s, delim) {
-				bdelim := []byte(delim)
-				k := bytes.LastIndex(line, bdelim)
-
-				if k > 0 {
-					line = append(line[:k], line[k+3:]...)
-				} else {
-					line = line[3:]
-				}
-				ok = 1
-			}
-			result = append(result, slash...)
-			if strings.HasPrefix(s, "About:") {
-				result = append(result, byte(' '))
-				result = append(result, bytes.TrimLeft(line, " \t")...)
-			} else {
-				result = append(result, line...)
-			}
+		}
+		if len(cmt) != 0 && strings.TrimSpace(cmt[len(cmt)-1]) == strings.TrimSpace(s) {
 			continue
+		}
+		cmt = append(cmt, s)
+	}
+	if len(cmt) == 1 && cmt[len(cmt)-1] == "" {
+		cmt = nil
+	}
+	if len(cmt) > 1 && cmt[len(cmt)-1] == "" {
+		cmt = cmt[:len(cmt)-2]
+	}
+	if len(cmt) == 0 {
+		return body
+	}
+	cmt[0] = "About: " + cmt[0]
+	for i, s := range cmt {
+		if s == "" {
+			cmt[i] = "//"
+		} else {
+			if strings.HasPrefix(s, " ") {
+				cmt[i] = "//" + s
+			} else {
+				cmt[i] = "// " + s
+			}
 		}
 	}
+	result = append([]byte(strings.Join(cmt, "\n")), body...)
+	return result
+
 }
 
 // AboutLine retrieves the first About line

@@ -12,7 +12,7 @@ import (
 	qyaml "gopkg.in/yaml.v3"
 )
 
-func Display(outfile string, cwd string, obj fmt.Stringer, signature string, indent string, after string, replacements map[string]string, clip bool, withdelim bool) (err error) {
+func Display(outfile string, cwd string, obj fmt.Stringer, signature string, indent string, after string, replacements map[string]string, clip bool, withdelim bool) (out string, err error) {
 	if clip {
 		qclip.WriteAll("")
 	}
@@ -20,7 +20,7 @@ func Display(outfile string, cwd string, obj fmt.Stringer, signature string, ind
 	if outfile != "" {
 		f, err := os.Create(qutil.AbsPath(outfile, cwd))
 		if err != nil {
-			return err
+			return "", err
 		}
 		output = f
 		defer output.Close()
@@ -47,9 +47,9 @@ func Display(outfile string, cwd string, obj fmt.Stringer, signature string, ind
 	if !withdelim {
 		pdelim = ""
 		adelim = ""
+		indent = ""
 	}
 	sout = signature + indent + pdelim + sout + "\n" + indent + adelim + "\n" + after
-
 	for key, value := range replacements {
 		sout = strings.ReplaceAll(sout, key, value)
 	}
@@ -57,7 +57,7 @@ func Display(outfile string, cwd string, obj fmt.Stringer, signature string, ind
 	if clip {
 		qclip.WriteAll(sout)
 	}
-	return nil
+	return sout, nil
 }
 
 func yaml(i interface{}) string {
