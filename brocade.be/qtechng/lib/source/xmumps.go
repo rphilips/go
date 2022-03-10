@@ -29,13 +29,13 @@ func WidgetsListToMumps(batchid string, widgets []*qofile.Widget, buf *bytes.Buf
 // XFileToMumps schrijft een M file naar een buffer
 func (xfile *Source) XFileToMumps(batchid string, buf *bytes.Buffer) error {
 	content, err := xfile.Fetch()
+
 	if err != nil {
 		return err
 	}
 	content = qutil.Decomment(content).Bytes()
 	bufnoc := new(bytes.Buffer)
 	//qpath := xfile.String()
-
 	content = qutil.About(content)
 	lines := bytes.SplitN(content, []byte("\n"), -1)
 	preamble := true

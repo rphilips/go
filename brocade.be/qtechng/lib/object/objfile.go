@@ -43,6 +43,7 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 		}
 	}
 	blob = qutil.About(blob)
+
 	preamble, objects, e := ofile.Parse(blob, decomment)
 	if e != nil {
 		msg, lineno := qerror.ExtractEMsg(e, fname, blob)

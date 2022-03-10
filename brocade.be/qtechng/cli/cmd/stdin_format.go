@@ -36,6 +36,7 @@ func stdinFormat(cmd *cobra.Command, args []string) error {
 		ext = "." + ext
 	}
 	data, err := io.ReadAll(os.Stdin)
+
 	if err != nil {
 		return err
 	}

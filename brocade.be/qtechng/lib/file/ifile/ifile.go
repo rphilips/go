@@ -173,8 +173,8 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	includes := qutil.BlobSplit(body, delims, false)
 	wrote := false
-	if len(includes) != 0 {
-		output.Write(bytes.TrimSpace(includes[0]))
+	if len(includes) != 0 && len(includes[0]) != 0 {
+		output.Write(includes[0])
 		wrote = true
 	}
 	first := true

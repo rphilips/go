@@ -211,8 +211,8 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	screfors := qutil.BlobSplit(body, []string{"screen", "text", "format"}, false)
 	wrote := false
-	if len(screfors) != 0 {
-		output.Write(bytes.TrimSpace(screfors[0]))
+	if len(screfors) != 0 && len(screfors[0]) != 0 {
+		output.Write(screfors[0])
 		wrote = true
 	}
 

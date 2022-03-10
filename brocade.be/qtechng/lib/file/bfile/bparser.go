@@ -889,9 +889,9 @@ var g = &grammar{
 		},
 		{
 			name: "WS",
-			pos:  position{line: 170, col: 1, offset: 3508},
+			pos:  position{line: 171, col: 1, offset: 3566},
 			expr: &charClassMatcher{
-				pos:        position{line: 170, col: 7, offset: 3514},
+				pos:        position{line: 171, col: 7, offset: 3572},
 				val:        "[ \\n\\t\\r]",
 				chars:      []rune{' ', '\n', '\t', '\r'},
 				ignoreCase: false,
@@ -900,9 +900,9 @@ var g = &grammar{
 		},
 		{
 			name: "WSS",
-			pos:  position{line: 172, col: 1, offset: 3525},
+			pos:  position{line: 173, col: 1, offset: 3583},
 			expr: &charClassMatcher{
-				pos:        position{line: 172, col: 8, offset: 3532},
+				pos:        position{line: 173, col: 8, offset: 3590},
 				val:        "[ \\t]",
 				chars:      []rune{' ', '\t'},
 				ignoreCase: false,
@@ -911,27 +911,27 @@ var g = &grammar{
 		},
 		{
 			name: "EOL",
-			pos:  position{line: 174, col: 1, offset: 3539},
+			pos:  position{line: 175, col: 1, offset: 3597},
 			expr: &choiceExpr{
-				pos: position{line: 174, col: 9, offset: 3547},
+				pos: position{line: 175, col: 9, offset: 3605},
 				alternatives: []interface{}{
 					&litMatcher{
-						pos:        position{line: 174, col: 9, offset: 3547},
+						pos:        position{line: 175, col: 9, offset: 3605},
 						val:        "\r\n",
 						ignoreCase: false,
 					},
 					&litMatcher{
-						pos:        position{line: 174, col: 18, offset: 3556},
+						pos:        position{line: 175, col: 18, offset: 3614},
 						val:        "\n\r",
 						ignoreCase: false,
 					},
 					&litMatcher{
-						pos:        position{line: 174, col: 27, offset: 3565},
+						pos:        position{line: 175, col: 27, offset: 3623},
 						val:        "\r",
 						ignoreCase: false,
 					},
 					&litMatcher{
-						pos:        position{line: 174, col: 34, offset: 3572},
+						pos:        position{line: 175, col: 34, offset: 3630},
 						val:        "\n",
 						ignoreCase: false,
 					},
@@ -940,11 +940,11 @@ var g = &grammar{
 		},
 		{
 			name: "EOF",
-			pos:  position{line: 176, col: 1, offset: 3579},
+			pos:  position{line: 177, col: 1, offset: 3637},
 			expr: &notExpr{
-				pos: position{line: 176, col: 8, offset: 3586},
+				pos: position{line: 177, col: 8, offset: 3644},
 				expr: &anyMatcher{
-					line: 176, col: 9, offset: 3587,
+					line: 177, col: 9, offset: 3645,
 				},
 			},
 		},
@@ -1196,6 +1196,7 @@ func (p *parser) callonNotCommentLine1() (interface{}, error) {
 }
 
 func (c *current) onComment1(comment interface{}) (interface{}, error) {
+	//fmt.Println("comment:", "[" + string(c.text) + "]")
 	return string(c.text), nil
 }
 

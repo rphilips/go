@@ -263,9 +263,9 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 	macros := qutil.BlobSplit(body, delims, false)
 	wrote := false
 
-	if len(macros) != 0 {
-		m0 := bytes.TrimSpace(macros[0])
-		output.Write(m0)
+	if len(macros) != 0 && len(macros[0]) != 0 {
+		output.Write(macros[0])
+		wrote = true
 	}
 
 	if len(pardoc) != 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'W') {
@@ -291,8 +291,10 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 		}
 		macro := new(Macro)
 		err := macro.Loads(part)
-		output.WriteString("\n\n")
-		wrote = true
+		if wrote {
+			output.WriteString("\n\n")
+			wrote = true
+		}
 		if err != nil {
 			m0 := bytes.TrimSpace(part)
 			output.Write(m0)

@@ -179,41 +179,47 @@ func (source *Source) Lint(lintdir string, warnings bool) (info error, err error
 	}
 	buffer := new(bytes.Buffer)
 
+	about := ""
 	switch {
 	case strings.HasSuffix(source.String(), "/brocade.json"):
 		buffer.Write(body)
-		info, err := source.LintBrocadeJson(buffer, warnings, lintdir)
+		info, err := source.LintBrocadeJson(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case natures["lfile"]:
+		about = qutil.AboutLine(body)
 		err = source.Resolve("r", nil, nil, buffer, true)
 		if err != nil {
 			return nil, err
 		}
-		info, err := source.LintL(buffer, warnings, lintdir)
+		info, err := source.LintL(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case natures["dfile"]:
+		about = qutil.AboutLine(body)
 		err = source.Resolve("rl", nil, nil, buffer, true)
 		if err != nil {
 			return nil, err
 		}
-		info, err := source.LintD(buffer, warnings, lintdir)
+		info, err := source.LintD(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case natures["ifile"]:
+		about = qutil.AboutLine(body)
 		err = source.Resolve("rlm", nil, nil, buffer, true)
 		if err != nil {
 			return nil, err
 		}
-		info, err := source.LintI(buffer, warnings, lintdir)
+		info, err := source.LintI(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case natures["bfile"]:
+		about = qutil.AboutLine(body)
 		err = source.Resolve("rilm", nil, nil, buffer, true)
 		if err != nil {
 			return nil, err
 		}
-		info, err := source.LintB(buffer, warnings, lintdir)
+		info, err := source.LintB(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	}
 	if natures["mfile"] {
+		about = qutil.AboutLine(body)
 		err = source.MFileToMumps("lint", buffer)
 	}
 	if !natures["mfile"] {
@@ -225,28 +231,29 @@ func (source *Source) Lint(lintdir string, warnings bool) (info error, err error
 	ext := path.Ext(source.String())
 	switch ext {
 	case ".php", ".phtml":
-		info, err := source.LintPHP(buffer, warnings, lintdir)
+		info, err := source.LintPHP(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".rst":
-		info, err := source.LintRST(buffer, warnings, lintdir)
+		info, err := source.LintRST(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".yaml", ".yml":
-		info, err := source.LintYAML(buffer, warnings, lintdir)
+		info, err := source.LintYAML(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".json":
-		info, err := source.LintJSON(buffer, warnings, lintdir)
+		info, err := source.LintJSON(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".xml":
-		info, err := source.LintXML(buffer, warnings, lintdir)
+		info, err := source.LintXML(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".py":
-		info, err := source.LintPy(buffer, warnings, lintdir)
+		info, err := source.LintPy(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".x":
-		info, err := source.LintX(buffer, warnings, lintdir)
+		about = qutil.AboutLine(body)
+		info, err := source.LintX(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	case ".m":
-		info, err := source.LintM(buffer, warnings, lintdir)
+		info, err := source.LintM(buffer, warnings, lintdir, about)
 		return source.LintResult(info), err
 	}
 
@@ -304,7 +311,7 @@ func tmplint(lintdir string, source *Source, buffer *bytes.Buffer, justcopy bool
 }
 
 //Parse Python File
-func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	release := source.Release()
 	fs, pyscript := release.SourcePlace(source.String())
 	pyscript, _ = fs.RealPath(pyscript)
@@ -328,7 +335,7 @@ func (source *Source) LintPy(buffer *bytes.Buffer, warnings bool, lintdir string
 }
 
 //Parse PHP File
-func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	tmpphp := tmplint(lintdir, source, buffer, true, false)
 	e := qphp.Compile(tmpphp)
 	info = "OK"
@@ -342,7 +349,7 @@ func (source *Source) LintPHP(buffer *bytes.Buffer, warnings bool, lintdir strin
 }
 
 //Parse RST File
-func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 
 	tmprst := tmplint(lintdir, source, buffer, true, true)
 	level := "info"
@@ -362,7 +369,7 @@ func (source *Source) LintRST(buffer *bytes.Buffer, warnings bool, lintdir strin
 
 // brocade.json
 
-func (source *Source) LintBrocadeJson(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintBrocadeJson(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	body := buffer.Bytes()
 	config := new(qproject.Config)
 	e := json.Unmarshal(body, config)
@@ -379,7 +386,7 @@ func (source *Source) LintBrocadeJson(buffer *bytes.Buffer, warnings bool, lintd
 
 // json
 
-func (source *Source) LintJSON(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintJSON(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	body := buffer.Bytes()
 	var js json.RawMessage
 	e := json.Unmarshal(body, &js)
@@ -393,7 +400,7 @@ func (source *Source) LintJSON(buffer *bytes.Buffer, warnings bool, lintdir stri
 
 // xml
 
-func (source *Source) LintXML(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintXML(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	decoder := xml.NewDecoder(buffer)
 	for {
 		err := decoder.Decode(new(interface{}))
@@ -408,7 +415,7 @@ func (source *Source) LintXML(buffer *bytes.Buffer, warnings bool, lintdir strin
 
 // YAML
 
-func (source *Source) LintYAML(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintYAML(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	decoder := qyaml.NewDecoder(buffer)
 	for {
 		err := decoder.Decode(new(interface{}))
@@ -422,17 +429,20 @@ func (source *Source) LintYAML(buffer *bytes.Buffer, warnings bool, lintdir stri
 }
 
 // Parse BFile
-func (source *Source) LintB(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintB(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	bfile := new(qofile.BFile)
 	bfile.Source = source.String()
 	bfile.Version = source.Release().String()
-	preamble, objs, e := bfile.Parse(buffer.Bytes(), true)
+	blob := buffer.Bytes()
+	_, objs, e := bfile.Parse(blob, true)
 	info = "OK"
 
 	if e != nil {
 		info = e.Error()
 		if info == "" {
 			info = "OK"
+		} else {
+			return info, nil
 		}
 	}
 	if info == "OK" {
@@ -441,20 +451,23 @@ func (source *Source) LintB(buffer *bytes.Buffer, warnings bool, lintdir string)
 			info = "OK"
 		}
 	}
-
-	if info == "OK" && !strings.Contains(preamble, "About") {
-		info = fmt.Sprintf("No `About` in `%s`", source.String())
+	if about == "" {
+		about = qutil.AboutLine(blob)
+	}
+	if info == "OK" && about == "" {
+		info = fmt.Sprintf("No `About` in `%s` (LintB)", source.String())
 	}
 
 	return info, nil
 }
 
 // Parse DFile
-func (source *Source) LintD(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintD(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	dfile := new(qofile.DFile)
 	dfile.Source = source.String()
 	dfile.Version = source.Release().String()
-	preamble, objs, e := dfile.Parse(buffer.Bytes(), true)
+	blob := buffer.Bytes()
+	_, objs, e := dfile.Parse(blob, true)
 	info = "OK"
 	if e != nil {
 		info = e.Error()
@@ -468,18 +481,23 @@ func (source *Source) LintD(buffer *bytes.Buffer, warnings bool, lintdir string)
 			info = "OK"
 		}
 	}
-	if info == "OK" && !strings.Contains(preamble, "About") {
+	if about == "" {
+		about = qutil.AboutLine(blob)
+	}
+	if info == "OK" && about == "" {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
 	}
+
 	return info, nil
 }
 
 // Parse IFile
-func (source *Source) LintI(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintI(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	ifile := new(qofile.IFile)
 	ifile.Source = source.String()
 	ifile.Version = source.Release().String()
-	preamble, objs, e := ifile.Parse(buffer.Bytes(), true)
+	blob := buffer.Bytes()
+	_, objs, e := ifile.Parse(blob, true)
 	info = "OK"
 	if e != nil {
 		info = e.Error()
@@ -489,19 +507,24 @@ func (source *Source) LintI(buffer *bytes.Buffer, warnings bool, lintdir string)
 	}
 	if info == "OK" {
 		info = handleObjects(objs)
+
 	}
-	if info == "OK" && !strings.Contains(preamble, "About") {
+	if about == "" {
+		about = qutil.AboutLine(blob)
+	}
+	if info == "OK" && about == "" {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
 	}
 	return info, nil
 }
 
 // Parse LFile
-func (source *Source) LintL(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintL(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	lfile := new(qofile.LFile)
 	lfile.Source = source.String()
 	lfile.Version = source.Release().String()
-	preamble, objs, e := lfile.Parse(buffer.Bytes(), true)
+	blob := buffer.Bytes()
+	_, objs, e := lfile.Parse(blob, true)
 
 	info = "OK"
 	if e != nil {
@@ -514,7 +537,10 @@ func (source *Source) LintL(buffer *bytes.Buffer, warnings bool, lintdir string)
 	if info == "OK" {
 		info = handleObjects(objs)
 	}
-	if info == "OK" && !strings.Contains(preamble, "About") {
+	if about == "" {
+		about = qutil.AboutLine(blob)
+	}
+	if info == "OK" && about == "" {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
 	}
 	return info, nil
@@ -522,7 +548,7 @@ func (source *Source) LintL(buffer *bytes.Buffer, warnings bool, lintdir string)
 }
 
 // Parse MFile
-func (source *Source) LintM(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintM(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	preamble := "About"
 	info = "OK"
 	if info == "OK" && !strings.Contains(preamble, "About") {
@@ -544,11 +570,12 @@ func (source *Source) LintM(buffer *bytes.Buffer, warnings bool, lintdir string)
 }
 
 // Parse XFile
-func (source *Source) LintX(buffer *bytes.Buffer, warnings bool, lintdir string) (info string, err error) {
+func (source *Source) LintX(buffer *bytes.Buffer, warnings bool, lintdir string, about string) (info string, err error) {
 	xfile := new(qofile.XFile)
 	xfile.Source = source.String()
 	xfile.Version = source.Release().String()
-	preamble, _, e := xfile.Parse(buffer.Bytes(), true)
+	blob := buffer.Bytes()
+	_, _, e := xfile.Parse(blob, true)
 	info = "OK"
 	if e != nil {
 		info = e.Error()
@@ -556,7 +583,10 @@ func (source *Source) LintX(buffer *bytes.Buffer, warnings bool, lintdir string)
 			info = "OK"
 		}
 	}
-	if info == "OK" && !strings.Contains(preamble, "About") {
+	if about == "" {
+		about = qutil.AboutLine(blob)
+	}
+	if info == "OK" && about == "" {
 		info = fmt.Sprintf("No `About` in `%s`", source.String())
 	}
 	return info, nil

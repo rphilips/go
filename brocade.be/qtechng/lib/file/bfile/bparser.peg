@@ -164,6 +164,7 @@ NotCommentLine <-  (([^\n\r/]* (EOL / EOF)) / ([^\n\r/]* !"/" NotCommentLine)) {
 CommentLine <- ("//" [^\n\r]*)
 
 Comment <- comment:(CommentLine / WS+)+ {
+    //fmt.Println("comment:", "[" + string(c.text) + "]")
 	return string(c.text), nil
 }
 

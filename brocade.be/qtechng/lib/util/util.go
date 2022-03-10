@@ -85,7 +85,7 @@ func About(blob []byte) (result []byte) {
 		stop = err == io.EOF
 		s := string(line)
 		s = strings.ReplaceAll(s, "-*- coding: utf-8 -*-", "")
-		s = strings.ReplaceAll(s, "About: ", "")
+		s = strings.ReplaceAll(s, "About:", " ")
 		t := strings.TrimSpace(s)
 		if delim == "//" && !strings.HasPrefix(t, "//") {
 			body = append(body, line...)
@@ -125,23 +125,23 @@ func About(blob []byte) (result []byte) {
 		t := strings.TrimSpace(s)
 		if strings.HasPrefix(t, "//") {
 			s = strings.TrimLeft(t, "/")
+			s = RStrip(s)
+			if len(cmt) == 0 && s == "" {
+				continue
+			}
+			cmt = append(cmt, strings.TrimSpace(s))
+			continue
 		}
-		if len(cmt) == 0 && s == "" {
+		if len(cmt) == 0 && t == "" {
 			continue
 		}
 		if len(cmt) == 0 {
-			s = strings.TrimSpace(s)
+			s = t
 		}
-		if len(cmt) != 0 && strings.TrimSpace(cmt[len(cmt)-1]) == strings.TrimSpace(s) {
+		if len(cmt) != 0 && strings.TrimSpace(cmt[len(cmt)-1]) == t {
 			continue
 		}
 		cmt = append(cmt, s)
-	}
-	if len(cmt) == 1 && cmt[len(cmt)-1] == "" {
-		cmt = nil
-	}
-	if len(cmt) > 1 && cmt[len(cmt)-1] == "" {
-		cmt = cmt[:len(cmt)-2]
 	}
 	if len(cmt) == 0 {
 		return body
@@ -158,9 +158,10 @@ func About(blob []byte) (result []byte) {
 			}
 		}
 	}
-	result = append([]byte(strings.Join(cmt, "\n")), body...)
+	scmt := strings.TrimSpace(strings.Join(cmt, "\n")) + "\n\n"
+	body = append(bytes.TrimSpace(body), 10)
+	result = append([]byte(scmt), body...)
 	return result
-
 }
 
 // AboutLine retrieves the first About line
@@ -225,10 +226,10 @@ func Time(times ...string) string {
 
 // Comment maakt een commentaar lijn uit een slice of strings
 func Comment(cmt interface{}) string {
-	c := make([]string, 0)
 	if cmt == nil {
 		return ""
 	}
+	c := make([]string, 0)
 	lines := strings.SplitN(cmt.(string), "\n", -1)
 	if len(lines) == 0 {
 		return ""
@@ -844,63 +845,76 @@ func BlobSplit(blob []byte, split []string, qreg bool) [][]byte {
 	for i, s := range split {
 		part := s
 		if !qreg {
-			part = "(^|\\n)" + regexp.QuoteMeta(s) + "\\s+"
+			part = "(\\n)" + regexp.QuoteMeta(s) + "\\s+"
 		}
 		parts[i] = part
 	}
+	examin := append([]byte("\n"), blob...)
 	re := regexp.MustCompile(strings.Join(parts, "|"))
-	find := re.FindAllIndex(blob, -1)
+	find := re.FindAllIndex(examin, -1)
 	if len(find) == 0 {
 		return [][]byte{blob}
 	}
 	result := make([][]byte, len(find)+1)
 
-	result[0] = blob[:find[0][0]]
+	result[0] = bytes.TrimSpace(examin[:find[0][0]])
 
 	for i := 0; i < len(find); i++ {
 		if i < len(find)-1 {
-			result[i+1] = blob[find[i][0]+1 : find[i+1][0]]
+			result[i+1] = examin[find[i][0]+1 : find[i+1][0]]
 		} else {
-			result[i+1] = blob[find[i][0]+1:]
+			result[i+1] = examin[find[i][0]+1:]
 		}
 	}
 	return result
 }
 
 // Decomment haalt beginnende  '//' commentaar weg
-func Decomment(blob []byte) (buf *bytes.Buffer) {
-	buf = new(bytes.Buffer)
+func Decomment(blob []byte) *bytes.Buffer {
+	buf := new(bytes.Buffer)
+	result := new(bytes.Buffer)
+
 	content := bytes.NewBuffer(blob)
 	eol := byte('\n')
-	cmt := []byte("//")
-	preamble := true
 	var err error
 	var line []byte
-	for err != io.EOF {
+	for {
 		line, err = content.ReadBytes(eol)
-		if len(line) == 0 {
+		if err != nil && err != io.EOF {
+			return bytes.NewBuffer(blob)
+		}
+		s := strings.TrimSpace(string(line))
+		if s != "" && !strings.HasPrefix(s, "//") {
+			buf.Write(line)
+			buf.Write(content.Bytes())
 			break
 		}
-
-		if preamble && bytes.HasPrefix(line, cmt) {
-			buf.Write(line)
-			continue
+		if err == io.EOF {
+			break
 		}
-
-		preamble = false
-
-		line, dlm, _ := sdecomment(line)
-
-		if len(dlm) == 0 || err != nil {
-			if len(line) != 0 {
-				buf.Write(line)
-			}
-			continue
-		}
-		buf.Write(line)
-		buf.WriteByte(eol)
 	}
-	return
+	content = bytes.NewBuffer(buf.Bytes())
+
+	for {
+		line, err = content.ReadBytes(eol)
+		if err != nil && err != io.EOF {
+			return bytes.NewBuffer(blob)
+		}
+		line, dlm, _ := sdecomment(line)
+		if len(line) != 0 {
+			result.Write(line)
+		}
+		if err == io.EOF {
+			break
+		}
+		if len(dlm) != 0 {
+			result.WriteByte(eol)
+		}
+		// if len(line) == 0 {
+		// 	break
+		// }
+	}
+	return result
 }
 
 func sdecomment(line []byte) (before []byte, dlm []byte, after []byte) {

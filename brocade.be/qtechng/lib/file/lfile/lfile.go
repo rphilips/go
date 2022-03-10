@@ -242,8 +242,8 @@ func Format(fname string, blob []byte, output *bytes.Buffer) error {
 
 	lgcodes := qutil.BlobSplit(body, delims, false)
 	wrote := false
-	if len(lgcodes) != 0 {
-		output.Write(bytes.TrimSpace(lgcodes[0]))
+	if len(lgcodes) != 0 && len(lgcodes[0]) != 0 {
+		output.Write(lgcodes[0])
 		wrote = true
 	}
 	first := true

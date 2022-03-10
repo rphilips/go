@@ -345,6 +345,21 @@ func TestBM01(t *testing.T) {
 
 }
 
+func TestAbout19(t *testing.T) {
+	data := []byte(`loi tg:
+xyx
+`)
+	expected := data
+
+	about := About(data)
+	if string(expected) != string(about) {
+		t.Errorf("Error: about: \n`%s`\n\nexpected:\n`%s`\n", string(about), string(expected))
+	}
+	aboutline := AboutLine(about)
+	if aboutline != "" {
+		t.Errorf("Error: aboutline : \n`%s`\n\nexpected:\n`Hello`\n", aboutline)
+	}
+}
 func TestAbout01(t *testing.T) {
 	data := []byte(`a
 b
@@ -507,6 +522,19 @@ func TestAbout09(t *testing.T) {
 	if string(expected) != string(about) {
 		t.Errorf("Error: about: \n`%s`\n\nexpected:\n`%s`\n", string(about), string(expected))
 	}
+	aboutline := AboutLine(about)
+	if aboutline != "Hello" {
+		t.Errorf("Error: aboutline : \n`%s`\n\nexpected:\n`Hello`\n", aboutline)
+	}
+}
+
+func TestAbout099(t *testing.T) {
+	data := []byte(`// About: Hell
+//
+ // a b c`)
+
+	about := About(data)
+
 	aboutline := AboutLine(about)
 	if aboutline != "Hello" {
 		t.Errorf("Error: aboutline : \n`%s`\n\nexpected:\n`Hello`\n", aboutline)
