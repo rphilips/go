@@ -558,6 +558,12 @@ type VarReport struct {
 	Err    error
 }
 
+type SubReport struct {
+	Subs  []string
+	Value string
+	Err   error
+}
+
 func ZWR(gloref string, report chan VarReport, needle string, forward bool) {
 	rex := new(regexp.Regexp)
 	var err error
@@ -631,6 +637,92 @@ func ZWR(gloref string, report chan VarReport, needle string, forward bool) {
 			Gloref: gloref,
 			Value:  value,
 			Err:    err,
+		}
+		if needle != "" {
+			close(report)
+			return
+		}
+	}
+
+}
+
+func CSV(gloref string, report chan SubReport, needle string, forward bool) {
+	rex := new(regexp.Regexp)
+	var err error
+	if needle != "" {
+		rex, err = regexp.Compile(needle)
+		if err != nil {
+			rex = nil
+		}
+	}
+	gloref = N(gloref)
+	d, err := D(gloref)
+	if d == 0 {
+		err = fmt.Errorf("`%s` does not exist", gloref)
+	}
+	if err != nil {
+		report <- SubReport{
+			Subs:  nil,
+			Value: "",
+			Err:   err,
+		}
+		close(report)
+		return
+	}
+	if needle == "" && (d == 1 || d == 11) {
+		subs := MArgs(QS(gloref))
+		value, _ := G(gloref, true)
+		report <- SubReport{
+			Subs:  subs,
+			Value: value,
+			Err:   err,
+		}
+	}
+
+	last := strings.TrimRight(gloref, "(),")
+	for {
+		exec := "s %nExt=$Q(" + gloref + ")"
+		next, err := Calc(exec, "%nExt")
+
+		if !strings.HasPrefix(next, last) {
+			next = ""
+		}
+		if next != "" {
+			x := strings.SplitN(next, last, 2)[0]
+			if strings.IndexAny(x, "(),") == 0 {
+				next = ""
+			}
+
+		}
+		if err != nil || next == "" {
+			subs := MArgs(QS(gloref))
+
+			report <- SubReport{
+				Subs:  subs,
+				Value: "",
+				Err:   err,
+			}
+			close(report)
+			return
+		}
+		gloref = next
+		value, _ := G(gloref, true)
+		if needle != "" {
+			pair := gloref + "=" + value
+			found := strings.Contains(pair, needle)
+			if !found && rex != nil {
+				found = rex.FindStringIndex(pair) != nil
+			}
+			if !found {
+				continue
+			}
+		}
+
+		subs := MArgs(QS(gloref))
+		report <- SubReport{
+			Subs:  subs,
+			Value: value,
+			Err:   err,
 		}
 		if needle != "" {
 			close(report)

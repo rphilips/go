@@ -158,7 +158,7 @@ func (modifier Modifier) ModifierYaml() (m *qyaml.Node) {
 		}
 	}
 	nature := strings.ToLower(strings.TrimSpace(modifier.Type))
-	if nature != "" && nature != "string" {
+	if nature != "" {
 		props.Content = append(props.Content,
 			&qyaml.Node{
 				Kind:  qyaml.ScalarNode,

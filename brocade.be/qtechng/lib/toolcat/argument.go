@@ -184,20 +184,18 @@ func (arg Arg) ArgYaml() (m *qyaml.Node) {
 		}
 	}
 	nature := strings.ToLower(strings.TrimSpace(arg.Type))
-	if nature != "" && nature != "string" {
-		props.Content = append(props.Content,
-			&qyaml.Node{
-				Kind:  qyaml.ScalarNode,
-				Value: "type",
-				Tag:   "!!str",
-			},
-			&qyaml.Node{
-				Kind:  qyaml.ScalarNode,
-				Value: nature,
-				Tag:   "!!str",
-			},
-		)
-	}
+	props.Content = append(props.Content,
+		&qyaml.Node{
+			Kind:  qyaml.ScalarNode,
+			Value: "type",
+			Tag:   "!!str",
+		},
+		&qyaml.Node{
+			Kind:  qyaml.ScalarNode,
+			Value: nature,
+			Tag:   "!!str",
+		},
+	)
 	arg.ES.ESYaml(props)
 	arg.EM.EMYaml(props)
 
@@ -216,12 +214,15 @@ func (arg Arg) String() string {
 	for i, line := range lines {
 		line := strings.TrimSpace(line)
 		if strings.HasPrefix(line, "Argumenten:") {
-			if len(line) == i+1 {
+			if len(lines) == i+1 {
 				return ""
 			}
-			j = i
+			if j == -1 && line != "" {
+				j = i
+			}
 		}
 	}
+
 	if j != -1 {
 		s = strings.Join(lines[j+1:], "\n")
 	}

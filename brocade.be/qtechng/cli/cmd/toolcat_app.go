@@ -50,6 +50,12 @@ func toolcatApp(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = qtoolcat.Display(Fstdout, Fcwd, app, "", "", "", nil, Ftcclip, true)
+	after := `
+from anet.core import base
+from anet.toolcatng import toolcat
+
+`
+
+	_, err = qtoolcat.Display(Fstdout, Fcwd, app, "", "", after, nil, Ftcclip, true)
 	return err
 }

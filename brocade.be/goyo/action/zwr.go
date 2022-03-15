@@ -1,7 +1,9 @@
 package action
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
 
 	qutil "brocade.be/goyo/lib/util"
 	qyottadb "brocade.be/goyo/lib/yottadb"
@@ -28,6 +30,33 @@ func ZWR(text string) []string {
 	h := []string{"zwr " + gloref}
 	if gloref2 != gloref {
 		h = append(h, "zwr "+gloref2)
+	}
+	return h
+}
+
+func CSV(text string) []string {
+	if text == "" {
+		return nil
+	}
+	w := csv.NewWriter(os.Stdout)
+	gloref, _ := SplitRefValue(text)
+	gloref2 := qyottadb.N(gloref)
+	show := make(chan qyottadb.SubReport, 100)
+	go qyottadb.CSV(gloref2, show, "", true)
+	for report := range show {
+		if report.Err != nil {
+			qutil.Error(report.Err)
+			break
+		}
+		if len(report.Subs) == 0 {
+			break
+		}
+		w.Write(append(report.Subs, report.Value))
+	}
+	w.Flush()
+	h := []string{"csv " + gloref}
+	if gloref2 != gloref {
+		h = append(h, "csv "+gloref2)
 	}
 	return h
 }
