@@ -75,8 +75,8 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 
 		if !ok {
 			direxists[dir] = make([]qclient.LocalFile, 0)
-			direxists[dir] = append(direxists[dir], *plocfil)
 		}
+		direxists[dir] = append(direxists[dir], *plocfil)
 
 	}
 
@@ -96,6 +96,7 @@ func fileDelete(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
+
 	Fmsg = qreport.Report(result, errorlist, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	if len(list) != 0 {
 		qutil.EditList(Flist, false, list)
