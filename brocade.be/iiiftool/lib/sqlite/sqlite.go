@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -287,6 +288,10 @@ func QueryTime(sqlitefile string, mode string) (string, error) {
 		row := db.QueryRow("SELECT * FROM sqlar ORDER BY mtime DESC LIMIT 1", sqlitefile)
 		err = ReadSqlarRow(row, &sqlar)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				// in case of empty sqlar table with no images
+				return "", nil
+			}
 			return "", fmt.Errorf("cannot query sqlar time from archive: %v", err)
 		}
 		result = (sqlar.Mtime).Format(time.RFC3339)
