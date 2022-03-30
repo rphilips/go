@@ -9,10 +9,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"brocade.be/base/mumps"
 	"brocade.be/base/parallel"
 	"brocade.be/base/registry"
+	qtime "brocade.be/base/time"
 	"brocade.be/iiiftool/lib/sqlite"
 	"brocade.be/iiiftool/lib/util"
 )
@@ -323,7 +325,10 @@ func KillinMIndex(digest string, identifiers []string) error {
 		`k ^BIIIF("index",1,"digest2id","` + digest + `")`}
 
 	for _, id := range identifiers {
-		cmds = append(cmds, `k ^BIIIF("index",1,"id2digest","`+id+`")`)
+		loi := strings.Split(id, ",")[0]
+		loi = strings.TrimRight(loi, ",")
+		cmds = append(cmds, `k ^BIIIF("index",1,"id2digest","`+loi+`","`+loi+`","`+digest+`")`)
+		cmds = append(cmds, `k ^BIIIF("index",1,"id2digest","`+loi+`","`+id+`","`+digest+`")`)
 	}
 
 	for _, cmd := range cmds {
@@ -349,10 +354,13 @@ func SetMIndex(indices map[string][]string, kill bool) error {
 		loi := strings.Split(id, ",")[0]
 		loi = strings.TrimRight(loi, ",")
 		digest := values[0]
-		metatime := values[1]
-		sqlartime := values[2]
+		metaTimeObject, _ := time.Parse(time.RFC3339, values[1])
+		sqlarTimeObject, _ := time.Parse(time.RFC3339, values[2])
+		metatime := qtime.H(metaTimeObject)
+		sqlartime := qtime.H(sqlarTimeObject)
 
 		cmds := []string{
+			`s ^BIIIF("index",2,"id2digest","` + loi + `","` + loi + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
 			`s ^BIIIF("index",2,"id2digest","` + loi + `","` + id + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
 			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + loi + `","` + id + `")="` + metatime + `^` + sqlartime + `"`}
 
