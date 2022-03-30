@@ -50,6 +50,41 @@ func toolcatApp(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = qtoolcat.Display(Fstdout, Fcwd, app, "", "", "", nil, Ftcclip, true)
+	after := `
+import json
+
+from anet.core import base
+from anet.toolcatng import toolcat
+
+
+@toolcat.toolcat
+def about():
+    r'''
+    Titel: Informatie omtrent deze toolcat applicatie
+
+    Beschrijving: |-
+        Deze functie verschaft repository informatie omtrent deze toolcat applicatie.
+
+        Deze informatie wordt opgehaald door gebruik te maken van *qtechng*
+
+    Triggers: about
+
+    Voorbeelden:
+        - {APPNAME} about
+
+    Argumenten: Geen argumenten
+    '''
+    qpath = "{APPQPATH}"
+    valid = qpath.startswith("/")
+    if valid:
+        cp = base.catch("qtechng", args=["source", "list", qpath])
+    	props = json.loads(cp.stdout)
+        valid = "DATA" in props and props["DATA"]
+        if valid:
+            print(json.dumps(props["DATA"]["0"], indent=4))
+    if not valid:
+        print("Geen informatie gevonden betreffende", qpath)
+`
+	_, err = qtoolcat.Display(Fstdout, Fcwd, app, "", "", after, nil, Ftcclip, true)
 	return err
 }

@@ -91,6 +91,7 @@ func fileRefresh(cmd *cobra.Command, args []string) error {
 				j = i + 2
 			}
 			args[j+1] = "--version=" + v
+			
 			stdout, _, err := qutil.QtechNG(args, []string{"$..qpath"}, false, qdir)
 			if err != nil {
 				errs = append(errs, err)

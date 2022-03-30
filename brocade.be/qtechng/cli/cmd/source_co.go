@@ -39,6 +39,9 @@ func init() {
 }
 
 func sourceCo(cmd *cobra.Command, args []string) error {
+	if Ftransported {
+		return nil
+	}
 	qdir := ""
 	qpaths, result, errlist := storeTransport(Fcwd, qdir)
 	errs := make([]error, 0)

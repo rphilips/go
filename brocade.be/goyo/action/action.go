@@ -108,6 +108,10 @@ During navigation one-key instructions can be given:
 		Ref:   "",
 		Short: "Shows zwr data referenced by the argument",
 	},
+	"csv": {
+		Ref:   "",
+		Short: "Shows global data in CSV style",
+	},
 }
 
 func RunAction(key string, text string) []string {
@@ -130,6 +134,8 @@ func RunAction(key string, text string) []string {
 		return Get(text)
 	case "zwr":
 		return ZWR(text)
+	case "csv":
+		return CSV(text)
 	case "walk":
 		return walk(text)
 	case "exec":

@@ -127,6 +127,14 @@ func Run(scriptpy string, py3 bool, args []string, extra []string, cwd string) (
 		cwd = c
 	}
 
+	for _, env := range extra {
+		key, value, found := strings.Cut(env, "=")
+		if found && key != "" {
+			value = strings.TrimLeft(value, "'")
+			value = strings.TrimRight(value, "'")
+			os.Setenv(key, value)
+		}
+	}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd := exec.Cmd{
@@ -140,6 +148,15 @@ func Run(scriptpy string, py3 bool, args []string, extra []string, cwd string) (
 	qcredential.Credential(&cmd)
 
 	err := cmd.Run()
+
+	for _, env := range extra {
+		key, value, found := strings.Cut(env, "=")
+		if found && key != "" {
+			value = strings.TrimLeft(value, "'")
+			value = strings.TrimRight(value, "'")
+			os.Unsetenv(key)
+		}
+	}
 	sout = stdout.String()
 	serr = stderr.String()
 	if err != nil {

@@ -23,6 +23,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -161,6 +162,7 @@ func main() {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	cmd.Execute(buildTime, goVersion, buildHost, os.Args)
+	exec.Command("stty", "sane").Run()
 
 }
 

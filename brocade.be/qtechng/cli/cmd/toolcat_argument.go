@@ -50,7 +50,7 @@ func toolcatArg(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = qtoolcat.Display(Fstdout, Fcwd, arg, "", "        ", "", nil, Ftcclip, false)
+	_, err = qtoolcat.Display(Fstdout, Fcwd, arg, "", "    ", "", nil, Ftcclip, false)
 
 	return err
 }

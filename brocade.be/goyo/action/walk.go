@@ -49,10 +49,10 @@ r(ight), ARROW-RIGHT               : next level
 l(eft), ARROW-LEFT                 : previous level
 s(et)                              : set node
 k(ill)                             : kill node
-z(wr)                              : show node
+z(wr)                              : show node in ZWR
+c(sv)                              : show node in CSV
 e(dit)                             : edit node=value
-/(search)                          : searches both on needle and regexp of needle
-`)
+/(search)                          : searches both on needle and regexp of needle`)
 			gloref, _, err = qyottadb.Next(gloref)
 			if err != nil {
 				qutil.Error(err)
@@ -103,6 +103,11 @@ e(dit)                             : edit node=value
 		}
 		if char == 'z' {
 			ZWR(gloref)
+			fmt.Println()
+			continue
+		}
+		if char == 'c' {
+			CSV(gloref)
 			fmt.Println()
 			continue
 		}

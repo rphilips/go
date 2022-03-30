@@ -3,6 +3,7 @@ package cmd
 import (
 	"io"
 	"os"
+	"strings"
 
 	qtoolcat "brocade.be/qtechng/lib/toolcat"
 	"github.com/spf13/cobra"
@@ -56,6 +57,25 @@ func toolcatVerb(cmd *cobra.Command, args []string) error {
 	replacements["\n    Argumenten: \"\"\n"] = "\n    Argumenten:\n"
 	replacements["\n    Modifiers: \"\"\n"] = "\n    Modifiers:\n"
 
-	_, err = qtoolcat.Display(Fstdout, Fcwd, verb, sign, "    ", "    pass\n", replacements, Ftcclip, true)
+	after := []string{}
+
+	if verb.WithArguments {
+		after = append(after, `    print("argumenten:", repr(args))`)
+	}
+	if verb.WithModifiers {
+		after = append(after, `    print("modifiers:", repr(modifiers))`)
+		after = append(after, `    print("modifiers():", repr(modifiers()))`)
+		after = append(after, `    for modifier in modifiers():`)
+		after = append(after, `        print("modifier('" + modifier + "'):", repr(modifiers(modifier)))`)
+	}
+	if verb.WithVerbose {
+		after = append(after, `    print("verbose:", repr(verbose))`)
+	}
+	if verb.WithDebug {
+		after = append(after, `    print("debug:", repr(debug))`)
+	}
+	after = append(after, `    print("`+verb.Name+` loopt succesvol!")`)
+
+	_, err = qtoolcat.Display(Fstdout, Fcwd, verb, sign, "    ", strings.Join(after, "\n"), replacements, Ftcclip, true)
 	return err
 }

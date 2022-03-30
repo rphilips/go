@@ -25,7 +25,7 @@ func Display(outfile string, cwd string, obj fmt.Stringer, signature string, ind
 		output = f
 		defer output.Close()
 	}
-	sout := strings.TrimSpace(obj.String())
+	sout := qutil.RStrip(obj.String())
 	lines := strings.SplitN(sout, "\n", -1)
 	for i, line := range lines {
 		if strings.TrimSpace(line) == "" {
