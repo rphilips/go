@@ -182,7 +182,7 @@ func RSync(r string) (changed []string, deleted []string, err error) {
 	if strings.Contains(qtechType, "B") {
 		return nil, nil, nil
 	}
-	changed, deleted, err = qsync.Sync(r, r, false, false)
+	changed, deleted, err = qsync.Sync(r, r, false, false, false)
 	return changed, deleted, err
 }
 

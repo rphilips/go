@@ -84,7 +84,7 @@ func preProjectCheck(cmd *cobra.Command, args []string) {
 		Frefname = "projectcheck-" + qutil.Timestamp(true)
 	}
 	if strings.Contains(QtechType, "P") {
-		qsync.Sync("", "", true, false)
+		qsync.Sync("", "", true, false, false)
 	}
 
 	if !strings.ContainsAny(QtechType, "BP") {

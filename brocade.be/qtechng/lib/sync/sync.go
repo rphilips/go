@@ -21,7 +21,7 @@ import (
 // vtarget is on the current server.
 // vtarget can only be empty on a non-development machine
 // if vtarget is empty it reduces to the value of registry("brocade-release")
-func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []string, deleted []string, err error) {
+func Sync(vsource string, vtarget string, force bool, deepy bool, dry bool) (changed []string, deleted []string, err error) {
 	deep := true
 	shallow := !deep
 	//shallow := false
@@ -31,31 +31,37 @@ func Sync(vsource string, vtarget string, force bool, deepy bool) (changed []str
 		return
 	}
 	syncrun := qregistry.Registry["qtechng-sync-exe"]
+	if dry {
+		syncrun = qregistry.Registry["qtechng-syncdry-exe"]
+	}
 
 	copyrun := qregistry.Registry["qtechng-copy-exe"]
 	run := ""
 	regvalue := ""
 	if !strings.Contains(qtechType, "B") {
+		regvalue = "qtechng-sync-exe"
+		if dry {
+			regvalue = qregistry.Registry["qtechng-syncdry-exe"]
+		}
 		if syncrun == "" {
 			err = &qerror.QError{
 				Ref: []string{"sync.version.sync.registry"},
-				Msg: []string{"Registry value `qtechng-sync-exe` is missing"},
+				Msg: []string{"Registry value `" + regvalue + "` is missing"},
 			}
 			return
 		}
 		run = syncrun
-		regvalue = "qtechng-sync-exe"
 	}
 	if strings.Contains(qtechType, "B") {
+		regvalue = "qtechng-copy-exe"
 		if copyrun == "" {
 			err = &qerror.QError{
 				Ref: []string{"sync.version.copy.registry"},
-				Msg: []string{"Registry value `qtechng-copy-exe` is missing"},
+				Msg: []string{"Registry value `" + regvalue + "` is missing"},
 			}
 			return
 		}
 		run = copyrun
-		regvalue = "qtechng-copy-exe"
 		shallow = false
 	}
 

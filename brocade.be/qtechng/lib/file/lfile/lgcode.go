@@ -391,7 +391,7 @@ func (lgcode *Lgcode) Lint() (errslice qerror.ErrorSlice) {
 
 	// check on alias
 	lregid := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z][a-zA-Z0-9.]*$`)
-	lregalias := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*$`)
+	lregalias := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
 	alias := lgcode.Alias
 	if alias != "" {
 		y := lgcode.N + lgcode.E + lgcode.D + lgcode.F + lgcode.U + lgcode.Encoding

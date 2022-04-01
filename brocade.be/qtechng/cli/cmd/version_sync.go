@@ -33,10 +33,12 @@ it may be necessary to run this command as root!`,
 }
 
 var Fdeep bool
+var Fdry bool
 
 func init() {
 	versionCmd.AddCommand(versionSyncCmd)
 	versionSyncCmd.Flags().BoolVar(&Fdeep, "deep", false, "if true, all files in the repository are synced")
+	versionSyncCmd.Flags().BoolVar(&Fdry, "dry", false, "if true, theh changed files ar elisted but not checked in")
 }
 
 func versionSync(cmd *cobra.Command, args []string) error {
@@ -68,20 +70,24 @@ func versionSync(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	changed, deleted, err := qsync.Sync(current, current, false, Fdeep)
+	changed, deleted, err := qsync.Sync(current, current, false, Fdeep, Fdry)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return nil
 	}
+	tag := ""
+	if Fdry {
+		tag = "dry-"
+	}
 	msg := make(map[string][]string)
 	if len(changed) != 0 {
 		sort.Strings(changed)
-		msg["synced"] = changed
+		msg[tag+"synced"] = changed
 	}
 	if len(deleted) != 0 {
 		sort.Strings(deleted)
-		msg["deleted"] = deleted
+		msg[tag+"deleted"] = deleted
 	}
 
 	if err != nil {
@@ -93,17 +99,20 @@ func versionSync(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	work := make([]string, 0)
-	work = append(work, changed...)
-	work = append(work, deleted...)
+	err = nil
+	if !Fdry {
+		work := make([]string, 0)
+		work = append(work, changed...)
+		work = append(work, deleted...)
 
-	query := &qsource.Query{
-		Release:  current,
-		Patterns: work,
+		query := &qsource.Query{
+			Release:  current,
+			Patterns: work,
+		}
+		sources := query.Run()
+		refname := qutil.Reference("synced")
+		err = qsource.Install(refname, sources, false, nil)
 	}
-	sources := query.Run()
-	refname := qutil.Reference("synced")
-	err = qsource.Install(refname, sources, false, nil)
 
 	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 	return nil

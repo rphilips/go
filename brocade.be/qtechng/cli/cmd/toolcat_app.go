@@ -81,7 +81,7 @@ def about():
     	props = json.loads(cp.stdout)
         valid = "DATA" in props and props["DATA"]
         if valid:
-            print(json.dumps(props["DATA"]["0"], indent=4))
+            print(json.dumps(props["DATA"][0], indent=4))
     if not valid:
         print("Geen informatie gevonden betreffende", qpath)
 `

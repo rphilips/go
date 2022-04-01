@@ -62,7 +62,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 	logme.Println("Start")
 
 	if !strings.Contains(QtechType, "B") {
-		qsync.Sync("", "", true, false)
+		qsync.Sync("", "", true, false, false)
 		logme.Println(fmt.Sprintf("Synchronised version `%s` with dev.anet.be", current))
 	}
 
