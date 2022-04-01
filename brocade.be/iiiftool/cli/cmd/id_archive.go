@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"log"
 	"strings"
 
@@ -84,32 +85,30 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	sqlitefile := iiif.Digest2Location(mResponse.Digest)
 
-	if Fmetaonly && fs.Exists(sqlitefile) { // to do: check more than just existing sqlitefile!
+	if Fmetaonly && fs.Exists(sqlitefile) {
 		err = sqlite.ReplaceMeta(sqlitefile, mResponse)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: replace error:\n%s", err)
 		}
 	} else {
 
-		// get file contents from docman ids
 		imgLen := len(mResponse.Images)
-		docIds := make([]docman.DocmanID, imgLen)
+		var convertedStream []io.Reader
 
-		empty := true
-		for i, image := range mResponse.Images {
-			empty = false
-			docIds[i] = docman.DocmanID(image["loc"])
-		}
-		if empty {
-			log.Fatalf("iiiftool ERROR: no docman images found")
-		}
-
-		// convert docman files from TIFF/JPG to JP2K
-		convertedStream, errors := convert.ConvertDocmanIdsToJP2K(docIds, Fquality, Ftile, Fverbose)
-		for _, e := range errors {
-			if e != nil {
-				log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
+		if imgLen > 0 {
+			// get file contents from docman ids
+			docIds := make([]docman.DocmanID, imgLen)
+			for i, image := range mResponse.Images {
+				docIds[i] = docman.DocmanID(image["loc"])
 			}
+			// convert docman files from TIFF/JPG to JP2K
+			docStream, errors := convert.ConvertDocmanIdsToJP2K(docIds, Fquality, Ftile, Fverbose)
+			for _, e := range errors {
+				if e != nil {
+					log.Fatalf("iiiftool ERROR: conversion error:\n%s", e)
+				}
+			}
+			convertedStream = docStream
 		}
 
 		// store file contents in SQLite archive
