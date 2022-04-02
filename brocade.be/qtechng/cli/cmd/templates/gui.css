@@ -1,0 +1,150 @@
+
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: #5897b7; }
+.header {
+    background-color: #046;
+    padding: 20px 30px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.qtechng-form-base{
+	max-width: 500px;
+	padding: 20px 12px 10px 20px;
+	font: 13px Arial, Helvetica, sans-serif;
+}
+.qtechng-form-base-heading{
+	font-weight: bold;
+	font-style: italic;
+	border-bottom: 2px solid #ddd;
+	margin-bottom: 20px;
+	font-size: 15px;
+	padding-bottom: 3px;
+}
+.qtechng-form-base label{
+    display: flex;
+    align-items: center;
+	margin: 0px 0px 15px 0px;
+}
+.qtechng-form-base label.input-label-primary > span{
+	width: 150px;
+	font-weight: bold;
+	float: left;
+	padding-top: 8px;
+	padding-right: 5px;
+}
+
+.qtechng-form-base label.input-label-secondary > span{
+	width: 150px;
+	font-weight: light;
+	float: left;
+	padding-top: 8px;
+	padding-right: 5px;
+    font-size: smaller;
+}
+
+.qtechng-form-base span.required{
+	color:red;
+}
+.qtechng-form-base .tel-number-field{
+	width: 40px;
+	text-align: center;
+}
+.qtechng-form-base input.input-field, .qtechng-form-base input.input-field-jsonpath, .qtechng-form-base .select-field{
+	width: 48%;	
+    
+}
+
+.qtechng-form-base input.input-field-version {
+	width: 10%;	
+}
+
+.qtechng-menuitem-link {
+    cursor: pointer;
+    color: #FF8500;
+    font-weight: bold;
+    padding-left: 15px;
+}
+.qtechng-form-base input.input-field, 
+.qtechng-form-base input.input-field-version, 
+.qtechng-form-base input.input-field-jsonpath, 
+.qtechng-form-base .tel-number-field, 
+.qtechng-form-base .textarea-field, 
+ .qtechng-form-base .select-field{
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	border: 1px solid #C2C2C2;
+	box-shadow: 1px 1px 4px #EBEBEB;
+	-moz-box-shadow: 1px 1px 4px #EBEBEB;
+	-webkit-box-shadow: 1px 1px 4px #EBEBEB;
+	border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	padding: 7px;
+	outline: none;
+    line-height: 5px;
+    
+}
+.qtechng-form-base .input-field:focus, 
+.qtechng-form-base .input-field-version:focus, 
+.qtechng-form-base .input-field-jsonpath:focus, 
+.qtechng-form-base .tel-number-field:focus, 
+.qtechng-form-base .textarea-field:focus,  
+.qtechng-form-base .select-field:focus{
+	border: 1px solid #0C0;
+}
+.qtechng-form-base .textarea-field{
+	height:100px;
+	width: 55%;
+}
+.qtechng-form-base input[type=submit],
+.qtechng-form-base input[type=button]{
+    cursor: pointer;
+	border: none;
+	padding: 8px 15px 8px 15px;
+	background: #FF8500;
+	color: #fff;
+	box-shadow: 1px 1px 4px #DADADA;
+	-moz-box-shadow: 1px 1px 4px #DADADA;
+	-webkit-box-shadow: 1px 1px 4px #DADADA;
+	border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+}
+.qtechng-form-base input[type=submit]:hover,
+.qtechng-form-base input[type=button]:hover{
+	background: #EA7B00;
+	color: #fff;
+}
+
+input[type=checkbox]{
+    position: relative;
+    vertical-align: middle;
+    bottom: 1px;
+
+}
+input[type=radio]{
+    position: relative;
+    vertical-align: middle;
+    bottom: 1px;
+
+}
+.visible {
+    display:block;
+    border: 2px solid green;
+    padding: .5em;
+}
+
+.invisible {
+    display:none;
+}
+
+.toggle {
+    color: green;
+    cursor: pointer;
+    font-size:larger;
+}

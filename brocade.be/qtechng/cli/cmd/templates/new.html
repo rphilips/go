@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>{{ .Head }}</head>
+
+<body>
+
+    <form class="qtechng-form-base">
+        <div class="qtechng-form-base-heading">New files in project</div>
+        {{if (.VarsH.nofiles)}}
+        <label class="input-label-primary" for="name"><span>Name <span
+            class="required">*</span></span><input autofocus placeholder="e.g. colwedit.m" type="text"
+        class="input-field" name="name" id="name" value='' /></label>
+        {{end}}
+        <label class="input-label-primary" for="qdir"><span>QDir <span
+                    class="required">*</span></span><input placeholder="e.g. /collection/application" type="text"
+                class="input-field" name="qdir" id="qdir" value='{{index .Vars "qdir"}}' /></label>
+        <label class="input-label-primary" for="version"><span>Version <span class="required">*</span></span><input
+                type="text" class="input-field-version" name="version" id="version"
+                value='{{index .Vars "version"}}' /></label>
+        {{if (.VarsH.nofiles)}}
+        <label class="input-label-primary" for="hint"><span>Hint </span><select id="hint" name="hint" class="select-field">
+            {{.VarsS.select}}
+        </select> 
+        </label>
+        {{end}}
+        <label class="input-label-primary">
+            <span>&#160;</span>
+            <input type="submit" value="Submit" onclick="golangfunc('')" />
+            &#160;
+            <input type="submit" value="Quit" onclick="golangfunc('stop')" />
+        </label>
+    </form>
+    <pre id="yamldisplay"></pre>
+    <pre id="jsondisplay"></pre>
+
+</body>
+
+</html>

@@ -2,32 +2,32 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"strconv"
 	"syscall"
 	"time"
 
-	qregistry "brocade.be/base/registry"
-	qerror "brocade.be/qtechng/lib/error"
+	qcredential "brocade.be/base/credential"
+	qreport "brocade.be/qtechng/lib/report"
 	"github.com/spf13/cobra"
 )
 
 var lockRunCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Runs an executable",
-	Long: `First argument is the name of a lock. 
+	Short: "Run a program with a lock",
+	Long: `The first argument is the name of a lock for a program.
+The second argument is an estimation in seconds of the duration of this process.
 If this lock is set, the program does not run.
-If it is not set, the program does run and sets the lock
-and cleans up afterwards.
+If it is not set, the lock is set and the program runs.
+Afterwards, the lock is deleted.
+The third argument is the executable to run.
 `,
-	Args:    cobra.ExactArgs(2),
-	Example: `qtechng lock run mylock docpublish -rebuild`,
+	Args:    cobra.MinimumNArgs(3),
+	Example: `qtechng lock run mylock 10 docpublish -rebuild`,
 	Run:     lockRun,
 	Annotations: map[string]string{
 		"remote-allowed": "no",
@@ -39,36 +39,28 @@ func init() {
 }
 
 func lockRun(cmd *cobra.Command, args []string) {
-	lock := args[0]
-	exe := args[1]
+}
 
-	argums := make([]string, 0)
-	json.Unmarshal([]byte(exe), &argums)
+func LockRunner(args []string) {
+	lock := args[0]
+	until := args[1]
+	exe := args[2]
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	lockdir := qregistry.Registry["lock-dir"]
-	if lockdir == "" {
-		lockdir = qregistry.Registry["scratch-dir"]
-	}
-	if lockdir == "" {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot find `lock-dir` in registry"))
+	locker := checkLock(lock, until)
+	if locker == "" {
+		Fmsg = qreport.Report(nil, fmt.Errorf("cannot obtain lock `%s`", lock), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return
 	}
 
-	locker := path.Join(lockdir, "brocade_"+lock)
-	err := os.Mkdir(locker, os.ModePerm)
-	if err != nil {
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Cannot create lock: %s", err.Error()))
-		return
-	}
 	unlock := func(cmd *exec.Cmd, code int) {
 		rand.Seed(time.Now().UnixNano())
 		rnd := strconv.FormatInt(rand.Int63n(100000000), 10)
 		tempdir := locker + "." + rnd
 		os.Rename(locker, tempdir)
-		os.Remove(tempdir)
+		os.RemoveAll(tempdir)
 		if cmd != nil {
 			cmd.Process.Kill()
 			return
@@ -76,15 +68,14 @@ func lockRun(cmd *cobra.Command, args []string) {
 		os.Exit(code)
 	}
 
-	rcmd := exec.Command(argums[0], argums[1:]...)
+	rcmd := exec.Command(exe, args[3:]...)
 	go signalWatcher(ctx, rcmd, 1, unlock)
 	rcmd.Stdin = os.Stdin
 	rcmd.Stdout = os.Stdout
 	rcmd.Stderr = os.Stderr
 	rcmd.Dir = Fcwd
-	rcmd.SysProcAttr = &syscall.SysProcAttr{}
-	rcmd.SysProcAttr.Setpgid = true
-	err = rcmd.Run()
+	rcmd = qcredential.Credential(rcmd)
+	err := rcmd.Run()
 	unlock(nil, 0)
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
@@ -92,7 +83,7 @@ func lockRun(cmd *cobra.Command, args []string) {
 				os.Exit(status.ExitStatus())
 			}
 		}
-		Fmsg = qerror.ShowResult(nil, Fjq, fmt.Errorf("Unable to run command"))
+		Fmsg = qreport.Report(nil, fmt.Errorf("unable to run command succesfully"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")
 		return
 	}
 }

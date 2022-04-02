@@ -1,0 +1,118 @@
+{
+package lfile
+
+import (
+    qutil "brocade.be/qtechng/lib/util"
+)
+}
+
+File <- preamble:(Preamble?) lgcodes:(Lgcode*) EOF {
+	p := qutil.Comment(preamble)
+    ms := lgcodes.([]interface{})
+    if len(ms) == 0 {
+        return LFile{
+		    Preamble: p,
+		    Lgcodes: nil,
+	    }, nil
+    }
+	lgs := make([]*Lgcode, len(ms))
+	for i, m := range ms {
+		lgs[i] = m.(*Lgcode)
+	}
+
+    return LFile{
+		Preamble: p,
+		Lgcodes: lgs,
+	}, nil
+}
+
+Preamble <- Comment
+
+Lgcode <- "lgcode" WS+ id:(LgcodeID) WS* ":" WS*  translations:(Translation*) WS* {
+	lgcode := Lgcode{
+		ID: id.([2]string)[0],
+		Line: id.([2]string)[1],
+	}
+	if translations == nil {
+		return &lgcode, nil
+	}
+
+	for _, t := range translations.([]interface{}){
+		tr := t.([2]string)
+		prefix := tr[0]
+		text := tr[1]
+		switch prefix {
+			case "N": lgcode.N = text
+			case "E": lgcode.E = text
+			case "D": lgcode.D = text
+			case "F": lgcode.F = text
+			case "U": lgcode.U = text
+			case "Alias": lgcode.Alias = text
+			case "Encoding": lgcode.Alias = text
+			case "Nature": lgcode.Nature = text
+		}
+	}
+	return &lgcode, nil
+}
+
+LgcodeID <- id:(ScopeID / TextID / NsID / SimpleID) {
+	return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
+	}
+ScopeID  <- [a-zA-Z] [a-zA-Z0-9]* "." [a-zA-Z0-9]+ ".scope"
+TextID   <- [a-zA-Z] [a-zA-Z0-9]* "." [a-zA-Z0-9]+
+NsID     <- [a-zA-Z] [a-zA-Z0-9]* "."
+SimpleID <- [a-zA-Z0-9_ -]+
+
+
+
+Translation <- WS* prefix:Prefix  WS* ":" WS* text:Text WS* {
+
+	return [2]string{prefix.(string), text.(string)}, nil
+}
+
+Prefix <- prefix:("Alias" / "Nature" / "Encoding" / [NEFDU]) {
+	return string(c.text), nil
+}
+
+Text <- text:((TS1 CHARS1 TE1) / (TS2 CHARS2 TE2) / CHARS3 ) WS* {
+	return qutil.Fix(string(c.text)), nil
+}
+
+
+Line <- ("" !("lgcode" / EOF)) [^\n\r]* EOL? {
+	return string(c.text), nil
+	}
+
+CommentLine <- ("//" [^\n\r]*)
+
+Comment <- comment:(CommentLine / WS+)+ {
+	return string(c.text), nil
+}
+
+WS <- [ \n\t\r]
+
+EOL <- ("\r\n" / "\n\r" / "\r" / "\n")
+
+
+TS <- "[⟦«]"
+TS1 <- "⟦"
+TE1 <- "⟧"
+TS2 <- "«"
+TE2 <- "»"
+
+CHARS1 <- [^⟦⟧]* {
+	return string(c.text), nil
+}
+
+CHARS2 <- [^«»]* {
+	return string(c.text), nil
+}
+
+CHARS3 <- [^\n\r]* {
+	return string(c.text), nil
+}
+
+
+EOF <- !.
+
+

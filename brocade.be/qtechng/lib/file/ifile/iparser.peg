@@ -1,0 +1,103 @@
+{
+package ifile
+
+import (
+   qutil "brocade.be/qtechng/lib/util"
+   qobject "brocade.be/qtechng/lib/object"
+)
+}
+
+
+
+File <- preamble:(Preamble?) includes:(Include*) EOF {
+	p := qutil.Comment(preamble)
+    ms := includes.([]interface{})
+    if len(ms) == 0 {
+        return IFile{
+		    Preamble: p,
+		    Includes: nil,
+	    }, nil
+    }
+	incs := make([]*Include, len(ms))
+    for i, m := range ms {
+		incs[i] = m.(*Include)
+	}
+    return IFile{
+		Preamble: p,
+		Includes: incs,
+	}, nil
+}
+
+Preamble <- Comment
+
+Include <- "include" WS+ id:(IncludeID) WS* ":" WS*  content:(Content) WS* {
+	Include := Include{
+		ID: id.([2]string)[0],
+		Line: id.([2]string)[1],
+	}
+	if content == nil {
+		return Include, nil
+	}
+    Include.Content = content.(string)
+	return &Include, nil
+}
+
+IncludeID <- id:([a-zA-Z] [a-zA-Z0-9]*) {
+	return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
+	}
+
+
+Content <- content:((TS1 CHARS1 TE1) / (TS2 CHARS2 TE2) / Lines) {
+	x := string(c.text)
+	if strings.HasPrefix(x, "«") && strings.HasSuffix(x, "»") {
+		return strings.TrimSuffix(strings.TrimPrefix(x, "«"), "»"), nil
+	}
+	if strings.HasPrefix(x, "⟦") && strings.HasSuffix(x, "⟧") {
+		return strings.TrimSuffix(strings.TrimPrefix(x, "⟦"), "⟧"), nil
+	}
+	return strings.TrimSpace(x), nil
+}
+
+
+Line1 <- ("" !([\t ]* "include" [ \t])) [^\r\n]* EOL {
+	return string(c.text), nil
+}
+
+Line2 <- ("" !([\t ]* "include" [ \t])) [^\r\n]+ &EOF {
+	return string(c.text), nil
+}
+
+Lines <- (Line1 / Line2)+ {
+	return string(c.text), nil
+}
+
+CommentLine <- ("//" [^\n\r]*)
+
+Comment <- comment:(CommentLine / WS+)+ {
+	return string(c.text), nil
+}
+
+WS <- [ \n\t\r]
+
+EOL <- ("\r\n" / "\n\r" / "\r" / "\n")
+
+
+TS <- "[⟦«]"
+TS1 <- "⟦"
+TE1 <- "⟧"
+TS2 <- "«"
+TE2 <- "»"
+
+CHARS1 <- [^⟦⟧]* {
+	return string(c.text), nil
+}
+
+CHARS2 <- [^«»]* {
+	return string(c.text), nil
+}
+
+
+
+EOF <- !.
+
+

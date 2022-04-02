@@ -1,0 +1,15 @@
+{
+    "$id": "https://dev.anet.be/brocade/schema/pardoc.schema.json",
+    "$schema": "http://json-schema.org/draft/2019-09/schema#",
+    "title": "Macro parameter standard definitions",
+    "type": "object",
+    "properties": {
+        "uniqueItems": true,
+        "patternProperties": {
+            "\\$[a-z][a-z0-9]$": {
+                "type": "string"
+            }
+        }
+    },
+    "additionalProperties": false
+}

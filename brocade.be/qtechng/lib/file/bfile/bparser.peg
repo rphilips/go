@@ -1,0 +1,179 @@
+{
+package bfile
+
+import (
+
+    qutil "brocade.be/qtechng/lib/util"
+    qerror "brocade.be/qtechng/lib/error"
+    qregistry "brocade.be/base/registry"
+)
+
+
+
+}
+
+
+File <- preamble:(Preamble?) brobs:(Brob*) EOF {
+	p := qutil.Comment(preamble)
+    bs := brobs.([]interface{})
+    if len(bs) == 0 {
+        return BFile{
+		    Preamble: p,
+		    Brobs: nil,
+	    }, nil
+    }
+	brbs := make([]*Brob, len(bs))
+	for i, b := range bs {
+        brbs[i] = b.(*Brob)
+	}
+
+    return BFile{
+		Preamble: p,
+		Brobs: brbs,
+	}, nil
+}
+
+Preamble <- Comment  {
+    value := string(c.text)
+    value = strings.TrimSpace(value)
+    if strings.HasPrefix(value, "'''") || strings.HasPrefix(value, "\"\"\""){
+        value = value[3:]
+    }
+    if strings.HasSuffix(value, "'''") || strings.HasSuffix(value, "\"\"\""){
+        value = value[:len(value)-3]
+    }
+    if strings.HasSuffix(value, "'''") {
+        value = value[:len(value)-3]
+    }
+    value = strings.TrimSpace(value)
+
+    return value, nil
+}
+
+
+Brob <- brob:(BrobLine) body:(Body) &(BrobMode / EOF) {
+    x := [4]string(brob.([4]string))
+    b := Brob{
+        ID: x[0] + " " + x[1],
+        Body: body.([]*Field),
+        Line: x[2],
+    }
+	return &b, nil
+}
+
+
+
+BrobLine <- mode:BrobMode WSS+ id:(BrobID) WSS* ":"  WS* cmt:(Cmt) {
+    return [4]string{mode.(string), id.([2]string)[0], id.([2]string)[1], cmt.(string)}, nil
+}
+
+BrobMode <- ("oaiset" / "oai" / "mprocess" / "mailtrg" / "usergroup" / "ujson" / "lookup" / "history" / "meta" / "listattribute" / "listidentity" / "listdownloadtype" / "cg" / "loi" / "search" / "listsorttype" / "nodeattribute" / "listconversion") {
+    return string(c.text), nil
+}
+
+
+BrobID <- [?0-9A-Za-z_./%^]+ {
+    return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
+}
+
+Cmt <- CmtLine* {
+    return string(c.text), nil
+}
+
+CmtLine <- "//" [^\n\r]* (EOF / WS+) {
+    return string(c.text), nil
+}
+
+
+
+
+Body <- fields:Field+ {
+    x := fields.([]interface{})
+    flds := make([]*Field, len(x))
+    for i, f := range x {
+        flds[i] = f.(*Field)
+    }
+    return flds, nil
+}
+
+Key1 <- [a-z][a-zA-Z0-9]* {
+    return string(c.text), nil
+}
+
+Key2 <- [a-z][a-z0-9]* {
+    return string(c.text), nil
+}
+
+Field <- WS* "$" key:Key1 WSS* ":" WSS* value:( Value1 / Value2 / Value3 ) WS* Cmt?  attribs:Attrib* {
+    x := attribs.([]interface{})
+    attr := make([]*Duo, len(x))
+    for i, a := range x {
+        attr[i] = a.(*Duo)
+    }
+    f := Field {
+        key: key.(string),
+        value: value.(string),
+        attribs: attr,
+    }
+    return &f, nil
+}
+
+
+Attrib <- WS* "$$" key:Key2 WSS* ":" WSS* value:(Value1 / Value2 / Value3) WS* Cmt? {
+    d := Duo {
+        key: key.(string),
+        value: value.(string),
+    }
+    return &d, nil
+}
+
+
+
+Value1 <- "⟦" [^⟦⟧]* "⟧" {
+    return strings.Trim(string(c.text), "⟧⟦"), nil
+}
+
+
+Value2 <- "«" [^«»]* "»" {
+    return strings.Trim(string(c.text), "«»"), nil
+}
+
+Value3 <- [^\n\r]* (EOL / EOF) {
+    x := string(c.text)
+    k := strings.Index(x, "//")
+    if k == 0 {
+        return "", nil
+    }
+    if k != -1 {
+       b := qutil.Decomment(c.text)
+       //fmt.Println("TEST:", b.String())
+       return strings.TrimSpace(b.String()), nil
+    }
+    return strings.TrimSpace(x), nil
+}
+
+
+UntilEnd <- [^\n\r]* (EOL / EOF) {
+    return string(c.text), nil
+}
+
+NotCommentLine <-  (([^\n\r/]* (EOL / EOF)) / ([^\n\r/]* !"/" NotCommentLine)) {
+    return c.text, nil
+}
+
+CommentLine <- ("//" [^\n\r]*)
+
+Comment <- comment:(CommentLine / WS+)+ {
+    //fmt.Println("comment:", "[" + string(c.text) + "]")
+	return string(c.text), nil
+}
+
+WS <- [ \n\t\r]
+
+WSS <- [ \t]
+
+EOL <- ("\r\n" / "\n\r" / "\r" / "\n")
+
+EOF <- !.
+
+

@@ -1,0 +1,405 @@
+package dfile
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestParse01(t *testing.T) {
+	data := strings.NewReader(`// -*- coding: utf-8 -*-
+
+
+
+	                             // About: Hello
+
+
+	macro  First   :
+
+	'''
+	$synopsis: Uitleg1F
+	Uitleg2F
+	'''
+
+	macro Second (          ) :
+
+	'''
+	$synopsis: Uitleg1S
+'''
+	macro Third ($a) :    
+	
+	'''
+	$synopsis: Uitleg1T
+    Uitleg2T
+
+'''
+
+
+	`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+	}
+	expect := `// -*- coding: utf-8 -*-
+//
+// About: Hello`
+	if expect != dfile.Preamble {
+		t.Errorf("Comment found: `%s`", dfile.Preamble)
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 3 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	macro := macros[0]
+
+	if macro.ID != "First" {
+		t.Errorf("ID1: `%s`", macro.ID)
+	}
+	macro = macros[1]
+	if macro.ID != "Second" {
+		t.Errorf("ID2: `%s`", macro.ID)
+	}
+	macro = macros[2]
+	if macro.ID != `Third` {
+		t.Errorf("ID3: `%s`", macro.ID)
+	}
+
+	if macro.Synopsis != "Uitleg1T\nUitleg2T" {
+		t.Errorf("Synopsis3: `%s`", macro.Synopsis)
+	}
+}
+
+func TestParam01(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third (  ):`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 0 {
+			t.Errorf("Number of  paramas should be 0")
+		}
+	}
+}
+
+func TestParam02(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third   :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 0 {
+			t.Errorf("Number of  paramas should be 0")
+		}
+	}
+}
+
+func TestParam03(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third(   $a   ,   $b     , *$c )   :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 3 {
+			t.Errorf("Number of  paramas should be 3")
+			return
+		}
+	}
+
+	params := macros[0].Params
+	if params[0].Name != "a" {
+		t.Errorf("Error: param[0] name is %s", params[0].Name)
+	}
+	if params[1].Name != "b" {
+		t.Errorf("Error: param[1] name is %s", params[1].Name)
+	}
+	if params[2].Name != "c" {
+		t.Errorf("Error: param[2] name is %s", params[2].Name)
+	}
+	if params[0].Named {
+		t.Errorf("Error: param[0] should not be named")
+	}
+	if params[1].Named {
+		t.Errorf("Error: param[1] should not be named")
+	}
+	if !params[2].Named {
+		t.Errorf("Error: param[2] should be named")
+	}
+
+	if params[0].Default != "" {
+		t.Errorf("Error: param[0] has default `%s`", params[0].Default)
+	}
+	if params[1].Default != "" {
+		t.Errorf("Error: param[1] has default `%s`", params[1].Default)
+	}
+	if params[2].Default != "" {
+		t.Errorf("Error: param[2] has default `%s`", params[2].Default)
+	}
+
+}
+
+func TestParam04(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third(   $a   = «»,   $b  =  « a »   , *$c =  «»)   :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 3 {
+			t.Errorf("Number of  paramas should be 3")
+			return
+		}
+	}
+
+	params := macros[0].Params
+	if params[0].Name != "a" {
+		t.Errorf("Error: param[0] name is %s", params[0].Name)
+	}
+	if params[1].Name != "b" {
+		t.Errorf("Error: param[1] name is %s", params[1].Name)
+	}
+	if params[2].Name != "c" {
+		t.Errorf("Error: param[2] name is %s", params[2].Name)
+	}
+	if params[0].Named {
+		t.Errorf("Error: param[0] should not be named")
+	}
+	if params[1].Named {
+		t.Errorf("Error: param[1] should not be named")
+	}
+	if !params[2].Named {
+		t.Errorf("Error: param[2] should be named")
+	}
+
+	if params[0].Default != "" {
+		t.Errorf("Error: param[0] has default `%s`", params[0].Default)
+	}
+	if params[1].Default != " a " {
+		t.Errorf("Error: param[1] has default `%s`", params[1].Default)
+	}
+	if params[2].Default != "" {
+		t.Errorf("Error: param[2] has default `%s`", params[2].Default)
+	}
+}
+
+func TestParam05(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third(   $1   = abc )   :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 1 {
+			t.Errorf("Number of  paramas should be 1")
+			return
+		}
+	}
+
+	params := macros[0].Params
+	if params[0].Name != "1" {
+		t.Errorf("Error: param[0] name is %s", params[0].Name)
+	}
+	if params[0].Default != "abc" {
+		t.Errorf("Error: param[0] has default `%s`", params[0].Default)
+	}
+}
+
+func TestParam06(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third(   $1   = 4 - "a,b)c"+5 )   :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 1 {
+			t.Errorf("Number of  paramas should be 1")
+			return
+		}
+	}
+
+	params := macros[0].Params
+	if params[0].Name != "1" {
+		t.Errorf("Error: param[0] name is %s", params[0].Name)
+	}
+	if params[0].Default != `4 - "a,b)c"+5` {
+		t.Errorf("Error: param[0] has default `%s`", params[0].Default)
+	}
+}
+
+func TestParam07(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third(   $1   = (A,B) )  :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 1 {
+			t.Errorf("Number of  paramas should be 1")
+			return
+		}
+	}
+
+	params := macros[0].Params
+	if params[0].Name != "1" {
+		t.Errorf("Error: param[0] name is %s", params[0].Name)
+	}
+	if params[0].Default != `(A,B)` {
+		t.Errorf("Error: param[0] has default `%s`", params[0].Default)
+	}
+}
+
+func TestParam08(t *testing.T) {
+	preamble := "// About\n"
+	data := strings.NewReader(preamble + `macro Third(   $1   = (A,B ")" ) )  :`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+		return
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	if len(macros) == 1 {
+		macro := macros[0]
+		if len(macro.Params) != 1 {
+			t.Errorf("Number of  paramas should be 1")
+			return
+		}
+	}
+
+	params := macros[0].Params
+	if params[0].Name != "1" {
+		t.Errorf("Error: param[0] name is %s", params[0].Name)
+	}
+	if params[0].Default != `(A,B ")" )` {
+		t.Errorf("Error: param[0] has default `%s`", params[0].Default)
+	}
+}
+
+func TestParse11(t *testing.T) {
+	data := strings.NewReader(`// -*- coding: utf-8 -*-
+	macro Third ($cloi, $eloi) :    
+	
+	'''
+	$synopsis: Uitleg1T
+	$cloi: C-loi
+	$eloi: E-loi
+    $example: m4_Third()
+'''
+
+
+	`)
+	dfile, err := Lint("reader", data)
+	if err != nil {
+		t.Errorf("Error: %s", err)
+	}
+	macros := dfile.Macros
+
+	if len(macros) != 1 {
+		t.Errorf("# macros found: `%d`", len(macros))
+		return
+	}
+
+	macro := macros[0]
+	if macro.Synopsis != "Uitleg1T" {
+		t.Errorf("Synopsis11: `%s`", macro.Synopsis)
+	}
+	if len(macro.Params) != 2 {
+		t.Errorf("# params found: `%d`", len(macro.Params))
+		return
+	}
+	param := macro.Params[1]
+	if param.Name != "eloi" {
+		t.Errorf("param2 Name is: `%s`", param.Name)
+		return
+	}
+	if param.Doc != "E-loi" {
+		t.Errorf("param2 doc is: `%s`", param.Doc)
+		return
+	}
+	examples := macro.Example
+
+	if len(examples) != 1 {
+		t.Errorf("# examples is: `%d`", len(examples))
+		return
+	}
+	example := examples[0]
+	if example != "m4_Third()" {
+		t.Errorf("example is: `%s`", example)
+	}
+
+}

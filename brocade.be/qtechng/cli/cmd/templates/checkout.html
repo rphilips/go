@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>{{ .Head }}</head>
+<body>
+    
+    <form class="qtechng-form-base">
+        <div class="qtechng-form-base-heading">Checkout file from the QTechNG repository</div>
+        <label class="input-label-primary" for="qpattern"><span>Pattern on QPath <span
+                    class="required">*</span></span><input autofocus placeholder="e.g. /collection/*.m" type="text"
+                class="input-field" name="qpattern" id="qpattern" value='{{index .Vars "qpattern"}}' /></label>
+        <label class="input-label-primary" for="version"><span>Version <span class="required">*</span></span><input
+                type="text" class="input-field-version" name="version" id="version"
+                value='{{index .Vars "version"}}' /></label>
+        <label class="input-label-primary" for="clear0"><span>Clear ?</span>
+            <input type='checkbox' name='clear0' id='clear0' {{if (.VarsH.clear)}}checked{{end}}
+                value='{{index .Vars "clear"}}' onclick='return handleCheck("clear")' />
+            <input type='hidden' name='clear' id='clear' value='{{index .Vars "clear"}}' data-on='1'
+                data-off='0' />
+                <input type='hidden' name='checkout' id='checkout' value='1' />
+        </label>
+        <label class="input-label-primary" for="mode"><span>Auto </span><input type="radio" name="mode" id="mode_auto" value='auto' {{if (.VarsH.auto)}}checked{{end}} /></label>
+        <label class="input-label-primary" for="mode"><span>Tree </span><input type="radio" name="mode" id="mode_tree" value='tree' {{if (.VarsH.tree)}}checked{{end}} /></label>
+        <label class="input-label-primary" for="mode"><span>Flat </span><input type="radio" name="mode" id="mode_flat" value='' {{if (.VarsH.flat)}}checked{{end}} /></label>
+
+
+        <label class="input-label-secondary" for="editlist"><span>Edit list </span><input type="text" name="editlist"
+                id="editlist" value='{{index .Vars "editlist"}}' /></label>
+        <label class="input-label-secondary" for="jsonpath"><span>JSONPath </span><input type="text" name="jsonpath"
+                id="jsonpath" value='{{index .Vars "jsonpath"}}' /></label>
+        <label class="input-label-secondary" for="yaml"><span>YAML ?</span>
+            <input type='checkbox' name='yaml0' id='yaml0' {{if (.VarsH.yaml)}}checked{{end}}
+            value='{{index .Vars "yaml"}}'
+                onclick='return handleCheck("yaml")' />
+            <input type='hidden' name='yaml' id='yaml' value='{{index .Vars "yaml"}}' data-on='1' data-off='0' />
+        </label>
+        <label class="input-label-primary">
+            <span>&#160;</span>
+            <input type="submit" value="Submit" onclick="golangfunc('')" />
+            &#160;
+            <input type="submit" value="Quit" onclick="golangfunc('stop')" />
+        </label>
+        
+        
+    </form>
+    <p class="input-label-primary" id="busy"></p>
+    <pre id="yamldisplay"></pre>
+    <pre id="jsondisplay"></pre>
+    
+</body>
+
+</html>

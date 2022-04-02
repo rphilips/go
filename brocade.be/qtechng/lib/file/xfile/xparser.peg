@@ -1,0 +1,132 @@
+{
+package xfile
+
+import (
+
+    qutil "brocade.be/qtechng/lib/util"
+    qerror "brocade.be/qtechng/lib/error"
+    qregistry "brocade.be/base/registry"
+)
+
+
+
+}
+
+
+
+File <- preamble:(Preamble?) widgets:(Widget*) EOF {
+	p := qutil.Comment(preamble)
+    ms := widgets.([]interface{})
+    if len(ms) == 0 {
+        return XFile{
+		    Preamble: p,
+		    Widgets: nil,
+	    }, nil
+    }
+	wgts := make([]*Widget, len(ms))
+	for i, m := range ms {
+		wgts[i] = m.(*Widget)
+	}
+    return XFile{
+		Preamble: p,
+		Widgets: wgts,
+	}, nil
+}
+
+Preamble <- Comment  {
+    value := string(c.text)
+    value = strings.TrimSpace(value)
+    if strings.HasPrefix(value, "'''") || strings.HasPrefix(value, "\"\"\""){
+        value = value[3:]
+    }
+    if strings.HasSuffix(value, "'''") || strings.HasSuffix(value, "\"\"\""){
+        value = value[:len(value)-3]
+    }
+    if strings.HasSuffix(value, "'''") {
+        value = value[:len(value)-3]
+    }
+    value = strings.TrimSpace(value)
+
+    return value, nil
+}
+
+Tripel1 <- WS* "'''" .* "'''" & {
+                preamble := string(c.text)
+                return strings.Count(preamble, "'''") == 2, nil
+                }
+
+Tripel2 <-  WS* "\"\"\"" .* "\"\"\"" & {
+                preamble := string(c.text)
+                return strings.Count(preamble, "\"\"\"") == 2, nil
+                }
+
+Widget <- widget:WidgetLine body:Body {
+	w := widget.(*Widget)
+    w.Body = body.(string)
+	return w, nil
+}
+
+WidgetLine <- mode:WidgetMode WSS+ id:(WidgetID) WSS* ":" [^\n\r]* &(EOF/EOL) {
+	widget := Widget{
+        ID: mode.(string) + " " + id.([2]string)[0],
+        Line: id.([2]string)[1],
+    }
+	return &widget, nil
+}
+
+WidgetMode <- ("screen" / "format" / "text") {
+    return  string(c.text), nil
+}
+
+WidgetID <- id:([@$0-9a-zA-Z][$._a-zA-Z0-9-]*) {
+	return [2]string{string(c.text), strconv.Itoa(c.pos.line)}, nil
+}
+
+
+Body <- (EOF / Body2) {
+    x := strings.TrimSpace(string(c.text))
+    if strings.HasPrefix(x, "«") {
+        x = strings.TrimPrefix(x, "«")
+        x = strings.TrimSuffix(x, "»")
+    } else {
+        if strings.HasPrefix(x, "⟦") {
+            x = strings.TrimPrefix(x, "⟦")
+            x = strings.TrimSuffix(x, "⟧")
+        }
+    }
+    return x, nil
+}
+
+Body2 <- lines:(NotWidgetLine+)
+
+NotWidgetLine <-  ((EOL !WidgetLine)  [^\n\r]* &(EOF/EOL)) / EOL {
+    return  string(c.text), nil
+}
+
+
+CommentLine <- ("//" [^\n\r]*)
+
+Comment <- comment:(CommentLine / WS+)+ {
+	return string(c.text), nil
+}
+
+
+DELIM1 <- WS* "'''"
+
+DELIM2 <- WS* `"""`
+
+WS <- [ \n\t\r]
+WSS <- [ \t]
+
+EOL <- ("\r\n" / "\n\r" / "\r" / "\n")
+
+EOF <- !.
+
+
+
+
+
+
+
+
+

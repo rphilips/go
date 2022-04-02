@@ -1,0 +1,78 @@
+{
+package mfile
+
+import qutil "brocade.be/qtechng/lib/util"
+}
+
+// see: https://github.com/antlr/grammars-v4/blob/master/mumps/mumps.g4
+
+
+Expression <-
+    / Term "[+*-/\\\[\]^" Expression
+    / Term
+
+Term <- 
+    / Number
+    / "(" Expression ")"
+    / Function
+    / Var
+
+Number <- 
+    / [0-9]+( "." [0-9]* ( [eE] [+-]? [0-9]+ )? )?
+    / "." [0-9]+ ( [eE] [+-]? [0-9]+ )?
+
+ 
+Function 
+
+   : erm (SPACE* ADD  expression)*
+Command <- 
+    / CmdBREAK
+    / CmdCLOSE
+    / CmdDO
+    / CmdELSE
+    / CmdFOR
+    / CmdGOTO
+    / CmdHALT
+    / CmdHANG
+    / CmdIF
+    / CmdJOB
+    / CmdKILL
+    / CmdLOCK
+    / CmdMERGE
+    / CmdNEW
+    / CmdOPEN
+    / CmdQUIT
+    / CmdREAD
+    / CmdSET
+    / CmdTCOMMIT
+    / CmdTRESTART
+    / CmdTROLLBACK
+    / CmdTSTART
+    / CmdUSE
+    / CmdVIEW
+    / CmdWRITE
+    / CmdXECUTE
+    / CmdZ
+
+
+
+
+Commandword (" " ListArguments)
+	p := qutil.Comment(preamble)
+    ms := macros.([]interface{})
+    if len(ms) == 0 {
+        return DFile{
+		    Preamble: p,
+		    Macros: nil,
+	    }, nil
+    }
+	macs := make([]*Macro, len(ms))
+	for i, m := range ms {
+		macs[i] = m.(*Macro)
+	}
+
+    return DFile{
+		Preamble: p,
+		Macros: macs,
+	}, nil
+}
