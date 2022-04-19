@@ -34,6 +34,7 @@ func init() {
 func registrySet(cmd *cobra.Command, args []string) (err error) {
 
 	key := args[0]
+	key = strings.ReplaceAll(key, "_", "-")
 	value := ""
 	ok := false
 	switch len(args) {

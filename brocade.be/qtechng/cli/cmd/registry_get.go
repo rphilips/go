@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 
 	qfnmatch "brocade.be/base/fnmatch"
 	qregistry "brocade.be/base/registry"
@@ -18,6 +19,7 @@ var registryGetCmd = &cobra.Command{
 	Long:  `List all registry values with a key matching a pattern`,
 	Example: `
   qtechng registry get scratch-dir
+  qtechng registry get scratch-dir --remote
   qtechng registry get qtechng-*`,
 	Args:   cobra.ExactArgs(1),
 	RunE:   registryGet,
@@ -35,6 +37,10 @@ func init() {
 func registryGet(cmd *cobra.Command, args []string) (err error) {
 
 	pattern := args[0]
+	if strings.HasPrefix(pattern, "r4_") {
+		pattern = pattern[3:]
+	}
+	pattern = strings.ReplaceAll(pattern, "_", "-")
 	found := make([]string, 0)
 	for key := range qregistry.Registry {
 		if qfnmatch.Match(pattern, key) {
@@ -44,7 +50,12 @@ func registryGet(cmd *cobra.Command, args []string) (err error) {
 	sort.Strings(found)
 	if len(found) == 1 {
 		if Fstdout == "" || Ftransported {
-			fmt.Printf("%s", qregistry.Registry[found[0]])
+			fi, _ := os.Stdout.Stat()
+			if (fi.Mode() & os.ModeCharDevice) == 0 {
+				fmt.Print(qregistry.Registry[found[0]])
+				return nil
+			}
+			fmt.Println(qregistry.Registry[found[0]])
 			return nil
 		}
 		f, err := os.Create(Fstdout)

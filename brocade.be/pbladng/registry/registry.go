@@ -16,21 +16,21 @@ var Registry map[string]string
 
 func init() {
 	Registry = make(map[string]string)
-	registryFile := os.Getenv("BROCADE_REGISTRY")
+	registryFile := os.Getenv("PBLAD_REGISTRY")
 	if registryFile == "" {
-		Registry["error"] = "BROCADE_REGISTRY environment variable is not defined"
+		Registry["error"] = "PBLAD_REGISTRY environment variable is not defined"
 		return
 	}
 	info, err := os.Stat(registryFile)
 	if err == nil && info.IsDir() {
-		Registry["error"] = fmt.Sprintf("BROCADE_REGISTRY `%s` points to a directory. It should be a file.", registryFile)
+		Registry["error"] = fmt.Sprintf("PBLAD_REGISTRY `%s` points to a directory. It should be a file.", registryFile)
 		return
 	}
 	b := make([]byte, 0)
 	if !errors.Is(err, fs.ErrNotExist) {
 		b, err = os.ReadFile(registryFile)
 		if err != nil {
-			Registry["error"] = fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
+			Registry["error"] = fmt.Sprintf("Cannot read file '%s' (PBLAD_REGISTRY environment variable)", registryFile)
 			return
 		}
 	}
@@ -38,7 +38,7 @@ func init() {
 		b = []byte("{}")
 		err = fatomic.WriteFile(registryFile, bytes.NewReader(b))
 		if err != nil {
-			Registry["error"] = fmt.Sprintf("Cannot initialise file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
+			Registry["error"] = fmt.Sprintf("Cannot initialise file '%s' (PBLAD_REGISTRY environment variable)", registryFile)
 			return
 		}
 	}
@@ -60,13 +60,13 @@ func init() {
 
 //SetRegistry set a value to a key in the registry
 func SetRegistry(key, value string) error {
-	registryFile := os.Getenv("BROCADE_REGISTRY")
+	registryFile := os.Getenv("PBLAD_REGISTRY")
 	if registryFile == "" {
-		return fmt.Errorf("BROCADE_REGISTRY environment variable is not defined")
+		return fmt.Errorf("PBLAD_REGISTRY environment variable is not defined")
 	}
 	b, err := os.ReadFile(registryFile)
 	if err != nil {
-		return fmt.Errorf("cannot read file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
+		return fmt.Errorf("cannot read file `%s` (PBLAD_REGISTRY environment variable): %s", registryFile, err.Error())
 	}
 	if len(b) == 0 {
 		b = []byte("{}")
@@ -87,20 +87,20 @@ func SetRegistry(key, value string) error {
 	}
 	err = fatomic.WriteFile(registryFile, bytes.NewReader(r))
 	if err != nil {
-		return fmt.Errorf("cannot write file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
+		return fmt.Errorf("cannot write file `%s` (PBLAD_REGISTRY environment variable): %s", registryFile, err.Error())
 	}
 	return nil
 }
 
 //InitRegistry set a value to a key in the registry if it does not exist
 func InitRegistry(key, value string) error {
-	registryFile := os.Getenv("BROCADE_REGISTRY")
+	registryFile := os.Getenv("PBLAD_REGISTRY")
 	if registryFile == "" {
-		return fmt.Errorf("BROCADE_REGISTRY environment variable is not defined")
+		return fmt.Errorf("PBLAD_REGISTRY environment variable is not defined")
 	}
 	b, err := os.ReadFile(registryFile)
 	if err != nil {
-		return fmt.Errorf("cannot read file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
+		return fmt.Errorf("cannot read file `%s` (PBLAD_REGISTRY environment variable): %s", registryFile, err.Error())
 	}
 	if len(b) == 0 {
 		b = []byte("{}")
@@ -120,7 +120,7 @@ func InitRegistry(key, value string) error {
 	}
 	err = fatomic.WriteFile(registryFile, bytes.NewReader(r))
 	if err != nil {
-		return fmt.Errorf("cannot write file `%s` (BROCADE_REGISTRY environment variable): %s", registryFile, err.Error())
+		return fmt.Errorf("cannot write file `%s` (PBLAD_REGISTRY environment variable): %s", registryFile, err.Error())
 	}
 	return nil
 }

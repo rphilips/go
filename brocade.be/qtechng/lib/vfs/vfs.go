@@ -12,6 +12,8 @@ import (
 
 	"github.com/spf13/afero"
 
+	bfs "io/fs"
+
 	qfnmatch "brocade.be/base/fnmatch"
 	qutil "brocade.be/qtechng/lib/util"
 )
@@ -123,7 +125,7 @@ func (fs QFs) Store(fname string, data interface{}, digest string) (changed bool
 		return false, before, nil, err
 	}
 
-	if bytes.Equal(before, after) && !os.IsNotExist(e) {
+	if bytes.Equal(before, after) && !errors.Is(e, bfs.ErrNotExist) {
 		return false, before, after, nil
 	}
 

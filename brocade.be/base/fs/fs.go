@@ -416,7 +416,7 @@ func Exists(path string) bool {
 	if err == nil {
 		return true
 	}
-	return !os.IsNotExist(err)
+	return !errors.Is(err, fs.ErrNotExist)
 }
 
 // IsDir checks if a path is an existing directory
@@ -693,7 +693,7 @@ func CopyDir(src string, dst string, pathmode string, keepmtime bool) (err error
 	}
 
 	_, err = os.Stat(dst)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return
 	}
 	if err == nil {

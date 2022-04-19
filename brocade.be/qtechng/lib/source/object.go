@@ -1,8 +1,10 @@
 package source
 
 import (
-	"os"
+	"errors"
 	"strings"
+
+	bfs "io/fs"
 
 	qfnmatch "brocade.be/base/fnmatch"
 	qparallel "brocade.be/base/parallel"
@@ -57,7 +59,7 @@ func Waste(object qobject.Object) (changed bool, err error) {
 	fs, fname := rel.ObjectPlace(object.String())
 	changed, err = fs.Waste(fname)
 
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, bfs.ErrNotExist) {
 		e := &qerror.QError{
 			Ref:     []string{"object.waste.file"},
 			Version: r,

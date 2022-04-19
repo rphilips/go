@@ -3,6 +3,8 @@ package source
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -176,7 +178,7 @@ func (source *Source) Waste() (err error) {
 	version := source.Release()
 	r := version.String()
 	content, err := source.Fetch()
-	if err != nil && os.IsNotExist(err) {
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
 		return nil
 	}
 	if err != nil {

@@ -2,8 +2,9 @@ package project
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -141,7 +142,7 @@ func (project Project) Exists(p string) bool {
 		p = "brocade.json"
 	}
 	if _, err := project.Release().FS().Stat(p); err != nil {
-		return !os.IsNotExist(err)
+		return !errors.Is(err, fs.ErrNotExist)
 	}
 	return true
 }
