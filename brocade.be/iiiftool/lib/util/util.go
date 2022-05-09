@@ -1,6 +1,8 @@
 package util
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -40,4 +42,14 @@ func Check(result string, expected string, t *testing.T) {
 	if result != expected {
 		t.Errorf(fmt.Sprintf("\nResult: \n[%s]\nExpected: \n[%s]\n", result, expected))
 	}
+}
+
+// Get SHA1 for a given string
+func GetSHA1(data []byte) string {
+	h := sha1.New()
+	h.Write(data)
+	sha1bytes := h.Sum(nil)
+	hash := hex.EncodeToString(sha1bytes)
+	hash = strings.ToLower(hash)
+	return hash
 }

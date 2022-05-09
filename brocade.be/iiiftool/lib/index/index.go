@@ -16,7 +16,6 @@ import (
 	"brocade.be/base/registry"
 	qtime "brocade.be/base/time"
 	"brocade.be/iiiftool/lib/sqlite"
-	"brocade.be/iiiftool/lib/util"
 )
 
 var iifBaseDir = registry.Registry["iiif-base-dir"]
@@ -26,7 +25,8 @@ var iiifMaxPar, _ = strconv.Atoi(registry.Registry["iiif-max-parallel"])
 const createIndexes = `
 CREATE TABLE indexes (
 	key INTEGER PRIMARY KEY AUTOINCREMENT,
-	id TEXT,
+	identifier TEXT,
+	iiifsys TEXT,
 	digest TEXT,
 	location TEXT,
 	metatime TEXT,
@@ -48,7 +48,7 @@ func WriteIndexes(index IndexData) (map[string][]string, error) {
 	Mindices := make(map[string][]string)
 
 	db := index.Index
-	insert, err := db.Prepare("INSERT INTO indexes (key, id, digest, location, metatime, sqlartime) Values($1,$2,$3,$4,$5,$6)")
+	insert, err := db.Prepare("INSERT INTO indexes (key, identifier, digest, location, metatime, sqlartime) Values($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		return Mindices, fmt.Errorf("cannot prepare insert: %v", err)
 	}
@@ -56,23 +56,10 @@ func WriteIndexes(index IndexData) (map[string][]string, error) {
 
 	meta := index.Meta
 
-	indexes := strings.Split(meta.Indexes, "^")
-	for _, id := range indexes {
-		if id == "" {
-			continue
-		}
-
-		Mindices[id] = []string{meta.Digest, index.Metatime, index.Sqlartime}
-
-		// log both original and URL-safe version (for PHP endpoint)
-		versions := []string{id, util.URLSafe(id)}
-		for _, version := range versions {
-			_, err = insert.Exec(nil, version, meta.Digest, index.Path, index.Metatime, index.Sqlartime)
-			if err != nil {
-				// do not throw error, but allow to continue
-				fmt.Printf("error executing insert: %v: %s\n", err, id)
-			}
-		}
+	_, err = insert.Exec(nil, meta.Identifier, meta.Digest, index.Path, index.Metatime, index.Sqlartime)
+	if err != nil {
+		// do not throw error, but allow to continue
+		fmt.Printf("error executing insert: %v", err)
 	}
 
 	return Mindices, nil
@@ -109,6 +96,7 @@ func Update(sqlitefile string) error {
 	}
 
 	var indexInfo IndexData
+
 	indexInfo.Index = index
 	indexInfo.Meta = meta
 	indexInfo.Metatime = metatime
@@ -229,14 +217,14 @@ func Rebuild(verbose bool) error {
 
 // Given a IIIF identifier, lookup its digest
 // in the index database
-func LookupId(id string) (string, error) {
+func LookupId(identifier string) (string, error) {
 	index, err := sql.Open("sqlite", iiifIndexDb)
 	if err != nil {
 		return "", fmt.Errorf("cannot open index database: %v", err)
 	}
 	defer index.Close()
 
-	row := index.QueryRow("SELECT digest FROM indexes where id=?", id)
+	row := index.QueryRow("SELECT digest FROM indexes where identifier=?", identifier)
 	digest, err := sqlite.ReadStringRow(row)
 	if err != nil {
 		return "", fmt.Errorf("error selecting digest: %v", err)
@@ -278,8 +266,8 @@ func RemoveDigest(digest string) error {
 		return fmt.Errorf("json error:\n%s", err)
 	}
 
-	for id := range result {
-		identifiers = append(identifiers, id)
+	for identifier := range result {
+		identifiers = append(identifiers, identifier)
 	}
 
 	err = KillinMIndex(digest, identifiers)
@@ -300,7 +288,7 @@ func Search(search string) ([][]string, error) {
 	}
 	defer index.Close()
 
-	query := "SELECT * FROM indexes where id='" + search + "' or digest='" + search + "'"
+	query := "SELECT * FROM indexes where identifier='" + search + "' or digest='" + search + "'"
 	rows, err := index.Query(query)
 	if err != nil {
 		return result, fmt.Errorf("error querying index database: %v", err)
@@ -324,11 +312,11 @@ func KillinMIndex(digest string, identifiers []string) error {
 	cmds := []string{
 		`k ^BIIIF("index",1,"digest2id","` + digest + `")`}
 
-	for _, id := range identifiers {
-		loi := strings.Split(id, ",")[0]
+	for _, identifier := range identifiers {
+		loi := strings.Split(identifier, ",")[0]
 		loi = strings.TrimRight(loi, ",")
 		cmds = append(cmds, `k ^BIIIF("index",1,"id2digest","`+loi+`","`+loi+`","`+digest+`")`)
-		cmds = append(cmds, `k ^BIIIF("index",1,"id2digest","`+loi+`","`+id+`","`+digest+`")`)
+		cmds = append(cmds, `k ^BIIIF("index",1,"id2digest","`+loi+`","`+identifier+`","`+digest+`")`)
 	}
 
 	for _, cmd := range cmds {
@@ -344,14 +332,15 @@ func KillinMIndex(digest string, identifiers []string) error {
 // Log index info in MUMPS
 // kill=true rebuild the index from scratch
 func SetMIndex(indices map[string][]string, kill bool) error {
+	return nil
 	mpipe, err := mumps.Open("")
 	if err != nil {
 		return fmt.Errorf("mumps open error:\n%s", err)
 	}
 	defer mpipe.Close()
 
-	for id, values := range indices {
-		loi := strings.Split(id, ",")[0]
+	for identifier, values := range indices {
+		loi := strings.Split(identifier, ",")[0]
 		loi = strings.TrimRight(loi, ",")
 		digest := values[0]
 		metaTimeObject, _ := time.Parse(time.RFC3339, values[1])
@@ -361,8 +350,8 @@ func SetMIndex(indices map[string][]string, kill bool) error {
 
 		cmds := []string{
 			`s ^BIIIF("index",2,"id2digest","` + loi + `","` + loi + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
-			`s ^BIIIF("index",2,"id2digest","` + loi + `","` + id + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
-			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + loi + `","` + id + `")="` + metatime + `^` + sqlartime + `"`}
+			`s ^BIIIF("index",2,"id2digest","` + loi + `","` + identifier + `","` + digest + `")="` + metatime + `^` + sqlartime + `"`,
+			`s ^BIIIF("index",2,"digest2id","` + digest + `","` + loi + `","` + identifier + `")="` + metatime + `^` + sqlartime + `"`}
 
 		for _, cmd := range cmds {
 			err = mpipe.WriteExec(cmd)
