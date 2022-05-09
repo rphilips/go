@@ -34,11 +34,20 @@ func ZWR(text string) []string {
 	return h
 }
 
-func CSV(text string) []string {
+func CSV(text string, output string) []string {
 	if text == "" {
 		return nil
 	}
 	w := csv.NewWriter(os.Stdout)
+	if output != "" {
+		f, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		if err != nil {
+			fmt.Println(err.Error())
+			return nil
+		}
+		defer f.Close()
+		w = csv.NewWriter(f)
+	}
 	gloref, _ := SplitRefValue(text)
 	gloref2 := qyottadb.N(gloref)
 	show := make(chan qyottadb.SubReport, 100)

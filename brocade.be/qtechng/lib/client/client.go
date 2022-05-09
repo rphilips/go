@@ -20,18 +20,20 @@ import (
 
 // LocalFile represents a local file
 type LocalFile struct {
-	Release string `json:"release"`
-	QPath   string `json:"qpath"`
-	DevPath string `json:"devpath"`
-	Project string `json:"project"`
-	Time    string `json:"time"`
-	Digest  string `json:"digest"`
-	Cu      string `json:"cu"`
-	Mu      string `json:"mu"`
-	Ct      string `json:"ct"`
-	Mt      string `json:"mt"`
-	Place   string `json:"-"`
-	Sort    string `json:"sort"`
+	Release  string `json:"release"`
+	QPath    string `json:"qpath"`
+	DevPath  string `json:"devpath"`
+	Project  string `json:"project"`
+	Time     string `json:"time"`
+	Digest   string `json:"digest"`
+	Cu       string `json:"cu"`
+	Mu       string `json:"mu"`
+	Ct       string `json:"ct"`
+	Mt       string `json:"mt"`
+	Place    string `json:"-"`
+	Sort     string `json:"sort"`
+	Priority string `json:"priority"`
+	Core     bool   `json:"core"`
 }
 
 // Transport of files to B

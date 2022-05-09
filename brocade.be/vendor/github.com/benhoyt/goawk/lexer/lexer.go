@@ -8,10 +8,6 @@
 //
 package lexer
 
-import (
-	"fmt"
-)
-
 // Lexer tokenizes a byte string of AWK source code. Use NewLexer to
 // actually create a lexer, and Scan() or ScanRegex() to get tokens.
 type Lexer struct {
@@ -52,7 +48,7 @@ func (l *Lexer) HadSpace() bool {
 }
 
 // Scan scans the next token and returns its position (line/column),
-// token value (one of the uppercased token constants), and the
+// token value (one of the uppercase token constants), and the
 // string value of the token. For most tokens, the token value is
 // empty. For NAME, NUMBER, STRING, and REGEX tokens, it's the
 // token's value. For an ILLEGAL token, it's the error message.
@@ -366,7 +362,7 @@ func (l *Lexer) scanRegex() (Position, Token, string) {
 		pos.Column -= 2
 		chars = append(chars, '=')
 	default:
-		return l.pos, ILLEGAL, fmt.Sprintf("unexpected %s preceding regex", l.lastTok)
+		panic("ScanRegex should only be called after DIV or DIV_ASSIGN token")
 	}
 	for l.ch != '/' {
 		c := l.ch
@@ -408,7 +404,7 @@ func (l *Lexer) next() {
 	if ch == '\n' {
 		l.nextPos.Line++
 		l.nextPos.Column = 1
-	} else {
+	} else if ch != '\r' {
 		l.nextPos.Column++
 	}
 	l.ch = ch
@@ -452,4 +448,10 @@ func (l *Lexer) choice(ch byte, one, two Token) Token {
 		return two
 	}
 	return one
+}
+
+// PeekByte returns the next unscanned byte; used when parsing
+// "getline lvalue" expressions. Returns 0 at end of input.
+func (l *Lexer) PeekByte() byte {
+	return l.ch
 }

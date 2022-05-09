@@ -94,7 +94,7 @@ func (Project) New(r string, p string, readonly bool) (project *Project, err err
 }
 
 // Orden calculates a string for a project to indicates its ordening under all projects
-func (project Project) Orden() (sort string) {
+func (project Project) Orden() (sort string, core bool, priority string) {
 	r := project.Release().String()
 	p := project.String() + "/brocade.json"
 	seq, _ := Sequence(r, p, true)
@@ -102,6 +102,8 @@ func (project Project) Orden() (sort string) {
 	if project.IsCore() {
 		sort = "0"
 	}
+	prs := make([]string, 0)
+	core = sort == "0"
 	for _, p := range seq {
 		cfg, e := p.LoadConfig()
 		prio := 10000
@@ -114,10 +116,11 @@ func (project Project) Orden() (sort string) {
 				prio = 1
 			}
 		}
+		prs = append(prs, strconv.Itoa(prio))
 		prio = 1000000 - prio
 		sort += strconv.Itoa(prio)
 	}
-	return sort
+	return sort, core, strings.Join(prs, " ")
 }
 
 // String of a release: release fulfills the Stringer interface
@@ -794,13 +797,18 @@ func find(slice []string, val string, wildcard bool) int {
 // Sort Sorteer projecten in volgorde van installeerbaarheid
 func Sort(projects []*Project) []*Project {
 
+	result := make([]*Project, len(projects))
 	ordens := make([]string, len(projects))
 	for i, p := range projects {
-		ordens[i] = p.Orden()
+		s, _, _ := p.Orden()
+		ordens[i] = s + " " + strconv.Itoa(i)
 	}
-	less := func(i, j int) bool {
-		return ordens[i] < ordens[j]
+	sort.Strings(ordens)
+
+	for i, orden := range ordens {
+		_, after, _ := strings.Cut(orden, " ")
+		j, _ := strconv.Atoi(after)
+		result[i] = projects[j]
 	}
-	sort.SliceStable(projects, less)
-	return projects
+	return result
 }

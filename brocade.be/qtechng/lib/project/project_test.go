@@ -105,7 +105,7 @@ func TestCore02(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Project should be core: %s", project.String()))
 		return
 	}
-	sort := project.Orden()
+	sort, _, _ := project.Orden()
 	if sort != "1996667" {
 		t.Errorf(fmt.Sprintf("sort: %s", sort))
 		return
