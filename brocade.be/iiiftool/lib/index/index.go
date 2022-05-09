@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	qfs "brocade.be/base/fs"
 	"brocade.be/base/mumps"
 	"brocade.be/base/parallel"
 	"brocade.be/base/registry"
@@ -72,6 +73,11 @@ func Update(sqlitefile string) error {
 	meta, err := sqlite.ReadMetaTable(sqlitefile)
 	if err != nil {
 		return fmt.Errorf("cannot read meta table: %v", err)
+	}
+
+	// create iiifIndexDb if necessary
+	if !qfs.Exists(iiifIndexDb) {
+		return Rebuild(false)
 	}
 
 	index, err := sql.Open("sqlite", iiifIndexDb)

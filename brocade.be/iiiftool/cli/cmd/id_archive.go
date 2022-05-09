@@ -75,6 +75,7 @@ func idArchive(cmd *cobra.Command, args []string) error {
 
 	// Get IIIF metadata from MUMPS
 	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
+	mResponse.Iiifsys = Fiiifsys // to do: vroeger kwam dit uit MUMPS, nu niet meer?!
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
