@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"brocade.be/base/fs"
 	"brocade.be/base/mumps"
@@ -23,14 +25,13 @@ type validateResponse struct {
 	Error    string      `json:"error"`
 	Warnings interface{} `json:"warnings"`
 }
-type MResponse struct {
-	Digest     string              `json:"digest"`
-	Images     []map[string]string `json:"images"`
-	Imgloi     string              `json:"imgloi"`
-	Indexes    []string            `json:"index"`
-	Iiifsys    string              `json:"iiifsys"`
-	Manifest   interface{}         `json:"manifest"`
-	Identifier string              `json:"identifier"`
+type IIIFmeta struct {
+	Images   []map[string]string `json:"images"`
+	Imgloi   string              `json:"imgloi"`
+	Indexes  []string            `json:"index"`
+	Info     map[string]string   `json:"info"`
+	Iiifsys  string              `json:"iiifsys"`
+	Manifest interface{}         `json:"manifest"`
 }
 
 // Harvest IIIF metadata from MUMPS
@@ -41,7 +42,7 @@ func Meta(
 	imgty string,
 	access string,
 	mime string,
-	iiifsys string) (MResponse, error) {
+	iiifsys string) (IIIFmeta, error) {
 
 	payload := make(map[string]string)
 	payload["loi"] = id
@@ -59,20 +60,20 @@ func Meta(
 		payload["mime"] = mime
 	}
 
-	var mResponse MResponse
+	var iiifMeta IIIFmeta
 	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
 	if err != nil {
-		return mResponse, fmt.Errorf("mumps reader error:\n%s", err)
+		return iiifMeta, fmt.Errorf("mumps reader error:\n%s", err)
 	}
 	out, err := ioutil.ReadAll(oreader)
 	if err != nil {
-		return mResponse, fmt.Errorf("cannot read MUMPS response:\n%s", err)
+		return iiifMeta, fmt.Errorf("cannot read MUMPS response:\n%s", err)
 	}
-	err = json.Unmarshal(out, &mResponse)
+	err = json.Unmarshal(out, &iiifMeta)
 	if err != nil {
-		return mResponse, fmt.Errorf("json error:\n%s", err)
+		return iiifMeta, fmt.Errorf("json error:\n%s", err)
 	}
-	return mResponse, nil
+	return iiifMeta, nil
 }
 
 // Given a IIIF digest, formulate its appropriate location in the filesystem
@@ -82,6 +83,15 @@ func Digest2Location(digest string) string {
 	folder := digest[0:2]
 	subfolder := digest[2:4]
 	location := filepath.Join(iifBaseDir, folder[0:2], subfolder, digest, "db.sqlite")
+	return location
+}
+
+// Create a temporary location for IIIF archive
+func TempLocation() string {
+	now := time.Now().UnixNano()
+	b := []byte(strconv.FormatInt(now, 10))
+	filename := util.GetSHA1(b) + ".sqlite"
+	location := filepath.Join(iifBaseDir, "tmp", filename)
 	return location
 }
 

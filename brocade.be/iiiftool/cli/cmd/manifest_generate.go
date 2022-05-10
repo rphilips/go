@@ -36,12 +36,12 @@ func manifestGenerate(cmd *cobra.Command, args []string) error {
 	}
 	loiType := strings.Split(loi, ":")[0]
 
-	mResponse, err := iiif.Meta(loi, loiType, "", "", "", "", iiifsys)
+	iiifMeta, err := iiif.Meta(loi, loiType, "", "", "", "", iiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
-	manifest, err := json.Marshal(mResponse.Manifest)
+	manifest, err := json.Marshal(iiifMeta.Manifest)
 	if err != nil {
 		return fmt.Errorf("json error:\n%s", err)
 	}

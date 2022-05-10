@@ -11,6 +11,7 @@ import (
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/index"
 	"brocade.be/iiiftool/lib/sqlite"
+	"brocade.be/iiiftool/lib/util"
 
 	"github.com/spf13/cobra"
 )
@@ -51,7 +52,7 @@ func init() {
 	idArchiveCmd.PersistentFlags().BoolVar(&Fverbose, "verbose", false, "Display information")
 	idArchiveCmd.PersistentFlags().BoolVar(&Fmetaonly, "metaonly", false,
 		`If images are present, only the meta information (including manifest) is replaced.
-	If there are no images present, the usual archiving routine is used.`)
+	If there are no images present, the usual archiving routine is performed.`)
 }
 
 func idArchive(cmd *cobra.Command, args []string) error {
@@ -74,32 +75,37 @@ func idArchive(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get IIIF metadata from MUMPS
-	mResponse, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
-	mResponse.Iiifsys = Fiiifsys // to do: vroeger kwam dit uit MUMPS, nu niet meer?!
+	iiifMeta, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
-	if len(mResponse.Digest) == 0 {
-		log.Fatalf("iiiftool ERROR: no digest")
+	iiifMeta.Info["olddigest"] = "" // to do: Richard past de MUMPS code aan eens de index er is
+	var sqlitefile string
+	if iiifMeta.Info["olddigest"] == "" {
+		sqlitefile = iiif.TempLocation()
+	} else {
+		sqlitefile = iiif.Digest2Location(iiifMeta.Info["olddigest"])
 	}
 
-	sqlitefile := iiif.Digest2Location(mResponse.Digest)
+	iiifMeta.Iiifsys = Fiiifsys // to do: vroeger kwam dit uit MUMPS, nu niet meer?!
+
+	// Create SQLite contents
 
 	if Fmetaonly && fs.Exists(sqlitefile) {
-		err = sqlite.ReplaceMeta(sqlitefile, mResponse)
+		err = sqlite.ReplaceMeta(sqlitefile, iiifMeta)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: replace error:\n%s", err)
 		}
 	} else {
 
-		imgLen := len(mResponse.Images)
+		imgLen := len(iiifMeta.Images)
 		var convertedStream []io.Reader
 
 		if imgLen > 0 {
 			// get file contents from docman ids
 			docIds := make([]docman.DocmanID, imgLen)
-			for i, image := range mResponse.Images {
+			for i, image := range iiifMeta.Images {
 				docIds[i] = docman.DocmanID(image["loc"])
 			}
 			// convert docman files from TIFF/JPG to JP2K
@@ -113,13 +119,31 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 
 		// store file contents in SQLite archive
-		err = sqlite.Create(sqlitefile, convertedStream, Fcwd, mResponse)
+		digest, err := sqlite.Create(sqlitefile, convertedStream, Fcwd, iiifMeta)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: store error:\n%s", err)
 		}
+
+		// move file if necessary
+		if iiifMeta.Info["olddigest"] == "" {
+			new := iiif.Digest2Location(digest)
+			_, err := util.CreateFile(new)
+			if err != nil {
+				log.Fatalf("cannot create file: %v", err)
+			}
+			err = fs.CopyFile(sqlitefile, new, "=", true)
+			if err != nil {
+				log.Fatalf("cannot copy file: %v", err)
+			}
+			err = fs.Rmpath(sqlitefile)
+			if err != nil {
+				log.Fatalf("cannot remove tempfile: %v", err)
+			}
+			sqlitefile = new
+		}
 	}
 
-	// update IIIF archive
+	// Update IIIF index
 	if Findex {
 		err = index.Update(sqlitefile)
 		if err != nil {
