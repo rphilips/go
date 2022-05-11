@@ -3,7 +3,6 @@ package cmd
 import (
 	"io"
 	"log"
-	"strings"
 
 	"brocade.be/base/docman"
 	"brocade.be/base/fs"
@@ -19,14 +18,9 @@ var idArchiveCmd = &cobra.Command{
 	Use:   "archive",
 	Short: "Create archive for a IIIF identifier",
 	Long: `Given a IIIF identifier, convert the appropriate image files
-and store them in an SQLite archive.
-Various additional parameters are in use and sometimes required:
---urlty:	url type (required for c-loi/o-loi)
---imgty:	image type (required for tg-loi)
---access:	access type (space separated)
---mime:		mime type (space separated)`,
+and store them in an SQLite archive.`,
 	Args:    cobra.ExactArgs(1),
-	Example: `iiiftool id archive c:stcv:12915850 --iiifsys=stcv --urlty=stcv`,
+	Example: `iiiftool id archive c:stcv:12915850 --iiifsys=stcv`,
 	RunE:    idArchive,
 }
 
@@ -40,10 +34,6 @@ var Fmetaonly bool
 
 func init() {
 	idCmd.AddCommand(idArchiveCmd)
-	idArchiveCmd.PersistentFlags().StringVar(&Furlty, "urlty", "", "URL type")
-	idArchiveCmd.PersistentFlags().StringVar(&Fimgty, "imgty", "", "Image type")
-	idArchiveCmd.PersistentFlags().StringVar(&Faccess, "access", "", "Access type")
-	idArchiveCmd.PersistentFlags().StringVar(&Fmime, "mime", "", "Mime type")
 	idArchiveCmd.PersistentFlags().StringVar(&Fiiifsys, "iiifsys", "test", "IIIF system")
 	idArchiveCmd.PersistentFlags().IntVar(&Fquality, "quality", 70, "Quality parameter")
 	idArchiveCmd.PersistentFlags().IntVar(&Ftile, "tile", 256, "Tile parameter")
@@ -61,20 +51,8 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
 
-	loiType := strings.Split(id, ":")[0]
-	switch loiType {
-	case "c", "o":
-		if Furlty == "" {
-			log.Fatalf("iiiftool ERROR: c-loi requires --urlty flag")
-		}
-	case "tg":
-		if Fimgty == "" {
-			log.Fatalf("iiiftool ERROR: tg-loi requires --imgty flag")
-		}
-	}
-
 	// Get IIIF metadata from MUMPS
-	iiifMeta, err := iiif.Meta(id, loiType, Furlty, Fimgty, Faccess, Fmime, Fiiifsys)
+	iiifMeta, err := iiif.Meta(id, Fiiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}

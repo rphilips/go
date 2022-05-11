@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
-	"strconv"
-	"time"
 
 	"brocade.be/base/fs"
 	"brocade.be/base/mumps"
@@ -36,29 +34,12 @@ type IIIFmeta struct {
 
 // Harvest IIIF metadata from MUMPS
 func Meta(
-	id string,
-	loiType string,
-	urlty string,
-	imgty string,
-	access string,
-	mime string,
+	loi string,
 	iiifsys string) (IIIFmeta, error) {
 
 	payload := make(map[string]string)
-	payload["loi"] = id
+	payload["loi"] = loi
 	payload["iiifsys"] = iiifsys
-	switch loiType {
-	case "c", "o":
-		payload["urlty"] = urlty
-	case "tg":
-		payload["imgty"] = imgty
-	}
-	if access != "" {
-		payload["access"] = access
-	}
-	if mime != "" {
-		payload["mime"] = mime
-	}
 
 	var iiifMeta IIIFmeta
 	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
@@ -86,15 +67,6 @@ func Digest2Location(digest string) string {
 	return location
 }
 
-// Create a temporary location for IIIF archive
-func TempLocation() string {
-	now := time.Now().UnixNano()
-	b := []byte(strconv.FormatInt(now, 10))
-	filename := util.GetSHA1(b) + ".sqlite"
-	location := filepath.Join(iifBaseDir, "tmp", filename)
-	return location
-}
-
 // Delete a IIIF archive
 func DigestDelete(digest string) error {
 	location := Digest2Location(digest)
@@ -116,7 +88,7 @@ func Validate(manifestUrl string, version string) (validateResponse, error) {
 
 	var result validateResponse
 
-	URL := validator + version + "&url=" + manifestUrl
+	URL := validator + "version=" + version + "&url=" + manifestUrl
 
 	response, err := http.Get(URL)
 	if err != nil {
