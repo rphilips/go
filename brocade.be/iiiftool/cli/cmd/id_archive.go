@@ -11,7 +11,6 @@ import (
 	"brocade.be/iiiftool/lib/iiif"
 	"brocade.be/iiiftool/lib/index"
 	"brocade.be/iiiftool/lib/sqlite"
-	"brocade.be/iiiftool/lib/util"
 
 	"github.com/spf13/cobra"
 )
@@ -80,15 +79,9 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
-	iiifMeta.Info["olddigest"] = "" // to do: Richard past de MUMPS code aan eens de index er is
-	var sqlitefile string
-	if iiifMeta.Info["olddigest"] == "" {
-		sqlitefile = iiif.TempLocation()
-	} else {
-		sqlitefile = iiif.Digest2Location(iiifMeta.Info["olddigest"])
-	}
+	sqlitefile := iiif.Digest2Location(iiifMeta.Info["digest"])
 
-	iiifMeta.Iiifsys = Fiiifsys // to do: vroeger kwam dit uit MUMPS, nu niet meer?!
+	iiifMeta.Iiifsys = iiifMeta.Info["iiifsys"]
 
 	// Create SQLite contents
 
@@ -119,27 +112,9 @@ func idArchive(cmd *cobra.Command, args []string) error {
 		}
 
 		// store file contents in SQLite archive
-		digest, err := sqlite.Create(sqlitefile, convertedStream, Fcwd, iiifMeta)
+		err := sqlite.Create(sqlitefile, convertedStream, Fcwd, iiifMeta)
 		if err != nil {
 			log.Fatalf("iiiftool ERROR: store error:\n%s", err)
-		}
-
-		// move file if necessary
-		if iiifMeta.Info["olddigest"] == "" {
-			new := iiif.Digest2Location(digest)
-			_, err := util.CreateFile(new)
-			if err != nil {
-				log.Fatalf("cannot create file: %v", err)
-			}
-			err = fs.CopyFile(sqlitefile, new, "=", true)
-			if err != nil {
-				log.Fatalf("cannot copy file: %v", err)
-			}
-			err = fs.Rmpath(sqlitefile)
-			if err != nil {
-				log.Fatalf("cannot remove tempfile: %v", err)
-			}
-			sqlitefile = new
 		}
 	}
 

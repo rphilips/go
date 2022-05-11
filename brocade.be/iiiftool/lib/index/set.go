@@ -10,9 +10,31 @@ import (
 	"brocade.be/iiiftool/lib/util"
 )
 
-// Write IIIF index information to SQLite index database
-func SetSQLiteIndex(indexdata IndexData, db *sql.DB) error {
+// Wrapper for setting index data
+func SetIndex(indexdata IndexData, db *sql.DB) error {
+	err := setSQLiteIndex(indexdata, db)
+	if err != nil {
+		return fmt.Errorf("error writing to SQLite index: %v", err)
+	}
 
+	err = setMIndex(indexdata)
+	if err != nil {
+		return fmt.Errorf("error writing to MUMPS index: %v", err)
+	}
+
+	return nil
+}
+
+// Write IIIF index information to SQLite index database
+func setSQLiteIndex(indexdata IndexData, db *sql.DB) error {
+
+	// delete old data
+	err := KillinSQLiteIndex(indexdata.Digest)
+	if err != nil {
+		return fmt.Errorf("cannot kill in SQLite index: %v", err)
+	}
+
+	// set new data
 	insert, err := db.Prepare(`INSERT INTO indexes
 	(key, loi, digest, iiifsys, location, metatime, sqlartime)
 	Values($1,$2,$3,$4,$5,$6,$7)`)
@@ -43,7 +65,7 @@ func SetSQLiteIndex(indexdata IndexData, db *sql.DB) error {
 }
 
 // Log index info in MUMPS
-func SetMIndex(indexdata IndexData) error {
+func setMIndex(indexdata IndexData) error {
 
 	mpipe, err := mumps.Open("")
 	if err != nil {
@@ -51,6 +73,13 @@ func SetMIndex(indexdata IndexData) error {
 	}
 	defer mpipe.Close()
 
+	// delete old data
+	err = KillinMIndex(indexdata.Digest)
+	if err != nil {
+		return fmt.Errorf("cannot kill in MUMPS index:\n%s", err)
+	}
+
+	// set new data
 	lois := util.GetUniqueLOIs(indexdata.LOIs)
 
 	for loi := range lois {

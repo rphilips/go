@@ -58,13 +58,7 @@ func Update(sqlitefile string) error {
 	}
 	defer index.Close()
 
-	// delete old data
-	_, err = index.Exec("DELETE FROM indexes WHERE digest=?", meta.Digest)
-	if err != nil {
-		return fmt.Errorf("cannot delete rows in index database: %v", err)
-	}
-
-	// set new data
+	// data
 	var indexdata IndexData
 	indexdata.LOIs = strings.Split(meta.Indexes, "^")
 	indexdata.Digest = meta.Digest
@@ -84,14 +78,9 @@ func Update(sqlitefile string) error {
 	}
 	indexdata.Sqlartime = sqlartime
 
-	err = SetSQLiteIndex(indexdata, index)
+	err = SetIndex(indexdata, index)
 	if err != nil {
-		return fmt.Errorf("cannot write index data in index database: %v", err)
-	}
-
-	err = SetMIndex(indexdata)
-	if err != nil {
-		return fmt.Errorf("cannot write MUMPS index database: %v", err)
+		return fmt.Errorf("cannot write to index: %v", err)
 	}
 
 	return nil
@@ -100,7 +89,13 @@ func Update(sqlitefile string) error {
 // Rebuild IIIF index (all archives, SQLite and MUMPS)
 func Rebuild(verbose bool) error {
 
+	// Remove old indices
+
 	os.Remove(iiifIndexDb)
+	KillMIndex()
+
+	// Create SQLite index
+	// Caution: do not use "index" (= reserved keyword) as table name!
 
 	index, err := sql.Open("sqlite", iiifIndexDb)
 	if err != nil {
@@ -108,7 +103,6 @@ func Rebuild(verbose bool) error {
 	}
 	defer index.Close()
 
-	// Caution: do not use "index" (= reserved keyword) as table name!
 	_, err = index.Exec(createIndexes)
 	if err != nil {
 		return fmt.Errorf("cannot create index database: %v", err)
@@ -167,7 +161,7 @@ func Rebuild(verbose bool) error {
 		return nil, nil
 	}
 
-	// Read in parallel
+	// Read (in parallel)
 	_, errors := parallel.NMap(len(archives), iiifMaxPar, handleFile)
 	for _, err := range errors {
 		if err != nil {
@@ -175,20 +169,12 @@ func Rebuild(verbose bool) error {
 		}
 	}
 
-	// Write sequentially
+	// Write (sequentially for SQLite!)
 	for _, data := range indexdatas {
-		err := SetSQLiteIndex(data, index)
+		// Write sequentially (because of SQLite!)
+		err := SetIndex(data, index)
 		if err != nil {
-			return fmt.Errorf("cannot write index data in index database: %v", err)
-		}
-	}
-
-	// Set M index
-	KillMIndex()
-	for _, data := range indexdatas {
-		err = SetMIndex(data)
-		if err != nil {
-			return fmt.Errorf("cannot write index data to M: %v", err)
+			return fmt.Errorf("cannot write to index: %v", err)
 		}
 	}
 

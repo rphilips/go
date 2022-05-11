@@ -15,7 +15,6 @@ import (
 
 	basefs "brocade.be/base/fs"
 	"brocade.be/base/registry"
-	qdigest "brocade.be/iiiftool/lib/digest"
 	"brocade.be/iiiftool/lib/iiif"
 	_ "modernc.org/sqlite"
 )
@@ -37,8 +36,7 @@ CREATE TABLE admin (
 	key INTEGER PRIMARY KEY AUTOINCREMENT,
 	time TEXT,
 	action TEXT,
-	user TEXT,
-	fileshash TEXT
+	user TEXT
 );`
 
 const createFiles = `
@@ -69,6 +67,8 @@ const selectSqlar = "SELECT name, mode, mtime, sz FROM sqlar"
 
 const insertMeta = "INSERT INTO meta (key, digest, indexes, iiifsys, sortcode, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)"
 
+const insertAdmin = "INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)"
+
 // Structs
 
 type Sqlar struct {
@@ -95,7 +95,7 @@ type Meta struct {
 func Create(sqlitefile string,
 	filestream []io.Reader,
 	cwd string,
-	iiifMeta iiif.IIIFmeta) (string, error) {
+	iiifMeta iiif.IIIFmeta) error {
 
 	// Validate input
 
@@ -103,11 +103,11 @@ func Create(sqlitefile string,
 		directory := filepath.Dir(sqlitefile)
 		err := basefs.Mkdir(directory, "process")
 		if err != nil {
-			return "", fmt.Errorf("cannot make dir")
+			return fmt.Errorf("cannot make dir")
 		}
 	} else {
 		if !basefs.IsDir(cwd) {
-			return "", fmt.Errorf("cwd is not valied")
+			return fmt.Errorf("cwd is not valied")
 		}
 		sqlitefile = filepath.Join(cwd, filepath.Base(sqlitefile))
 	}
@@ -115,7 +115,7 @@ func Create(sqlitefile string,
 	if basefs.Exists(sqlitefile) {
 		err := basefs.Rmpath(sqlitefile)
 		if err != nil {
-			return "", fmt.Errorf("cannot remove file: %v", err)
+			return fmt.Errorf("cannot remove file: %v", err)
 		}
 	}
 
@@ -123,47 +123,47 @@ func Create(sqlitefile string,
 
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
-		return "", fmt.Errorf("cannot open file: %v", err)
+		return fmt.Errorf("cannot open file: %v", err)
 	}
 	defer db.Close()
 
 	if _, err = db.Exec(createSqlar); err != nil {
-		return "", fmt.Errorf("cannot create table sqlar: %v", err)
+		return fmt.Errorf("cannot create table sqlar: %v", err)
 	}
 
 	if _, err = db.Exec(createAdmin); err != nil {
-		return "", fmt.Errorf("cannot create table admin: %v", err)
+		return fmt.Errorf("cannot create table admin: %v", err)
 	}
 
 	if _, err = db.Exec(createFiles); err != nil {
-		return "", fmt.Errorf("cannot create table files: %v", err)
+		return fmt.Errorf("cannot create table files: %v", err)
 	}
 
 	if _, err = db.Exec(createMeta); err != nil {
-		return "", fmt.Errorf("cannot create table meta: %v", err)
+		return fmt.Errorf("cannot create table meta: %v", err)
 	}
 
 	stmt1, err := db.Prepare("INSERT INTO sqlar (name, mode, mtime, sz, data) Values($1,$2,$3,$4,$5)")
 	if err != nil {
-		return "", fmt.Errorf("cannot prepare insert1: %v", err)
+		return fmt.Errorf("cannot prepare insert1: %v", err)
 	}
 	defer stmt1.Close()
 
-	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user, fileshash) Values($1,$2,$3,$4,$5)")
+	stmt2, err := db.Prepare(insertAdmin)
 	if err != nil {
-		return "", fmt.Errorf("cannot prepare insert2: %v", err)
+		return fmt.Errorf("cannot prepare insert2: %v", err)
 	}
 	defer stmt2.Close()
 
 	stmt3, err := db.Prepare("INSERT INTO files (key, docman, name) Values($1,$2,$3)")
 	if err != nil {
-		return "", fmt.Errorf("cannot prepare insert3: %v", err)
+		return fmt.Errorf("cannot prepare insert3: %v", err)
 	}
 	defer stmt3.Close()
 
 	stmt4, err := db.Prepare(insertMeta)
 	if err != nil {
-		return "", fmt.Errorf("cannot prepare insert4: %v", err)
+		return fmt.Errorf("cannot prepare insert4: %v", err)
 	}
 	defer stmt4.Close()
 
@@ -172,7 +172,7 @@ func Create(sqlitefile string,
 	content, err := json.Marshal(iiifMeta.Manifest)
 	manifest := string(content)
 	if err != nil {
-		return "", fmt.Errorf("json error on stmt4: %v", err)
+		return fmt.Errorf("json error on stmt4: %v", err)
 	}
 
 	sqlar := func(docman string, name string, stream io.Reader) error {
@@ -203,31 +203,25 @@ func Create(sqlitefile string,
 		}
 		err = sqlar(docman, iiifMeta.Images[i]["name"], stream)
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
 	// Insert into "meta", "admin"
 
-	filesHash, digest, err := qdigest.CalculateDigest(filestream, manifest, iiifMeta.Iiifsys)
-	if err != nil {
-		return "", fmt.Errorf("cannot calculate digest: %v", err)
-	}
-
 	indexes := strings.Join(iiifMeta.Indexes, "^")
-	manifest = strings.ReplaceAll(manifest, `\u003c-digest-\u003e`, digest)
-	_, err = stmt4.Exec(nil, digest, indexes, iiifMeta.Iiifsys, iiifMeta.Info["sortid"], iiifMeta.Imgloi, manifest)
+	_, err = stmt4.Exec(nil, iiifMeta.Info["digest"], indexes, iiifMeta.Iiifsys, iiifMeta.Info["sortid"], iiifMeta.Imgloi, manifest)
 	if err != nil {
-		return "", fmt.Errorf("cannot exec stmt4: %v", err)
+		return fmt.Errorf("cannot exec stmt4: %v", err)
 	}
 
 	h := time.Now()
-	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user, filesHash)
+	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user)
 	if err != nil {
-		return "", fmt.Errorf("cannot execute smt2: %v", err)
+		return fmt.Errorf("cannot execute smt2: %v", err)
 	}
 
-	return digest, nil
+	return nil
 }
 
 // Given a SQLite archive and a table name show the contents of that table
@@ -343,26 +337,20 @@ func ReplaceMeta(sqlitefile string, iiifMeta iiif.IIIFmeta) error {
 		return fmt.Errorf("json error on replacemeta: %v", err)
 	}
 	indexes := strings.Join(iiifMeta.Indexes, "^")
-	_, err = stmt.Exec(nil, iiifMeta.Info["olddigest"], indexes, iiifMeta.Iiifsys, iiifMeta.Info["sortid"], iiifMeta.Imgloi, manifest)
+	_, err = stmt.Exec(nil, iiifMeta.Info["digest"], indexes, iiifMeta.Iiifsys, iiifMeta.Info["sortid"], iiifMeta.Imgloi, manifest)
 	if err != nil {
 		return fmt.Errorf("cannot execute replacemeta statement: %v", err)
 	}
 
 	// update admin
-	query := "SELECT admin.key, admin.fileshash FROM admin ORDER BY CAST(admin.key AS INT) DESC LIMIT 1"
-	row := db.QueryRow(query, sqlitefile)
-	fileshash, err := ReadStringRow(row)
-	if err != nil {
-		return fmt.Errorf("cannot query meta update time from archive: %v", err)
-	}
-	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user, fileshash) Values($1,$2,$3,$4,$5)")
+	stmt2, err := db.Prepare(insertAdmin)
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert2: %v", err)
 	}
 	defer stmt2.Close()
 
 	h := time.Now()
-	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "update meta", user, fileshash)
+	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "update meta", user)
 	if err != nil {
 		return fmt.Errorf("cannot execute insert2: %v", err)
 	}
