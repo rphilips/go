@@ -17,7 +17,7 @@ func Search(search string) ([][]string, error) {
 	}
 	defer index.Close()
 
-	query := "SELECT * FROM indexes where identifier='" + search + "' or digest='" + search + "'"
+	query := "SELECT * FROM indexes where loi='" + search + "' or digest='" + search + "'"
 	rows, err := index.Query(query)
 	if err != nil {
 		return result, fmt.Errorf("error querying index database: %v", err)
@@ -39,9 +39,12 @@ func LookupId(identifier string) (string, error) {
 	}
 	defer index.Close()
 
-	row := index.QueryRow("SELECT digest FROM indexes where identifier=?", identifier)
+	row := index.QueryRow("SELECT digest FROM indexes where loi=?", identifier)
 	digest, err := sqlite.ReadStringRow(row)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	if (err != nil) && (err != sql.ErrNoRows) {
 		return "", fmt.Errorf("error selecting digest: %v", err)
 	}
 

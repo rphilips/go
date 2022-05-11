@@ -52,10 +52,8 @@ func KillinMIndex(digest string) error {
 
 	out, err := ioutil.ReadAll(oreader)
 	if err != nil {
-		return fmt.Errorf("error reading MUMPS response:\n%s\n%v", err, out)
+		return fmt.Errorf("error reading MUMPS response:\n%s\n%v", err, string(out))
 	}
-
-	fmt.Println(out)
 
 	return nil
 }

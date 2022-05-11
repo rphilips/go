@@ -34,7 +34,7 @@ func idLocate(cmd *cobra.Command, args []string) error {
 
 	// one id can be associated with several digests/locations
 	for _, res := range search {
-		location := res[3]
+		location := res[4]
 		fmt.Println(location)
 	}
 	return nil
