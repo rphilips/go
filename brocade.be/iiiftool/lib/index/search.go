@@ -50,3 +50,26 @@ func LookupId(identifier string) (string, error) {
 
 	return digest, nil
 }
+
+// Lookup all IIIF identifiers in the index database
+func LookupAll() ([][]string, error) {
+	result := make([][]string, 0)
+
+	index, err := sql.Open("sqlite", iiifIndexDb)
+	if err != nil {
+		return result, fmt.Errorf("error opening index database: %v", err)
+	}
+	defer index.Close()
+
+	query := "SELECT * FROM indexes"
+	rows, err := index.Query(query)
+	if err != nil {
+		return result, fmt.Errorf("error querying index database: %v", err)
+	}
+	result, err = sqlite.ReadIndexRows(rows)
+	if err != nil {
+		return result, fmt.Errorf("error reading result: %v", err)
+	}
+
+	return result, nil
+}

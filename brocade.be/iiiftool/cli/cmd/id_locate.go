@@ -10,8 +10,8 @@ import (
 
 var idLocateCmd = &cobra.Command{
 	Use:     "locate",
-	Short:   "Locate a IIIF id",
-	Long:    `Locate a IIIF id in the index database.`,
+	Short:   "Locate a IIIF identifier",
+	Long:    `Locate a IIIF identifier in the index database.`,
 	Args:    cobra.MinimumNArgs(1),
 	Example: `iiiftool id locate dg:ua:9`,
 	RunE:    idLocate,
