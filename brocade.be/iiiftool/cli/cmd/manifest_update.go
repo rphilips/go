@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"brocade.be/iiiftool/lib/archive"
@@ -23,6 +24,7 @@ var Fall bool
 func init() {
 	manifestCmd.AddCommand(manifestUpdateCmd)
 	manifestUpdateCmd.PersistentFlags().BoolVar(&Fall, "all", false, "Update the complete IIIF database")
+	manifestUpdateCmd.PersistentFlags().BoolVar(&Fverbose, "verbose", false, "Show verbose output")
 }
 
 func manifestUpdate(cmd *cobra.Command, args []string) error {
@@ -45,6 +47,9 @@ func manifestUpdate(cmd *cobra.Command, args []string) error {
 			}
 
 			digests[digest] = true
+			if Fverbose {
+				fmt.Println(id, iiifsys)
+			}
 			err := archive.Run(id, iiifsys, true, true, "", 0, 0, false)
 			if err != nil {
 				log.Fatalf("iiiftool ERROR: cannot update archive: %v", err)
@@ -61,6 +66,9 @@ func manifestUpdate(cmd *cobra.Command, args []string) error {
 		}
 		id := args[0]
 		iiifsys := args[1]
+		if Fverbose {
+			fmt.Println(id, iiifsys)
+		}
 
 		// image parameters can be 0 because there is never image conversion
 		err := archive.Run(id, iiifsys, true, true, "", 0, 0, false)
