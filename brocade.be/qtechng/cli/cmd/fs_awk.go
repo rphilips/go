@@ -38,6 +38,8 @@ Some remarks:
 	- If an argument is a directory, all files in that directory are taken.
 	- With the '--ask' flag, you can interactively specify the arguments and flags
 	- The '--awk' flag contains the AWK statement
+	- The '--inputmode' contains - if non-empty - a specification of the form "csv|tsv [separator=<char>] [comment=<char>] [header]"
+	- The '--outputmode' contains - if non-empty - a specification of the form "csv|tsv [separator=<char>]"
 	- The '--isfile' flag specifies that the '--awk' flag is the name of a file
 	- The '--recurse' flag walks recursively in the subdirectories of the argument directories.
 	- The '--pattern' flag builds a list of acceptable patterns on the basenames
@@ -47,6 +49,8 @@ Some remarks:
 	Example: `qtechng fs awk . --awk='{print $1}' --cwd=../workspace --recurse --pattern='*.txt'
 qtechng fs awk  --awk='{print $1}' --stdout=result.txt
 qtechng fs awk f1.txt f2.txt --awk=myprog.awk --cwd=../workspace --isfile
+qtechng fs awk f1.csv --inputmode="csv separator=, header" --awk=myprog.awk --cwd=../workspace --isfile
+qtechng fs awk f1.csv --inputmode="csv separator=, header" --outputmode="csv separator=;" --awk=myprog.awk --cwd=../workspace --isfile
 qtechng fs awk --ask`,
 	RunE: fsAWK,
 	Annotations: map[string]string{
@@ -55,10 +59,14 @@ qtechng fs awk --ask`,
 }
 
 var Fawk = ""
+var Fcsvinmode = ""
+var Fcsvoutmode = ""
 
 func init() {
 	fsAWKCmd.Flags().BoolVar(&Fisfile, "isfile", false, "Is this an AWK file?")
 	fsAWKCmd.Flags().StringVar(&Fawk, "awk", "", "AWK command")
+	fsAWKCmd.Flags().StringVar(&Fcsvinmode, "inputmode", "", "Input mode for CVS")
+	fsAWKCmd.Flags().StringVar(&Fcsvoutmode, "outputmode", "", "Output mode for CVS")
 	fsCmd.AddCommand(fsAWKCmd)
 }
 
@@ -66,6 +74,8 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	if Fask {
 		askfor := []string{
 			"awk::" + Fawk,
+			"inputmode::" + Fcsvinmode,
+			"outputmode::" + Fcsvinmode,
 			"files:awk",
 			"recurse:awk,files:" + qutil.UnYes(Frecurse),
 			"patterns:awk,files:",
@@ -82,6 +92,9 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		Frecurse = argums["recurse"].(bool)
 		Fisfile = Fawk != "" && qfs.IsFile(qutil.AbsPath(Fawk, Fcwd))
 		Futf8only = argums["utf8only"].(bool)
+		Fcsvinmode = argums["inputmode"].(string)
+		Fcsvoutmode = argums["outputmode"].(string)
+		Fext = argums["ext"].(string)
 	}
 	if Fawk == "" {
 		Fmsg = qreport.Report(nil, errors.New("missing AWK statement"), Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-cmd")
@@ -99,7 +112,7 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 		}
 		program = string(body)
 	}
-	_, err := qawkp.ParseProgram([]byte(program), nil)
+	prog, err := qawkp.ParseProgram([]byte(program), nil)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "fs-awk-invalidawk")
@@ -107,7 +120,21 @@ func fsAWK(cmd *cobra.Command, args []string) error {
 	}
 
 	fawk := func(reader io.Reader, writer io.Writer) error {
-		return qawk.Exec(program, " ", reader, writer)
+		config := new(qawk.Config)
+		config.Vars = append(config.Vars, "FS", " ")
+		config.Stdin = reader
+		config.Output = writer
+		if Fcsvinmode != "" || Fcsvoutmode != "" {
+			if Fcsvinmode != "" {
+				config.Vars = append(config.Vars, "INPUTMODE", Fcsvinmode)
+			}
+			if Fcsvoutmode != "" {
+				config.Vars = append(config.Vars, "OUTPUTMODE", Fcsvoutmode)
+			}
+		}
+
+		_, err := qawk.ExecProgram(prog, config)
+		return err
 	}
 
 	files := make([]string, 0)

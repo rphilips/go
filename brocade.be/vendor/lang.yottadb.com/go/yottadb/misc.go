@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////
 //								//
-// Copyright (c) 2018-2020 YottaDB LLC and/or its subsidiaries.	//
+// Copyright (c) 2018-2022 YottaDB LLC and/or its subsidiaries.	//
 // All rights reserved.						//
 //								//
 //	This source code contains the intellectual property	//
@@ -28,6 +28,8 @@ import (
 import "C"
 
 var wgexit sync.WaitGroup
+var mtxInExit sync.Mutex
+var exitRun bool
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -134,6 +136,32 @@ func formatINVSTRLEN(tptoken uint64, errstr *BufferT, lenalloc, lenused C.uint) 
 	return errmsg
 }
 
+// syslogEntry records the given message in the syslog. Since these are rare or one-time per process type errors
+// that get recorded here, we open a new syslog handle each time to reduce complexity of single threading access
+// across goroutines.
+func syslogEntry(logMsg string) {
+	syslogr, err := syslog.New(syslog.LOG_INFO+syslog.LOG_USER, "[YottaDB-Go-Wrapper]")
+	if nil != err {
+		panic(fmt.Sprintf("syslog.New() failed unexpectedly with error: %s", err))
+	}
+	err = syslogr.Info(logMsg)
+	if nil != err {
+		panic(fmt.Sprintf("syslogr.Info() failed unexpectedly with error: %s", err))
+	}
+	err = syslogr.Close()
+	if nil != err {
+		panic(fmt.Sprintf("syslogr.Close() failed unexpectedly with error: %s", err))
+	}
+}
+
+// selectString returns the first string parm if the expression is true and the second if it is false
+func selectString(boolVal bool, trueString, falseString string) string {
+	if boolVal {
+		return trueString
+	}
+	return falseString
+}
+
 // IsLittleEndian is a function to determine endianness. Exposed in case anyone else wants to know.
 func IsLittleEndian() bool {
 	var bittest = 0x01
@@ -144,12 +172,34 @@ func IsLittleEndian() bool {
 	return false
 }
 
+// Init is a function to drive the initialization for this process. This is part wrapper initialization and part YottaDB
+// runtime initialization. This routine is the exterior face of initialization.
+func Init() {
+	if 1 != atomic.LoadUint32(&ydbInitialized) {
+		initializeYottaDB()
+	}
+}
+
 // Exit is a function to drive YDB's exit handler in case of panic or other non-normal shutdown that bypasses
 // atexit() that would normally drive the exit handler.
-func Exit() {
+//
+// Note this function is guarded with a mutex and has a "exitRun" flag indicating it has been run. This is because we have seen
+// the Exit() routine being run multiple times by multiple goroutines which causes hangs. So it is now controlled with a mutex and
+// the already-been-here global flag "exitRun". Once this routine calls C.ydb_exit(), even if it gets stuck, the goroutine is still
+// active so if the engine lock becomes available prior to process demise, this routine will wake up and complete the rundown
+func Exit() error {
+	var errstr string
+	var errNum int
+
 	if 1 != atomic.LoadUint32(&ydbInitialized) {
-		return // If not (never) initialized, nothing to do
+		return nil // If never initialized, nothing to do
 	}
+	mtxInExit.Lock()         // One thread at a time through here else we can get DATA-RACE warnings accessing wgexit wait group
+	defer mtxInExit.Unlock() // Release lock when we leave this routine
+	if exitRun {
+		return nil // If exit has already run, no use in running it again
+	}
+	defer func() { exitRun = true }() // Set flag we have run Exit()
 	if dbgSigHandling {
 		fmt.Fprintln(os.Stderr, "YDB: Exit(): YDB Engine shutdown started")
 	}
@@ -190,23 +240,20 @@ func Exit() {
 		if dbgSigHandling {
 			fmt.Fprintln(os.Stderr, "YDB: Exit(): Wait for ydb_exit() expired")
 		}
+		errstr = getWrapperErrorMsg(YDB_ERR_DBRNDWNBYPASS)
+		errNum = YDB_ERR_DBRNDWNBYPASS
 		if 0 == atomic.LoadUint32(&ydbSigPanicCalled) { // Need "atomic" usage to avoid read/write DATA RACE issues
 			// If we panic'd due to a signal, we definitely have run the exit handler as it runs before the panic is
 			// driven so we can bypass this message in that case.
-			syslogr, err := syslog.New(syslog.LOG_INFO+syslog.LOG_USER, "[YottaDB-Go-Wrapper]")
-			if nil != err {
-				panic(fmt.Sprintf("syslog.NewLogger() failed unexpectedly with error: %s", err))
-			}
-			err = syslogr.Info("YDB-W-DBRNDWNBYPASS YottaDB database rundown may have been bypassed due to timeout " +
-				"- run MUPIP JOURNAL ROLLBACK BACKWARD / MUPIP JOURNAL RECOVER BACKWARD / MUPIP RUNDOWN")
-			if nil != err {
-				panic(fmt.Sprintf("syslogr.Info() failed unexpectedly with error: %s", err))
-			}
-
+			syslogEntry(errstr)
 		}
 	}
 	// Note - the temptation here is to unset ydbInitialized but things work better if we do not do that (we don't have
 	// multiple goroutines trying to re-initialize the engine) so we bypass/ re-doing the initialization call later and
 	// just go straight to getting the CALLINAFTERXIT error when an actual call is attempted. We now handle CALLINAFTERXIT
 	// in the places it matters.
+	if "" != errstr {
+		return &YDBError{errNum, errstr}
+	}
+	return nil
 }

@@ -8,6 +8,11 @@ type HelpData struct {
 
 var IOcsvout string
 var Actions = map[string]HelpData{
+	"awk": {
+		Ref:   "",
+		Short: "Transform with AWK",
+		Long:  "Transform with AWK",
+	},
 	"help": {
 		Ref:   "",
 		Short: "Help on goyo REPL",
@@ -133,6 +138,8 @@ func RunAction(key string, text string) []string {
 		return Extract(text)
 	case "set":
 		return Set(text)
+	case "awk":
+		return AWK(text)
 	case "kill", "killtree":
 		return Kill(text, true)
 	case "killnode":

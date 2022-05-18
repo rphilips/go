@@ -44,6 +44,12 @@ var Askit = map[string]Ask{
 		Prompt: "File/directory",
 		Repeat: true,
 	},
+	"inputmode": {
+		Prompt: "Input mode (csv|tsv [separator=<char>] [comment=<char>] [header])",
+	},
+	"outputmode": {
+		Prompt: "Output mode (csv|tsv [separator=<char>])",
+	},
 	"recurse": {
 		Prompt:  "Recurse through directories ?",
 		IsBoole: true,

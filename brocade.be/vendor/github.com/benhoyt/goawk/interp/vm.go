@@ -63,20 +63,32 @@ func (p *interp) execute(code []compiler.Opcode) error {
 
 		case compiler.Field:
 			index := p.peekTop()
-			v, err := p.getField(int(index.num()))
-			if err != nil {
-				return err
-			}
+			v := p.getField(int(index.num()))
 			p.replaceTop(v)
 
 		case compiler.FieldInt:
 			index := code[ip]
 			ip++
-			v, err := p.getField(int(index))
+			v := p.getField(int(index))
+			p.push(v)
+
+		case compiler.FieldByName:
+			fieldName := p.peekTop()
+			field, err := p.getFieldByName(p.toString(fieldName))
 			if err != nil {
 				return err
 			}
-			p.push(v)
+			p.replaceTop(field)
+
+		case compiler.FieldByNameStr:
+			index := code[ip]
+			fieldName := p.strs[index]
+			ip++
+			field, err := p.getFieldByName(fieldName)
+			if err != nil {
+				return err
+			}
+			p.push(field)
 
 		case compiler.Global:
 			index := code[ip]
@@ -185,11 +197,8 @@ func (p *interp) execute(code []compiler.Opcode) error {
 			amount := code[ip]
 			ip++
 			index := int(p.pop().num())
-			v, err := p.getField(index)
-			if err != nil {
-				return err
-			}
-			err = p.setField(index, p.toString(num(v.num()+float64(amount))))
+			v := p.getField(index)
+			err := p.setField(index, p.toString(num(v.num()+float64(amount))))
 			if err != nil {
 				return err
 			}
@@ -237,10 +246,7 @@ func (p *interp) execute(code []compiler.Opcode) error {
 			ip++
 			right, indexVal := p.popTwo()
 			index := int(indexVal.num())
-			field, err := p.getField(index)
-			if err != nil {
-				return err
-			}
+			field := p.getField(index)
 			v, err := p.augAssignOp(operation, field, right)
 			if err != nil {
 				return err
@@ -737,24 +743,9 @@ func (p *interp) execute(code []compiler.Opcode) error {
 			redirect := lexer.Token(code[ip+1])
 			ip += 2
 
-			// Print OFS-separated args followed by ORS (usually newline)
-			var line string
-			if numArgs > 0 {
-				args := p.popSlice(int(numArgs))
-				var builder strings.Builder
-				builder.Grow(10 * len(args)) // probably enough space, but it'll grow more if needed
-				for i, a := range args {
-					if i > 0 {
-						builder.WriteString(p.outputFieldSep)
-					}
-					builder.WriteString(a.str(p.outputFormat))
-				}
-				line = builder.String()
-			} else {
-				// "print" with no args is equivalent to "print $0"
-				line = p.line
-			}
+			args := p.popSlice(int(numArgs))
 
+			// Determine what output stream to write to.
 			output := p.output
 			if redirect != lexer.ILLEGAL {
 				var err error
@@ -764,9 +755,19 @@ func (p *interp) execute(code []compiler.Opcode) error {
 					return err
 				}
 			}
-			err := p.printLine(output, line)
-			if err != nil {
-				return err
+
+			if numArgs > 0 {
+				err := p.printArgs(output, args)
+				if err != nil {
+					return err
+				}
+			} else {
+				// "print" with no arguments prints the raw value of $0,
+				// regardless of output mode.
+				err := p.printLine(output, p.line)
+				if err != nil {
+					return err
+				}
 			}
 
 		case compiler.Printf:
