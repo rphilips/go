@@ -43,10 +43,10 @@ func ReadMetaRow(row *sql.Row, meta *Meta) error {
 	err := row.Scan(
 		&meta.Key,
 		&meta.Digest,
-		&meta.Identifier,
 		&meta.Indexes,
 		&meta.Imgloi,
 		&meta.Iiifsys,
+		&meta.Sortcode,
 		&meta.Manifest)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
 
 	result := make([][]string, 0)
 
-	// key|id|digest|location|metatime|sqlartime
+	// key|loi|digest|iiifsys|location|metatime|sqlartime
 	columns, err := rows.Columns()
 	if err != nil {
 		return result, err
@@ -88,7 +88,7 @@ func ReadIndexRows(rows *sql.Rows) ([][]string, error) {
 	for rows.Next() {
 
 		data := make([]string, len(columns))
-		err := rows.Scan(&data[0], &data[1], &data[2], &data[3], &data[4], &data[5])
+		err := rows.Scan(&data[0], &data[1], &data[2], &data[3], &data[4], &data[5], &data[6])
 		if err != nil {
 			return result, err
 		}

@@ -11,7 +11,7 @@ import (
 
 var aboutCmd = &cobra.Command{
 	Use:     "about",
-	Short:   "Information about `iiiftool`",
+	Short:   "Information about iiiftool",
 	Long:    `Version and build time information about the iiiftool executable.`,
 	Args:    cobra.NoArgs,
 	Example: `iiiftool about`,

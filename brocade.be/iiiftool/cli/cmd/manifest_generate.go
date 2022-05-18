@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 
 	"brocade.be/base/fs"
 	"brocade.be/iiiftool/lib/iiif"
@@ -34,14 +33,13 @@ func manifestGenerate(cmd *cobra.Command, args []string) error {
 	if iiifsys == "" {
 		log.Fatalf("iiiftool ERROR: argument is empty")
 	}
-	loiType := strings.Split(loi, ":")[0]
 
-	mResponse, err := iiif.Meta(loi, loiType, "", "", "", "", iiifsys)
+	iiifMeta, err := iiif.Meta(loi, iiifsys)
 	if err != nil {
 		log.Fatalf("iiiftool ERROR: %s", err)
 	}
 
-	manifest, err := json.Marshal(mResponse.Manifest)
+	manifest, err := json.Marshal(iiifMeta.Manifest)
 	if err != nil {
 		return fmt.Errorf("json error:\n%s", err)
 	}

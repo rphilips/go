@@ -23,56 +23,38 @@ type validateResponse struct {
 	Error    string      `json:"error"`
 	Warnings interface{} `json:"warnings"`
 }
-type MResponse struct {
-	Digest     string              `json:"digest"`
-	Images     []map[string]string `json:"images"`
-	Imgloi     string              `json:"imgloi"`
-	Indexes    []string            `json:"index"`
-	Iiifsys    string              `json:"iiifsys"`
-	Manifest   interface{}         `json:"manifest"`
-	Identifier string              `json:"identifier"`
+type IIIFmeta struct {
+	Images   []map[string]string `json:"images"`
+	Imgloi   string              `json:"imgloi"`
+	Indexes  []string            `json:"index"`
+	Info     map[string]string   `json:"info"`
+	Iiifsys  string              `json:"iiifsys"`
+	Manifest interface{}         `json:"manifest"`
 }
 
 // Harvest IIIF metadata from MUMPS
 func Meta(
-	id string,
-	loiType string,
-	urlty string,
-	imgty string,
-	access string,
-	mime string,
-	iiifsys string) (MResponse, error) {
+	loi string,
+	iiifsys string) (IIIFmeta, error) {
 
 	payload := make(map[string]string)
-	payload["loi"] = id
+	payload["loi"] = loi
 	payload["iiifsys"] = iiifsys
-	switch loiType {
-	case "c", "o":
-		payload["urlty"] = urlty
-	case "tg":
-		payload["imgty"] = imgty
-	}
-	if access != "" {
-		payload["access"] = access
-	}
-	if mime != "" {
-		payload["mime"] = mime
-	}
 
-	var mResponse MResponse
+	var iiifMeta IIIFmeta
 	oreader, _, err := mumps.Reader("d %Action^iiisori(.RApayload)", payload)
 	if err != nil {
-		return mResponse, fmt.Errorf("mumps reader error:\n%s", err)
+		return iiifMeta, fmt.Errorf("mumps reader error:\n%s", err)
 	}
 	out, err := ioutil.ReadAll(oreader)
 	if err != nil {
-		return mResponse, fmt.Errorf("cannot read MUMPS response:\n%s", err)
+		return iiifMeta, fmt.Errorf("cannot read MUMPS response:\n%s", err)
 	}
-	err = json.Unmarshal(out, &mResponse)
+	err = json.Unmarshal(out, &iiifMeta)
 	if err != nil {
-		return mResponse, fmt.Errorf("json error:\n%s", err)
+		return iiifMeta, fmt.Errorf("json error:\n%s", err)
 	}
-	return mResponse, nil
+	return iiifMeta, nil
 }
 
 // Given a IIIF digest, formulate its appropriate location in the filesystem
@@ -106,7 +88,7 @@ func Validate(manifestUrl string, version string) (validateResponse, error) {
 
 	var result validateResponse
 
-	URL := validator + version + "&url=" + manifestUrl
+	URL := validator + "version=" + version + "&url=" + manifestUrl
 
 	response, err := http.Get(URL)
 	if err != nil {
