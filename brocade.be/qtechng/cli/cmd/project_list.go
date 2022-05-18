@@ -66,18 +66,23 @@ func projlistTransport(pcargo *qclient.Cargo) []projlister {
 			p := locfil.Project
 			r := locfil.Release
 			s := locfil.Sort
+			c := locfil.Core
+			prio := locfil.Priority
 			inx := r + " " + p
 			if done[inx] {
 				continue
 			}
 			done[inx] = true
 			result = append(result, projlister{
-				Release: locfil.Release,
-				Project: locfil.Project,
-				Sort:    s,
+				Release:  locfil.Release,
+				Project:  locfil.Project,
+				Sort:     s,
+				Core:     c,
+				Priority: prio,
 			})
 		}
 	}
+
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Sort < result[j].Sort
 	})

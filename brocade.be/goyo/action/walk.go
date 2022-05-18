@@ -107,7 +107,7 @@ e(dit)                             : edit node=value
 			continue
 		}
 		if char == 'c' {
-			CSV(gloref)
+			CSV(gloref, IOcsvout)
 			fmt.Println()
 			continue
 		}

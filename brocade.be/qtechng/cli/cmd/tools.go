@@ -53,9 +53,11 @@ type linter struct {
 }
 
 type projlister struct {
-	Release string `json:"version"`
-	Project string `json:"project"`
-	Sort    string `json:"sort"`
+	Release  string `json:"version"`
+	Project  string `json:"project"`
+	Core     bool   `json:"core"`
+	Sort     string `json:"sort"`
+	Priority string `json:"priority"`
 }
 type storer struct {
 	Release string `json:"version"`
@@ -244,6 +246,8 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 	transports := make([]qclient.Transport, len(paths))
 
 	sorts := make(map[string]string)
+	cores := make(map[string]bool)
+	prios := make(map[string]string)
 
 	for i, qpath := range paths {
 		locfile := qclient.LocalFile{}
@@ -266,9 +270,11 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 		locfile.Mt = pmeta.Mt
 		proj := locfile.Project
 		if sorts[proj] == "" {
-			sorts[proj] = psource.Project().Orden()
+			sorts[proj], cores[proj], prios[proj] = psource.Project().Orden()
 		}
 		locfile.Sort = sorts[proj]
+		locfile.Core = cores[proj]
+		locfile.Priority = prios[proj]
 		transports[i].LocFile = locfile
 		if withcontent && bodies[i] != nil {
 			transports[i].Body = bodies[i]

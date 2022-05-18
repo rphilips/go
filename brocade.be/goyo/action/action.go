@@ -6,6 +6,7 @@ type HelpData struct {
 	Long  string
 }
 
+var IOcsvout string
 var Actions = map[string]HelpData{
 	"help": {
 		Ref:   "",
@@ -112,10 +113,16 @@ During navigation one-key instructions can be given:
 		Ref:   "",
 		Short: "Shows global data in CSV style",
 	},
+	"spec": {
+		Ref:   "",
+		Short: "Specify an option (spec csvout /library/tmp/my.csv)",
+	},
 }
 
 func RunAction(key string, text string) []string {
 	switch key {
+	case "spec":
+		return Spec(text)
 	case "cd":
 		return Cd(text)
 	case "echo":
@@ -135,7 +142,7 @@ func RunAction(key string, text string) []string {
 	case "zwr":
 		return ZWR(text)
 	case "csv":
-		return CSV(text)
+		return CSV(text, IOcsvout)
 	case "walk":
 		return walk(text)
 	case "exec":

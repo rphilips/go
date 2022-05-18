@@ -99,9 +99,11 @@ func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger
 		return qerror.ErrorSlice(errs)
 	}
 
-	projs := make([]*qproject.Project, 0)
+	projs := make([]*qproject.Project, len(mproj))
+	i := 0
 	for _, p := range mproj {
-		projs = append(projs, p)
+		projs[i] = p
+		i++
 	}
 
 	// sort project in sequence of installation
@@ -243,7 +245,9 @@ func installInstallfiles(batchid string, projs []*qproject.Project, qsources map
 				logme.Printf("    see: %s\n", filepath.Join(projplace, "__error__"))
 			}
 		} else {
-
+			if logme != nil {
+				logme.Printf("Successfully installed `%s`\n", ps)
+			}
 			qfs.RmpathUntil(projplace, tmpdir)
 			for _, q := range qsources {
 				if q.Project().String() == ps {
