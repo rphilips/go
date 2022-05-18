@@ -26,7 +26,7 @@ var Fversion string
 
 func init() {
 	manifestCmd.AddCommand(manifestValidateCmd)
-	idArchiveCmd.PersistentFlags().StringVar(&Fversion, "version", "3.0", "IIIF Presentation API version")
+	manifestValidateCmd.PersistentFlags().StringVar(&Fversion, "version", "3.0", "IIIF Presentation API version")
 }
 
 func manifestValidate(cmd *cobra.Command, args []string) error {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,15 +31,16 @@ func testRequests(cmd *cobra.Command, args []string) error {
 	prefix := registry.Registry["web-base-url"] + registry.Registry["iiif-base-url"]
 
 	URLs := []string{
-		prefix + testId + "00000001.jp2/full/max/0/default.jpg",            // default
-		prefix + testId + "00000001.jp2/100,200,300,400/max/0/default.jpg", // region
-		prefix + testId + "00000001.jp2/full/300,/0/default.jpg",           // size
-		prefix + testId + "00000001.jp2/full/max/180/default.jpg",          // rotation
-		prefix + testId + "00000001.jp2/full/max/0/bitonal.jpg",            // quality
-		prefix + testId + "00000001.jp2/full/max/0/default.png",            //format
+		prefix + "/" + testId + "00000001.jp2/full/max/0/default.jpg",            // default
+		prefix + "/" + testId + "00000001.jp2/100,200,300,400/max/0/default.jpg", // region
+		prefix + "/" + testId + "00000001.jp2/full/300,/0/default.jpg",           // size
+		prefix + "/" + testId + "00000001.jp2/full/max/180/default.jpg",          // rotation
+		prefix + "/" + testId + "00000001.jp2/full/max/0/bitonal.jpg",            // quality
+		prefix + "/" + testId + "00000001.jp2/full/max/0/default.png",            //format
 	}
 
 	download := func(URL string) ([]byte, error) {
+		fmt.Println(URL)
 		response, err := http.Get(URL)
 		if err != nil {
 			return nil, err

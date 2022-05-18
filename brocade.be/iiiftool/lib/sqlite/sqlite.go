@@ -50,10 +50,10 @@ const createMeta = `
 CREATE TABLE meta (
 	key INTEGER PRIMARY KEY AUTOINCREMENT,
 	digest TEXT,
-	identifier TEXT,
 	indexes TEXT,
 	imgloi TEXT,
 	iiifsys TEXT,
+	sortcode TEXT,
 	manifest TEXT
 );`
 
@@ -64,6 +64,10 @@ GROUP BY m.name
 ORDER BY m.name, p.cid`
 
 const selectSqlar = "SELECT name, mode, mtime, sz FROM sqlar"
+
+const insertMeta = "INSERT INTO meta (key, digest, indexes, iiifsys, sortcode, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)"
+
+const insertAdmin = "INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)"
 
 // Structs
 
@@ -76,22 +80,24 @@ type Sqlar struct {
 }
 
 type Meta struct {
-	Key        string
-	Digest     string
-	Imgloi     string
-	Indexes    string
-	Iiifsys    string
-	Manifest   string
-	Identifier string
+	Key      string
+	Digest   string
+	Imgloi   string
+	Indexes  string
+	Iiifsys  string
+	Sortcode string
+	Manifest string
 }
 
-// Given a IIIF identifier and an io.Reader
+// Given a IIIF digest and an io.Reader
 // create the appropriate SQLite archive
 // and store the contents.
 func Create(sqlitefile string,
 	filestream []io.Reader,
 	cwd string,
-	mResponse iiif.MResponse) error {
+	iiifMeta iiif.IIIFmeta) error {
+
+	// Validate input
 
 	if cwd == "" {
 		directory := filepath.Dir(sqlitefile)
@@ -112,6 +118,8 @@ func Create(sqlitefile string,
 			return fmt.Errorf("cannot remove file: %v", err)
 		}
 	}
+
+	// Create tables
 
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
@@ -141,17 +149,11 @@ func Create(sqlitefile string,
 	}
 	defer stmt1.Close()
 
-	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)")
+	stmt2, err := db.Prepare(insertAdmin)
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert2: %v", err)
 	}
 	defer stmt2.Close()
-
-	h := time.Now()
-	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user)
-	if err != nil {
-		return fmt.Errorf("cannot execute insert2: %v", err)
-	}
 
 	stmt3, err := db.Prepare("INSERT INTO files (key, docman, name) Values($1,$2,$3)")
 	if err != nil {
@@ -159,22 +161,18 @@ func Create(sqlitefile string,
 	}
 	defer stmt3.Close()
 
-	stmt4, err := db.Prepare("INSERT INTO meta (key, digest, identifier, indexes, iiifsys, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)")
+	stmt4, err := db.Prepare(insertMeta)
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert4: %v", err)
 	}
 	defer stmt4.Close()
 
-	content, err := json.Marshal(mResponse.Manifest)
+	// Insert into "admin", "files"
+
+	content, err := json.Marshal(iiifMeta.Manifest)
 	manifest := string(content)
 	if err != nil {
 		return fmt.Errorf("json error on stmt4: %v", err)
-	}
-
-	indexes := strings.Join(mResponse.Indexes, "^")
-	_, err = stmt4.Exec(nil, mResponse.Digest, mResponse.Identifier, indexes, mResponse.Iiifsys, mResponse.Imgloi, manifest)
-	if err != nil {
-		return fmt.Errorf("cannot exec stmt4: %v", err)
 	}
 
 	sqlar := func(docman string, name string, stream io.Reader) error {
@@ -200,13 +198,27 @@ func Create(sqlitefile string,
 
 	for i, stream := range filestream {
 		docman := ""
-		if len(mResponse.Images) != 0 {
-			docman = mResponse.Images[i]["loc"]
+		if len(iiifMeta.Images) != 0 {
+			docman = iiifMeta.Images[i]["loc"]
 		}
-		err = sqlar(docman, mResponse.Images[i]["name"], stream)
+		err = sqlar(docman, iiifMeta.Images[i]["name"], stream)
 		if err != nil {
 			return err
 		}
+	}
+
+	// Insert into "meta", "admin"
+
+	indexes := strings.Join(iiifMeta.Indexes, "^")
+	_, err = stmt4.Exec(nil, iiifMeta.Info["digest"], indexes, iiifMeta.Iiifsys, iiifMeta.Info["sortid"], iiifMeta.Imgloi, manifest)
+	if err != nil {
+		return fmt.Errorf("cannot exec stmt4: %v", err)
+	}
+
+	h := time.Now()
+	_, err = stmt2.Exec(nil, h.Format(time.RFC3339), "created", user)
+	if err != nil {
+		return fmt.Errorf("cannot execute smt2: %v", err)
 	}
 
 	return nil
@@ -300,7 +312,7 @@ func QueryTime(sqlitefile string, mode string) (string, error) {
 	return result, nil
 }
 
-func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
+func ReplaceMeta(sqlitefile string, iiifMeta iiif.IIIFmeta) error {
 	db, err := sql.Open("sqlite", sqlitefile)
 	if err != nil {
 		return fmt.Errorf("cannot open file: %v", err)
@@ -313,25 +325,25 @@ func ReplaceMeta(sqlitefile string, mResponse iiif.MResponse) error {
 		return fmt.Errorf("cannot delete meta from archive: %v", err)
 	}
 
-	stmt, err := db.Prepare("INSERT INTO meta (key, digest, identifier, indexes, iiifsys, imgloi, manifest) Values($1,$2,$3,$4,$5,$6,$7)")
+	stmt, err := db.Prepare(insertMeta)
 	if err != nil {
 		return fmt.Errorf("cannot prepare replacemeta insert statement: %v", err)
 	}
 	defer stmt.Close()
 
-	data, err := json.Marshal(mResponse.Manifest)
+	data, err := json.Marshal(iiifMeta.Manifest)
 	manifest := string(data)
 	if err != nil {
 		return fmt.Errorf("json error on replacemeta: %v", err)
 	}
-	indexes := strings.Join(mResponse.Indexes, "^")
-	_, err = stmt.Exec(nil, mResponse.Digest, mResponse.Identifier, indexes, mResponse.Iiifsys, mResponse.Imgloi, manifest)
+	indexes := strings.Join(iiifMeta.Indexes, "^")
+	_, err = stmt.Exec(nil, iiifMeta.Info["digest"], indexes, iiifMeta.Iiifsys, iiifMeta.Info["sortid"], iiifMeta.Imgloi, manifest)
 	if err != nil {
 		return fmt.Errorf("cannot execute replacemeta statement: %v", err)
 	}
 
 	// update admin
-	stmt2, err := db.Prepare("INSERT INTO admin (key, time, action, user) Values($1,$2,$3,$4)")
+	stmt2, err := db.Prepare(insertAdmin)
 	if err != nil {
 		return fmt.Errorf("cannot prepare insert2: %v", err)
 	}
