@@ -29,6 +29,11 @@ func Run(
 		return fmt.Errorf("iiiftool ERROR: %s", err)
 	}
 
+	// No digest could be created
+	if iiifMeta.Info["digest"] == "" {
+		return nil
+	}
+
 	sqlitefile := iiif.Digest2Location(iiifMeta.Info["digest"])
 
 	iiifMeta.Iiifsys = iiifMeta.Info["iiifsys"]
