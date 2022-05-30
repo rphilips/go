@@ -87,7 +87,7 @@ func Update(sqlitefile string) error {
 	}
 	indexdata.Sqlartime = sqlartime
 
-	err = SetIndex(indexdata, db, mpipe)
+	err = SetIndex(indexdata, db, mpipe, "update")
 	if err != nil {
 		return fmt.Errorf("cannot write to index: %v", err)
 	}
@@ -188,7 +188,7 @@ func Rebuild(verbose bool) error {
 
 	// Write (sequentially for SQLite!)
 	for _, data := range indexdatas {
-		err := SetIndex(data, index, mpipe)
+		err := SetIndex(data, index, mpipe, "rebuild")
 		if err != nil {
 			return fmt.Errorf("cannot write to index: %v", err)
 		}
