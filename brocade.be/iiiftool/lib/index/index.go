@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	qfs "brocade.be/base/fs"
+	"brocade.be/base/mumps"
 	"brocade.be/base/parallel"
 	"brocade.be/base/registry"
 	"brocade.be/iiiftool/lib/sqlite"
@@ -52,11 +53,19 @@ func Update(sqlitefile string) error {
 		return Rebuild(false)
 	}
 
-	index, err := sql.Open("sqlite", iiifIndexDb)
+	// open indexes
+
+	db, err := sql.Open("sqlite", iiifIndexDb)
 	if err != nil {
 		return fmt.Errorf("cannot open index database: %v", err)
 	}
-	defer index.Close()
+	defer db.Close()
+
+	mpipe, err := mumps.Open("")
+	if err != nil {
+		return fmt.Errorf("mumps open error:\n%s", err)
+	}
+	defer mpipe.Close()
 
 	// data
 	var indexdata IndexData
@@ -78,7 +87,7 @@ func Update(sqlitefile string) error {
 	}
 	indexdata.Sqlartime = sqlartime
 
-	err = SetIndex(indexdata, index)
+	err = SetIndex(indexdata, db, mpipe)
 	if err != nil {
 		return fmt.Errorf("cannot write to index: %v", err)
 	}
@@ -107,6 +116,14 @@ func Rebuild(verbose bool) error {
 	if err != nil {
 		return fmt.Errorf("cannot create index database: %v", err)
 	}
+
+	// Create mpipe
+
+	mpipe, err := mumps.Open("")
+	if err != nil {
+		return fmt.Errorf("mumps open error:\n%s", err)
+	}
+	defer mpipe.Close()
 
 	// Collect archives
 	var archives []string
@@ -171,8 +188,7 @@ func Rebuild(verbose bool) error {
 
 	// Write (sequentially for SQLite!)
 	for _, data := range indexdatas {
-		// Write sequentially (because of SQLite!)
-		err := SetIndex(data, index)
+		err := SetIndex(data, index, mpipe)
 		if err != nil {
 			return fmt.Errorf("cannot write to index: %v", err)
 		}
