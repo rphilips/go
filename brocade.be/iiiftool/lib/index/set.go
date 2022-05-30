@@ -11,13 +11,13 @@ import (
 )
 
 // Wrapper for setting index data
-func SetIndex(indexdata IndexData, db *sql.DB) error {
+func SetIndex(indexdata IndexData, db *sql.DB, mpipe mumps.MPipe) error {
 	err := setSQLiteIndex(indexdata, db)
 	if err != nil {
 		return fmt.Errorf("error writing to SQLite index: %v", err)
 	}
 
-	err = setMIndex(indexdata)
+	err = setMIndex(indexdata, mpipe)
 	if err != nil {
 		return fmt.Errorf("error writing to MUMPS index: %v", err)
 	}
@@ -65,16 +65,10 @@ func setSQLiteIndex(indexdata IndexData, db *sql.DB) error {
 }
 
 // Log index info in MUMPS
-func setMIndex(indexdata IndexData) error {
-
-	mpipe, err := mumps.Open("")
-	if err != nil {
-		return fmt.Errorf("mumps open error:\n%s", err)
-	}
-	defer mpipe.Close()
+func setMIndex(indexdata IndexData, mpipe mumps.MPipe) error {
 
 	// delete old data
-	err = KillinMIndex(indexdata.Digest)
+	err := KillinMIndex(indexdata.Digest)
 	if err != nil {
 		return fmt.Errorf("cannot kill in MUMPS index:\n%s", err)
 	}

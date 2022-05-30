@@ -10,7 +10,7 @@ import (
 var indexRebuildCmd = &cobra.Command{
 	Use:   "rebuild",
 	Short: "Rebuild IIIF index",
-	Long: `Rebuild the IIIF index which stores the translation table
+	Long: `Rebuild the (SQLite and MUMPS) IIIF index which stores the translation table
 	for IIIF identifiers and IIIF digests`,
 	Args:    cobra.NoArgs,
 	Example: `iiiftool index rebuild`,
