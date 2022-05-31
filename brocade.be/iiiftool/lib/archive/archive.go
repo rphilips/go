@@ -83,3 +83,23 @@ func Run(
 
 	return nil
 }
+
+// Update IIIF archive
+func Update(digest string, id string, iiifsys string, verbose bool, dry bool) error {
+
+	if verbose {
+		fmt.Println(digest, id, iiifsys)
+	}
+
+	if dry {
+		return nil
+	}
+
+	// image parameters can be 0 because there is never image conversion
+	err := Run(id, iiifsys, true, true, "", 0, 0, false)
+	if err != nil {
+		return fmt.Errorf("iiiftool ERROR: cannot update archive: %v", err)
+	}
+
+	return nil
+}
