@@ -32,7 +32,7 @@ func init() {
 	manifestUpdateCmd.PersistentFlags().BoolVar(&Fverbose, "verbose", false, "Show verbose output")
 	manifestUpdateCmd.PersistentFlags().BoolVar(&Fdry, "dry", false, "Dry run: show output, but do not perform update")
 	manifestUpdateCmd.PersistentFlags().BoolVar(&Fmodified, "modified", false, `Update all IIIF digests connected to LOIs
-	that have been modified since the creation of their manifest`)
+that have been modified since the creation of their manifest`)
 }
 
 func manifestUpdate(cmd *cobra.Command, args []string) error {
