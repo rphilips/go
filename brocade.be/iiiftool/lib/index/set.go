@@ -11,13 +11,13 @@ import (
 )
 
 // Wrapper for setting index data
-func SetIndex(indexdata IndexData, db *sql.DB) error {
-	err := setSQLiteIndex(indexdata, db)
+func SetIndex(indexdata IndexData, db *sql.DB, mpipe mumps.MPipe, mode string) error {
+	err := setSQLiteIndex(indexdata, db, mode)
 	if err != nil {
 		return fmt.Errorf("error writing to SQLite index: %v", err)
 	}
 
-	err = setMIndex(indexdata)
+	err = setMIndex(indexdata, mpipe, mode)
 	if err != nil {
 		return fmt.Errorf("error writing to MUMPS index: %v", err)
 	}
@@ -26,12 +26,14 @@ func SetIndex(indexdata IndexData, db *sql.DB) error {
 }
 
 // Write IIIF index information to SQLite index database
-func setSQLiteIndex(indexdata IndexData, db *sql.DB) error {
+func setSQLiteIndex(indexdata IndexData, db *sql.DB, mode string) error {
 
 	// delete old data
-	err := KillinSQLiteIndex(indexdata.Digest)
-	if err != nil {
-		return fmt.Errorf("cannot kill in SQLite index: %v", err)
+	if mode == "update" {
+		err := KillinSQLiteIndex(indexdata.Digest)
+		if err != nil {
+			return fmt.Errorf("cannot kill in SQLite index: %v", err)
+		}
 	}
 
 	// set new data
@@ -65,18 +67,14 @@ func setSQLiteIndex(indexdata IndexData, db *sql.DB) error {
 }
 
 // Log index info in MUMPS
-func setMIndex(indexdata IndexData) error {
-
-	mpipe, err := mumps.Open("")
-	if err != nil {
-		return fmt.Errorf("mumps open error:\n%s", err)
-	}
-	defer mpipe.Close()
+func setMIndex(indexdata IndexData, mpipe mumps.MPipe, mode string) error {
 
 	// delete old data
-	err = KillinMIndex(indexdata.Digest)
-	if err != nil {
-		return fmt.Errorf("cannot kill in MUMPS index:\n%s", err)
+	if mode == "update" {
+		err := KillinMIndex(indexdata.Digest)
+		if err != nil {
+			return fmt.Errorf("cannot kill in MUMPS index:\n%s", err)
+		}
 	}
 
 	// set new data
@@ -96,7 +94,7 @@ func setMIndex(indexdata IndexData) error {
 			`s ^BIIIF("index","` + digest + `","` + iiifsys + `","` + sortcode + `","` + loi + `")="` + metatime + `^` + sqlartime + `"`}
 
 		for _, cmd := range cmds {
-			err = mpipe.WriteExec(cmd)
+			err := mpipe.WriteExec(cmd)
 			if err != nil {
 				return fmt.Errorf("mumps exec error:\n%s", err)
 			}
