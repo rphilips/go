@@ -16,21 +16,29 @@ var Registry map[string]string
 
 func init() {
 	Registry = make(map[string]string)
+	LoadRegistry(&Registry)
+
+}
+
+func LoadRegistry(registry *map[string]string) {
+
+	regmap := *registry
+
 	registryFile := os.Getenv("BROCADE_REGISTRY")
 	if registryFile == "" {
-		Registry["error"] = "BROCADE_REGISTRY environment variable is not defined"
+		regmap["error"] = "BROCADE_REGISTRY environment variable is not defined"
 		return
 	}
 	info, err := os.Stat(registryFile)
 	if err == nil && info.IsDir() {
-		Registry["error"] = fmt.Sprintf("BROCADE_REGISTRY `%s` points to a directory. It should be a file.", registryFile)
+		regmap["error"] = fmt.Sprintf("BROCADE_REGISTRY `%s` points to a directory. It should be a file.", registryFile)
 		return
 	}
 	b := make([]byte, 0)
 	if !errors.Is(err, fs.ErrNotExist) {
 		b, err = os.ReadFile(registryFile)
 		if err != nil {
-			Registry["error"] = fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
+			regmap["error"] = fmt.Sprintf("Cannot read file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
 			return
 		}
 	}
@@ -38,24 +46,25 @@ func init() {
 		b = []byte("{}")
 		err = fatomic.WriteFile(registryFile, bytes.NewReader(b))
 		if err != nil {
-			Registry["error"] = fmt.Sprintf("Cannot initialise file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
+			regmap["error"] = fmt.Sprintf("Cannot initialise file '%s' (BROCADE_REGISTRY environment variable)", registryFile)
 			return
 		}
 	}
-	err = json.Unmarshal(b, &Registry)
+	err = json.Unmarshal(b, &regmap)
 	if err != nil {
-		Registry["error"] = fmt.Sprintf("registry file '%s' does not contain valid JSON.\nUse http://jsonlint.com/", registryFile)
+		regmap["error"] = fmt.Sprintf("registry file '%s' does not contain valid JSON.\nUse http://jsonlint.com/", registryFile)
 		return
 	}
-	delete(Registry, "error")
-	if Registry["brocade-registry-file"] != registryFile {
-		Registry["brocade-registry-file"] = registryFile
-		SetRegistry("brocade-registry-file", Registry["brocade-registry-file"])
+	delete(regmap, "error")
+	if regmap["brocade-registry-file"] != registryFile {
+		regmap["brocade-registry-file"] = registryFile
+		SetRegistry("brocade-registry-file", regmap["brocade-registry-file"])
 	}
-	if Registry["$schema"] == "" {
-		Registry["$schema"] = "https://dev.anet.be/brocade/schema/registry.schema.json"
-		SetRegistry("$schema", Registry["$schema"])
+	if regmap["$schema"] == "" {
+		regmap["$schema"] = "https://dev.anet.be/brocade/schema/registry.schema.json"
+		SetRegistry("$schema", regmap["$schema"])
 	}
+	return
 }
 
 //SetRegistry set a value to a key in the registry

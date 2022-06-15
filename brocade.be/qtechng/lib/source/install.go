@@ -397,6 +397,8 @@ func installReleasesource(batchid string, reso *Source) (err error) {
 	sout = strings.TrimSpace(sout)
 	serr = string(qutil.Ignore([]byte(serr)))
 	serr = strings.TrimSpace(serr)
+
+	qregistry.LoadRegistry(&qregistry.Registry)
 	if serr == "" && sout == "" {
 		return nil
 	}
