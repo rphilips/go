@@ -283,7 +283,8 @@ func addData(ppayload *qclient.Payload, pcargo *qclient.Cargo, withcontent bool,
 			transports[i].Info = infos[i]
 		}
 		if batchid != "" && strings.HasPrefix(batchid, "m:") {
-			psource.ToMumps(batchid[2:], buffer)
+			err := psource.ToMumps(batchid[2:], buffer)
+			pcargo.AddError(err)
 			if !strings.HasSuffix(psource.String(), ".m") {
 				qsource.Mend(batchid[2:], buffer)
 			}

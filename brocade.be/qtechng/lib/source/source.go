@@ -544,20 +544,21 @@ func (source *Source) Neighbours() []*Source {
 }
 
 // ToMumps writes to mumps
-func (source *Source) ToMumps(batchid string, buf *bytes.Buffer) {
+func (source *Source) ToMumps(batchid string, buf *bytes.Buffer) error {
 	qpath := source.String()
 	ext := filepath.Ext(qpath)
 
 	switch ext {
 	case ".l":
-		source.LFileToMumps(batchid, buf)
+		return source.LFileToMumps(batchid, buf)
 	case ".b":
-		source.BFileToMumps(batchid, buf)
+		return source.BFileToMumps(batchid, buf)
 	case ".m":
-		source.MFileToMumps(batchid, buf)
+		return source.MFileToMumps(batchid, buf)
 	case ".x":
-		source.XFileToMumps(batchid, buf)
+		return source.XFileToMumps(batchid, buf)
 	}
+	return nil
 }
 
 // StoreTree installs a tree of projects
@@ -729,6 +730,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 		return storeeffect{nmeta, chobjs}, y
 	}
 
+	badsources := make(map[string]bool)
 	if len(configs) > 0 {
 		sort.Strings(configs)
 		work = append(work, configs...)
@@ -738,6 +740,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 			if errorlist[i] != nil {
 				results[p] = nil
 				oresults[p] = nil
+
 			} else {
 				results[p] = r.(storeeffect).pmeta
 				oresults[p] = r.(storeeffect).chobjs
@@ -746,10 +749,12 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 
 		errslice := make([]error, 0)
 
-		for _, e := range errorlist {
+		for i, e := range errorlist {
 			if e == nil {
 				continue
 			}
+			p := configs[i]
+			badsources[p] = true
 			errslice = append(errslice, e)
 		}
 
@@ -777,10 +782,13 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 
 	errslice := make([]error, 0)
 
-	for _, e := range errorlist {
+	for i, e := range errorlist {
 		if e == nil {
 			continue
 		}
+		p := configs[i]
+		badsources[p] = true
+		errslice = append(errslice, e)
 		errslice = append(errslice, e)
 	}
 	if len(errslice) == 0 {
@@ -833,7 +841,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 		sources[i] = source
 		i++
 	}
-	e := Install(batchid, sources, warnings, nil)
+	e := Install(batchid, sources, warnings, nil, badsources)
 	if e != nil {
 		errslice = append(errslice, e)
 		errs = qerror.ErrorSlice(errslice)

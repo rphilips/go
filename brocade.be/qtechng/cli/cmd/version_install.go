@@ -73,7 +73,7 @@ func versionInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources, Fwarnings, logme)
+	err := qsource.Install(Frefname, sources, Fwarnings, logme, nil)
 	reportfile := filepath.Join(qregistry.Registry["scratch-dir"], Frefname+".json")
 	t1 := time.Now()
 	logme.Printf("Results also in `%s`", reportfile)

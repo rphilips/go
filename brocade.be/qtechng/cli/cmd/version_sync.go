@@ -111,7 +111,7 @@ func versionSync(cmd *cobra.Command, args []string) error {
 		}
 		sources := query.Run()
 		refname := qutil.Reference("synced")
-		err = qsource.Install(refname, sources, false, nil)
+		err = qsource.Install(refname, sources, false, nil, nil)
 	}
 
 	Fmsg = qreport.Report(msg, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")

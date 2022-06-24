@@ -64,7 +64,7 @@ func sourceInstall(cmd *cobra.Command, args []string) error {
 
 	sources := query.Run()
 
-	err := qsource.Install(Frefname, sources, Fwarnings, nil)
+	err := qsource.Install(Frefname, sources, Fwarnings, nil, nil)
 
 	if err != nil {
 		Fmsg = qreport.Report(nil, err, Fjq, Fyaml, Funquote, Fjoiner, Fsilent, "", "")

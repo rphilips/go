@@ -100,7 +100,7 @@ func LintList(version string, paths []string, warnings bool) (infos []error, met
 				Ref:     []string{"source.lintlist.path.noread"},
 				Version: release.String(),
 				QPath:   p,
-				Msg:     []string{"Path `" + p + "` unreadable"},
+				Msg:     []string{err.Error()},
 			}
 			return nil, err
 		}
@@ -120,6 +120,10 @@ func LintList(version string, paths []string, warnings bool) (infos []error, met
 	}
 
 	result, errorlist := qparallel.NMap(len(paths), -1, fn)
+
+	if lintdir != "" {
+		qfs.Rmpath(lintdir)
+	}
 	infos = make([]error, len(result))
 	metas = make([]*qmeta.Meta, len(result))
 
@@ -174,9 +178,6 @@ func (source *Source) Lint(lintdir string, warnings bool) (info error, err error
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	buffer := new(bytes.Buffer)
 
 	about := ""

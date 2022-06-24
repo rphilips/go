@@ -29,7 +29,7 @@ import (
 // - a 'brocade.json' file causes the project to be installed
 // - a file of type 'install.py' or 'release.py ' causes the project to be installed.
 
-func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger) (err error) {
+func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger, badsources map[string]bool) (err error) {
 	if len(sources) == 0 {
 		return nil
 	}
@@ -118,6 +118,7 @@ func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger
 	count, e := installReleasefiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
+
 	}
 
 	if logme != nil {
@@ -128,6 +129,7 @@ func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger
 	mfiles, e := installMfiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
+
 	}
 	if logme != nil {
 		logme.Printf("*.m files installed: %d m-files\n", len(mfiles))
@@ -137,6 +139,7 @@ func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger
 	ofiles, e := installAutofiles(batchid, projs, qsources, msources)
 	if len(e) != 0 {
 		errs = append(errs, e...)
+
 	}
 	if logme != nil {
 		logme.Printf("*.[blx] files installed: %d files\n", len(ofiles))
@@ -154,8 +157,16 @@ func Install(batchid string, sources []*Source, warnings bool, logme *log.Logger
 	allfiles := append(mfiles, ofiles...)
 	allfiles = append(allfiles, zfiles...)
 	allfiles = qutil.Uniqify(allfiles)
+
 	if len(allfiles) > 0 && strings.ContainsRune(qregistry.Registry["qtechng-type"], 'B') {
-		infos, _, lerrs := LintList(r, allfiles, warnings)
+		lintfiles := make([]string, 0, len(allfiles))
+		for _, qp := range allfiles {
+			if !badsources[qp] {
+				lintfiles = append(lintfiles, qp)
+			}
+		}
+
+		infos, _, lerrs := LintList(r, lintfiles, warnings)
 		if lerrs != nil {
 			errs = append(errs, lerrs)
 		}
