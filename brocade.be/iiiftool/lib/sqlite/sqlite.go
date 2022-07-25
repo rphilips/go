@@ -275,6 +275,26 @@ func Harvest(harvestcode string, sqlar *Sqlar) error {
 	return nil
 }
 
+// Given a IIIF digest, return the manifest
+func Manifest(digest string) (string, error) {
+
+	sqlitefile := iiif.Digest2Location(digest)
+
+	db, err := sql.Open("sqlite", sqlitefile)
+	if err != nil {
+		return "", fmt.Errorf("cannot open file: %v", err)
+	}
+	defer db.Close()
+
+	var meta Meta
+	meta, err = ReadMetaTable(sqlitefile)
+	if err != nil {
+		return "", fmt.Errorf("cannot read file contents from archive: %v", err)
+	}
+
+	return meta.Manifest, nil
+}
+
 // Query IIIF sqlitefile for update times
 func QueryTime(sqlitefile string, mode string) (string, error) {
 	db, err := sql.Open("sqlite", sqlitefile)
