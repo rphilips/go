@@ -9,6 +9,7 @@ require (
 	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807
 	github.com/google/uuid v1.3.0
 	github.com/hexops/gotextdiff v1.0.3
+	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/natefinch/atomic v1.0.1
 	github.com/peterh/liner v1.2.2
 	github.com/rwtodd/Go.Sed v0.0.0-20210816025313-55464686f9ef
@@ -20,6 +21,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.1
 	github.com/zserge/lorca v0.1.10
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
+	golang.org/x/text v0.3.7
 	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	lang.yottadb.com/go/yottadb v1.2.0
@@ -36,7 +38,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -44,8 +46,7 @@ require (
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.70.0 // indirect

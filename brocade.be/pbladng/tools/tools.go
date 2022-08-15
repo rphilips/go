@@ -11,30 +11,32 @@ import (
 	"unicode/utf8"
 )
 
-func IsUTF8(body []byte, lineno int) (err error) {
+type Line struct {
+	L  string
+	NR int
+}
+
+func IsUTF8(body []byte) (lines []string, err error) {
 	if len(body) == 0 {
-		return nil
-	}
-	if !utf8.Valid(body) {
-		lines := bytes.SplitN(body, []byte("\n"), -1)
-		for i, line := range lines {
-			if !utf8.Valid(line) {
-				err = fmt.Errorf("error line %d: No valid UTF-8 in `%s`", lineno+i, line)
-				return
-			}
-		}
+		return
 	}
 	repl := rune(65533)
-	if bytes.ContainsRune(body, repl) {
-		lines := bytes.SplitN(body, []byte("\n"), -1)
-		for i, line := range lines {
-			if bytes.ContainsRune(line, repl) {
-				err = fmt.Errorf("error line %d: No valid UTF-8 in `%s`", lineno+i, line)
-				return
-			}
+	blines := bytes.SplitN(body, []byte("\n"), -1)
+	lines = make([]string, len(blines))
+	for i, bline := range blines {
+		if !utf8.Valid(bline) {
+			lines = nil
+			err = Error("utf8-noutf8", i+1, "No valid UTF-8 in line")
+			return
 		}
+		if bytes.ContainsRune(bline, repl) {
+			lines = nil
+			err = Error("utf8-repl", i+1, "Replacement character in line")
+			return
+		}
+		lines[i] = string(bline)
 	}
-	return nil
+	return
 }
 
 // LeftTrim removes whitespace at the beginning and counts the removed \n

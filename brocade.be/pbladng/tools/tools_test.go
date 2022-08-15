@@ -4,7 +4,19 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	unidecode "github.com/mozillazg/go-unidecode"
 )
+
+func TestDecode(t *testing.T) {
+	s := "é α \u201C \u20AC"
+	calc := unidecode.Unidecode(s)
+	exp := "e a \""
+	if exp != calc {
+		t.Errorf("Problem: \ncalc: %s\nexp: %s\n", calc, exp)
+		return
+	}
+}
 
 func TestIsUTF8(t *testing.T) {
 
@@ -12,7 +24,7 @@ func TestIsUTF8(t *testing.T) {
 	body = append(body, 129)
 	body = append(body, []byte("World\n")...)
 
-	err := IsUTF8(body, 1)
+	_, err := IsUTF8(body)
 
 	if err == nil {
 		t.Errorf("Problem: should have an error")
@@ -23,7 +35,7 @@ func TestIsUTF8(t *testing.T) {
 		return
 	}
 	body = nil
-	err = IsUTF8(body, 1)
+	_, err = IsUTF8(body)
 	if err != nil {
 		t.Errorf("Problem: should not have an error")
 		return
@@ -32,7 +44,7 @@ func TestIsUTF8(t *testing.T) {
 	body = []byte("Hello\n")
 	body = append(body, []byte("World\n")...)
 
-	err = IsUTF8(body, 1)
+	_, err = IsUTF8(body)
 	if err != nil {
 		t.Errorf("Problem: should not have an error2")
 		return

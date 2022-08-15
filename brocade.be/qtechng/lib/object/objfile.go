@@ -42,6 +42,7 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 			return e
 		}
 	}
+
 	blob = qutil.About(blob)
 
 	preamble, objects, e := ofile.Parse(blob, decomment)
@@ -57,6 +58,28 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 		}
 		return err
 	}
+
+	// check on doubles
+
+	found := make(map[string]int)
+
+	for nr, obj := range objects {
+		id := obj.Name()
+		if found[id] != 0 {
+			lineno, _ := strconv.Atoi(obj.Lineno())
+			err = &qerror.QError{
+				Ref:    []string{"objfile.lint.double"},
+				File:   fname,
+				Lineno: lineno,
+				Object: obj.String(),
+				Type:   "Error",
+				Msg:    []string{"`" + id + "` found at " + objects[found[id]-1].Lineno() + " and " + obj.Lineno()},
+			}
+			return
+		}
+		found[id] = nr + 1
+	}
+
 	ofile.SetComment(preamble)
 	release := ofile.Release()
 	editfile := ofile.EditFile()
@@ -69,6 +92,7 @@ func Loads(ofile OFile, blob []byte, decomment bool) (err error) {
 		}
 	}
 	ofile.SetObjects(objects)
+
 	return nil
 }
 

@@ -46,7 +46,16 @@ func TestImages(t *testing.T) {
 		t.Errorf(string(b))
 		return
 	}
-	if true {
-		t.Errorf("see")
+
+}
+
+func TestReduce(t *testing.T) {
+	imgpath := "t.png"
+	tmpdir, _ := ioutil.TempDir("", "")
+	work := filepath.Join(tmpdir, imgpath)
+	pfs.CopyFile(imgpath, work, "process", false)
+	err := ReduceSize(work, 500)
+	if err != nil {
+		t.Errorf(err.Error())
 	}
 }

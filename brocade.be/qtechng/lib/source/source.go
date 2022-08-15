@@ -786,7 +786,7 @@ func StoreList(batchid string, version string, paths []string, reset bool, fmeta
 		if e == nil {
 			continue
 		}
-		p := configs[i]
+		p := notconfigs[i]
 		badsources[p] = true
 		errslice = append(errslice, e)
 		errslice = append(errslice, e)
