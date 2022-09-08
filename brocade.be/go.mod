@@ -18,6 +18,7 @@ require (
 	github.com/spf13/afero v1.8.2
 	github.com/spf13/cobra v1.4.0
 	github.com/spyzhov/ajson v0.7.1
+	github.com/webview/webview v0.0.0-20220729131735-25e7f41b8bbf
 	github.com/xanzy/ssh-agent v0.3.1
 	github.com/zserge/lorca v0.1.10
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122

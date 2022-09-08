@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Nieuwe editie</title>
+    <style type="text/css">
+        dt {
+            float: left;
+            clear: left;
+            width: 6em;
+            font-weight: bold;
+            padding-bottom: 1em;
+        }
+
+        dd {
+            float: left;
+        }
+
+        h1 {
+            font-weight: bold;
+            font-style: italic;
+            border-bottom: 2px solid #FF5733;
+            margin-bottom: 20px;
+            font-size: 1em;
+            padding-bottom: 1px;
+        }
+
+        h2 {
+            float: left;
+            clear: left;
+            background-color: #046;
+            padding: 5px 10px;
+            color: #FF5733;
+            font-size: 16px;
+        }
+    </style>
+    <script type="text/javascript">
+        function makeJSON(action) {
+            js = {
+                "action": action,
+                "year": document.getElementById("year").value,
+                "week": document.getElementById("week").value,
+                "bdate": document.getElementById("bdate").value,
+                "edate": document.getElementById("edate").value
+            }
+            return JSON.stringify(js);
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <h1>Nieuwe editie van parochieblad {{ index .Vars "pcode" }}</h1>
+
+    <div>
+        <h2>Vorige editie</h2>
+        <dl>
+            <dt>Id</dt>
+            <dd>{{ index .Vars "id" }}</dd>
+            <dt>Periode</dt>
+            <dd>{{ index .Vars "periode" }}</dd>
+            <dt>Verzonden</dt>
+            <dd>{{ index .Vars "mailed" }}</dd>
+        </dl>
+    </div>
+
+    <div>
+        <h2>Nieuwe editie</h2>
+        <form class="pblad-form-base">
+            <dl>
+                <dt>Jaar</dt>
+                <dd><input autofocus type="number" class="input-field" name="year" id="year"
+                        value='{{ index .Vars "year" }}' /></dd>
+                <dt>Week</dt>
+                <dd><input autofocus type="number" class="input-field" name="week" id="week"
+                        value='{{ index .Vars "week" }}' /></dd>
+                <dt>Van</dt>
+                <dd><input autofocus type="text" class="input-field" name="bdate" id="bdate"
+                        value='{{ index .Vars "bdate" }}' /> <span class="info">{{ index .Vars "bdatedisplay" }}</span>
+                </dd>
+
+                <dt>Tot</dt>
+                <dd><input autofocus type="text" class="input-field" name="edate" id="edate"
+                        value='{{ index .Vars "edate" }}' /> <span class="info">{{ index .Vars "edatedisplay"
+                        }}</span></dd>
+                <dt>&#160;</dt>
+                <dd><input type="submit" value="Registreer" onclick='register(makeJSON("new"))' />
+                    <input type="submit" value="Stop!" onclick='register(makeJSON("stop"))' />
+                </dd>
+
+            </dl>
+        </form>
+    </div>
+
+</body>
+
+</html>

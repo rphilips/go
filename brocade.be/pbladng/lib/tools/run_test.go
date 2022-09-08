@@ -1,0 +1,24 @@
+package tools
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestRun(t *testing.T) {
+	params := []string{"gopblad", "{verb}"}
+	keys := map[string]string{"verb": "about"}
+
+	output, err := Launch(params, keys, "", true)
+
+	if err != nil {
+		t.Errorf("Problem:\noutput:`%s`\nerror:`%s`\n", output, err)
+	}
+
+	if err == nil && !strings.Contains(string(output), "REGISTRY") {
+		t.Errorf("Problem:\noutput:`%s`\n", output)
+	}
+
+	return
+
+}

@@ -1,0 +1,167 @@
+{
+    "pblad": {
+        "test": "pblad-test",
+        "source-dir": "/home/rphilips/go",
+        "package": "pbladng",
+        "exe": "/home/rphilips/bin/gopblad",
+        "platforms": [
+            "linux/amd64"
+        ],
+        "chapter-title-regexp": [
+            [
+                "LITURGISCHE VIERINGEN",
+                false
+            ],
+            [
+                "LITURGISCHE TEKSTEN",
+                false
+            ],
+            [
+                "PAROCHIAAL NIEUWS - ONZE-LIEVE-VROUW GEBOORTE NAZARETH & SINT-AMANDUS EKE",
+                true
+            ],
+            [
+                "VERENIGINGEN EN SCHOLEN",
+                true
+            ],
+            [
+                "NIEUWS VAN BUITEN ONZE PAROCHIEGRENZEN",
+                true
+            ],
+            [
+                "WACHTDIENSTEN",
+                false
+            ]
+        ],
+        "base-dir": "/home/rphilips/Dropbox/pblad",
+        "correspondents": {
+            "naz": "/home/rphilips/Dropbox/pblad/correspondents/Nazareth",
+            "eke": "/home/rphilips/Dropbox/pblad/correspondents/Eke"
+        },
+        "image-size-kb": "1000",
+        "image-resize-exe": [
+            "convert",
+            "{source}",
+            "-define",
+            "jpeg:extent={kbsize}kb",
+            "{target}"
+        ],
+        "pcodes-valid": [
+            "2222"
+        ],
+        "pcode": "2222",
+        "characters": {
+            "\u20AC": " EUR "
+        },
+        "places": {
+            "eke": {
+                "name": "Eke",
+                "lectors": {
+                    "BZ": "Boudewijn Zwaenepoel",
+                    "DC": "Danny Cortvriend",
+                    "EB": "Els Bradt",
+                    "FD": "Frida Dhont",
+                    "FS": "Filip Scheire",
+                    "FVE": "Franklin Vandendriessche",
+                    "FVT": "Frank Versypt",
+                    "HV": "Hilde Vanmeirhaeghe",
+                    "IC": "Ingrid Clemmen",
+                    "IV": "Ilse Vandeputte",
+                    "KVQ": "Karel Van Quathem",
+                    "KW": "Kathy Wellems",
+                    "LDC": "Luc De Coninck",
+                    "LVW": "Linda Van Wonterghem",
+                    "MDW": "Marc De Waele",
+                    "MMB": "Marie-Madeleine Bouderez",
+                    "MV": "Mieke Vuyge",
+                    "PP": "Piet Pison",
+                    "RC": "Régine Cnockaert",
+                    "SC": "Sebastiaan Colenbie",
+                    "XX": "Verschillende lectoren",
+                    "YY": "Eigen lectoren",
+                    "EL": "Eigen lectoren",
+                    "PL": "Philippe Lammens",
+                    "AT": "Trees Adins"
+                }
+            },
+            "deurle": {
+                "name": "Deurle",
+                "lectors": {}
+            },
+            "vurste": {
+                "name": "Vurste",
+                "lectors": {}
+            },
+            "nazareth": {
+                "name": "Nazareth",
+                "lectors": {
+                    "ADG": "Annemie De Gussem",
+                    "ADV": "Annelies De Vos",
+                    "ADP": "Anja De Paermentier",
+                    "ADVE": "Agnes De Vreese",
+                    "CDK": "Christian De Ketelaere",
+                    "CDP": "Chantal De Pauw",
+                    "CDQ": "Christel De Pourcq",
+                    "FD": "Frida Dhont",
+                    "GDJ": "Geert De Jans",
+                    "HC": "Hilde Cocquyt",
+                    "HDV": "Hilde De Vriendt",
+                    "HS": "Hilde Sablain",
+                    "JB": "Jo Buysse",
+                    "KL": "Karine Lefèvre",
+                    "KC": "Karel Cocquyt",
+                    "MCT": "Marie Christine Tijsebaert",
+                    "MDS": "Martin Dhaenens",
+                    "MD": "Marijke Dhondt",
+                    "MP": "Marc Perseyn",
+                    "ND": "Nick Dhondt",
+                    "PD": "Patrick Decock",
+                    "PDW": "Paul De Wilde",
+                    "PN": "Patrick Neyt",
+                    "PVH": "Patrick Van Hecke",
+                    "SC": "Sebastiaan Colenbie",
+                    "ST": "Suzanne Troncquo",
+                    "XX": "Verschillende lectoren",
+                    "YY": "Eigen lectoren",
+                    "EL": "Eigen lectoren"
+                }
+            },
+            "gavere": {
+                "name": "Gavere",
+                "lectors": {}
+            },
+            "asper": {
+                "name": "Asper",
+                "lectors": {}
+            },
+            "zevergem": {
+                "name": "Zevergem",
+                "lectors": {}
+            },
+            "pinte": {
+                "name": "De Pinte",
+                "lectors": {}
+            },
+            "depinte": {
+                "name": "De Pinte",
+                "lectors": {}
+            },
+            "gent": {
+                "name": "Gent",
+                "lectors": {}
+            },
+            "dikkelvenne": {
+                "name": "Dikkelvenne",
+                "lectors": {}
+            },
+            "baafs": {
+                "name": "Sint-Baafskathedraal",
+                "lectors": {}
+            },
+            "bavo": {
+                "name": "Sint-Baafskathedraal",
+                "lectors": {}
+            }
+        }
+    }
+}

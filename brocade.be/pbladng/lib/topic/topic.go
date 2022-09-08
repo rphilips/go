@@ -1,0 +1,529 @@
+package topic
+
+import (
+	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
+	pimage "brocade.be/pbladng/lib/image"
+	pregistry "brocade.be/pbladng/lib/registry"
+	ptools "brocade.be/pbladng/lib/tools"
+)
+
+var ret = regexp.MustCompile(`^\s*[@#]\s*`)
+var reiso = regexp.MustCompile(`^20[0-9][0-9]-[0-9][0-9]$`)
+var ws = regexp.MustCompile(`\s`)
+
+type Topic struct {
+	Pcodes   []string
+	Header   string
+	Start    int
+	Images   []*pimage.Image
+	From     *time.Time
+	Until    *time.Time
+	LastPB   string
+	MaxCount int
+	Count    int
+	NotePB   string
+	NoteMe   string
+	Body     []ptools.Line
+	Type     string
+	Eudays   []*Euday
+}
+
+func (t Topic) String() string {
+	builder := strings.Builder{}
+	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", ptools.HeaderString(t.Header)))
+	meta := make(map[string]string)
+	if t.Type != "" {
+		meta["type"] = t.Type
+	}
+	if len(t.Pcodes) != 0 {
+		meta["pcodes"] = strings.Join(t.Pcodes, ";")
+	}
+
+	if t.From != nil {
+		meta["from"] = ptools.StringDate(t.From, "I")
+	}
+
+	if t.Until != nil {
+		meta["until"] = ptools.StringDate(t.Until, "I")
+	}
+
+	if t.LastPB != "" {
+		meta["lastpb"] = t.LastPB
+	}
+
+	if t.MaxCount != 0 {
+		meta["maxcount"] = strconv.Itoa(t.MaxCount)
+	}
+
+	if t.Count != 0 {
+		meta["count"] = strconv.Itoa(t.Count)
+	}
+
+	if t.NotePB != "" {
+		meta["notepb"] = ptools.Normalize(t.NotePB)
+	}
+
+	if t.NoteMe != "" {
+		meta["noteme"] = ptools.Normalize(t.NoteMe)
+	}
+	if len(meta) != 0 {
+		bs, _ := json.Marshal(meta)
+		builder.WriteString("  ")
+		builder.Write(bs)
+		builder.WriteString("\n")
+	}
+	if len(t.Images) != 0 {
+		builder.WriteString("\n")
+		for _, img := range t.Images {
+			builder.WriteString(img.Name + ".jpg")
+			if img.Copyright != "" {
+				img.Legend += " © " + img.Copyright
+			}
+			img.Legend = strings.TrimSpace(img.Legend)
+			if img.Legend != "" {
+				builder.WriteString(" ")
+				builder.WriteString(ptools.Normalize(img.Legend))
+				builder.WriteString("\n")
+			}
+		}
+	}
+	if len(t.Body) != 0 {
+		builder.WriteString("\n")
+		for _, line := range t.Body {
+			builder.WriteString(ptools.Normalize(line.L))
+			builder.WriteString("\n")
+		}
+	}
+	if len(t.Eudays) != 0 {
+		for i, euday := range t.Eudays {
+			builder.WriteString("\n")
+			if i > 0 {
+				builder.WriteString("\n")
+			}
+			builder.WriteString(euday.String())
+		}
+	}
+
+	return builder.String()
+}
+
+func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) (t *Topic, err error) {
+	t = new(Topic)
+	for _, line := range lines {
+		lineno := line.NR
+		s := strings.TrimSpace(line.L)
+		if s == "" {
+			continue
+		}
+		nieuw := ret.MatchString(s)
+		if !nieuw {
+			err = ptools.Error("topic-fluff", lineno, "text outside of topic")
+			return
+		}
+		s = ret.ReplaceAllString(s, "")
+		t.Header = ptools.HeaderString(s)
+		t.Start = lineno
+		break
+	}
+
+	if t.Header == "" {
+		err = ptools.Error("topic-header", t.Start, "empty topic header")
+		return
+	}
+
+	if len(lines) == 0 {
+		err = ptools.Error("topic-empty", t.Start, "topic without content")
+	}
+	meta := ptools.Line{}
+	images := make([]ptools.Line, 0)
+	body := make([]ptools.Line, 0)
+	indata := false
+	indash := false
+	for _, line := range lines {
+		s := strings.TrimSpace(line.L)
+		if s == "" && !indata {
+			continue
+		}
+		s = strings.ToLower(s)
+		if meta.L == "" && strings.HasPrefix(s, "{") {
+			meta = line
+			continue
+		}
+		indata = true
+		if isdash(s) {
+			body = append(body, line)
+			indash = !indash
+			continue
+		}
+		if indash {
+			body = append(body, line)
+			continue
+		}
+		if strings.Index(s, ".jpg") != -1 {
+			images = append(images, line)
+			continue
+		}
+		if line.NR > t.Start {
+			body = append(body, line)
+		}
+	}
+	if indash {
+		err = ptools.Error("topic-dash", t.Start, "dashline missing")
+		return
+	}
+
+	if !indata {
+		err = ptools.Error("topic-empty", t.Start, "topic without content")
+		return
+	}
+
+	met := strings.TrimSpace(meta.L)
+	if met != "" {
+		pcodes, from, until, lastpb, count, maxcount, notepb, noteme, ty, err := JSON(meta)
+		if err != nil {
+			return nil, err
+		}
+		t.Pcodes = pcodes
+		t.From = from
+		t.Until = until
+		t.NotePB = notepb
+		t.NoteMe = noteme
+		t.MaxCount = maxcount
+		t.LastPB = lastpb
+		t.Count = count
+		t.Type = ty
+	}
+	if t.LastPB < mid {
+		t.LastPB = mid
+		t.Count += 1
+	}
+
+	// dashes
+
+	indash = false
+	ok := false
+	for _, line := range body {
+		s := strings.TrimSpace(line.L)
+		if isdash(s) {
+			if indash && !ok {
+				err = ptools.Error("topic-dash-empty", line.NR, "dash is empty")
+				return
+			}
+			ok = false
+			indash = !indash
+			continue
+		}
+		if s != "" && indash {
+			ok = true
+		}
+	}
+	if indash {
+		err = ptools.Error("topic-dash-open", t.Start, "dash is not closed")
+		return
+	}
+
+	// images
+
+	if len(images) != 0 {
+		dir := pregistry.Registry["workspace-dir"].(string)
+		for _, img := range images {
+			image, err := pimage.New(img, dir)
+			if err != nil {
+				return nil, err
+			}
+			t.Images = append(t.Images, &image)
+		}
+	}
+
+	// body
+
+	i := 0
+	for _, line := range body {
+		if strings.TrimSpace(line.L) == "" {
+			i++
+			continue
+		}
+		break
+	}
+	body = body[i:]
+	if len(body) != 0 {
+		i = len(body) - 1
+		for {
+			if i < 0 {
+				break
+			}
+			line := body[i]
+			if strings.TrimSpace(line.L) == "" {
+				i--
+				continue
+			}
+			if i >= 0 {
+				t.Body = body[:i+1]
+			}
+			break
+		}
+	}
+
+	for _, line := range t.Body {
+		err := ptools.TestLine(line)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(t.Images) == 0 && len(t.Body) == 0 {
+		err = ptools.Error("topic-empty2", t.Start, "topic is empty")
+		return
+	}
+
+	if t.Type == "cal" {
+		err = parsecal(t, mid, bdate, edate)
+	}
+
+	if t.Type == "mass" {
+		err = parseeudays(t, mid, bdate, edate)
+	}
+	return t, err
+}
+
+func JSON(line ptools.Line) (pcodes []string, from *time.Time, until *time.Time, lastpb string, count int, maxcount int, notepb string, noteme string, ty string, err error) {
+	met := strings.TrimSpace(line.L)
+	lineno := line.NR
+	if met == "" {
+		return
+	}
+	if !strings.HasPrefix(met, "{") {
+		err = ptools.Error("meta-nojson1", lineno, "should start with `{`")
+		return
+	}
+	if !strings.HasSuffix(met, "}") {
+		err = ptools.Error("meta-nojson2", lineno, "should end with `}`")
+		return
+	}
+	mm := make(map[string]string)
+	e := json.Unmarshal([]byte(met), &mm)
+	if e != nil {
+		err = ptools.Error("meta-json-invalid", lineno, "invalid JSON")
+		return
+	}
+
+	if len(mm) == 0 {
+		err = ptools.Error("meta-empty", lineno, "empty meta")
+		return
+	}
+	pcodes = make([]string, 0)
+	for key, value := range mm {
+		value := strings.TrimSpace(value)
+		if value == "" {
+			err = ptools.Error("meta-value-empty", lineno, "`"+key+"` is empty")
+			return
+		}
+		switch key {
+		case "pcodes":
+			validpc := pregistry.Registry["pcodes-valid"].([]string)
+			mgood := make(map[string]bool)
+			mfound := make(map[string]bool)
+
+			for _, pc := range validpc {
+				g := strings.TrimSpace(pc)
+				if g != "" {
+					mgood[g] = true
+				}
+			}
+			value = strings.ReplaceAll(value, ",", ";")
+			given := strings.SplitN(value, ";", -1)
+			for _, g := range given {
+				g := strings.TrimSpace(g)
+				if g == "" {
+					err = ptools.Error("meta-pcode-empty", lineno, "empty pcode")
+					return
+				}
+				if !mgood[g] {
+					err = ptools.Error("meta-pcode-bad", lineno, "bad pcode")
+					return
+				}
+				if mfound[g] {
+					err = ptools.Error("meta-pcode-double", lineno, "pcode `"+g+"` found twice")
+					return
+				}
+				mfound[g] = true
+			}
+			if len(mfound) == 0 {
+				err = ptools.Error("meta-pcode-none", lineno, "no pcodes")
+				return
+			}
+			for pcode := range mfound {
+				pcodes = append(pcodes, pcode)
+			}
+
+		case "from":
+			f, a, e := ptools.NewDate(value)
+			if e != nil {
+				err = ptools.Error("meta-from-bad", lineno, e)
+				return
+			}
+			if a != "" {
+				err = ptools.Error("meta-from-after", lineno, "trailing info after `from`")
+				return
+			}
+			from = f
+
+		case "lastpb":
+
+			if !reiso.MatchString(value) {
+				err = ptools.Error("meta-lastpb-bad", lineno, e)
+				return
+			}
+			lastpb = value
+
+		case "count":
+			var e error
+			count, e = strconv.Atoi(value)
+			if e != nil {
+				err = ptools.Error("meta-count-bad", lineno, e)
+				return
+			}
+		case "maxcount":
+			var e error
+			count, e = strconv.Atoi(value)
+			if e != nil {
+				err = ptools.Error("meta-maxcount-bad", lineno, e)
+				return
+			}
+
+		case "until":
+
+			u, after, e := ptools.NewDate(value)
+			if e != nil {
+				err = ptools.Error("meta-until-bad", lineno, e)
+				return
+			}
+			if after != "" {
+				err = ptools.Error("meta-until-after", lineno, "trailing info after `until`")
+				return
+			}
+			until = u
+
+		case "notepb":
+			notepb = value
+
+		case "noteme":
+			noteme = value
+		case "type":
+			value = strings.ToLower(value)
+			if value != "cal" && value != "mass" {
+				err = ptools.Error("meta-type", lineno, "`"+value+"` is invalid type")
+				return
+			}
+			ty = value
+
+		default:
+			err = ptools.Error("meta-key", lineno, "`"+key+"` is unknown")
+			return
+		}
+	}
+
+	return
+
+}
+
+func isvalidmap(mm map[string]string, lineno int) (good []string, from *time.Time, until *time.Time, note string, err error) {
+	if len(mm) == 0 {
+		err = ptools.Error("meta-empty", lineno, "empty meta")
+		return
+	}
+	good = make([]string, 0)
+	for key, value := range mm {
+		value := strings.TrimSpace(value)
+		switch key {
+		case "pcodes":
+
+			validpc := pregistry.Registry["pcodes-valid"].([]string)
+			pcodes := strings.SplitN(value, ";", -1)
+			for _, pcode := range pcodes {
+				ok := false
+				pcode := strings.TrimSpace(pcode)
+				if pcode == "" {
+					err = ptools.Error("meta-pcode-empty", lineno, "lege pcode")
+					return
+				}
+				for _, pc := range validpc {
+					ok = pcode == pc
+					if ok {
+						good = append(good, pc)
+						break
+					}
+				}
+				if !ok {
+					err = ptools.Error("meta-pcode-bad", lineno, "bad pcode")
+					return
+				}
+			}
+			if len(good) == 0 {
+				err = ptools.Error("meta-pcode-none", lineno, "no pcodes")
+				return
+			}
+		case "from":
+			if value == "" {
+				err = ptools.Error("meta-from-empty", lineno, "`from` is empty")
+				return
+			}
+
+			f, a, e := ptools.NewDate(value)
+			if e != nil {
+				err = ptools.Error("meta-from-bad", lineno, e)
+				return
+			}
+			if a != "" {
+				err = ptools.Error("meta-from-after", lineno, "trailing info after `from`")
+				return
+			}
+			from = f
+		case "until":
+			if value == "" {
+				err = ptools.Error("meta-until-empty", lineno, "`until` is empty")
+				return
+			}
+
+			u, after, e := ptools.NewDate(value)
+			if e != nil {
+				err = ptools.Error("meta-until-bad", lineno, e)
+				return
+			}
+			if after != "" {
+				err = ptools.Error("meta-until-after", lineno, "trailing info after `until`")
+				return
+			}
+			until = u
+		case "note":
+			if value == "" {
+				err = ptools.Error("meta-note-empty", lineno, "`note` is empty")
+				return
+			}
+			note = value
+		default:
+			err = ptools.Error("meta-key", lineno, "`"+key+"` is unknown")
+			return
+		}
+	}
+
+	return
+
+}
+
+func isdash(s string) bool {
+	s = strings.ReplaceAll(s, "_", "-")
+
+	s = ws.ReplaceAllString(s, "")
+	if len(s) < 5 {
+		return false
+	}
+	s = strings.TrimLeft(s, "-")
+	return s == ""
+}
