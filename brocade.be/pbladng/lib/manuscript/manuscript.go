@@ -35,15 +35,11 @@ func (m Manuscript) String() string {
 	if m.Mailed != nil {
 		mailed = ptools.StringDate(m.Mailed, "")
 	}
-	mm := map[string]string{
-		"id":     m.ID(),
-		"bdate":  ptools.StringDate(m.Bdate, ""),
-		"edate":  ptools.StringDate(m.Edate, ""),
-		"mailed": mailed,
-	}
-	h, _ := json.Marshal(mm)
-	builder.Write(h)
-	builder.WriteString("\n")
+	J := ptools.J
+
+	h := fmt.Sprintf(`{ "id": %s, "bdate": %s, "edate": %s, "mailed": %s }`+"\n", J(m.ID()), J(ptools.StringDate(m.Bdate, "")), J(ptools.StringDate(m.Edate, "")), J(mailed))
+
+	builder.WriteString(h)
 	for _, chapter := range m.Chapters {
 		builder.WriteString(chapter.String())
 	}
@@ -169,7 +165,7 @@ func Parse(source io.Reader) (m *Manuscript, err error) {
 }
 
 func Header(line string, lineno int) (year int, week int, bdate *time.Time, edate *time.Time, mailed *time.Time, err error) {
-	line = strings.ToUpper(strings.TrimSpace(line))
+	line = strings.TrimSpace(line)
 	switch {
 	case strings.HasPrefix(line, "{"):
 		return HeaderJ(line, lineno)
@@ -182,6 +178,7 @@ func Header(line string, lineno int) (year int, week int, bdate *time.Time, edat
 }
 
 func HeaderT(line string, lineno int) (year int, week int, bdate *time.Time, edate *time.Time, mailed *time.Time, err error) {
+	line = strings.ToUpper(strings.TrimSpace(line))
 	rem := regexp.MustCompile(`mailed:\s*20\d\d-\d\d-\d\d`)
 	mal := rem.FindString(line)
 	if mal != "" {
@@ -249,7 +246,7 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 	mm := make(map[string]string)
 	e := json.Unmarshal([]byte(line), &mm)
 	if e != nil {
-		err = ptools.Error("header-json-invalid", lineno, "invalid JSON")
+		err = ptools.Error("header-json-invalid", lineno, "invalid JSON: "+e.Error())
 		return
 	}
 
@@ -257,6 +254,24 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 		err = ptools.Error("header-empty", lineno, "empty meta")
 		return
 	}
+	value := mm["id"]
+	y, w, ok := strings.Cut(value, "-")
+	if !ok {
+		err = ptools.Error("header-week1-bad", lineno, "'week' should be of the form 'yyyy-ww'")
+		return
+	}
+	year, e = strconv.Atoi(y)
+	if e != nil {
+		err = ptools.Error("header-year1-bad", lineno, "'year' should be a number")
+		return
+	}
+
+	week, e = strconv.Atoi(w)
+	if e != nil {
+		err = ptools.Error("header-week1-bad", lineno, "'week' should be a number")
+		return
+	}
+
 	for key, value := range mm {
 		value := strings.TrimSpace(value)
 		if value == "" && key != "mailed" {
@@ -265,14 +280,9 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 		}
 		switch key {
 		case "id":
-			y, w, ok := strings.Cut(value, "-")
+			_, _, ok := strings.Cut(value, "-")
 			if !ok {
 				err = ptools.Error("header-week1-bad", lineno, "'week' should be of the form 'yyyy-ww'")
-				return
-			}
-			year, e = strconv.Atoi(y)
-			if e != nil {
-				err = ptools.Error("header-year1-bad", lineno, "'year' should be a number")
 				return
 			}
 			if year > (now.Year() + 1) {
@@ -283,12 +293,6 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 				err = ptools.Error("header-year3-bad", lineno, "'year' should be greater than 2021")
 				return
 			}
-			week, e = strconv.Atoi(w)
-			if e != nil {
-				err = ptools.Error("header-week1-bad", lineno, "'week' should be a number")
-				return
-			}
-
 			if week > 53 {
 				err = ptools.Error("header-weekmax", lineno, fmt.Sprintf("week %d should be smaller than 54", week))
 				return
@@ -315,8 +319,8 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 					break
 				}
 			}
-			if !ok {
-				err = ptools.Error("header-week", lineno, fmt.Sprintf("week %d is invalid", week))
+			if false && !ok {
+				err = ptools.Error("header-prevweek", lineno, fmt.Sprintf("week %d is invalid", week))
 				return
 			}
 		case "bdate":
@@ -340,7 +344,7 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 				return
 			}
 			if week < 52 && edate.Year() != year {
-				err = ptools.Error("header-edate-year1", lineno, "year and edate do not match")
+				err = ptools.Error("header-edate-year1", lineno, fmt.Sprintf("year %d and edate %d do not match ", year, edate.Year()))
 				return
 			}
 			if week > 51 && (edate.Year() != year && edate.Year() != year+1) {

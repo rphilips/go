@@ -2,6 +2,7 @@ package tools
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -14,6 +15,36 @@ import (
 type Line struct {
 	L  string
 	NR int
+}
+
+func WSLines(mylist []Line) (result []Line) {
+	found := false
+	prev := false
+	last := -1
+	for _, line := range mylist {
+		s := strings.TrimSpace(line.L)
+		if !found && s == "" {
+			continue
+		}
+		found = true
+		if prev && s == "" {
+			continue
+		}
+		result = append(result, line)
+		prev = s == ""
+		if !prev {
+			last = len(result)
+		}
+	}
+	if last != -1 {
+		result = result[:last]
+	}
+	return
+}
+
+func J(s any) string {
+	js, _ := json.Marshal(s)
+	return string(js)
 }
 
 func Normalize(s string) string {

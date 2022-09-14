@@ -71,11 +71,9 @@ func (d Euday) String() string {
 
 	mas := ""
 	for _, m := range d.M {
-		mas += m.String()
+		mas += strings.TrimSpace(m.String()) + "\n"
 	}
-	mas = strings.TrimSpace(mas)
-
-	return fmt.Sprintf("%s %02d/%02d\n%s%s", weekday, day, month, headers, mas)
+	return strings.TrimSpace(fmt.Sprintf("%s %02d/%02d\n%s%s", weekday, day, month, headers, mas))
 }
 
 func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (err error) {
@@ -83,7 +81,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 	dys := make([][]ptools.Line, 0)
 	days := make([]*Euday, 0)
 	rem1 := regexp.MustCompile(`^[A-Z][a-z]+dag [0-9]+ [a-z]+ [0-9]{4}$`)
-	rem2 := regexp.MustCompile(`^[A-Z][a-z]+dag [0-9]{,2}/[0-9]{,2}$`)
+	rem2 := regexp.MustCompile(`^[A-Z][a-z]+dag [0-9]{1,2}/[0-9]{1,2}$`)
 	for _, line := range topic.Body {
 		s := strings.ReplaceAll(line.L, "*", "")
 		s, _, _ = strings.Cut(s, "[")
@@ -132,7 +130,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 			return
 		}
 		if t.Before(*bdate) {
-			err = ptools.Error("day-range-from", line.NR, "date `"+dt+"` is before "+ptools.StringDate(bdate, "I"))
+			err = ptools.Error("day-range-from", line.NR, "date `"+ptools.StringDate(t, "I")+"` is before "+ptools.StringDate(bdate, "I"))
 			return
 		}
 		if t.After(*edate) {
@@ -154,7 +152,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 		day.M = make([]*Mass, 0)
 		var tm *time.Time = nil
 
-		red := regexp.MustCompile(`^([0-9]{1,2}\.[0-9]{1,2})\s*([a-z]+)([^:]*):(.*)$`)
+		red := regexp.MustCompile(`^([0-9]{1,2}\.[0-9]{1,2})(\s*u\.)\s*([a-z]+)([^:]*):(.*)$`)
 
 		for _, line := range dy[1:] {
 			s := strings.TrimSpace(line.L)
@@ -200,7 +198,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 			mass.Time = &tt
 			tm = mass.Time
 
-			place := pieces[0][2]
+			place := pieces[0][3]
 
 			cplace, nplace := findPlace(place)
 
@@ -211,7 +209,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 
 			mass.Place = cplace
 
-			intention := strings.TrimSpace(pieces[0][4])
+			intention := strings.TrimSpace(pieces[0][5])
 			if intention != "" {
 				ints := strings.SplitN(intention, ";", -1)
 				for _, x := range ints {
@@ -222,7 +220,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 				}
 			}
 
-			players := strings.TrimSpace(pieces[0][3])
+			players := strings.TrimSpace(pieces[0][4])
 			if players != "" {
 				roles := strings.SplitN(players, "/", -1)
 				if len(roles) > 2 {

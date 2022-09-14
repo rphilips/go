@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -148,6 +149,34 @@ func TestPhone(t *testing.T) {
 
 		}
 	}
+}
+func TestWSLines(t *testing.T) {
+	mylist := `
+
+
+
+
+	A
+
+	B
+
+
+	C
+
+
+
+
+
+	`
+	myL := make([]Line, 0)
+	for i, x := range strings.SplitN(mylist, "\n", -1) {
+		myL = append(myL, Line{x, i})
+	}
+	calc := WSLines(myL)
+	b, _ := json.Marshal(calc)
+	t.Errorf("Problem:\n%s\n", string(b))
+	return
+
 }
 
 func TestShowPhone(t *testing.T) {

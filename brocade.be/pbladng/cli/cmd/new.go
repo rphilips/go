@@ -99,15 +99,25 @@ func newedition(cmd *cobra.Command, args []string) error {
 func loadVars(guiFiller *GuiFiller) {
 	id, period, mailed := pmanuscript.Previous()
 	year, week, bdate, edate := pmanuscript.Next()
+	tbdate, _, _ := ptools.NewDate(bdate)
+	tedate, _, _ := ptools.NewDate(edate)
 	vars := map[string]string{
-		"pcode":   pregistry.Registry["pcode"].(string),
-		"id":      id,
-		"periode": period,
-		"mailed":  mailed,
-		"year":    year,
-		"week":    week,
-		"bdate":   bdate,
-		"edate":   edate,
+		"pcode":        pregistry.Registry["pcode"].(string),
+		"id":           id,
+		"periode":      period,
+		"mailed":       mailed,
+		"year":         year,
+		"week":         week,
+		"bdate":        bdate,
+		"edate":        edate,
+		"minyear":      "2000",
+		"maxyear":      "2050",
+		"minweek":      "1",
+		"maxweek":      "53",
+		"minbdate":     bdate,
+		"maxbdate":     "2010-06-30",
+		"edatedisplay": ptools.StringDate(tedate, "D"),
+		"bdatedisplay": ptools.StringDate(tbdate, "D"),
 	}
 	guiFiller.Vars = vars
 

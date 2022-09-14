@@ -4,17 +4,24 @@
 <head>
     <title>Nieuwe editie</title>
     <style type="text/css">
-        dt {
-            float: left;
-            clear: left;
-            width: 6em;
-            font-weight: bold;
-            padding-bottom: 1em;
+        .label {
+            font-size: smaller;
         }
 
-        dd {
-            float: left;
+        .info {
+            font-size: smaller;
+            color: green;
         }
+
+        input:invalid {
+            border: solid red 3px;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+
 
         h1 {
             font-weight: bold;
@@ -26,12 +33,12 @@
         }
 
         h2 {
-            float: left;
-            clear: left;
-            background-color: #046;
-            padding: 5px 10px;
-            color: #FF5733;
-            font-size: 16px;
+            font-weight: bold;
+            color: blue;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            font-size: 0.8em;
+            padding-top: 5px;
         }
     </style>
     <script type="text/javascript">
@@ -53,45 +60,60 @@
 <body>
     <h1>Nieuwe editie van parochieblad {{ index .Vars "pcode" }}</h1>
 
-    <div>
-        <h2>Vorige editie</h2>
-        <dl>
-            <dt>Id</dt>
-            <dd>{{ index .Vars "id" }}</dd>
-            <dt>Periode</dt>
-            <dd>{{ index .Vars "periode" }}</dd>
-            <dt>Verzonden</dt>
-            <dd>{{ index .Vars "mailed" }}</dd>
-        </dl>
-    </div>
+    <h2>Vorige editie</h2>
+    <table>
+        <tr>
+            <td class="label">Id</td>
+            <td>{{ index .Vars "id" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Periode</td>
+            <td>{{ index .Vars "periode" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Verzonden</td>
+            <td>{{ index .Vars "mailed" }}</td>
+        </tr>
+    </table>
 
-    <div>
-        <h2>Nieuwe editie</h2>
-        <form class="pblad-form-base">
-            <dl>
-                <dt>Jaar</dt>
-                <dd><input autofocus type="number" class="input-field" name="year" id="year"
-                        value='{{ index .Vars "year" }}' /></dd>
-                <dt>Week</dt>
-                <dd><input autofocus type="number" class="input-field" name="week" id="week"
-                        value='{{ index .Vars "week" }}' /></dd>
-                <dt>Van</dt>
-                <dd><input autofocus type="text" class="input-field" name="bdate" id="bdate"
-                        value='{{ index .Vars "bdate" }}' /> <span class="info">{{ index .Vars "bdatedisplay" }}</span>
-                </dd>
+    <h2>Nieuwe editie</h2>
+    <form class="pblad-form-base" onkeydown="return event.key != 'Enter';">
+        <table>
+            <tr>
+                <td class="label">Jaar</td>
+                <td><input autofocus type="number" class="input-field" name="year" id="year"
+                        value='{{ index .Vars "year" }}' min='{{ index .Vars "minyear" }}'
+                        max='{{ index .Vars "maxyear" }}' /></td>
+            </tr>
+            <tr>
+                <td class="label">Week</td>
+                <td><input type="number" class="input-field" name="week" id="week" value='{{ index .Vars "week" }}'
+                        min='{{ index .Vars "minweek" }}' max='{{ index .Vars "maxweek" }}' /></td>
+            </tr>
+            <tr>
+                <td class="label">Van</td>
+                <td><input type="date" class="input-field" name="bdate" id="bdate" value='{{ index .Vars "bdate" }}'
+                        min='{{ index .Vars "minbdate" }}' max='{{ index .Vars "maxbdate" }}' /></td>
+                <td><span class="info">{{ index .Vars "bdatedisplay" }}</span>
+                </td>
+            </tr>
 
-                <dt>Tot</dt>
-                <dd><input autofocus type="text" class="input-field" name="edate" id="edate"
-                        value='{{ index .Vars "edate" }}' /> <span class="info">{{ index .Vars "edatedisplay"
-                        }}</span></dd>
-                <dt>&#160;</dt>
-                <dd><input type="submit" value="Registreer" onclick='register(makeJSON("new"))' />
-                    <input type="submit" value="Stop!" onclick='register(makeJSON("stop"))' />
-                </dd>
+            <tr>
+                <td class="label">Tot</td>
+                <td><input type="date" class="input-field" name="edate" id="edate" value='{{ index .Vars "edate" }}'
+                        min='{{ index .Vars "minedate" }}' max='{{ index .Vars "maxedate" }}' /></td>
+                <td><span class="info">{{ index .Vars "edatedisplay" }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>&#160;</td>
+                <td><input class="label" type="submit" value="Registreer" onclick='register(makeJSON("new"))' />
+                    <input class="label" type="submit" value="Stop!" onclick='register(makeJSON("stop"))' />
+                </td>
+            </tr>
 
-            </dl>
-        </form>
-    </div>
+        </table>
+    </form>
 
 </body>
 

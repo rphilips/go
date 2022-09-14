@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	pfs "brocade.be/pbladng/lib/fs"
 	pimage "brocade.be/pbladng/lib/image"
 	pregistry "brocade.be/pbladng/lib/registry"
 	ptools "brocade.be/pbladng/lib/tools"
@@ -29,54 +30,61 @@ type Topic struct {
 	Count    int
 	NotePB   string
 	NoteMe   string
+	Comment  []ptools.Line
 	Body     []ptools.Line
 	Type     string
 	Eudays   []*Euday
 }
 
 func (t Topic) String() string {
+	J := ptools.J
 	builder := strings.Builder{}
 	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", ptools.HeaderString(t.Header)))
-	meta := make(map[string]string)
+	meta := make([]string, 0)
 	if t.Type != "" {
-		meta["type"] = t.Type
+		meta = append(meta, fmt.Sprintf(`"type": %s`, J(t.Type)))
 	}
 	if len(t.Pcodes) != 0 {
-		meta["pcodes"] = strings.Join(t.Pcodes, ";")
+		meta = append(meta, fmt.Sprintf(`"pcodes": %s`, J(strings.Join(t.Pcodes, ";"))))
 	}
 
 	if t.From != nil {
-		meta["from"] = ptools.StringDate(t.From, "I")
+		meta = append(meta, fmt.Sprintf(`"from": %s`, J(ptools.StringDate(t.From, "I"))))
 	}
 
 	if t.Until != nil {
-		meta["until"] = ptools.StringDate(t.Until, "I")
+		meta = append(meta, fmt.Sprintf(`"until": %s`, J(ptools.StringDate(t.Until, "I"))))
 	}
 
 	if t.LastPB != "" {
-		meta["lastpb"] = t.LastPB
+		meta = append(meta, fmt.Sprintf(`"lastpb": %s`, J(t.LastPB)))
 	}
 
 	if t.MaxCount != 0 {
-		meta["maxcount"] = strconv.Itoa(t.MaxCount)
+		meta = append(meta, fmt.Sprintf(`"maxcount": %s`, J(strconv.Itoa(t.MaxCount))))
 	}
 
 	if t.Count != 0 {
-		meta["count"] = strconv.Itoa(t.Count)
+		meta = append(meta, fmt.Sprintf(`"count": %s`, J(strconv.Itoa(t.Count))))
 	}
 
 	if t.NotePB != "" {
-		meta["notepb"] = ptools.Normalize(t.NotePB)
+		meta = append(meta, fmt.Sprintf(`"notepb": %s`, J(ptools.Normalize(t.NotePB))))
 	}
 
 	if t.NoteMe != "" {
-		meta["noteme"] = ptools.Normalize(t.NoteMe)
+		meta = append(meta, fmt.Sprintf(`"noteme": %s`, J(ptools.Normalize(t.NoteMe))))
 	}
 	if len(meta) != 0 {
-		bs, _ := json.Marshal(meta)
-		builder.WriteString("  ")
-		builder.Write(bs)
-		builder.WriteString("\n")
+		builder.WriteString("  { ")
+		builder.WriteString(strings.Join(meta, ", "))
+		builder.WriteString(" }\n")
+	}
+
+	if len(t.Comment) != 0 {
+		for _, l := range t.Comment {
+			builder.WriteString(l.L)
+		}
 	}
 	if len(t.Images) != 0 {
 		builder.WriteString("\n")
@@ -108,6 +116,7 @@ func (t Topic) String() string {
 			}
 			builder.WriteString(euday.String())
 		}
+		builder.WriteString("\n")
 	}
 
 	return builder.String()
@@ -119,6 +128,9 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 		lineno := line.NR
 		s := strings.TrimSpace(line.L)
 		if s == "" {
+			continue
+		}
+		if strings.HasPrefix(s, "//") {
 			continue
 		}
 		nieuw := ret.MatchString(s)
@@ -147,7 +159,24 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 	indash := false
 	for _, line := range lines {
 		s := strings.TrimSpace(line.L)
+		if strings.HasPrefix(s, "//") {
+			s = strings.TrimLeft(s, "//")
+			if s == "" {
+				s = "//"
+			} else {
+				s = "// " + s
+			}
+			line.L = s
+		}
 		if s == "" && !indata {
+			continue
+		}
+		if !indata && strings.HasPrefix(s, "//") {
+			t.Comment = append(t.Comment, line)
+			continue
+		}
+		if indata && strings.HasPrefix(s, "//") {
+			body = append(body, line)
 			continue
 		}
 		s = strings.ToLower(s)
@@ -231,7 +260,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 	// images
 
 	if len(images) != 0 {
-		dir := pregistry.Registry["workspace-dir"].(string)
+		dir := pfs.FName("workspace")
 		for _, img := range images {
 			image, err := pimage.New(img, dir)
 			if err != nil {
@@ -243,32 +272,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 
 	// body
 
-	i := 0
-	for _, line := range body {
-		if strings.TrimSpace(line.L) == "" {
-			i++
-			continue
-		}
-		break
-	}
-	body = body[i:]
-	if len(body) != 0 {
-		i = len(body) - 1
-		for {
-			if i < 0 {
-				break
-			}
-			line := body[i]
-			if strings.TrimSpace(line.L) == "" {
-				i--
-				continue
-			}
-			if i >= 0 {
-				t.Body = body[:i+1]
-			}
-			break
-		}
-	}
+	t.Body = ptools.WSLines(body)
 
 	for _, line := range t.Body {
 		err := ptools.TestLine(line)
