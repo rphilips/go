@@ -16,32 +16,38 @@ import (
 
 var arcdir = pfs.FName(pfs.Base + "/archive/manuscripts")
 
-func FindLast(id string, mailed bool) (string, *pmanuscript.Manuscript, error) {
-	now := time.Now()
-	year := 2 + now.Year()
-	week = 54
-	if id != "" {
-		syear, sweek, _ := strings.Cut(id, "-")
-		year, _ = strconv.Atoi(syear)
-		if sweek == "1" {
-
-			week, _ := strconv.Atoi(sweek)
-			year++
-		}
+func FindBefore(id string, mailed bool) (place string, m *pmanuscript.Manuscript, err error) {
+	if id == "" {
+		now := time.Now()
+		year := now.Year()
+		id = strconv.Itoa(year)
+	}
+	if !strings.Contains(id, "-") {
+		id = id + "-99"
+	}
+	syear, sweek, _ := strings.Cut(id, "-")
+	year, err := strconv.Atoi(syear)
+	if err != nil {
+		return
+	}
+	_, err = strconv.Atoi(sweek)
+	if err != nil {
+		return
 	}
 	for {
-		year--
 		if year < 2005 {
 			return "", nil, fmt.Errorf("no manuscripts found")
 		}
 		dir := filepath.Join(arcdir, strconv.Itoa(year))
 		files, err := os.ReadDir(dir)
 		if err != nil {
+			year--
+			sweek = "99"
 			continue
 		}
 		weeks := make([]string, 0)
-		for _, week := range files {
-			name := week.Name()
+		for _, w := range files {
+			name := w.Name()
 			base := filepath.Base(name)
 			if len(name) != 2 {
 				continue
@@ -49,10 +55,15 @@ func FindLast(id string, mailed bool) (string, *pmanuscript.Manuscript, error) {
 			if strings.TrimLeft(name, "1234567890") != "" {
 				continue
 			}
-			weeks = append(weeks, base)
+			if base < sweek {
+				weeks = append(weeks, base)
+			}
 		}
 		sort.Sort(sort.Reverse(sort.StringSlice(weeks)))
 		for _, week := range weeks {
+			if week >= sweek {
+				continue
+			}
 			fname := filepath.Join(dir, week, "week.pb")
 			f, err := os.Open(fname)
 			if err != nil {
@@ -67,6 +78,8 @@ func FindLast(id string, mailed bool) (string, *pmanuscript.Manuscript, error) {
 				return fname, m, nil
 			}
 		}
+		year--
+		sweek = "99"
 	}
 
 }
