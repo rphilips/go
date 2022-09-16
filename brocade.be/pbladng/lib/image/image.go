@@ -24,7 +24,7 @@ type Image struct {
 	Lineno    int
 }
 
-func New(line ptools.Line, dir string) (image Image, err error) {
+func New(line ptools.Line, dir string, checkextern bool) (image Image, err error) {
 	s := line.L
 	lineno := line.NR
 	name, legend, ok := strings.Cut(s, ".jpg")
@@ -41,28 +41,28 @@ func New(line ptools.Line, dir string) (image Image, err error) {
 		return
 	}
 	if dir == "" {
-		dir = pfs.FName("wokspace")
+		dir = pfs.FName("workspace")
 	}
 	imgmap := ImageMap(dir)
-	if imgmap[name] == "" {
+	if imgmap[name] == "" && checkextern {
 		err = ptools.Error("topic-image-file", lineno, "cannot find image `"+name+"` in "+"`"+dir+"`")
 		return
 	}
 	legend = strings.TrimSpace(legend)
-
-	legend, copyright, ok := strings.Cut(legend, "©")
-	if !ok {
-		legend, copyright, ok = strings.Cut(" "+legend, " cr ")
-		legend = strings.TrimSpace(legend)
+	copyright := ""
+	for _, decider := range []string{"©", " cr ", "copyright", "Copyright"} {
+		x, y, ok := strings.Cut(" "+legend, decider)
+		if !ok {
+			continue
+		}
+		y = strings.TrimLeft(strings.TrimSpace(y), "!,:;. ")
+		if y == "" {
+			continue
+		}
+		copyright = y
+		legend = strings.TrimRight(strings.TrimSpace(x), ",:;. ")
+		break
 	}
-	if !ok {
-		legend, copyright, ok = strings.Cut(legend, "copyright")
-	}
-	if !ok {
-		legend, copyright, ok = strings.Cut(legend, "Copyright")
-	}
-	legend = strings.TrimSpace(legend)
-	copyright = strings.TrimSpace(copyright)
 
 	if copyright == "" {
 		err = ptools.Error("topic-image-copyright", lineno, "no copyright for `"+name+"`")

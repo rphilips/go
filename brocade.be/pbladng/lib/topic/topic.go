@@ -122,7 +122,7 @@ func (t Topic) String() string {
 	return builder.String()
 }
 
-func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) (t *Topic, err error) {
+func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, checkextern bool) (t *Topic, err error) {
 	t = new(Topic)
 	for _, line := range lines {
 		lineno := line.NR
@@ -262,7 +262,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 	if len(images) != 0 {
 		dir := pfs.FName("workspace")
 		for _, img := range images {
-			image, err := pimage.New(img, dir)
+			image, err := pimage.New(img, dir, checkextern)
 			if err != nil {
 				return nil, err
 			}

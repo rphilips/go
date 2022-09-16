@@ -34,7 +34,7 @@ func (c Chapter) String() string {
 	return builder.String()
 }
 
-func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) (c *Chapter, err error) {
+func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, checkextern bool) (c *Chapter, err error) {
 	c = new(Chapter)
 	for _, line := range lines {
 		lineno := line.NR
@@ -71,7 +71,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 		}
 	}
 	if !ok {
-		err = ptools.Error("chapter-title-unknown", c.Start, fmt.Sprintf("chapter without unknown title `%s`", c.Header))
+		err = ptools.Error("chapter-title-unknown", c.Start, fmt.Sprintf("chapter without known title `%s`", c.Header))
 		return
 	}
 	c.Sort = sortvalue
@@ -83,26 +83,34 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time) 
 			continue
 		}
 		s := strings.TrimSpace(line.L)
-		if s == "" && (len(tops) == 0 || len(tops[len(tops)-1]) == 0) {
+		switch {
+		case s == "" && len(tops) != 0:
+			tops[len(tops)-1] = append(tops[len(tops)-1], line)
 			continue
+		case s == "":
+			continue
+		default:
+			nieuw := ret.MatchString(line.L)
+			switch {
+			case nieuw:
+				tops = append(tops, make([]ptools.Line, 0))
+				tops[len(tops)-1] = append(tops[len(tops)-1], line)
+				continue
+			case len(tops) == 0:
+				err = ptools.Error("topics-fluff", line.NR, "text outside of topic: "+s)
+				return
+			default:
+				tops[len(tops)-1] = append(tops[len(tops)-1], line)
+				continue
+			}
 		}
-
-		nieuw := ret.MatchString(line.L)
-		if s != "" && len(tops) == 0 && !nieuw {
-			err = ptools.Error("topics-fluff", line.NR, "text outside of topic")
-			return
-		}
-		if nieuw {
-			tops = append(tops, make([]ptools.Line, 0))
-		}
-		tops[len(tops)-1] = append(tops[len(tops)-1], line)
 	}
 	if len(tops) == 0 {
 		return
 	}
 
 	for _, top := range tops {
-		topic, e := ptopic.Parse(top, mid, bdate, edate)
+		topic, e := ptopic.Parse(top, mid, bdate, edate, checkextern)
 		if e != nil {
 			return c, e
 		}

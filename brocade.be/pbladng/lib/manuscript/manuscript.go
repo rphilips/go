@@ -1,17 +1,22 @@
 package manuscript
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	bfs "brocade.be/base/fs"
 	pchapter "brocade.be/pbladng/lib/chapter"
 	pfs "brocade.be/pbladng/lib/fs"
+	pregistry "brocade.be/pbladng/lib/registry"
 	ptools "brocade.be/pbladng/lib/tools"
 )
 
@@ -24,6 +29,11 @@ type Manuscript struct {
 	Edate    *time.Time
 	Mailed   *time.Time
 	Chapters []*pchapter.Chapter
+}
+
+type ImageID struct {
+	Mtime  string `json:"mtime"`
+	Digest string `json:"digest"`
 }
 
 var rec = regexp.MustCompile(`^\s*[@#]\s*[@#]`)
@@ -51,7 +61,7 @@ func (m Manuscript) ID() string {
 }
 
 // New manuscript starting with a reader
-func Parse(source io.Reader) (m *Manuscript, err error) {
+func Parse(source io.Reader, checkextern bool, imgmanifest string) (m *Manuscript, err error) {
 	m = new(Manuscript)
 	blob, err := io.ReadAll(source)
 	if err != nil {
@@ -137,7 +147,7 @@ func Parse(source io.Reader) (m *Manuscript, err error) {
 	}
 
 	for _, chap := range chaps {
-		c, err := pchapter.Parse(chap, m.ID(), m.Bdate, m.Edate)
+		c, err := pchapter.Parse(chap, m.ID(), m.Bdate, m.Edate, checkextern)
 		if err != nil {
 			return nil, err
 		}
@@ -161,6 +171,68 @@ func Parse(source io.Reader) (m *Manuscript, err error) {
 	if len(m.Chapters) != 0 {
 		sort.Slice(m.Chapters, func(i, j int) bool { return m.Chapters[i].Sort < m.Chapters[j].Sort })
 	}
+
+	if checkextern && imgmanifest != "" {
+		imglist := make(map[string]ImageID)
+		manifest, e := os.ReadFile(imgmanifest)
+		if e == nil {
+			json.Unmarshal(manifest, &imglist)
+		}
+		counter := make(map[string]int)
+		change := false
+		for _, c := range m.Chapters {
+			for _, t := range c.Topics {
+				if len(t.Images) == 0 {
+					continue
+				}
+				for _, img := range t.Images {
+					fname := img.Fname
+					if counter[fname] != 0 {
+						err = ptools.Error("image-double1", img.Lineno, "same image as on line "+strconv.Itoa(counter[fname]))
+						return
+					}
+					counter[fname] = img.Lineno
+					digest := ""
+					imgid := imglist[fname]
+					mtime, digest, e := ptools.ImgProps(fname, img.Lineno, imgid.Mtime, imgid.Digest)
+					if e != nil {
+						delete(imglist, fname)
+						bfs.Store(imgmanifest, imglist, "process")
+						err = e
+						return
+					}
+					for _, im := range t.Images {
+						fn := im.Fname
+						if fn == fname {
+							continue
+						}
+						imgid, ok := imglist[fn]
+						if !ok {
+							continue
+						}
+						if imgid.Digest == digest {
+							delete(imglist, fname)
+							delete(imglist, fn)
+							bfs.Store(imgmanifest, imglist, "process")
+							err = ptools.Error("image-double2", img.Lineno, "same image as on line "+strconv.Itoa(im.Lineno))
+							return
+						}
+
+					}
+					change = true
+					imglist[fname] = ImageID{
+						Mtime:  mtime,
+						Digest: digest,
+					}
+				}
+			}
+		}
+		if change {
+			bfs.Store(imgmanifest, imglist, "process")
+		}
+
+	}
+
 	return
 }
 
@@ -179,11 +251,11 @@ func Header(line string, lineno int) (year int, week int, bdate *time.Time, edat
 
 func HeaderT(line string, lineno int) (year int, week int, bdate *time.Time, edate *time.Time, mailed *time.Time, err error) {
 	line = strings.ToUpper(strings.TrimSpace(line))
-	rem := regexp.MustCompile(`mailed:\s*20\d\d-\d\d-\d\d`)
+	rem := regexp.MustCompile(`MAILED:\s*20\d\d-\d\d-\d\d`)
 	mal := rem.FindString(line)
 	if mal != "" {
 		line = strings.ReplaceAll(line, mal, "")
-		mal = strings.TrimSpace(strings.TrimPrefix(line, "mailed:"))
+		mal = strings.TrimSpace(strings.TrimPrefix(mal, "MAILED:"))
 		x, _, e := ptools.NewDate(mal)
 		if e == nil {
 			mailed = x
@@ -373,10 +445,156 @@ func HeaderJ(line string, lineno int) (year int, week int, bdate *time.Time, eda
 
 }
 
-func Previous() (id string, period string, mailed string) {
-	return "1999-10", "2022-01-15 - 2022-01-25", "2022-01-12"
+func Previous() (m *Manuscript) {
+	_, m, err := FindBefore("", true)
+	if err != nil {
+		m = nil
+	}
+	return
 }
 
-func Next() (year string, week string, bdate string, edate string) {
-	return "2000", "13", "2000-02-15", "2000-02-25"
+func Next(m *Manuscript) (id string, year string, week string, bdate string, edate string) {
+	if m == nil {
+		return
+	}
+	startessential := pregistry.Registry["start-day-essential"].(string)
+	startday := pregistry.Registry["start-day"].(string)
+
+	date := m.Edate
+	bd := m.Bdate
+
+	for {
+		if date.Before(*bd) {
+			date = nil
+			break
+		}
+		if date.Weekday().String() == startessential {
+			break
+		}
+		d := date.AddDate(0, 0, -1)
+		date = &d
+	}
+	if date == nil {
+		return
+	}
+
+	bdn := date
+	for {
+		if bdn.Weekday().String() == startday {
+			break
+		}
+		d := bdn.AddDate(0, 0, -1)
+		bdn = &d
+	}
+
+	iyear := m.Year
+	iweek := m.Week
+	switch {
+	case iweek < 52:
+		iweek++
+	case iweek > 52:
+		iweek = 1
+		iyear++
+	case iweek == 52:
+		if date.Year() == iyear {
+			iweek = 53
+		} else {
+			iyear++
+			iweek++
+		}
+	}
+
+	ed := date
+
+	inc, _ := strconv.Atoi(pregistry.Registry["last-day"].(string))
+	for {
+		if inc == 0 {
+			break
+		}
+		inc--
+		d := date.AddDate(0, 0, 1)
+		ed = &d
+	}
+
+	year = strconv.Itoa(iyear)
+	week = strconv.Itoa(iweek)
+	id = fmt.Sprintf("%d-%02d", iyear, iweek)
+	bdate = ptools.StringDate(bdn, "I")
+
+	edate = ptools.StringDate(ed, "I")
+	return
+}
+
+var arcdir = pfs.FName("/archive/manuscripts")
+
+func FindBefore(id string, mailed bool) (place string, m *Manuscript, err error) {
+	if id == "" {
+		now := time.Now()
+		year := now.Year()
+		id = strconv.Itoa(year)
+	}
+	if !strings.Contains(id, "-") {
+		id = id + "-99"
+	}
+	syear, sweek, _ := strings.Cut(id, "-")
+	year, err := strconv.Atoi(syear)
+	if err != nil {
+		return
+	}
+	// bfs.Store("/home/rphilips/Desktop/log.txt", id, "process")
+	_, err = strconv.Atoi(sweek)
+	if err != nil {
+		return
+	}
+
+	for {
+		if year < 2005 {
+			return "", nil, fmt.Errorf("no manuscripts found")
+		}
+		dir := filepath.Join(arcdir, strconv.Itoa(year))
+
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			year--
+			sweek = "99"
+			continue
+		}
+		weeks := make([]string, 0)
+		for _, w := range files {
+			name := w.Name()
+			base := filepath.Base(name)
+			if len(name) != 2 {
+				continue
+			}
+			if strings.TrimLeft(name, "1234567890") != "" {
+				continue
+			}
+			if base < sweek {
+				weeks = append(weeks, base)
+			}
+		}
+		sort.Sort(sort.Reverse(sort.StringSlice(weeks)))
+
+		for _, week := range weeks {
+			if week >= sweek {
+				continue
+			}
+			fname := filepath.Join(dir, week, "week.pb")
+
+			f, err := os.Open(fname)
+			if err != nil {
+				continue
+			}
+			source := bufio.NewReader(f)
+			m, err := Parse(source, false, "")
+			if err != nil {
+				return "", nil, fmt.Errorf("error in %s: %s", fname, err.Error())
+			}
+			if !mailed || m.Mailed != nil {
+				return fname, m, nil
+			}
+		}
+		year--
+		sweek = "99"
+	}
 }

@@ -40,7 +40,7 @@ func doimport(cmd *cobra.Command, args []string) error {
 	}
 	defer f.Close()
 	source := bufio.NewReader(f)
-	m, err := pmanuscript.Parse(source)
+	m, err := pmanuscript.Parse(source, false, "")
 	if err != nil {
 		return err
 	}
