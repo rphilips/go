@@ -16,8 +16,10 @@ import (
 	bfs "brocade.be/base/fs"
 	pchapter "brocade.be/pbladng/lib/chapter"
 	pfs "brocade.be/pbladng/lib/fs"
+	pholy "brocade.be/pbladng/lib/holy"
 	pregistry "brocade.be/pbladng/lib/registry"
 	ptools "brocade.be/pbladng/lib/tools"
+	ptopic "brocade.be/pbladng/lib/topic"
 )
 
 type Manuscript struct {
@@ -267,7 +269,7 @@ func HeaderT(line string, lineno int) (year int, week int, bdate *time.Time, eda
 		err = ptools.Error("header-after", lineno, "first non-empty line should contain more information")
 		return
 	}
-	matched, err := regexp.MatchString(`^20\d\d-\d\d.*`, after)
+	matched, _ := regexp.MatchString(`^20\d\d-\d\d.*`, after)
 	if !matched {
 		err = ptools.Error("header-yearweek", lineno, "first non-empty line should start with 'WEEK yyyy-ww")
 		return
@@ -287,7 +289,7 @@ func HeaderT(line string, lineno int) (year int, week int, bdate *time.Time, eda
 		return
 	}
 	after = strings.TrimLeft(after, "\t -")
-	edate, after, err = ptools.NewDate(after)
+	edate, _, err = ptools.NewDate(after)
 	if err != nil {
 		err = ptools.Error("header-edate", lineno, err)
 		return
@@ -480,6 +482,7 @@ func Next(m *Manuscript) (id string, year string, week string, bdate string, eda
 
 	bdn := date
 	for {
+		fmt.Println(bdn.Weekday())
 		if bdn.Weekday().String() == startday {
 			break
 		}
@@ -512,7 +515,7 @@ func Next(m *Manuscript) (id string, year string, week string, bdate string, eda
 			break
 		}
 		inc--
-		d := date.AddDate(0, 0, 1)
+		d := ed.AddDate(0, 0, 1)
 		ed = &d
 	}
 
@@ -597,4 +600,152 @@ func FindBefore(id string, mailed bool) (place string, m *Manuscript, err error)
 		year--
 		sweek = "99"
 	}
+}
+
+func New(mm map[string]string, mold *Manuscript) (m *Manuscript, err error) {
+	// {"action":"new","bdate":"2022-09-28","edate":"2022-10-02","week":"39","year":"2022"}
+	m = new(Manuscript)
+	//bfs.Store("/home/rphilips/Desktop/log.txt", mm, "process")
+
+	m.Year, _ = strconv.Atoi(mm["year"])
+	m.Week, _ = strconv.Atoi(mm["week"])
+	m.Bdate, _, _ = ptools.NewDate(mm["bdate"])
+	m.Edate, _, _ = ptools.NewDate(mm["edate"])
+	m.Start = 1
+
+	validti := pregistry.Registry["chapter-title-regexp"].([]any)
+	for _, ti2 := range validti {
+		ti := ti2.(map[string]any)["title"].(string)
+		c := new(pchapter.Chapter)
+		m.Chapters = append(m.Chapters, c)
+		c.Header = ti
+		ty := ti2.(map[string]any)["type"].(string)
+
+		switch ty {
+		case "new":
+			c.Text = ti2.(map[string]any)["text"].(string)
+		case "mass":
+			t := new(ptopic.Topic)
+			t.Header = ti2.(map[string]any)["header"].(string)
+			t.Type = "mass"
+
+			eudays := make([]*ptopic.Euday, 0)
+
+			bdate := m.Bdate
+			edate := m.Edate
+
+			var told *ptopic.Topic
+			for _, ch := range mold.Chapters {
+				if ch.Header != ti {
+					continue
+				}
+				if len(ch.Topics) == 0 {
+					break
+				}
+				told = ch.Topics[0]
+				if told.Type != "mass" {
+					told = nil
+					break
+				}
+				if len(told.Eudays) == 0 {
+					told = nil
+					break
+				}
+				break
+			}
+			last := bdate
+			if told != nil {
+				for _, euday := range told.Eudays {
+					if euday.Date.Before(*bdate) {
+						continue
+					}
+					if euday.Date.After(*edate) {
+						break
+					}
+					last = euday.Date
+					eudays = append(eudays, euday)
+				}
+			}
+			date := last.AddDate(0, 0, -1)
+			for {
+				date = date.AddDate(0, 0, 1)
+				if edate.Before(date) {
+					break
+				}
+				weekday := date.Weekday().String()
+				day := pregistry.Registry["mass-day"].(map[string]any)[weekday].([]any)
+				if len(day) == 0 {
+					continue
+				}
+				euday := new(ptopic.Euday)
+				xdate := date
+				euday.Date = &xdate
+				euday.Headers = pholy.Today(&xdate)
+				eudays = append(eudays, euday)
+				for _, ms := range day {
+					mms := ms.(map[string]any)
+					st := mms["time"].(string)
+					p := mms["place"].(string)
+					i := mms["intention"].(string)
+					if st == "" || p == "" || i == "" {
+						continue
+					}
+					mass := new(ptopic.Mass)
+					euday.M = append(euday.M, mass)
+					if !strings.Contains(st, ".") {
+						st += ".00"
+					}
+					sh, sm, _ := strings.Cut(st, ".")
+					sh = strings.TrimLeft(sh, "0")
+					sm = strings.TrimLeft(sm, "0")
+					if sh == "" {
+						sh = "0"
+					}
+					if sm == "" {
+						sm = "0"
+					}
+					hour, _ := strconv.Atoi(sh)
+					min, _ := strconv.Atoi(sm)
+
+					ndate := time.Date(date.Year(), date.Month(), date.Day(), hour, min, 0, 0, date.Location())
+					ndate.Hour()
+					mass.Time = &ndate
+					mass.Place = p
+					for _, s := range strings.SplitN(i, "\n", -1) {
+						s = strings.TrimSpace(s)
+						if s == "" {
+							continue
+						}
+						mass.Intentions = append(mass.Intentions, s)
+					}
+				}
+			}
+			t.Eudays = eudays
+			c.Topics = append(c.Topics, t)
+
+		default:
+			for _, ch := range mold.Chapters {
+				if ch.Header != ti {
+					continue
+				}
+				for _, t := range ch.Topics {
+					if t.MaxCount != 0 && t.MaxCount == t.Count {
+						continue
+					}
+					if t.Until != nil && t.Until.Before(*m.Bdate) {
+						continue
+					}
+					switch t.Type {
+					case "cal":
+						continue
+					default:
+						c.Topics = append(c.Topics, t)
+					}
+				}
+			}
+		}
+
+	}
+
+	return
 }

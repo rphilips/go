@@ -8,6 +8,59 @@ import (
 	"time"
 )
 
+var red1 = regexp.MustCompile(`^[*a-zA-Z\t ]*(\d?\d/\d?\d)[^\d]`)
+var red2 = regexp.MustCompile(`^[*a-zA-Z\t ]*(\d?\d)\s*([a-z]+)`)
+
+func DetectDate(s string) (t *time.Time) {
+	s = strings.TrimSpace(s) + " "
+	now := time.Now()
+	year := now.Year()
+	parts := red1.FindStringSubmatch(s)
+	dates := make([]*time.Time, 0)
+
+	years := []string{
+		strconv.Itoa(year - 1),
+		strconv.Itoa(year),
+		strconv.Itoa(year + 1),
+	}
+	if len(parts) != 0 {
+		for _, y := range years {
+			t := parts[1] + "/" + y
+			d, _, _ := NewDate(t)
+			dates = append(dates, d)
+		}
+	} else {
+		parts := red2.FindStringSubmatch(s)
+		if len(parts) != 0 {
+			for _, y := range years {
+				t := parts[1] + " " + parts[2] + " " + y
+				d, _, _ := NewDate(t)
+				dates = append(dates, d)
+			}
+		}
+	}
+	if len(dates) != 3 {
+		return nil
+	}
+
+	d0 := dates[0].Sub(now).Abs()
+	d1 := dates[1].Sub(now).Abs()
+	d2 := dates[2].Sub(now).Abs()
+	if d0 < d1 {
+		if d0 < d2 {
+			return dates[0]
+		} else {
+			return dates[2]
+		}
+	} else {
+		if d1 < d2 {
+			return dates[1]
+		} else {
+			return dates[2]
+		}
+	}
+}
+
 func StringDate(t *time.Time, mode string) string {
 	mode = strings.TrimSpace(strings.ToUpper(mode))
 	if mode == "" {

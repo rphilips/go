@@ -39,7 +39,7 @@ type Topic struct {
 func (t Topic) String() string {
 	J := ptools.J
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", ptools.HeaderString(t.Header)))
+	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", t.Header))
 	meta := make([]string, 0)
 	if t.Type != "" {
 		meta = append(meta, fmt.Sprintf(`"type": %s`, J(t.Type)))
@@ -160,7 +160,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 	for _, line := range lines {
 		s := strings.TrimSpace(line.L)
 		if strings.HasPrefix(s, "//") {
-			s = strings.TrimLeft(s, "//")
+			s = strings.TrimPrefix(s, "//")
 			if s == "" {
 				s = "//"
 			} else {
@@ -194,7 +194,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 			body = append(body, line)
 			continue
 		}
-		if strings.Index(s, ".jpg") != -1 {
+		if strings.Contains(s, ".jpg") {
 			images = append(images, line)
 			continue
 		}
@@ -427,90 +427,6 @@ func JSON(line ptools.Line) (pcodes []string, from *time.Time, until *time.Time,
 			}
 			ty = value
 
-		default:
-			err = ptools.Error("meta-key", lineno, "`"+key+"` is unknown")
-			return
-		}
-	}
-
-	return
-
-}
-
-func isvalidmap(mm map[string]string, lineno int) (good []string, from *time.Time, until *time.Time, note string, err error) {
-	if len(mm) == 0 {
-		err = ptools.Error("meta-empty", lineno, "empty meta")
-		return
-	}
-	good = make([]string, 0)
-	for key, value := range mm {
-		value := strings.TrimSpace(value)
-		switch key {
-		case "pcodes":
-
-			validpc := pregistry.Registry["pcodes-valid"].([]string)
-			pcodes := strings.SplitN(value, ";", -1)
-			for _, pcode := range pcodes {
-				ok := false
-				pcode := strings.TrimSpace(pcode)
-				if pcode == "" {
-					err = ptools.Error("meta-pcode-empty", lineno, "lege pcode")
-					return
-				}
-				for _, pc := range validpc {
-					ok = pcode == pc
-					if ok {
-						good = append(good, pc)
-						break
-					}
-				}
-				if !ok {
-					err = ptools.Error("meta-pcode-bad", lineno, "bad pcode")
-					return
-				}
-			}
-			if len(good) == 0 {
-				err = ptools.Error("meta-pcode-none", lineno, "no pcodes")
-				return
-			}
-		case "from":
-			if value == "" {
-				err = ptools.Error("meta-from-empty", lineno, "`from` is empty")
-				return
-			}
-
-			f, a, e := ptools.NewDate(value)
-			if e != nil {
-				err = ptools.Error("meta-from-bad", lineno, e)
-				return
-			}
-			if a != "" {
-				err = ptools.Error("meta-from-after", lineno, "trailing info after `from`")
-				return
-			}
-			from = f
-		case "until":
-			if value == "" {
-				err = ptools.Error("meta-until-empty", lineno, "`until` is empty")
-				return
-			}
-
-			u, after, e := ptools.NewDate(value)
-			if e != nil {
-				err = ptools.Error("meta-until-bad", lineno, e)
-				return
-			}
-			if after != "" {
-				err = ptools.Error("meta-until-after", lineno, "trailing info after `until`")
-				return
-			}
-			until = u
-		case "note":
-			if value == "" {
-				err = ptools.Error("meta-note-empty", lineno, "`note` is empty")
-				return
-			}
-			note = value
 		default:
 			err = ptools.Error("meta-key", lineno, "`"+key+"` is unknown")
 			return

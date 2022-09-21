@@ -25,7 +25,7 @@ var formatCmd = &cobra.Command{
 var Fimage bool
 
 func init() {
-	formatCmd.PersistentFlags().BoolVar(&Fimage, "image", false, "Check images")
+	formatCmd.PersistentFlags().BoolVar(&Fimage, "extern", false, "Check external documents (like images)")
 	rootCmd.AddCommand(formatCmd)
 }
 

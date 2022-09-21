@@ -20,16 +20,18 @@ type Chapter struct {
 	Header string
 	Start  int
 	Topics []*ptopic.Topic
+	Text   string
 }
 
 func (c Chapter) String() string {
 	builder := strings.Builder{}
-	for i, topic := range c.Topics {
-		if i == 0 {
-			builder.WriteString(fmt.Sprintf("\n\n\n## %s\n", ptools.HeaderString(c.Header)))
-
+	builder.WriteString(fmt.Sprintf("\n\n\n## %s\n", ptools.HeaderString(c.Header)))
+	if c.Text != "" {
+		builder.WriteString(c.Text)
+	} else {
+		for _, topic := range c.Topics {
+			builder.WriteString(topic.String())
 		}
-		builder.WriteString(topic.String())
 	}
 	return builder.String()
 }
@@ -62,8 +64,8 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 	validti := pregistry.Registry["chapter-title-regexp"].([]any)
 	sortvalue := -1
 	for i, ti2 := range validti {
-		ti := (ti2.([]any))[0]
-		re := regexp.MustCompile(ti.(string))
+		ti := ti2.(map[string]any)["regexp"].(string)
+		re := regexp.MustCompile(ti)
 		ok = re.MatchString(c.Header)
 		if ok {
 			sortvalue = i

@@ -138,7 +138,7 @@ func HeaderString(s string) string {
 		s = strings.TrimSpace(s[:k])
 	}
 	s = Normalize(s)
-	return strings.ToUpper(s)
+	return strings.TrimSpace(strings.ToUpper(s))
 }
 
 // LeftTrim removes whitespace at the beginning and counts the removed \n

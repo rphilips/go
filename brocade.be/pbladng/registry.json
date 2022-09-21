@@ -7,31 +7,96 @@
         "platforms": [
             "linux/amd64"
         ],
-        "chapter-title-regexp": [
-            [
-                "LITURGISCHE VIERINGEN",
-                false
+        "mass-day": {
+            "Sunday": [
+                {
+                    "time": "09.00",
+                    "place": "gavere",
+                    "intention": "Eucharistie"
+                },
+                {
+                    "time": "10.30",
+                    "place": "nazareth",
+                    "intention": "Eucharistie"
+                }
             ],
-            [
-                "LITURGISCHE TEKSTEN",
-                false
+            "Monday": [
+                {
+                    "time": "08.00",
+                    "place": "eke",
+                    "intention": "Eucharistie"
+                }
             ],
-            [
-                "PAROCHIAAL NIEUWS - ONZE-LIEVE-VROUW GEBOORTE NAZARETH & SINT-AMANDUS EKE",
-                true
+            "Tuesday": [
+                {
+                    "time": "08.00",
+                    "place": "eke",
+                    "intention": "Eucharistie"
+                }
             ],
-            [
-                "VERENIGINGEN EN SCHOLEN",
-                true
+            "Wednesday": [
+                {
+                    "time": "08.30",
+                    "place": "nazareth",
+                    "intention": "Eucharistie"
+                }
             ],
-            [
-                "NIEUWS VAN BUITEN ONZE PAROCHIEGRENZEN",
-                true
+            "Thursday": [
+                {
+                    "time": "08.00",
+                    "place": "eke",
+                    "intention": "Eucharistie"
+                }
             ],
-            [
-                "WACHTDIENSTEN",
-                false
+            "Friday": [
+                {
+                    "time": "08.00",
+                    "place": "eke",
+                    "intention": "Eucharistie"
+                }
+            ],
+            "Saturday": [
+                {
+                    "time": "18.30",
+                    "place": "eke",
+                    "intention": "Eucharistie"
+                }
             ]
+        },
+        "chapter-title-regexp": [
+            {
+                "regexp": "LITURGISCHE VIERINGEN",
+                "title": "LITURGISCHE VIERINGEN",
+                "type": "mass",
+                "header": "LITURGISCHE VIERINGEN"
+            },
+            {
+                "regexp": "LITURGISCHE TEKSTEN",
+                "title": "LITURGISCHE TEKSTEN",
+                "type": "new",
+                "text": "# BEZINNING BIJ DE ZONDAGSVIERINGn\n**\n\n="
+            },
+            {
+                "regexp": "PAROCHIAAL NIEUWS - ONZE-LIEVE-VROUW GEBOORTE NAZARETH & SINT-AMANDUS EKE",
+                "title": "PAROCHIAAL NIEUWS - ONZE-LIEVE-VROUW GEBOORTE NAZARETH & SINT-AMANDUS EKE",
+                "type": "topic"
+            },
+            {
+                "regexp": "VERENIGINGEN EN SCHOLEN",
+                "title": "VERENIGINGEN EN SCHOLEN",
+                "type": "topic"
+            },
+            {
+                "regexp": "NIEUWS VAN BUITEN ONZE PAROCHIEGRENZEN",
+                "title": "NIEUWS VAN BUITEN ONZE PAROCHIEGRENZEN",
+                "type": "topic"
+            },
+            {
+                "regexp": "WACHTDIENSTEN",
+                "title": "WACHTDIENSTEN",
+                "type": "new",
+                "text": "# WACHTDIENSTEN\n\n*Dokter:*\n\nVia het wachtnummer *1733*, ieder weekend van vrijdag 19.00 u. tot maandag 08.00 u. (Huisartsenwachtpost in AZ Sint-Vincentius Deinze)\n\n*Tandarts:*\n\n*0903 39 969* (algemeen betalend wachtdienstnummer)\n\n*Wit-Gele Kruis team Nazareth-Eke:*\n\nSteenweg 167A\n9810 Nazareth\n09 371 43 35\n\n*Apotheker:*\n\nGEOWACHT\n\nOver dag (tot 22.00 u.) kan je de apotheek van wacht terugvinden via de website _www.geowacht.be_ of tel. *0903/99 000*.\n\nUit veiligheidsredenen worden de apotheken met nachtwacht niet geafficheerd of publiek bekend gemaakt."
+            }
         ],
         "base-dir": "/home/rphilips/Dropbox/pblad",
         "correspondents": {
@@ -42,6 +107,7 @@
         "start-day": "Wednesday",
         "last-day": "8",
         "image-size-kb": "1000",
+        "sunday-correction": "0",
         "image-resize-exe": [
             "convert",
             "{source}",

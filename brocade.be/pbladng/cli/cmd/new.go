@@ -7,9 +7,13 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
+	bfs "brocade.be/base/fs"
+	pfs "brocade.be/pbladng/lib/fs"
 	pmanuscript "brocade.be/pbladng/lib/manuscript"
 	pregistry "brocade.be/pbladng/lib/registry"
 	ptools "brocade.be/pbladng/lib/tools"
@@ -37,15 +41,17 @@ type GuiFiller struct {
 
 var guiFiller GuiFiller
 var Fstderr bool
+var Fdir string
 
 func init() {
 	newCmd.PersistentFlags().BoolVar(&Fstderr, "stderr", false, "Show stderr")
+	newCmd.PersistentFlags().StringVar(&Fdir, "dir", "", "Directory")
 	rootCmd.AddCommand(newCmd)
 }
 
 func newedition(cmd *cobra.Command, args []string) error {
 	if !Fstderr {
-		_, err := ptools.Launch([]string{"gopblad", "new", "--stderr"}, nil, "", false)
+		_, err := ptools.Launch([]string{"gopblad", "new", "--stderr", "--dir=" + Fdir}, nil, "", false)
 		return err
 	}
 	install(cmd, args)
@@ -55,7 +61,7 @@ func newedition(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	loadVars(&guiFiller)
+	mold := loadVars(&guiFiller)
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, guiFiller)
 
@@ -83,7 +89,6 @@ func newedition(cmd *cobra.Command, args []string) error {
 			guilistener <- mm
 			ui.Eval("window.close()")
 			ui.Terminate()
-			return
 		})
 
 		ui.Run()
@@ -92,22 +97,41 @@ func newedition(cmd *cobra.Command, args []string) error {
 	}()
 
 	mm := <-guilistener
-	fmt.Println(mm)
-	return nil
+	if mm["action"] != "new" {
+		return nil
+	}
+
+	m, err := pmanuscript.New(mm, mold)
+
+	if err == nil {
+		if Fdir == "" {
+			Fdir = pfs.FName("workspace")
+		}
+		weekpb := filepath.Join(Fdir, "week.pb")
+		source := strings.NewReader(m.String())
+		m, err := pmanuscript.Parse(source, false, "")
+		if err != nil {
+			bfs.Store("/home/rphilips/Desktop/log.js", err.Error(), "process")
+			return err
+		}
+		bfs.Store(weekpb, m.String(), "process")
+	}
+
+	return err
 }
 
-func loadVars(guiFiller *GuiFiller) {
-	m := pmanuscript.Previous()
+func loadVars(guiFiller *GuiFiller) (mold *pmanuscript.Manuscript) {
+	mold = pmanuscript.Previous()
 
 	id := "?"
 	period := "?"
 	mailed := "?"
-	if m != nil {
-		id = m.ID()
-		period = fmt.Sprintf("%s - %s", ptools.StringDate(m.Bdate, "I"), ptools.StringDate(m.Edate, "I"))
-		mailed = ptools.StringDate(m.Edate, "I")
+	if mold != nil {
+		id = mold.ID()
+		period = fmt.Sprintf("%s - %s", ptools.StringDate(mold.Bdate, "I"), ptools.StringDate(mold.Edate, "I"))
+		mailed = ptools.StringDate(mold.Edate, "I")
 	}
-	_, year, week, bdate, edate := pmanuscript.Next(m)
+	_, year, week, bdate, edate := pmanuscript.Next(mold)
 
 	minbdate := bdate
 	maxbdate := bdate
@@ -144,7 +168,7 @@ func loadVars(guiFiller *GuiFiller) {
 		"bdatedisplay": bdatedisplay,
 	}
 	guiFiller.Vars = vars
-
+	return
 }
 
 func handleNew(action string, ui webview.WebView, guiFiller *GuiFiller) map[string]string {

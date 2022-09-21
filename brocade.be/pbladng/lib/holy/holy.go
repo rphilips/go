@@ -1,13 +1,133 @@
 package holy
 
 import (
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	pregistry "brocade.be/pbladng/lib/registry"
 	ptools "brocade.be/pbladng/lib/tools"
 )
 
 var loc = time.Now().Location()
+
+var allholy []func(year int) (*time.Time, string, bool)
+
+func init() {
+	allholy = []func(year int) (*time.Time, string, bool){
+		Pasen,
+		Paasmaandag,
+		Aswoensdag,
+		Mariaopdracht,
+		Advent1,
+		Advent2,
+		Advent3,
+		Advent4,
+		Kerstmis,
+		Koningheelal,
+		Heiligefamilie,
+		Onschuldigekinderen,
+		Silvester,
+		Becket,
+		Driekoningen,
+		Hmariamoedergod,
+		Doopjezus,
+		Zondagvasten1,
+		Zondagvasten2,
+		Zondagvasten3,
+		Zondagvasten4,
+		Zondagvasten5,
+		Mariaonbevlektontvangen,
+		Hjozef,
+		Mariaboodschap,
+		Drievuldigheidszondag,
+		Sacramentsdag,
+		Lichtmis,
+		Heilighartjezus,
+		Johannesdedoper,
+		Petruspaulus,
+		Palmzondag,
+		Belokenpasen,
+		Pasen3,
+		Pasen4,
+		Pasen5,
+		Pasen6,
+		Pasen7,
+		Stillezaterdag,
+		Goedevrijdag,
+		Wittedonderdag,
+		Hemelvaart,
+		Pinksteren,
+		Mariahemelvaart,
+		Allerheiligen,
+		Allerzielen,
+	}
+}
+
+func Today(today *time.Time) (result []string) {
+	year := today.Year()
+	for _, h := range allholy {
+		t, note, _ := h(year)
+		if !t.Equal(*today) {
+			continue
+		}
+		result = append(result, note)
+	}
+	r := sundayinyear(today)
+	if r != "" {
+		result = append(result, r)
+	}
+
+	sort.Strings(result)
+	return
+
+}
+
+func sundayinyear(today *time.Time) string {
+	if !issunday(today) {
+		return ""
+	}
+	year := today.Year()
+	scor := pregistry.Registry["sunday-correction"].(string)
+	icor, _ := strconv.Atoi(scor)
+	psun, _, _ := Doopjezus(year)
+	add := 1 + icor
+	sun := *psun
+	if sun.Equal(*today) {
+		return strconv.Itoa(add) + "e ZONDAG DOOR HET JAAR"
+	}
+	aswo, _, _ := Aswoensdag(year)
+	pink, _, _ := Pinksteren(year)
+	adv1, _, _ := Advent1(year)
+	for {
+		sun = sun.AddDate(0, 0, 7)
+		if sun.Before(*aswo) {
+			add++
+			if sun.Equal(*today) {
+				return strconv.Itoa(add) + "e ZONDAG DOOR HET JAAR"
+			}
+		} else {
+			break
+		}
+	}
+	sun = *pink
+	sun = sun.AddDate(0, 0, -14)
+
+	for {
+		sun = sun.AddDate(0, 0, 7)
+		if sun.Before(*adv1) {
+			add++
+			if sun.Equal(*today) {
+				return strconv.Itoa(add) + "e ZONDAG DOOR HET JAAR"
+			}
+		} else {
+			break
+		}
+	}
+	return ""
+
+}
 
 func myday(y, m, d int) *time.Time {
 	x := time.Date(y, time.Month(m), d, 0, 0, 0, 0, loc)
@@ -134,13 +254,14 @@ func Hmariamoedergod(year int) (*time.Time, string, bool) {
 
 func Doopjezus(year int) (*time.Time, string, bool) {
 	king3, _, _ := Driekoningen(year)
-	if issunday(king3) {
+	if !issunday(king3) {
 		king3 = myday(year, 1, 2)
 		for {
-			if !issunday(king3) {
-				xking3 := king3.AddDate(0, 0, 1)
-				king3 = &xking3
+			if issunday(king3) {
+				break
 			}
+			xking3 := king3.AddDate(0, 0, 1)
+			king3 = &xking3
 		}
 	}
 

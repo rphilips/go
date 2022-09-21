@@ -28,7 +28,7 @@ var importCmd = &cobra.Command{
 
 func init() {
 
-	rootCmd.AddCommand(newCmd)
+	rootCmd.AddCommand(importCmd)
 }
 
 func doimport(cmd *cobra.Command, args []string) error {

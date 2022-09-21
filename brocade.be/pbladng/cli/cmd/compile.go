@@ -80,7 +80,7 @@ func compile(cmd *cobra.Command, args []string) error {
 		}
 		if GOOS == runtime.GOOS {
 			exe := pregistry.Registry["exe"].(string)
-			pexe, err := exec.LookPath(exe)
+			pexe, _ := exec.LookPath(exe)
 			err = bfs.RefreshEXE(pexe, basename)
 			if err != nil {
 				return err
