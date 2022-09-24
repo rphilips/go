@@ -2,6 +2,7 @@ package chapter
 
 import (
 	"fmt"
+	"html/template"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,6 +34,35 @@ func (c Chapter) String() string {
 			builder.WriteString(topic.String())
 		}
 	}
+	return builder.String()
+}
+
+func (c Chapter) HTML(bdate, edate *time.Time, id string, imgletters map[string]string) string {
+	topics := make([]string, 0)
+	for _, topic := range c.Topics {
+		ht := topic.HTML(bdate, edate, id, imgletters)
+		if ht == "" {
+			continue
+		}
+		topics = append(topics, ht)
+	}
+	if len(topics) == 0 {
+		return ""
+	}
+
+	builder := strings.Builder{}
+	esc := template.HTMLEscapeString
+	dash := strings.Repeat("-", 96) + "<br />\n"
+
+	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s<b>%s</b><br />\n", dash, esc("RUBRIEKTITEL"), dash, esc(ptools.HeaderString(c.Header))))
+
+	for _, topic := range topics {
+		builder.WriteString(`<br /><br /><br />`)
+		builder.WriteString(topic)
+	}
+
+	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s", dash, esc("EINDE RUBRIEK"), dash))
+
 	return builder.String()
 }
 

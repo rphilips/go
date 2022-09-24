@@ -8,11 +8,17 @@ import (
 	"time"
 )
 
-var red1 = regexp.MustCompile(`^[*a-zA-Z\t ]*(\d?\d/\d?\d)[^\d]`)
-var red2 = regexp.MustCompile(`^[*a-zA-Z\t ]*(\d?\d)\s*([a-z]+)`)
+var red1 = regexp.MustCompile(`^(\d?\d/\d?\d)[^\d]`)
+var red2 = regexp.MustCompile(`^(\d?\d)\s*([a-z]+)`)
+var ren = regexp.MustCompile(`^[^\d]*`)
 
 func DetectDate(s string) (t *time.Time) {
+	s = ren.ReplaceAllString(s, "")
 	s = strings.TrimSpace(s) + " "
+	d, _, e := NewDate(s)
+	if e == nil && d != nil {
+		return d
+	}
 	now := time.Now()
 	year := now.Year()
 	parts := red1.FindStringSubmatch(s)

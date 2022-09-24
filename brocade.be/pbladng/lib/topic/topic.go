@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	pfs "brocade.be/pbladng/lib/fs"
@@ -117,6 +118,70 @@ func (t Topic) String() string {
 			builder.WriteString(euday.String())
 		}
 		builder.WriteString("\n")
+	}
+
+	return builder.String()
+}
+
+func (t Topic) HTML(bdate, edate *time.Time, id string, imgletters map[string]string) string {
+
+	if t.From != nil && t.From.After(*edate) {
+		return ""
+	}
+
+	builder := strings.Builder{}
+	esc := template.HTMLEscapeString
+	h := ptools.Html
+	dash := strings.Repeat("-", 96) + "<br />\n"
+
+	builder.WriteString(fmt.Sprintf("<b>%s</b><br /><br />", h(esc(ptools.HeaderString(t.Header)))))
+
+	// images
+	if len(t.Images) > 0 {
+		_, w, _ := strings.Cut(id, "-")
+		for _, img := range t.Images {
+			fname := img.Fname
+			builder.WriteString(dash)
+			legend := img.Legend
+			cr := img.Copyright
+			if cr != "" {
+				if legend != "" {
+					legend += " "
+				}
+				legend += "© " + cr
+			}
+			if legend != "" {
+				legend = " " + legend
+			}
+			builder.WriteString(fmt.Sprintf("F%s%s%s.jpg%s<br />\n", esc(pregistry.Registry["pcode"].(string)), imgletters[fname], esc(w), h(esc(legend))))
+			builder.WriteString(dash)
+		}
+		builder.WriteString("<br />\n")
+	}
+
+	if len(t.Body) != 0 {
+		x := ""
+		for _, line := range t.Body {
+			s := strings.TrimSpace(line.L)
+			x += s
+			if strings.HasPrefix(s, "//") {
+				continue
+			}
+			builder.WriteString(h(esc(s)))
+			builder.WriteString("<br />\n")
+		}
+		if strings.TrimSpace(strings.ReplaceAll(x, "=", "")) == "" {
+			return ""
+		}
+	}
+
+	if len(t.Eudays) != 0 {
+		for i, euday := range t.Eudays {
+			builder.WriteString(euday.HTML())
+			if len(t.Eudays) != i+1 {
+				builder.WriteString("<br />")
+			}
+		}
 	}
 
 	return builder.String()
@@ -286,9 +351,9 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 		return
 	}
 
-	if t.Type == "cal" {
-		err = parsecal(t, mid, bdate, edate)
-	}
+	// if t.Type == "cal" {
+	// 	err = parsecal(t, mid, bdate, edate)
+	// }
 
 	if t.Type == "mass" {
 		err = parseeudays(t, mid, bdate, edate)

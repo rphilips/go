@@ -122,6 +122,9 @@
         "characters": {
             "\u20AC": " EUR "
         },
+        "html": {
+            "title": "Kerk en Leven Nazareth / Eke"
+        },
         "places": {
             "eke": {
                 "name": "Eke",

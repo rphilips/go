@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"brocade.be/pbladng/lib/registry"
+	pregistry "brocade.be/pbladng/lib/registry"
 	unidecode "github.com/mozillazg/go-unidecode"
 
 	"golang.org/x/text/unicode/norm"
@@ -14,7 +14,7 @@ import (
 var chars = map[rune]string{}
 
 func init() {
-	chrs := registry.Registry["characters"].(map[string]any)
+	chrs := pregistry.Registry["characters"].(map[string]any)
 	for r, v := range chrs {
 		c := []rune(r)
 		if len(c) != 0 {

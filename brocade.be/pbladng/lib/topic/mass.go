@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	pregistry "brocade.be/pbladng/lib/registry"
@@ -57,6 +58,48 @@ func (m Mass) String() string {
 	return fmt.Sprintf("\n%02d.%02d %s%s:%s", hour, min, place, lector, ints)
 }
 
+func (m Mass) HTML() string {
+	hour := m.Time.Hour()
+	min := m.Time.Minute()
+	_, place := findPlace(m.Place)
+	lecs := make([]string, len(m.Lectors))
+	for i, lec := range m.Lectors {
+		_, lecs[i] = findPerson(m.Place, lec)
+	}
+	dels := make([]string, len(m.Dealers))
+	for i, del := range m.Dealers {
+		_, dels[i] = findPerson(m.Place, del)
+	}
+	lector := strings.Join(lecs, ", ")
+	dealer := strings.Join(dels, ", ")
+
+	ints := strings.Join(m.Intentions, "\n")
+	ints = strings.TrimSpace(ints)
+	uints := strings.TrimSpace(strings.ReplaceAll("\n"+strings.ToUpper(ints)+"\n", "EUCHARISTIE", ""))
+	if uints != "" {
+		euch := regexp.MustCompile("\n\\s*[Ee][Uu][Cc][Hh][Aa][Rr][Ii][Ss][Tt][Ii][Ee]\\s*\n")
+		ints = euch.ReplaceAllString("\n"+ints+"\n", "\n")
+		ints = strings.ReplaceAll(ints, "\n\n", "\n")
+	}
+	ints = strings.TrimSpace(ints)
+
+	if ints != "" {
+		ints = " " + ints
+	}
+	esc := template.HTMLEscapeString
+	h := ptools.Html
+	ints = h(esc(ints)) + "\n"
+	s := fmt.Sprintf("\n<i>%02d.%02d u. %s</i>:%s", hour, min, place, ints)
+	if lector != "" {
+		s += "Lector: " + h(esc(lector)) + "\n"
+	}
+	if dealer != "" {
+		s += "Communiedeler: " + h(esc(dealer)) + "\n"
+	}
+	s = strings.TrimSpace(s)
+	return strings.ReplaceAll(s, "\n", "<br />")
+}
+
 func (d Euday) String() string {
 	day := d.Date.Day()
 	month := d.Date.Month()
@@ -65,6 +108,7 @@ func (d Euday) String() string {
 
 	headers := strings.Join(d.Headers, "\n")
 	headers = strings.TrimSpace(headers)
+
 	if headers != "" {
 		headers = headers + "\n"
 	}
@@ -74,6 +118,25 @@ func (d Euday) String() string {
 		mas += strings.TrimSpace(m.String()) + "\n"
 	}
 	return strings.TrimSpace(fmt.Sprintf("%s %02d/%02d\n%s%s", weekday, day, month, headers, mas))
+}
+
+func (d Euday) HTML() string {
+	weekday := ptools.StringDate(d.Date, "D")
+	weekday = strings.ToUpper(weekday[0:1]) + weekday[1:]
+	esc := template.HTMLEscapeString
+	h := ptools.Html
+	headers := strings.Join(d.Headers, "\n")
+	headers = strings.TrimSpace(headers)
+	if headers != "" {
+		headers = h(esc(headers))
+		headers = strings.ReplaceAll(headers, "\n", "<br />")
+		headers += "<br />"
+	}
+	mas := ""
+	for _, m := range d.M {
+		mas += m.HTML() + "<br />"
+	}
+	return strings.TrimSpace(fmt.Sprintf("<b>%s</b><br />%s%s", weekday, headers, mas))
 }
 
 func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (err error) {
@@ -152,10 +215,11 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 		day.M = make([]*Mass, 0)
 		var tm *time.Time = nil
 
-		red := regexp.MustCompile(`^([0-9]{1,2}\.[0-9]{1,2})(\s*u\.)\s*([a-z]+)([^:]*):(.*)$`)
+		red := regexp.MustCompile(`^([0-9]{1,2}\.[0-9]{1,2})\s*([a-z]+)([^:]*):(.*)$`)
 
 		for _, line := range dy[1:] {
-			s := strings.TrimSpace(line.L)
+			s := strings.Replace(line.L, " u.", " ", 1)
+			s = strings.TrimSpace(s)
 			if s == "" {
 				continue
 			}
@@ -198,7 +262,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 			mass.Time = &tt
 			tm = mass.Time
 
-			place := pieces[0][3]
+			place := pieces[0][2]
 
 			cplace, nplace := findPlace(place)
 
@@ -209,7 +273,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 
 			mass.Place = cplace
 
-			intention := strings.TrimSpace(pieces[0][5])
+			intention := strings.TrimSpace(pieces[0][4])
 			if intention != "" {
 				ints := strings.SplitN(intention, ";", -1)
 				for _, x := range ints {
@@ -220,7 +284,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 				}
 			}
 
-			players := strings.TrimSpace(pieces[0][4])
+			players := strings.TrimSpace(pieces[0][3])
 			if players != "" {
 				roles := strings.SplitN(players, "/", -1)
 				if len(roles) > 2 {

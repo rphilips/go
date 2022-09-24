@@ -30,6 +30,7 @@ func WSLines(mylist []Line) (result []Line) {
 		if prev && s == "" {
 			continue
 		}
+		line.L = Normalize(line.L)
 		result = append(result, line)
 		prev = s == ""
 		if !prev {
@@ -55,6 +56,39 @@ func Normalize(s string) string {
 	re := regexp.MustCompile("  +")
 	s = re.ReplaceAllString(s, " ")
 	return strings.TrimSpace(s)
+}
+
+var bold = regexp.MustCompile(`\*([^*]*)\*`)
+var italic = regexp.MustCompile("_([^_]*)_")
+
+func Html(s string) string {
+	set := `\|*_`
+	if !strings.ContainsAny(s, set) {
+		return s
+	}
+	for i, r := range set {
+		if !strings.ContainsRune(s, r) {
+			continue
+		}
+		rs := string(byte(i))
+		s = strings.ReplaceAll(s, `\`+string(r), rs)
+	}
+	s = strings.ReplaceAll(s, "|", "")
+	s = bold.ReplaceAllString(s, `<b>$1</b>`)
+	s = italic.ReplaceAllString(s, `<i>$1</i>`)
+
+	nset := "\x00\x01\x02\x03\x04\x05"
+	if !strings.ContainsAny(s, nset) {
+		return s
+	}
+	for i, r := range nset {
+		if !strings.ContainsRune(s, r) {
+			continue
+		}
+		rs := string(r)
+		s = strings.ReplaceAll(s, rs, string(set[i]))
+	}
+	return s
 }
 
 func TestLine(line Line) error {

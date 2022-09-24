@@ -2,7 +2,40 @@ package tools
 
 import (
 	"testing"
+	"time"
 )
+
+func TestDetect(t *testing.T) {
+	now := time.Now()
+	times := []string{
+		"Maandag *03 oktober 2022* om 13.30 u. CREA-atelier in CC De Brouwerij.",
+		"3/10 13.30:A-atelier in CC De Brouwerij.",
+	}
+
+	expect := time.Date(2022, 10, 3, 0, 0, 0, 0, now.Location())
+	for _, s := range times {
+		d := DetectDate(s)
+		if d == nil {
+			t.Errorf("Problem: d should not be nil")
+			return
+		}
+		if !d.Equal(expect) {
+			t.Errorf("Problem: found `%s`", d)
+			return
+		}
+	}
+	times = []string{
+		"!!! Voor meer info: tel. 09/395.53.71",
+	}
+	for _, s := range times {
+		d := DetectDate(s)
+		if d != nil {
+			t.Errorf("Problem: d should be nil")
+			return
+		}
+
+	}
+}
 
 func TestString(t *testing.T) {
 	type linestruct struct {

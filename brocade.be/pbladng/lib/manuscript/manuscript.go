@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"os"
 	"path/filepath"
@@ -36,9 +37,60 @@ type Manuscript struct {
 type ImageID struct {
 	Mtime  string `json:"mtime"`
 	Digest string `json:"digest"`
+	Letter string `json:"letter"`
 }
 
 var rec = regexp.MustCompile(`^\s*[@#]\s*[@#]`)
+
+func (m Manuscript) HTML(colofon bool, imgmanifest string) string {
+	builder := strings.Builder{}
+	esc := template.HTMLEscapeString
+	dash := strings.Repeat("-", 96) + "<br />"
+	props := pregistry.Registry["html"].(map[string]any)
+	builder.WriteString("<!doctype html>\n<html lang='nl'>\n")
+	builder.WriteString("<head>\n")
+	builder.WriteString(fmt.Sprintf("<title>%s: week %s (%s - %s)</title>\n", esc(pregistry.Registry["pcode"].(string)), esc(m.ID()), esc(ptools.StringDate(m.Bdate, "I")), esc(ptools.StringDate(m.Edate, "I"))))
+	builder.WriteString("</head>\n<body>\n")
+	builder.WriteString(fmt.Sprintf("<b>Week: %s</b>", esc(m.ID())))
+	builder.WriteString("<br />")
+	builder.WriteString(fmt.Sprintf("<b>Editie: %s - %s</b>", esc(pregistry.Registry["pcode"].(string)), esc(props["title"].(string))))
+	builder.WriteString("<br />")
+	builder.WriteString(fmt.Sprintf("<b>%s</b><br />\n", strings.Repeat("-", 96)))
+
+	if colofon {
+		builder.WriteString(strings.Repeat("<br />", 3))
+		builder.WriteString(dash)
+		builder.WriteString("\n<b>OPGELET: NIEUWE COLOFON</b><br />")
+		builder.WriteString(dash)
+		builder.WriteString(strings.Repeat("<br />", 3))
+		pcol := pfs.FName("support/colofon.txt")
+		col, _ := bfs.Fetch(pcol)
+		scol := strings.TrimSpace(string(col))
+		builder.WriteString(scol)
+		builder.WriteString("<br />")
+	}
+
+	bdate := m.Bdate
+	edate := m.Edate
+
+	imglist := make(map[string]ImageID)
+	manifest, e := os.ReadFile(imgmanifest)
+	imgletters := make(map[string]string)
+
+	if e == nil {
+		json.Unmarshal(manifest, &imglist)
+		for fname, imgid := range imglist {
+			imgletters[fname] = imgid.Letter
+		}
+	}
+
+	for _, chapter := range m.Chapters {
+		builder.WriteString(chapter.HTML(bdate, edate, m.ID(), imgletters))
+	}
+	builder.WriteString("</body></html>\n")
+
+	return builder.String()
+}
 
 func (m Manuscript) String() string {
 	builder := strings.Builder{}
@@ -175,10 +227,18 @@ func Parse(source io.Reader, checkextern bool, imgmanifest string) (m *Manuscrip
 	}
 
 	if checkextern && imgmanifest != "" {
+		letters := "abcdefghijklmnopqrstuvwxyz"
 		imglist := make(map[string]ImageID)
 		manifest, e := os.ReadFile(imgmanifest)
+
 		if e == nil {
 			json.Unmarshal(manifest, &imglist)
+			for _, imgid := range imglist {
+				letter := imgid.Letter
+				if letter != "" {
+					letters = strings.ReplaceAll(letters, letter, "")
+				}
+			}
 		}
 		counter := make(map[string]int)
 		change := false
@@ -222,9 +282,19 @@ func Parse(source io.Reader, checkextern bool, imgmanifest string) (m *Manuscrip
 
 					}
 					change = true
+					newletter := ""
+					if letters != "" {
+						newletter = letters[0:1]
+						letters = letters[1:]
+					}
+					if newletter == "" {
+						err = ptools.Error("image-above26", img.Lineno, "too many images")
+						return
+					}
 					imglist[fname] = ImageID{
 						Mtime:  mtime,
 						Digest: digest,
+						Letter: newletter,
 					}
 				}
 			}
@@ -482,7 +552,6 @@ func Next(m *Manuscript) (id string, year string, week string, bdate string, eda
 
 	bdn := date
 	for {
-		fmt.Println(bdn.Weekday())
 		if bdn.Weekday().String() == startday {
 			break
 		}
@@ -737,7 +806,27 @@ func New(mm map[string]string, mold *Manuscript) (m *Manuscript, err error) {
 					}
 					switch t.Type {
 					case "cal":
-						continue
+						count := 0
+						bdate := m.Bdate
+						body := make([]ptools.Line, 0)
+						oldbody := t.Body
+						for _, line := range oldbody {
+							s := line.L
+							d := ptools.DetectDate(s)
+							if d == nil {
+								body = append(body, line)
+								continue
+							}
+							if d.Before(*bdate) {
+								continue
+							}
+							body = append(body, line)
+							count++
+						}
+						if count != 0 {
+							t.Body = body
+							c.Topics = append(c.Topics, t)
+						}
 					default:
 						c.Topics = append(c.Topics, t)
 					}
