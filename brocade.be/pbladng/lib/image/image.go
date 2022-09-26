@@ -24,7 +24,7 @@ type Image struct {
 	Lineno    int
 }
 
-func New(line ptools.Line, dir string, checkextern bool) (image Image, err error) {
+func New(line ptools.Line, dir string, checkextern bool, cpright string) (image Image, err error) {
 	s := line.L
 	lineno := line.NR
 	name, legend, ok := strings.Cut(s, ".jpg")
@@ -62,6 +62,9 @@ func New(line ptools.Line, dir string, checkextern bool) (image Image, err error
 		copyright = y
 		legend = strings.TrimRight(strings.TrimSpace(x), ",:;. ")
 		break
+	}
+	if copyright == "" {
+		copyright = cpright
 	}
 
 	if copyright == "" {

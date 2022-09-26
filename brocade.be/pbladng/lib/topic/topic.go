@@ -326,11 +326,13 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 
 	if len(images) != 0 {
 		dir := pfs.FName("workspace")
+		cpright := ""
 		for _, img := range images {
-			image, err := pimage.New(img, dir, checkextern)
+			image, err := pimage.New(img, dir, checkextern, cpright)
 			if err != nil {
 				return nil, err
 			}
+			cpright = image.Copyright
 			t.Images = append(t.Images, &image)
 		}
 	}
