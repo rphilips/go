@@ -28,12 +28,16 @@ func TestColon(t *testing.T) {
 			line:   "a:b https://w3c.org A:B a:1",
 			expect: "a: b https://w3c.org A: B a:1",
 		},
+		{
+			line:   "a:b https://w3c.org A:B a:1",
+			expect: "a: b https://w3c.org A: B a:1",
+		},
 	}
 
 	for _, line := range lines {
 		work := line.line
 		expect := line.expect
-		calc := FixColon(work)
+		calc := Colon(work)
 		if expect != calc {
 			t.Errorf("Problem:\nline:`%s`\nexpect:`%s`\ncalc:`%s`\n\n", work, expect, calc)
 			return

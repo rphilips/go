@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"time"
 
 	fatomic "github.com/natefinch/atomic"
 )
 
-//Registry holds the registry
+// Registry holds the registry
 var Registry map[string]any
 
 func init() {
@@ -52,6 +53,17 @@ func init() {
 	rp, ok := registry["pblad"]
 	if ok {
 		Registry = rp.(map[string]any)
+		_, ok := Registry["valid-until"]
+		if !ok {
+			Registry["error"] = fmt.Sprintf("No `valid-until` key in registry [%s]", registryFile)
+			return
+		}
+		now := time.Now()
+		validuntil := Registry["valid-until"].(string)
+		if now.Format(time.RFC3339) > validuntil {
+			Registry["error"] = fmt.Sprintf("`valid-until` key says: registry is not up to date [%s]", registryFile)
+			return
+		}
 	} else {
 		Registry["error"] = fmt.Sprintf("no \"pblad\" subscript in JSON file '%s')", registryFile)
 		return

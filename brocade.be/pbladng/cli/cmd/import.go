@@ -11,8 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	bfs "brocade.be/base/fs"
-	pfs "brocade.be/pbladng/lib/fs"
-	pmanuscript "brocade.be/pbladng/lib/manuscript"
+	pdocument "brocade.be/pbladng/lib/document"
 	pregistry "brocade.be/pbladng/lib/registry"
 )
 
@@ -33,31 +32,35 @@ func init() {
 
 func doimport(cmd *cobra.Command, args []string) error {
 	install(cmd, args)
-	weekpb := pfs.FName("workspace/week.pb")
+	weekpb := filepath.Join(Fcwd, "week.md")
 	f, err := os.Open(weekpb)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot read `week.md` in `%s`: %s", Fcwd, err.Error())
 	}
 	defer f.Close()
 	source := bufio.NewReader(f)
-	m, err := pmanuscript.Parse(source, false, "")
+	doc, _, _, err := pdocument.Parse(source, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot parse `week.md` in `%s`: %s", Fcwd, err.Error())
 	}
-	year := m.Year
-	week := m.Week
+	year := doc.Year
+	week := doc.Week
 
-	wdir := fmt.Sprintf("%d/%02d", year, week)
-	dst := pfs.FName("workspace")
+	dst := Fcwd
 
-	correspondents := pregistry.Registry["correspondents"].(map[string]string)
+	correspondents := pregistry.Registry["correspondents"].(map[string]any)
 	for prefix, dir := range correspondents {
-		src := dir + "/" + wdir
-		src = pfs.FName(src)
-		entries, err := os.ReadDir(src)
-		if err != nil {
+		src := filepath.Join(dir.(string), fmt.Sprintf("%d", year), fmt.Sprintf("%02d", week))
+		if !bfs.IsDir(src) {
+			fmt.Println("No files found for", prefix)
 			continue
 		}
+		//src = pfs.FName(src)
+		entries, err := os.ReadDir(src)
+		if err != nil {
+			return err
+		}
+		ok := false
 		for _, ery := range entries {
 			entry, e := ery.Info()
 			if e != nil {
@@ -70,26 +73,24 @@ func doimport(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			name := entry.Name()
-			if name == "week.pb" {
+			if name == "week.md" {
 				continue
 			}
 			srcPath := filepath.Join(src, name)
 			ext := path.Ext(name)
-			root := name
-			if ext != "" {
-				root = strings.TrimSuffix(name, ext)
-			}
-			if root == "" {
-				ext = "." + prefix + "-" + ext[1:]
-			} else {
-				root = root + "-" + prefix
-			}
-			dstPath := filepath.Join(dst, root+ext)
-
-			err = bfs.CopyFile(srcPath, dstPath, "process", false)
+			root := strings.TrimSuffix(name, ext)
+			ext = strings.ToLower(ext)
+			// new name: prefix-root.ext
+			dstPath := filepath.Join(dst, prefix+"-"+root+ext)
+			err = bfs.CopyFile(srcPath, dstPath, "", false)
 			if err != nil {
 				return err
 			}
+			ok = true
+		}
+		if !ok {
+			fmt.Println("No files found for", prefix)
+			continue
 		}
 	}
 	return nil

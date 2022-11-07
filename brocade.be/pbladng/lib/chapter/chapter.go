@@ -17,16 +17,16 @@ var rec = regexp.MustCompile(`^\s*[@#]\s*[@#]`)
 var ret = regexp.MustCompile(`^\s*[@#]`)
 
 type Chapter struct {
-	Sort   int
-	Header string
-	Start  int
-	Topics []*ptopic.Topic
-	Text   string
+	Sort    int
+	Heading string
+	Start   int
+	Topics  []*ptopic.Topic
+	Text    string
 }
 
 func (c Chapter) String() string {
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("\n\n\n## %s\n", ptools.HeaderString(c.Header)))
+	builder.WriteString(fmt.Sprintf("\n\n\n## %s\n", ptools.HeadingString(c.Heading)))
 	if c.Text != "" {
 		builder.WriteString(c.Text)
 	} else {
@@ -54,7 +54,7 @@ func (c Chapter) HTML(bdate, edate *time.Time, id string, imgletters map[string]
 	esc := template.HTMLEscapeString
 	dash := strings.Repeat("-", 96) + "<br />\n"
 
-	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s<b>%s</b><br />\n", dash, esc("RUBRIEKTITEL"), dash, esc(ptools.HeaderString(c.Header))))
+	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s<b>%s</b><br />\n", dash, esc("RUBRIEKTITEL"), dash, esc(ptools.HeadingString(c.Heading))))
 
 	for _, topic := range topics {
 		builder.WriteString(`<br /><br /><br />`)
@@ -80,13 +80,13 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 			return
 		}
 		s = rec.ReplaceAllString(s, "")
-		c.Header = ptools.HeaderString(s)
+		c.Heading = ptools.HeadingString(s)
 		c.Start = lineno
 		break
 	}
 
-	if c.Header == "" {
-		err = ptools.Error("chapter-header", c.Start, "empty chapter header")
+	if c.Heading == "" {
+		err = ptools.Error("chapter-heading", c.Start, "empty chapter heading")
 		return
 	}
 
@@ -96,14 +96,14 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 	for i, ti2 := range validti {
 		ti := ti2.(map[string]any)["regexp"].(string)
 		re := regexp.MustCompile(ti)
-		ok = re.MatchString(c.Header)
+		ok = re.MatchString(c.Heading)
 		if ok {
 			sortvalue = i
 			break
 		}
 	}
 	if !ok {
-		err = ptools.Error("chapter-title-unknown", c.Start, fmt.Sprintf("chapter without known title `%s`", c.Header))
+		err = ptools.Error("chapter-title-unknown", c.Start, fmt.Sprintf("chapter without known title `%s`", c.Heading))
 		return
 	}
 	c.Sort = sortvalue
@@ -151,7 +151,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 
 	doubles := make(map[string]int)
 	for _, t := range c.Topics {
-		ti := ptools.HeaderString(t.Header)
+		ti := ptools.HeadingString(t.Heading)
 		k := strings.Index(ti, "[")
 		if k != -1 {
 			ti = strings.TrimSpace(ti[:k])

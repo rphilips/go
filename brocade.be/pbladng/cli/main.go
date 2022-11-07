@@ -15,9 +15,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"brocade.be/pbladng/cli/cmd"
+
+	pregistry "brocade.be/pbladng/lib/registry"
 )
 
 var buildTime string
@@ -25,5 +28,10 @@ var goVersion string
 var buildHost string
 
 func main() {
+	v, ok := pregistry.Registry["error"]
+	if ok {
+		fmt.Fprintf(os.Stderr, "error: %s\n", v.(string))
+		os.Exit(1)
+	}
 	cmd.Execute(buildTime, goVersion, buildHost, os.Args)
 }

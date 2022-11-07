@@ -23,25 +23,28 @@ var formatCmd = &cobra.Command{
 }
 
 var Fimage bool
+var Fmanifest string
 
 func init() {
-	formatCmd.PersistentFlags().BoolVar(&Fimage, "extern", false, "Check external documents (like images)")
+	formatCmd.PersistentFlags().BoolVar(&Fimage, "checkimages", false, "Check external documents (like images)")
+	formatCmd.PersistentFlags().StringVar(&Fmanifest, "manifest", "", "Manifest file")
 	rootCmd.AddCommand(formatCmd)
 }
 
 func format(cmd *cobra.Command, args []string) error {
 	fname := args[0]
-	dir := filepath.Dir(fname)
-	manifest := filepath.Join(dir, "manifest.json")
+	if Fimage && Fmanifest == "" {
+		dir := filepath.Dir(fname)
+		Fmanifest = filepath.Join(dir, "manifest.json")
+	} else {
+		Fmanifest = ""
+	}
 	file, err := os.Open(fname)
 	if err != nil {
 		return ptools.Error("manuscript-notexist", 0, err)
 	}
 	source := bufio.NewReader(file)
-	m, err := pmanuscript.Parse(source, Fimage, manifest)
-	if err != nil {
-		return err
-	}
-	fmt.Print(m)
-	return nil
+	m, output, err := pmanuscript.Parse(source, Fimage, Fmanifest)
+	fmt.Print(output)
+	return err
 }

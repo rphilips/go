@@ -329,7 +329,7 @@ func NewDate(date string) (t *time.Time, after string, err error) {
 		return
 	}
 
-	if iday == 31 && strings.Index("1,3,5,7,8,10,12", month) < 0 {
+	if iday == 31 && !strings.Contains(",1,3,5,7,8,10,12,", ","+month+",") {
 		err = fmt.Errorf("`%s` has not 31 days in month %s", date, month)
 		return
 	}

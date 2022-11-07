@@ -49,7 +49,6 @@ func compile(cmd *cobra.Command, args []string) error {
 	platforms := pregistry.Registry["platforms"].([]any)
 	bexe := pregistry.Registry["exe"].(string)
 	bexe = path.Base(bexe)
-	err = bfs.CopyFile(filepath.Join(basedir, "brocade.be", pkg, "registry.json"), os.Getenv("MY_REGISTRY"), "processfile", false)
 	if err != nil {
 		return err
 	}

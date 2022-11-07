@@ -1,0 +1,231 @@
+package cmd
+
+import (
+	"bytes"
+	"fmt"
+	"html"
+	"os/exec"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	bfs "brocade.be/base/fs"
+	vicyear "brocade.be/vchess/lib/icyear"
+	vregistry "brocade.be/vchess/lib/registry"
+	"github.com/spf13/cobra"
+)
+
+var Fhtml = false
+var Fpdf = false
+
+var printCmd = &cobra.Command{
+	Use:   "print",
+	Short: "Information print `vchess`",
+	Long:  `Version and build time printrmation print the vchess executable`,
+
+	Args:    cobra.NoArgs,
+	Example: `vchess print`,
+	RunE:    print,
+}
+
+func init() {
+	printCmd.PersistentFlags().BoolVar(&Fhtml, "html", false, "HTML output")
+	printCmd.PersistentFlags().BoolVar(&Fpdf, "pdf", false, "PDF output")
+	rootCmd.AddCommand(printCmd)
+}
+
+func print(cmd *cobra.Command, args []string) error {
+
+	teams := vicyear.Teams(nil, nil)
+	matches := vicyear.Matches(nil, nil, "")
+
+	sort.Slice(teams, func(i, j int) bool {
+		return teams[i].Name < teams[j].Name
+	})
+	season := ""
+	round := ""
+	base := vregistry.Registry["club"].(map[string]any)["basename"].(string)
+	for i, match := range matches {
+		if i != 0 {
+			fmt.Println()
+		}
+		hteam := match.Home
+		hnr := vicyear.ClubNummer(nil, hteam.Name)
+
+		rteam := match.Remote
+		rnr := vicyear.ClubNummer(nil, rteam.Name)
+		round = match.Round
+		actives := vicyear.Actives(nil, round)
+		season = match.Season
+		fmt.Println("Seizoen :", match.Season)
+		fmt.Println("Ronde   :", strings.ReplaceAll(round, "R", ""))
+		fmt.Println("Afdeling:", hteam.Division)
+		fmt.Println("Datum   :", match.Date.Format(time.RFC3339)[:10])
+		fmt.Println("Teams   :", hteam.Name+" ("+hnr+")"+" vs. "+rteam.Name+" ("+rnr+")")
+		fmt.Println()
+		maxn := 0
+		maxs := 0
+		data := make([][6]string, 0)
+		if strings.HasPrefix(hteam.Name, base) {
+			duels := actives[hteam.Name]
+			for i = 0; i < len(duels); i++ {
+				j := strconv.Itoa(i + 1)
+				duel := duels[j]
+				player := duel.Home
+				data = append(data, [6]string{j, player.Stam, player.Name, "", "", ""})
+				if len(player.Stam) > maxs {
+					maxs = len(player.Stam)
+				}
+				if len(player.Name) > maxn {
+					maxn = len(player.Name)
+				}
+			}
+		} else {
+			duels := actives[rteam.Name]
+			for i = 0; i < len(duels); i++ {
+				j := strconv.Itoa(i + 1)
+				duel := duels[j]
+				player := duel.Home
+				data = append(data, [6]string{j, "", "", "", player.Name, player.Stam})
+			}
+		}
+		frame := "%2s.  %{maxs}s  %{maxn}s  %3s  %-{maxn}s  %-{maxs}s\n"
+		frame = strings.ReplaceAll(frame, "{maxs}", strconv.Itoa(maxs))
+		frame = strings.ReplaceAll(frame, "{maxn}", strconv.Itoa(maxn))
+		for _, line := range data {
+			fmt.Printf(frame, line[0], line[1], line[2], line[3], line[4], line[5])
+		}
+		fmt.Println()
+		fmt.Println("----")
+
+	}
+
+	if !Fhtml && !Fpdf {
+		return nil
+	}
+	buf := make([]byte, 0)
+	buffer := bytes.NewBuffer(buf)
+	buffer.WriteString(fmt.Sprintf(`<!DOCTYPE html>
+	<html lang="nl">
+	<meta charset="UTF-8">
+	<title>%s: %s</title>
+	<style>
+	table.score,
+	tr.score,
+	tr.score > th,
+	tr.score > td
+	{
+        padding: 10px;
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+	</style>
+	<script src=""></script>
+	<body>`, season, round))
+
+	for i, match := range matches {
+		if i != 0 {
+			buffer.WriteString(`<p style="page-break-after: always;">&#160;</p>`)
+		}
+		hteam := match.Home
+		hnr := vicyear.ClubNummer(nil, hteam.Name)
+
+		rteam := match.Remote
+		rnr := vicyear.ClubNummer(nil, rteam.Name)
+		round = match.Round
+		actives := vicyear.Actives(nil, round)
+		buffer.WriteString(fmt.Sprintf(`<table>
+<tr><td>Seizoen</td><td>%s</td></tr>
+<tr><td>Ronde</td><td>%s</td></tr>
+<tr><td>Afdeling</td><td>%s</td></tr>
+<tr><td>Datum</td><td>%s</td></tr>
+<tr><td>Teams</td><td>%s</td></tr>
+</table>
+`, match.Season, strings.ReplaceAll(round, "R", ""), hteam.Division, match.Date.Format(time.RFC3339)[:10], hteam.Name+" ("+hnr+")"+" vs. "+rteam.Name+" ("+rnr+")"))
+		maxn := 0
+		maxs := 0
+		data := make([][6]string, 0)
+		if strings.HasPrefix(hteam.Name, "LANDEGEM") {
+			duels := actives[hteam.Name]
+			for i = 0; i < len(duels); i++ {
+				j := strconv.Itoa(i + 1)
+				duel := duels[j]
+				player := duel.Home
+				data = append(data, [6]string{j, player.Stam, player.Name, "", "", ""})
+				if len(player.Stam) > maxs {
+					maxs = len(player.Stam)
+				}
+				if len(player.Name) > maxn {
+					maxn = len(player.Name)
+				}
+			}
+		} else {
+			duels := actives[rteam.Name]
+			for i = 0; i < len(duels); i++ {
+				j := strconv.Itoa(i + 1)
+				duel := duels[j]
+				player := duel.Home
+				data = append(data, [6]string{j, "", "", "", player.Name, player.Stam})
+			}
+		}
+		escape := html.EscapeString
+		buffer.WriteString(`<p>&#160;</p><table class="score">`)
+		buffer.WriteString(fmt.Sprintf(`<tr class="score"><th align="right" >Bord</th><th align="center">Stamnr. <br />%s</th><th align="right">Speler <br />%s</th><th align="center">Score</th><th align="left">Speler <br />%s</th><th align="left">Stamnr. <br />%s</th></tr>`, escape(hteam.Name), escape(hteam.Name), escape(rteam.Name), escape(rteam.Name)))
+
+		for _, line := range data {
+			escape := func(nr int) string { return html.EscapeString(line[nr]) }
+			buffer.WriteString(fmt.Sprintf(`<tr class="score"><td align="right">%s</td><td  align="right" style="min-width:%dex;">%s</td><td  align="right" style="min-width:%dex;">%s</td><td align="center" style="min-width:3em;">%s</td><td align="left" style="min-width:%dex;">%s</td><td align="left" style="min-width:%dex;">%s</td></tr>`, escape(0), maxs, escape(1), maxn, escape(2), escape(3), maxn, escape(4), maxs, escape(5)))
+		}
+		buffer.WriteString(`</table>`)
+		rules := vregistry.Registry["season"].(map[string]any)[season].(map[string]any)["print-rules"].(string)
+		buffer.WriteString(rules)
+	}
+
+	buffer.WriteString(`</body>
+</html>`)
+
+	mode := "pdf"
+	if Fhtml {
+		mode = "html"
+	}
+	outputfile := vicyear.OutputFile(nil, round, "html")
+
+	bfs.Store(outputfile, buffer.Bytes(), "")
+
+	if mode == "pdf" {
+		target := strings.TrimSuffix(outputfile, ".html") + ".pdf"
+		aconvertor := vregistry.Registry["convert"].(map[string]any)["html2pdf"].([]any)
+		convertor := make([]string, 0)
+		for _, piece := range aconvertor {
+			convertor = append(convertor, strings.ReplaceAll(strings.ReplaceAll(piece.(string), "{source}", outputfile), "{target}", target))
+		}
+		ccmd := exec.Command(convertor[0], convertor[1:]...)
+		err := ccmd.Run()
+		if err != nil {
+			panic(err)
+		}
+		outputfile = target
+	}
+
+	fmt.Println("\n\n" + outputfile)
+
+	aviewer := vregistry.Registry["viewer"].(map[string]any)["pdf"].([]any)
+
+	if Fhtml {
+		aviewer = vregistry.Registry["viewer"].(map[string]any)["html"].([]any)
+	}
+	viewer := make([]string, 0)
+
+	for _, piece := range aviewer {
+		viewer = append(viewer, strings.ReplaceAll(piece.(string), "{file}", outputfile))
+	}
+	vcmd := exec.Command(viewer[0], viewer[1:]...)
+	err := vcmd.Start()
+	if err != nil {
+		panic(err)
+	}
+
+	return nil
+
+}

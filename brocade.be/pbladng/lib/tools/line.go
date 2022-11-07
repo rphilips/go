@@ -5,35 +5,6 @@ import (
 	"strings"
 )
 
-func FixColon(s string) string {
-	if strings.HasPrefix(strings.TrimSpace(s), "//") {
-		return s
-	}
-	if !strings.ContainsRune(s, ':') {
-		return s
-	}
-	parts := strings.SplitN(s, ":", -1)
-	ppart := ""
-	for i, part := range parts {
-		if i == 0 {
-			ppart = part
-			continue
-		}
-		if strings.HasSuffix(ppart, "http") || strings.HasSuffix(ppart, "https") || strings.HasSuffix(ppart, "mailto") {
-			ppart = part
-			continue
-		}
-		ppart = part
-		k := strings.IndexAny(part, "1234567890")
-		if k == 0 {
-			continue
-		}
-		parts[i] = " " + strings.TrimLeft(parts[i], " \t")
-		ppart = parts[i]
-	}
-	return strings.Join(parts, ":")
-}
-
 func FixDelim(s string, index int, sub string, r rune) string {
 	if strings.HasPrefix(strings.TrimSpace(s), "//") {
 		return s

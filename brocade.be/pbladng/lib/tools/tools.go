@@ -17,45 +17,9 @@ type Line struct {
 	NR int
 }
 
-func WSLines(mylist []Line) (result []Line) {
-	found := false
-	prev := false
-	last := -1
-	for _, line := range mylist {
-		s := strings.TrimSpace(line.L)
-		if !found && s == "" {
-			continue
-		}
-		found = true
-		if prev && s == "" {
-			continue
-		}
-		line.L = Normalize(line.L)
-		result = append(result, line)
-		prev = s == ""
-		if !prev {
-			last = len(result)
-		}
-	}
-	if last != -1 {
-		result = result[:last]
-	}
-	return
-}
-
 func J(s any) string {
 	js, _ := json.Marshal(s)
 	return string(js)
-}
-
-func Normalize(s string) string {
-	s = Phone(Latin1(s))
-	s = Euro(s)
-	s = FixColon(s)
-	s = FixSpaceRune(s)
-	re := regexp.MustCompile("  +")
-	s = re.ReplaceAllString(s, " ")
-	return strings.TrimSpace(s)
 }
 
 var bold = regexp.MustCompile(`\*([^*]*)\*`)
@@ -166,12 +130,12 @@ func IsUTF8(body []byte) (lines []string, err error) {
 	return
 }
 
-func HeaderString(s string) string {
+func HeadingString(s string) string {
 	k := strings.Index(s, "[")
 	if k != -1 {
 		s = strings.TrimSpace(s[:k])
 	}
-	s = Normalize(s)
+	s = Normalize(s, true)
 	return strings.TrimSpace(strings.ToUpper(s))
 }
 
@@ -362,103 +326,6 @@ func unescape(body string) string {
 		body = strings.ReplaceAll(body, rs, `\`+string(oset[i]))
 	}
 	return body
-}
-
-// Euro transformation
-func Euro(body string) string {
-	body = strings.ReplaceAll(body, "€", " EUR ")
-	start := 0
-	for {
-		before, number, after := NumberSplit(body, true, start)
-		if number == "" {
-			break
-		}
-		after = strings.ReplaceAll(after, "\u00A0", " ")
-		punct, word, rest := FirstAlfa(after)
-		punct = strings.ReplaceAll(punct, " ", "")
-		punct = strings.ReplaceAll(punct, "\t", "")
-		if punct != "" {
-			start = len(before) + len(number)
-			continue
-		}
-		word = strings.ToUpper(word)
-		if word == "EUR" || word == "EURO" {
-			body = before + number + "\u00A0EUR" + rest
-			start = len(before) + len(number) + len(" EUR")
-			continue
-		}
-		start = len(before) + len(number)
-	}
-	return body
-}
-
-// Display phone
-
-func showphone(x string) string {
-	zones := []string{
-		"090x", "080x", "02", "03", "09", "010",
-		"011", "012", "013", "014", "015",
-		"016", "019", "050", "051", "052",
-		"053", "054", "055", "056", "057",
-		"058", "059", "060", "061", "063",
-		"064", "065", "067", "069", "071", "078",
-		"080", "081", "082", "083", "085",
-		"086", "087", "089",
-	}
-	rex := regexp.MustCompile(`[^0-9]`)
-	x = rex.ReplaceAllString(x, "")
-	zone := ""
-	for _, z := range zones {
-		p := z
-		if strings.HasSuffix(p, "x") {
-			p = strings.ReplaceAll(z, "x", "")
-		}
-		if strings.HasPrefix(x, p) {
-			zone = x[:len(z)]
-			break
-		}
-	}
-	if zone == "" && strings.HasPrefix(x, "04") {
-		zone = x[:4]
-	}
-	x = x[len(zone):]
-	nobreak := "\u00A0"
-	switch {
-	case zone == "0903":
-		x = x[:2] + nobreak + x[2:]
-	case len(x) == 6:
-		x = x[:2] + nobreak + x[2:4] + nobreak + x[4:]
-	default:
-		x = x[:3] + nobreak + x[3:5] + nobreak + x[5:]
-	}
-	return zone + nobreak + x
-}
-
-// Phone transformation
-func Phone(body string) string {
-
-	// 09 385 62 03
-	// 0475 812 419
-	rex := regexp.MustCompile(`[0-9][0-9./ -]{8,}`)
-
-	phones := rex.FindAllString(body, -1)
-	if len(phones) == 0 {
-		return body
-	}
-	result := body
-	rex2 := regexp.MustCompile(`[^0-9]`)
-	rex3 := regexp.MustCompile(`[^0-9]+$`)
-	for _, phone := range phones {
-		if !strings.HasPrefix(phone, "0") {
-			continue
-		}
-		phone = rex3.ReplaceAllString(phone, "")
-		x := rex2.ReplaceAllString(phone, "")
-		if len(x) == 9 || len(x) == 10 {
-			result = strings.ReplaceAll(result, phone, showphone(x))
-		}
-	}
-	return result
 }
 
 func Nobreak(s string) string {

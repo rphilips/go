@@ -13,10 +13,10 @@ import (
 )
 
 type Euday struct {
-	Date    *time.Time
-	Headers []string
-	Start   int
-	M       []*Mass
+	Date     *time.Time
+	Headings []string
+	Start    int
+	M        []*Mass
 }
 
 type Mass struct {
@@ -106,18 +106,18 @@ func (d Euday) String() string {
 	weekday, _, _ := strings.Cut(ptools.StringDate(d.Date, "D"), " ")
 	weekday = strings.ToUpper(weekday[0:1]) + weekday[1:]
 
-	headers := strings.Join(d.Headers, "\n")
-	headers = strings.TrimSpace(headers)
+	headings := strings.Join(d.Headings, "\n")
+	headings = strings.TrimSpace(headings)
 
-	if headers != "" {
-		headers = headers + "\n"
+	if headings != "" {
+		headings = headings + "\n"
 	}
 
 	mas := ""
 	for _, m := range d.M {
 		mas += strings.TrimSpace(m.String()) + "\n"
 	}
-	return strings.TrimSpace(fmt.Sprintf("%s %02d/%02d\n%s%s", weekday, day, month, headers, mas))
+	return strings.TrimSpace(fmt.Sprintf("%s %02d/%02d\n%s%s", weekday, day, month, headings, mas))
 }
 
 func (d Euday) HTML() string {
@@ -125,18 +125,18 @@ func (d Euday) HTML() string {
 	weekday = strings.ToUpper(weekday[0:1]) + weekday[1:]
 	esc := template.HTMLEscapeString
 	h := ptools.Html
-	headers := strings.Join(d.Headers, "\n")
-	headers = strings.TrimSpace(headers)
-	if headers != "" {
-		headers = h(esc(headers))
-		headers = strings.ReplaceAll(headers, "\n", "<br />")
-		headers += "<br />"
+	headings := strings.Join(d.Headings, "\n")
+	headings = strings.TrimSpace(headings)
+	if headings != "" {
+		headings = h(esc(headings))
+		headings = strings.ReplaceAll(headings, "\n", "<br />")
+		headings += "<br />"
 	}
 	mas := ""
 	for _, m := range d.M {
 		mas += m.HTML() + "<br />"
 	}
-	return strings.TrimSpace(fmt.Sprintf("<b>%s</b><br />%s%s", weekday, headers, mas))
+	return strings.TrimSpace(fmt.Sprintf("<b>%s</b><br />%s%s", weekday, headings, mas))
 }
 
 func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (err error) {
@@ -211,7 +211,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 		topic.Eudays = append(topic.Eudays, day)
 		day.Date = t
 		day.Start = dy[0].NR
-		day.Headers = make([]string, 0)
+		day.Headings = make([]string, 0)
 		day.M = make([]*Mass, 0)
 		var tm *time.Time = nil
 
@@ -225,7 +225,7 @@ func parseeudays(topic *Topic, mid string, bdate *time.Time, edate *time.Time) (
 			}
 			pieces := red.FindAllStringSubmatch(s, -1)
 			if len(day.M) == 0 && len(pieces) == 0 {
-				day.Headers = append(day.Headers, s)
+				day.Headings = append(day.Headings, s)
 				continue
 			}
 

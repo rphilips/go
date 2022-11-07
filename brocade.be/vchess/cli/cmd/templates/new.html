@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Nieuwe editie</title>
+    <style type="text/css">
+        .label {
+            font-size: smaller;
+        }
+
+        .info {
+            font-size: smaller;
+            color: green;
+        }
+
+        input:invalid {
+            border: solid red 3px;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+
+
+        h1 {
+            font-weight: bold;
+            font-style: italic;
+            border-bottom: 2px solid #FF5733;
+            margin-bottom: 20px;
+            font-size: 1em;
+            padding-bottom: 1px;
+        }
+
+        h2 {
+            font-weight: bold;
+            color: green;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            font-size: larger;
+            padding-top: 5px;
+        }
+    </style>
+    <script type="text/javascript">
+        function makeJSON(action) {
+            js = {
+                "action": action,
+                "year": document.getElementById("year").value,
+                "week": document.getElementById("week").value,
+                "bdate": document.getElementById("bdate").value,
+                "edate": document.getElementById("edate").value
+            }
+            return JSON.stringify(js);
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <h1>Nieuwe editie van parochieblad {{ index .Vars "pcode" }}</h1>
+
+    <h2>Vorige editie</h2>
+    <table>
+        <tr>
+            <td class="label">Id</td>
+            <td>{{ index .Vars "id" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Periode</td>
+            <td>{{ index .Vars "periode" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Verzonden</td>
+            <td>{{ index .Vars "mailed" }}</td>
+        </tr>
+    </table>
+
+    <h2>Nieuwe editie</h2>
+    <form class="pblad-form-base" onkeydown="return event.key != 'Enter';">
+        <table>
+            <tr>
+                <td class="label">Jaar</td>
+                <td><input autofocus type="number" class="input-field" name="year" id="year"
+                        value='{{ index .Vars "year" }}' min='{{ index .Vars "minyear" }}'
+                        max='{{ index .Vars "maxyear" }}' /></td>
+            </tr>
+            <tr>
+                <td class="label">Week</td>
+                <td><input type="number" class="input-field" name="week" id="week" value='{{ index .Vars "week" }}'
+                        min='{{ index .Vars "minweek" }}' max='{{ index .Vars "maxweek" }}' /></td>
+            </tr>
+            <tr>
+                <td class="label">Van</td>
+                <td><input type="date" class="input-field" name="bdate" id="bdate" value='{{ index .Vars "bdate" }}'
+                        min='{{ index .Vars "minbdate" }}' max='{{ index .Vars "maxbdate" }}' /></td>
+                <td><span class="info">{{ index .Vars "bdatedisplay" }}</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="label">Tot</td>
+                <td><input type="date" class="input-field" name="edate" id="edate" value='{{ index .Vars "edate" }}'
+                        min='{{ index .Vars "minedate" }}' max='{{ index .Vars "maxedate" }}' /></td>
+                <td><span class="info">{{ index .Vars "edatedisplay" }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>&#160;</td>
+                <td><input class="label" type="submit" value="Registreer" onclick='register(makeJSON("new"))' />
+                    <input class="label" type="submit" value="Stop!" onclick='register(makeJSON("stop"))' />
+                </td>
+            </tr>
+
+        </table>
+    </form>
+
+</body>
+
+</html>

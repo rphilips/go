@@ -1,0 +1,67 @@
+package manuscript
+
+import (
+	"fmt"
+
+	pparse "brocade.be/pbladng/lib/parse"
+	past "github.com/yuin/goldmark/ast"
+)
+
+type MNode struct {
+	Name string
+	Value 
+	RawText               []string
+	HasBlankPreviousLines bool
+	Children              []past.Node
+}
+
+func MParse(blob []byte) (m *Manuscript, err error) {
+	doc := pparse.Parse(blob)
+	m = new(Manuscript)
+
+	node := Analyse(doc)
+	fmt.Println()
+	name := doc.Kind().String()
+	if doc.Type() == past.TypeBlock {
+		fmt.Printf("%sRawText: \"", indent2)
+		for i := 0; i < doc.Lines().Len(); i++ {
+			line := doc.Lines().At(i)
+			fmt.Printf("%s", line.Value(source))
+		}
+		fmt.Printf("\"\n")
+		fmt.Printf("%sHasBlankPreviousLines: %v\n", indent2, v.HasBlankPreviousLines())
+	}
+	for name, value := range kv {
+		fmt.Printf("%s%s: %s\n", indent2, name, value)
+	}
+	if cb != nil {
+		cb(level + 1)
+	}
+	for c := v.FirstChild(); c != nil; c = c.NextSibling() {
+		c.Dump(source, level+1)
+	}
+	fmt.Printf("%s}\n", indent)
+
+	return
+
+}
+
+func Analyse(doc past.Node) *MNode {
+	node := new(MNode)
+	name := doc.Kind().String()
+	node.Name = name
+
+	if doc.Type() == past.TypeBlock {
+		node.RawText = make([]string, doc.Lines().Len())
+		for i := 0; i < doc.Lines().Len(); i++ {
+			line := doc.Lines().At(i)
+			node.RawText = append(node.RawText, string(line.Value()))
+		}
+		node.HasBlankPreviousLines = doc.HasBlankPreviousLines()
+	}
+	for c := doc.FirstChild(); c != nil; c = c.NextSibling() {
+		node.Children = append(node.Children, c)
+	}
+	return node
+
+}

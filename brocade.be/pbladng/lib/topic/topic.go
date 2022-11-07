@@ -21,7 +21,7 @@ var ws = regexp.MustCompile(`\s`)
 
 type Topic struct {
 	Pcodes   []string
-	Header   string
+	Heading  string
 	Start    int
 	Images   []*pimage.Image
 	From     *time.Time
@@ -40,7 +40,7 @@ type Topic struct {
 func (t Topic) String() string {
 	J := ptools.J
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", t.Header))
+	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", t.Heading))
 	meta := make([]string, 0)
 	if t.Type != "" {
 		meta = append(meta, fmt.Sprintf(`"type": %s`, J(t.Type)))
@@ -70,11 +70,11 @@ func (t Topic) String() string {
 	}
 
 	if t.NotePB != "" {
-		meta = append(meta, fmt.Sprintf(`"notepb": %s`, J(ptools.Normalize(t.NotePB))))
+		meta = append(meta, fmt.Sprintf(`"notepb": %s`, J(ptools.Normalize(t.NotePB, true))))
 	}
 
 	if t.NoteMe != "" {
-		meta = append(meta, fmt.Sprintf(`"noteme": %s`, J(ptools.Normalize(t.NoteMe))))
+		meta = append(meta, fmt.Sprintf(`"noteme": %s`, J(ptools.Normalize(t.NoteMe, true))))
 	}
 	if len(meta) != 0 {
 		builder.WriteString("  { ")
@@ -97,7 +97,7 @@ func (t Topic) String() string {
 			img.Legend = strings.TrimSpace(img.Legend)
 			if img.Legend != "" {
 				builder.WriteString(" ")
-				builder.WriteString(ptools.Normalize(img.Legend))
+				builder.WriteString(ptools.Normalize(img.Legend, true))
 				builder.WriteString("\n")
 			}
 		}
@@ -105,7 +105,7 @@ func (t Topic) String() string {
 	if len(t.Body) != 0 {
 		builder.WriteString("\n")
 		for _, line := range t.Body {
-			builder.WriteString(ptools.Normalize(line.L))
+			builder.WriteString(ptools.Normalize(line.L, true))
 			builder.WriteString("\n")
 		}
 	}
@@ -134,7 +134,7 @@ func (t Topic) HTML(bdate, edate *time.Time, id string, imgletters map[string]st
 	h := ptools.Html
 	dash := strings.Repeat("-", 96) + "<br />\n"
 
-	builder.WriteString(fmt.Sprintf("<b>%s</b><br /><br />", h(esc(ptools.HeaderString(t.Header)))))
+	builder.WriteString(fmt.Sprintf("<b>%s</b><br /><br />", h(esc(ptools.HeadingString(t.Heading)))))
 
 	// images
 	if len(t.Images) > 0 {
@@ -204,13 +204,13 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 			return
 		}
 		s = ret.ReplaceAllString(s, "")
-		t.Header = ptools.HeaderString(s)
+		t.Heading = ptools.HeadingString(s)
 		t.Start = lineno
 		break
 	}
 
-	if t.Header == "" {
-		err = ptools.Error("topic-header", t.Start, "empty topic header")
+	if t.Heading == "" {
+		err = ptools.Error("topic-heading", t.Start, "empty topic heading")
 		return
 	}
 
@@ -339,7 +339,7 @@ func Parse(lines []ptools.Line, mid string, bdate *time.Time, edate *time.Time, 
 
 	// body
 
-	t.Body = ptools.WSLines(body)
+	//t.Body = ptools.WSLines(body)
 
 	for _, line := range t.Body {
 		err := ptools.TestLine(line)

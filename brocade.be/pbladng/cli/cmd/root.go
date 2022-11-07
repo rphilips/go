@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	pfs "brocade.be/base/fs"
+	bfs "brocade.be/base/fs"
+	pfs "brocade.be/pbladng/lib/fs"
+	pregistry "brocade.be/pbladng/lib/registry"
 )
 
 // BuildTime defined by compilation
@@ -24,10 +27,10 @@ var BuildHost = ""
 // Fcwd Current working directory
 var Fcwd string // current working directory
 
-//Fenv environment variables
+// Fenv environment variables
 var Fenv []string
 
-//Fsilent if true: no output
+// Fsilent if true: no output
 var Fsilent bool
 
 // Fstdout if not-empty: output is redirected to this file
@@ -35,6 +38,8 @@ var Fstdout string
 
 // Fmsg output of commands
 var Fmsg string
+
+var Fdebug bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -55,6 +60,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&Fstdout, "stdout", "", "Filename containing the result")
 	rootCmd.PersistentFlags().StringVar(&Fcwd, "cwd", "", "Working directory")
 	rootCmd.PersistentFlags().BoolVar(&Fsilent, "quiet", false, "Silent the output")
+	rootCmd.PersistentFlags().BoolVar(&Fdebug, "debug", false, "put in debug mode")
 	rootCmd.PersistentFlags().StringArrayVar(&Fenv, "env", []string{}, "Environment variable KEY=VALUE")
 
 }
@@ -121,15 +127,17 @@ func Execute(buildTime string, goVersion string, buildHost string, args []string
 }
 
 func checkCwd(cwd string) (dir string, err error) {
-	defer func() { dir, _ = pfs.AbsPath(dir) }()
+	defer func() { dir, _ = bfs.AbsPath(dir) }()
 	dir = cwd
 	if cwd == "" {
-		dir, err = os.Getwd()
-		if err != nil {
-			return
+		if Fdebug {
+			dir = filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test")
+		} else {
+			dir = pfs.FName("workspace")
 		}
+
 	}
-	if !pfs.Exists(dir) || !pfs.IsDir(dir) {
+	if !bfs.Exists(dir) || !bfs.IsDir(dir) {
 		err = fmt.Errorf("`%s` does not exist or is not a directory", dir)
 		return
 	}

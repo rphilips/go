@@ -20,6 +20,7 @@ require (
 	github.com/spyzhov/ajson v0.7.1
 	github.com/webview/webview v0.0.0-20220729131735-25e7f41b8bbf
 	github.com/xanzy/ssh-agent v0.3.1
+	github.com/yuin/goldmark v1.5.2
 	github.com/zserge/lorca v0.1.10
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
 	golang.org/x/text v0.3.7
