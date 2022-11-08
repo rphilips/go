@@ -9,6 +9,7 @@ require (
 	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807
 	github.com/google/uuid v1.3.0
 	github.com/hexops/gotextdiff v1.0.3
+	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/natefinch/atomic v1.0.1
 	github.com/peterh/liner v1.2.2

@@ -18,6 +18,7 @@ import (
 
 var Fhtml = false
 var Fpdf = false
+var Fmail = false
 
 var printCmd = &cobra.Command{
 	Use:   "print",
@@ -32,6 +33,7 @@ var printCmd = &cobra.Command{
 func init() {
 	printCmd.PersistentFlags().BoolVar(&Fhtml, "html", false, "HTML output")
 	printCmd.PersistentFlags().BoolVar(&Fpdf, "pdf", false, "PDF output")
+	printCmd.PersistentFlags().BoolVar(&Fmail, "mail", false, "Mail output")
 	rootCmd.AddCommand(printCmd)
 }
 

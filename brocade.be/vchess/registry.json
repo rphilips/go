@@ -301,7 +301,23 @@
                 "pdf-round": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/{round}.pdf",
                 "clubs": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/clubs.txt",
                 "elo": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/elo.csv",
-                "print-rules": "<p><b>Tempo:</b></p><p>40 zetten in 90 minuten + 30 minuten + 30 seconden per zet vanaf de eerste zet (Fischer).<br />Noteren is verplicht tot de laatste zet, ook in tijdnood.</p>"
+                "print-rules": "<p><b>Tempo:</b></p><p>40 zetten in 90 minuten + 30 minuten + 30 seconden per zet vanaf de eerste zet (Fischer).<br />Noteren is verplicht tot de laatste zet, ook in tijdnood.</p>",
+                "mail-score": {
+                    "subject": "Resultaten voor {season}:{round}",
+                    "to": [
+                        "richard.philips@gmail.com",
+                        "kurt.vanhauwaert@gmail.com",
+                        "rudi.pauwels@gmail.com",
+                        "stijnvandoorne@hotmail.com"
+                    ],
+                    "cc": [
+                        "r.bonne@telenet.be",
+                        "nickderuyck@yahoo.com"
+                    ],
+                    "bcc": [
+                        "ria.vercruysse@gmail.com"
+                    ]
+                }
             }
         }
     }

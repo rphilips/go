@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"html"
+	"os"
 	"os/exec"
 	"sort"
 	"strconv"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	bfs "brocade.be/base/fs"
+	bmail "brocade.be/base/gmail"
 	vicyear "brocade.be/vchess/lib/icyear"
 	vregistry "brocade.be/vchess/lib/registry"
 	"github.com/spf13/cobra"
@@ -29,10 +32,15 @@ var scoreCmd = &cobra.Command{
 func init() {
 	scoreCmd.PersistentFlags().BoolVar(&Fhtml, "html", false, "HTML output")
 	scoreCmd.PersistentFlags().BoolVar(&Fpdf, "pdf", false, "PDF output")
+	scoreCmd.PersistentFlags().BoolVar(&Fmail, "mail", false, "mail output")
 	rootCmd.AddCommand(scoreCmd)
 }
 
 func score(cmd *cobra.Command, args []string) error {
+	if Fmail {
+		Fhtml = false
+		Fpdf = true
+	}
 	last := ""
 	if len(args) == 0 {
 		for i := 1; i < 20; i++ {
@@ -161,6 +169,18 @@ func score(cmd *cobra.Command, args []string) error {
         border: 1px solid black;
         border-collapse: collapse;
       }
+
+	table.sum,
+	tr.sum,
+	tr.sum > th,
+	tr.sum > td
+	{
+		border: none;
+		border-bottom: 0;
+        padding: 10px;
+      }
+
+
 	</style>
 	<script src=""></script>
 	<body>`, season, round))
@@ -187,6 +207,8 @@ func score(cmd *cobra.Command, args []string) error {
 		maxn := 0
 		maxs := 0
 		data := make([][8]string, 0)
+		sumscore := "0-0"
+		reverse := false
 		if strings.HasPrefix(hteam.Name, "LANDEGEM") {
 			duels := actives[hteam.Name]
 			for i = 0; i < len(duels); i++ {
@@ -194,6 +216,7 @@ func score(cmd *cobra.Command, args []string) error {
 				duel := duels[j]
 				ph := duel.Home
 				pr := duel.Remote
+				sumscore = sum(sumscore, duel.Score)
 				if pr.Elo == "0" || pr.Elo == "" {
 					pr.Elo = "-"
 				}
@@ -215,12 +238,14 @@ func score(cmd *cobra.Command, args []string) error {
 				}
 			}
 		} else {
+			reverse = true
 			duels := actives[rteam.Name]
 			for i = 0; i < len(duels); i++ {
 				j := strconv.Itoa(i + 1)
 				duel := duels[j]
 				ph := duel.Home
 				pr := duel.Remote
+				sumscore = sum(sumscore, duel.Score)
 				if pr.Elo == "0" || pr.Elo == "" {
 					pr.Elo = "-"
 				}
@@ -250,6 +275,7 @@ func score(cmd *cobra.Command, args []string) error {
 			escape := func(nr int) string { return html.EscapeString(line[nr]) }
 			buffer.WriteString(fmt.Sprintf(`<tr class="score"><td align="right">%s</td><td class="clipboard" data-clip="%s" align="right" style="min-width:%dex;">%s</td><td class="clipboard"  align="right" style="min-width:%dex;">%s</td><td class="clipboard" align="center" style="min-width:3em;">%s</td><td class="clipboard" align="left" style="min-width:%dex;">%s</td><td data-clip="%s" class="clipboard" align="left" style="min-width:%dex;">%s</td></tr>`, escape(0), escape(6), maxs, escape(1), maxn, escape(2), escape(3), maxn, escape(4), escape(7), maxs, escape(5)))
 		}
+		buffer.WriteString(fmt.Sprintf(`<tr class="sum"><td align="right"></td><td align="right" ></td><td align="right"></td><td class="clipboard" align="center" style="min-width:5em;"><b>%s</b></td><td></td><td></td></tr>`, color(sumscore, reverse)))
 		buffer.WriteString(`</table>`)
 	}
 	buffer.WriteString(`<script>
@@ -281,11 +307,14 @@ for (let i in elements) {
 		mode = "html"
 	}
 	outputfile := vicyear.OutputFile(nil, round, "html")
+	htmlfile := outputfile
+	pdffile := ""
 
 	bfs.Store(outputfile, buffer.Bytes(), "")
 
 	if mode == "pdf" {
 		target := strings.TrimSuffix(outputfile, ".html") + ".pdf"
+		pdffile = target
 		aconvertor := vregistry.Registry["convert"].(map[string]any)["html2pdf"].([]any)
 		convertor := make([]string, 0)
 		for _, piece := range aconvertor {
@@ -316,7 +345,140 @@ for (let i in elements) {
 	if err != nil {
 		panic(err)
 	}
+	if Fmail && YesNo("Mail the score ?") {
+		return mailscore(season, round, htmlfile, pdffile)
+	}
 
 	return nil
 
+}
+
+func sum(sumscore string, score string) string {
+	score = strings.ReplaceAll(score, " ", "")
+	x1, x2, _ := strings.Cut(score, "-")
+	s1, s2, _ := strings.Cut(sumscore, "-")
+	half := "½"
+	add1 := 0
+	add2 := 0
+	if strings.Contains(s1, half) {
+		add1 += 1
+		s1 = strings.ReplaceAll(s1, half, "")
+	}
+	if strings.Contains(s2, half) {
+		add2 += 1
+		s2 = strings.ReplaceAll(s2, half, "")
+	}
+	if x1 == x2 {
+		add1 += 1
+		add2 += 1
+	} else {
+		if x2 != "0" {
+			add2 += 2
+		}
+		if x1 != "0" {
+			add1 += 2
+		}
+	}
+	is1, _ := strconv.Atoi(s1)
+	is2, _ := strconv.Atoi(s2)
+	is1 *= 2
+	is2 *= 2
+	is1 += add1
+	is2 += add2
+
+	if is1%2 == 0 {
+		s1 = strconv.Itoa(is1 / 2)
+	} else {
+		s1 = strconv.Itoa((is1-1)/2) + half
+	}
+	if is2%2 == 0 {
+		s2 = strconv.Itoa(is2 / 2)
+	} else {
+		s2 = strconv.Itoa((is2-1)/2) + half
+	}
+	if s1 == ("0" + half) {
+		s1 = half
+	}
+	if s2 == ("0" + half) {
+		s2 = half
+	}
+
+	return s1 + "-" + s2
+
+}
+
+func color(sumscore string, reverse bool) string {
+	s1, s2, _ := strings.Cut(sumscore, "-")
+
+	if s1 == s2 {
+		return `<span style="color: blue;">` + sumscore + "</span>"
+	}
+	half := "½"
+	if s1 == half {
+		s1 = "0" + s1
+	}
+	if s2 == half {
+		s2 = "0" + s2
+	}
+	s1 = strings.ReplaceAll(s1, half, "")
+	s2 = strings.ReplaceAll(s2, half, "")
+	is1, _ := strconv.Atoi(s1)
+	is2, _ := strconv.Atoi(s2)
+	if is1 > is2 {
+		if !reverse {
+			return `<span style="color: green;">` + sumscore + "</span>"
+		} else {
+			return `<span style="color: red;">` + sumscore + "</span>"
+		}
+	}
+	if is1 < is2 {
+		if reverse {
+			return `<span style="color: green;">` + sumscore + "</span>"
+		} else {
+			return `<span style="color: red;">` + sumscore + "</span>"
+		}
+	}
+	return sumscore
+}
+
+func YesNo(s string) bool {
+	for {
+		fmt.Printf("%s [y/n] ", s)
+		reader := bufio.NewReader(os.Stdin)
+		text, _ := reader.ReadString('\n')
+		text = strings.TrimSpace(strings.ToLower(text))
+		if strings.HasPrefix(text, "y") {
+			return true
+		}
+		if strings.HasPrefix(text, "n") {
+			return false
+		}
+	}
+}
+
+func mailscore(season string, round string, htmlfile string, pdffile string) (err error) {
+	to := make([]string, 0)
+	cc := make([]string, 0)
+	bcc := make([]string, 0)
+	mail := vregistry.Registry["season"].(map[string]any)[season].(map[string]any)["mail-score"].(map[string]any)
+
+	subject := mail["subject"].(string)
+	subject = strings.ReplaceAll(subject, "{season}", season)
+	subject = strings.ReplaceAll(subject, "{round}", round)
+	for _, d := range mail["to"].([]any) {
+		to = append(to, d.(string))
+	}
+	for _, d := range mail["cc"].([]any) {
+		cc = append(to, d.(string))
+	}
+	for _, d := range mail["bcc"].([]any) {
+		bcc = append(to, d.(string))
+	}
+	html, err := bfs.Fetch(htmlfile)
+	if err != nil {
+		return err
+	}
+
+	err = bmail.Send(to, cc, bcc, subject, "", string(html), []string{pdffile})
+	return err
 }
