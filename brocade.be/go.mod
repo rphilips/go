@@ -7,6 +7,7 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/benhoyt/goawk v1.17.0
 	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807
+	github.com/gocarina/gocsv v0.0.0-20221105105431-c8ef78125b99
 	github.com/google/uuid v1.3.0
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible

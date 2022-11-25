@@ -1,6 +1,9 @@
 package tools
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"unicode"
@@ -205,4 +208,19 @@ func WSLines(mylist []string) (result []string) {
 		result = result[:last]
 	}
 	return
+}
+
+func YesNo(s string) bool {
+	for {
+		fmt.Printf("%s [y/n] ", s)
+		reader := bufio.NewReader(os.Stdin)
+		text, _ := reader.ReadString('\n')
+		text = strings.TrimSpace(strings.ToLower(text))
+		if strings.HasPrefix(text, "y") {
+			return true
+		}
+		if strings.HasPrefix(text, "n") {
+			return false
+		}
+	}
 }

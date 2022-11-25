@@ -277,7 +277,8 @@
         "kbsb": {
             "login": "https://www.frbe-kbsb.be/sites/manager/GestionCOMMON/GestionLogin.php",
             "userid": "25518",
-            "passwd": "eXr25F9zT^!UCS"
+            "passwd": "eXr25F9zT^!UCS",
+            "url": "https://www.frbe-kbsb.be/sites/manager/GestionFICHES/FRBE_Club.php?club={stamno}"
         },
         "prefixen": [
             "LANDEGEM",
@@ -294,16 +295,22 @@
         },
         "season": {
             "2022-2023": {
-                "rooster": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/ic-rooster.csv",
-                "players": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/spelers.csv",
-                "active-round": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/{round}.json",
-                "html-round": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/{round}.html",
-                "pdf-round": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/{round}.pdf",
-                "clubs": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/clubs.txt",
-                "elo": "/home/rphilips/Dropbox/Chess/IC/PK/2022-2023/elo.csv",
-                "print-rules": "<p><b>Tempo:</b></p><p>40 zetten in 90 minuten + 30 minuten + 30 seconden per zet vanaf de eerste zet (Fischer).<br />Noteren is verplicht tot de laatste zet, ook in tijdnood.</p>",
+                "rooster": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/ic-rooster.csv",
+                "players": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/players.csv",
+                "active-round": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/R{round}.json",
+                "club-round": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/C-{clubno}.json",
+                "html-round": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/R{round}.html",
+                "html-calendar": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/cal.html",
+                "pdf-calendar": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/cal.pdf",
+                "csv-results": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/results.csv",
+                "html-round-desktop": "/home/rphilips/Desktop/R{round}.html",
+                "pdf-round": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/R{round}.pdf",
+                "pdf-round-desktop": "/home/rphilips/Desktop/R{round}.pdf",
+                "clubs": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/clubs.csv",
+                "elo": "/home/rphilips/Dropbox/Chess/IC/PK/{season}/elo.csv",
+                "print-rules": "<p><b>Reglement:</b></p><ul><li>Tempo: 40 zetten in 90 minuten + 30 minuten + 30 seconden per zet vanaf de eerste zet (Fischer: nr. 19 op DGT)</li><li>Elke speler is verplicht te noteren tot de laatste zet, ook in tijdnood.</li><li>Elektronische toestellen mogen niet aanstaan: bij eerste inbreuk straftijd van 10 minuten (ook indien daardoor de partij wordt verloren); nadien partijverlies</li><li>Elektronische toestellen mogen niet op zich worden gedragen: de overtreder verliest de partij</li></ul><p>Gelieve de resultaten zo snel mogelijk te bezorgen aan richard.philips@gmail.com (0479 79 20 26). U mag dit ook doen door een duidelijke foto van de tabel op dit formulier te zenden!</p>",
                 "mail-score": {
-                    "subject": "Resultaten voor {season}: {round}",
+                    "subject": "Resultaten voor {season}: R{round}",
                     "to": [
                         "richard.philips@gmail.com",
                         "kurt.vanhauwaert@gmail.com",
@@ -316,6 +323,48 @@
                     ],
                     "bcc": [
                         "ria.vercruysse@gmail.com"
+                    ]
+                },
+                "mail-print": {
+                    "subject": "ICC {season}: R{round}",
+                    "to": [
+                        "richard.philips@gmail.com",
+                        "kurt.vanhauwaert@gmail.com",
+                        "rudi.pauwels@gmail.com",
+                        "stijnvandoorne@hotmail.com"
+                    ],
+                    "cc": [
+                        "r.bonne@telenet.be",
+                        "nickderuyck@yahoo.com"
+                    ],
+                    "bcc": [],
+                    "content-home": [
+                        "Ploegkapitein,",
+                        "",
+                        "In bijlage vind je een PDF met de ploegopstellingen voor ronde R{round}.",
+                        "Gelieve de opstellingen zorgvuldig na te kijken.",
+                        "",
+                        "Verwittig me bij eventuele wijzigingen",
+                        "",
+                        "Succes,",
+                        "",
+                        "Richard",
+                        ""
+                    ],
+                    "content-remote": [
+                        "Ploegkapitein,",
+                        "",
+                        "In bijlage vind je een PDF met de ploegopstellingen voor ronde <b>R{round}</b>.",
+                        "Gelieve de opstellingen zorgvuldig na te kijken.",
+                        "",
+                        "Verifieer ook het adres op <a href='https://www.frbe-kbsb.be/sites/manager/ICN/Inscriptions.php' target='_blank'>https://www.frbe-kbsb.be/sites/manager/ICN/Inscriptions.php</a>",
+                        "",
+                        "Verwittig me bij eventuele wijzigingen",
+                        "",
+                        "Succes,",
+                        "",
+                        "Richard",
+                        ""
                     ]
                 }
             }

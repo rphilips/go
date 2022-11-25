@@ -17,6 +17,25 @@ import (
 var ELO = make(map[string]Player)
 var Clubs = make(map[string]string)
 
+type CSV struct {
+	Season     string
+	Round      string
+	Date       string
+	Division   string
+	HomeNr     string
+	HomeName   string
+	RemoteNr   string
+	RemoteName string
+	Board      string
+	WhiteNr    string
+	WhiteName  string
+	WhiteElo   string
+	WhiteScore string
+	BlackNr    string
+	BlackName  string
+	BlackScore string
+}
+
 type Match struct {
 	Round  string
 	Date   time.Time
