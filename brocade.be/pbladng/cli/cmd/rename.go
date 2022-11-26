@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"archive/zip"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -26,7 +28,7 @@ var renameCmd = &cobra.Command{
 	Short: "File manipulation",
 	Long:  `Manipulate file names`,
 
-	Example: `gopblad rename rename`,
+	Example: `gopblad rename *.jpg --match='(.)(.)(.*)' --name='$1$2hallo$#.jpg' --sort=3 --report='$2$1'`,
 	RunE:    rename,
 }
 
@@ -56,23 +58,28 @@ func rename(cmd *cobra.Command, args []string) error {
 	}
 	Freport := strings.TrimSpace(Freport)
 
-	reportnr := -1
-	if Freport != "" {
-		var e error
-		reportnr, e = strconv.Atoi(Freport)
-		if e != nil {
-			return fmt.Errorf("invalid reportnumber for `--report=...` flag")
-		}
-	}
-
 	if Fdir == "" {
 		Fdir = "."
 	}
 	files, _, err := bfs.FilesDirs(Fdir)
-
 	if err != nil {
 		return err
 	}
+
+	for _, z := range files {
+		fname := strings.ToLower(z.Name())
+		if strings.HasSuffix(fname, ".zip") {
+			err := unzip(fname, Fdir)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	files, _, err = bfs.FilesDirs(Fdir)
+	if err != nil {
+		return err
+	}
+
 	rev := make(map[string]bool)
 	for _, f := range files {
 		rev[f.Name()] = true
@@ -90,6 +97,8 @@ func rename(cmd *cobra.Command, args []string) error {
 				}
 			}
 		}
+	} else {
+		work = files[:]
 	}
 	if len(work) == 0 {
 		return nil
@@ -139,6 +148,8 @@ func rename(cmd *cobra.Command, args []string) error {
 
 		fslice := make([]func(int, int) int, 0)
 		for _, part := range strings.SplitN(Fsort, ",", -1) {
+			part = strings.ToLower(strings.TrimSpace(part))
+			part = strings.Trim(part, "$")
 			part = strings.ToLower(strings.TrimSpace(part))
 			if part == "" {
 				continue
@@ -200,7 +211,11 @@ func rename(cmd *cobra.Command, args []string) error {
 	frame := fmt.Sprintf("%%0%dd", len(strconv.Itoa(len(work))))
 	for k, f := range work {
 		template := Fname
+		report := Freport
 		if strings.Contains(template, "$#") {
+			template = strings.ReplaceAll(template, "$#", fmt.Sprintf(frame, k+1))
+		}
+		if strings.Contains(report, "$#") {
 			template = strings.ReplaceAll(template, "$#", fmt.Sprintf(frame, k+1))
 		}
 		subs := m[f.Name()]
@@ -211,6 +226,7 @@ func rename(cmd *cobra.Command, args []string) error {
 			}
 			sub := subs[0][n]
 			template = strings.ReplaceAll(template, "$"+strconv.Itoa(n), sub)
+			report = strings.ReplaceAll(report, "$"+strconv.Itoa(n), sub)
 			n--
 		}
 		result := []byte{}
@@ -220,17 +236,18 @@ func rename(cmd *cobra.Command, args []string) error {
 		}
 		rev[sresult] = true
 		renames[f.Name()] = sresult
-		report := ""
-		rnr := -1
+
+		sresult = ""
 		if Freport == "" {
-			rnr = len(subs[0]) - 1
+			sresult = subs[0][len(subs[0])-1]
 		} else {
-			rnr = reportnr
+			result := []byte{}
+			sresult = string(pattern.ExpandString(result, report, f.Name(), pattern.FindAllStringSubmatchIndex(f.Name(), -1)[0]))
 		}
-		if len(subs[0]) > rnr {
-			report = subs[0][rnr]
-		}
-		reports[f.Name()] = strings.TrimSpace(report)
+		fmt.Println("report:", report)
+		fmt.Println("sresult:", sresult)
+		ext := filepath.Ext(f.Name())
+		reports[f.Name()] = strings.TrimSuffix(strings.TrimSpace(sresult), ext)
 	}
 
 	maxo := 0
@@ -243,18 +260,13 @@ func rename(cmd *cobra.Command, args []string) error {
 			maxn = len(new)
 		}
 	}
-	frame = "%" + strconv.Itoa(maxo) + "s -> %" + strconv.Itoa(maxn) + "s %s\n"
+	frame = "%-" + strconv.Itoa(maxo) + "s -> %-" + strconv.Itoa(maxn) + "s %s\n"
 	for _, oldf := range work {
 		old := oldf.Name()
 		new := renames[old]
 
 		fmt.Printf(frame, old, new, reports[old])
 
-		err := os.Rename(old, renames[old])
-		if err != nil {
-			return fmt.Errorf("`%s` renames to `%s`: error %s", old, renames[old], err)
-		}
-		fmt.Println(old, "->", renames[old])
 	}
 	ask := "\nRename ? (y/n): "
 	rn := ptools.YesNo(ask)
@@ -274,5 +286,64 @@ func rename(cmd *cobra.Command, args []string) error {
 		fmt.Printf(frame, old, new, reports[old])
 	}
 
+	return nil
+}
+
+func unzip(source string, dir string) (err error) {
+	reader, err := zip.OpenReader(source)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	// 3. Iterate over zip files inside the archive and unzip each of them
+	for _, f := range reader.File {
+		err := unzipFile(f, dir)
+		if err != nil {
+			return err
+		}
+	}
+	os.Rename(source, filepath.Join(dir, source)+".renamed")
+
+	return nil
+
+}
+
+func unzipFile(f *zip.File, dir string) error {
+	// 4. Check if file paths are not vulnerable to Zip Slip
+	fname := filepath.ToSlash(f.Name)
+	if strings.HasSuffix(fname, "/") {
+		return nil
+	}
+	if fname == "" {
+		return nil
+	}
+	parts := strings.SplitN(fname, "/", -1)
+	fname = parts[len(parts)-1]
+	if fname == "" {
+		return nil
+	}
+	d := filepath.Join(dir, fname)
+	if bfs.Exists(d) {
+		return nil
+	}
+
+	// 6. Create a destination file for unzipped content
+	destinationFile, err := os.OpenFile(d, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+	if err != nil {
+		return err
+	}
+	defer destinationFile.Close()
+
+	// 7. Unzip the content of a file and copy it to the destination file
+	zippedFile, err := f.Open()
+	if err != nil {
+		return err
+	}
+	defer zippedFile.Close()
+
+	if _, err := io.Copy(destinationFile, zippedFile); err != nil {
+		return err
+	}
 	return nil
 }
