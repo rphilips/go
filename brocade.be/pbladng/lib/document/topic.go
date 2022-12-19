@@ -80,3 +80,23 @@ func AddTopic(doc *pstructure.Document, content *string) (err error) {
 	t.Body = ptools.WSLines(body)
 	return nil
 }
+
+func LastCopyRight(doc *pstructure.Document) (cpright string) {
+	c := doc.LastChapter()
+	if c == nil {
+		return
+	}
+	t := c.LastTopic()
+	if t == nil {
+		return
+	}
+	images := t.Images
+	k := len(images)
+	if k == 0 {
+		return
+	} else {
+		image := images[k-1]
+		cpright = image.Copyright
+	}
+	return
+}

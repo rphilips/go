@@ -1,8 +1,12 @@
 package structure
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
+	btime "brocade.be/base/time"
 	perror "brocade.be/pbladng/lib/error"
 )
 
@@ -70,6 +74,7 @@ type Image struct {
 }
 
 type ImageID struct {
+	Path   string `json:"path"`
 	Mtime  string `json:"mtime"`
 	Digest string `json:"digest"`
 	Letter string `json:"letter"`
@@ -120,4 +125,41 @@ func (t *Topic) Test(hint string) (err error) {
 		return
 	}
 	return
+}
+
+func (d Document) ID() string {
+	return fmt.Sprintf("%d-%02d", d.Year, d.Week)
+}
+
+func (d Document) String() string {
+	m := make(map[string]string)
+	m["id"] = d.ID()
+	m["bdate"] = btime.StringDate(d.Bdate, "I")
+	m["edate"] = btime.StringDate(d.Edate, "I")
+	if d.Mailed != nil {
+		m["mailed"] = btime.StringDate(d.Mailed, "I")
+	}
+	j, _ := json.MarshalIndent(m, "", "    ")
+
+	builder := strings.Builder{}
+
+	builder.Write(j)
+	builder.WriteString("\n")
+	for _, chapter := range d.Chapters {
+		builder.WriteString(chapter.String())
+	}
+	return builder.String()
+}
+
+func (c Chapter) String() string {
+	builder := strings.Builder{}
+	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", c.Heading))
+	// if c.Text != "" {
+	// 	builder.WriteString(c.Text)
+	// } else {
+	// 	for _, topic := range c.Topics {
+	// 		builder.WriteString(topic.String())
+	// 	}
+	// }
+	return builder.String()
 }

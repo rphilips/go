@@ -24,6 +24,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.1
 	github.com/yuin/goldmark v1.5.2
 	github.com/zserge/lorca v0.1.10
+	go.lsp.dev/uri v0.3.0
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
 	golang.org/x/text v0.3.7
 	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3

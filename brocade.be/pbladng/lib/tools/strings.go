@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	bstrings "brocade.be/base/strings"
 )
 
 var phonerex = regexp.MustCompile(`[0-9][0-9./ -]{8,}`)
@@ -25,8 +27,9 @@ func Heading(s string) string {
 }
 
 func Normalize(s string, trim bool) string {
+	s = bstrings.InsertDiacritic(s)
 	s = Euro(s)
-	s = Phone(Latin1(s))
+	s = Phone(bstrings.Latin1(s))
 	s = Colon(s)
 	s = spaces.ReplaceAllString(s, " ")
 	if !trim {

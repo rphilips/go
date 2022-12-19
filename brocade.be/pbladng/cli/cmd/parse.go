@@ -25,7 +25,6 @@ var parseCmd = &cobra.Command{
 }
 
 func init() {
-	parseCmd.PersistentFlags().StringVar(&Fdir, "dir", "", "directory with images and manifest")
 	parseCmd.PersistentFlags().BoolVar(&Fdebug, "debug", false, "put in debug mode")
 	rootCmd.AddCommand(parseCmd)
 }
@@ -33,7 +32,8 @@ func init() {
 func parse(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		if Fdebug {
-			args = append(args, filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test", "week.md"))
+			Fcwd = filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test")
+			args = append(args, filepath.Join(Fcwd, "week.md"))
 		} else {
 			args = append(args, pfs.FName("workspace/week.md"))
 		}
@@ -46,10 +46,8 @@ func parse(cmd *cobra.Command, args []string) error {
 	if Fdir == "" {
 		Fdir = filepath.Dir(fname)
 	}
-	codes := make(map[string]bool)
-	alts := make(map[string]string)
 
-	_, codes, alts, err = pdocument.Parse(d, Fcwd)
+	_, codes, alts, err := pdocument.Parse(d, Fcwd)
 
 	if Fdebug {
 		fmt.Println("\n\n\nCodes:")

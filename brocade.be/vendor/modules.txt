@@ -129,6 +129,9 @@ github.com/yuin/goldmark/util
 # github.com/zserge/lorca v0.1.10
 ## explicit; go 1.13
 github.com/zserge/lorca
+# go.lsp.dev/uri v0.3.0
+## explicit; go 1.13
+go.lsp.dev/uri
 # go.opencensus.io v0.23.0
 ## explicit; go 1.13
 go.opencensus.io

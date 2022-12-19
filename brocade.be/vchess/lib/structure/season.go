@@ -318,6 +318,10 @@ func sum(sumscore string, score string) string {
 	score = strings.ReplaceAll(score, " ", "")
 	x1, x2, _ := strings.Cut(score, "-")
 	s1, s2, _ := strings.Cut(sumscore, "-")
+	x1 = strings.Trim(x1, " f")
+	x2 = strings.Trim(x2, " f")
+	s1 = strings.Trim(s1, " f")
+	s2 = strings.Trim(s2, " f")
 	half := "½"
 	add1 := 0
 	add2 := 0

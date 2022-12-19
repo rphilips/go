@@ -1,13 +1,25 @@
 {
     "pblad": {
+        "mails": {
+            "correspondents": {
+                "subject": "Parochieblad {id}{msg}",
+                "body": "Parochieblad {id} staat klaar in uw Dropbox folder\n{msg}\nR.",
+                "body-thursday": "\n\nOPGELET: vervroegde inzending!\nGelieve de aanvullingen klaar te zetten TEN LAATSTE woensdagavond\n",
+                "subject-thursday": ": OPGELET! Vervroegde inzending!",
+                "body-holiday": "\n\nOPGELET: vakantie inzending!\nGelieve de aanvullingen voor 3 weken aan te maken\n",
+                "subject-holiday": "\n\nOPGELET: vakantie inzending!"
+            }
+        },
         "valid-until": "2023-12-01",
         "test": "pblad-test",
         "source-dir": "/home/rphilips/go",
+        "distribute-dir": "/home/rphilips/Dropbox/pblad/admin/workspace",
         "package": "pbladng",
         "exe": "/home/rphilips/bin/gopblad",
         "platforms": [
             "linux/amd64"
         ],
+        "copyright-default": "Guy Claus",
         "mass-day": {
             "Sunday": [
                 {
@@ -100,8 +112,18 @@
         ],
         "base-dir": "/home/rphilips/Dropbox/pblad",
         "correspondents": {
-            "naz": "/home/rphilips/Dropbox/pblad/correspondents/Nazareth",
-            "eke": "/home/rphilips/Dropbox/pblad/correspondents/Eke"
+            "naz": {
+                "dir": "/home/rphilips/Dropbox/Nazareth",
+                "mail": "dewildepeil@skynet.be"
+            },
+            "gav1": {
+                "dir": "/home/rphilips/Dropbox/Chris",
+                "mail": "cjungbluth@hotmail.com"
+            },
+            "gav2": {
+                "dir": "/home/rphilips/Dropbox/Christine",
+                "mail": "christinepiens7@gmail.com"
+            }
         },
         "start-day-essential": "Saturday",
         "start-day": "Wednesday",

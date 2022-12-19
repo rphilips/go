@@ -25,7 +25,7 @@ HEMELVAART
 Er zijn ook *andere* jaargetijden
 
 
-# LITURGISCHE TEKSTEN
+# LITURGISCHE TEKSTen
 
 
 
@@ -97,7 +97,7 @@ Mogen we vragen om bij overschrijving steeds de gestructureerde mededeling te ge
 
 { "lastpb": "2022-39", "count": "2" }
 
-ont.jpg Ontbijt bij de boer (copyright Landelijke Gilde) © lg
+wandel.jpg Ontbijt bij de boer (copyright Landelijke Gilde) © lg
 
 
 ## LANDELIJKE GILDE, FERM EN KLJ NAZARETH
@@ -106,9 +106,7 @@ ont.jpg Ontbijt bij de boer (copyright Landelijke Gilde) © lg
 {"lastpb": "2022-39", "count": "2" }
 ```
 
-![a](baert.jpg "title cr copyright")
-![a](baert.jpg "title cr \"copyright\"")
-![c](wandel.jpg)
+![](baert.jpg "ti1 cr copyright")
 
 
 Landelijke Gilde, Ferm en KLJ Nazareth organiseren naar jaarlijkse gewoonte hun Barbecue.

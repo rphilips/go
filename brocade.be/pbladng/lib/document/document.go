@@ -6,10 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	bfs "brocade.be/base/fs"
 	perror "brocade.be/pbladng/lib/error"
+	pfs "brocade.be/pbladng/lib/fs"
 	pstructure "brocade.be/pbladng/lib/structure"
 	ptools "brocade.be/pbladng/lib/tools"
 	mgold "github.com/yuin/goldmark"
@@ -17,7 +22,82 @@ import (
 	mtext "github.com/yuin/goldmark/text"
 )
 
-func Parse(reader io.Reader, dir string) (doc *pstructure.Document, codes map[string]bool, alts map[string]string, err error) {
+// Retrieve year and week without parsing
+func DocRef(dir string) (year int, week int, err error) {
+	if dir == "" {
+		dir = pfs.FName("workspace")
+	}
+	weekpb := ""
+	for _, base := range []string{"week.md", "week.pb"} {
+		weekpb = filepath.Join(dir, base)
+		if bfs.Exists(weekpb) {
+			break
+		}
+	}
+	if weekpb == "" {
+		err = fmt.Errorf("cannot find week.[md,pb]")
+		return
+	}
+
+	data, err := os.ReadFile(weekpb)
+	if err != nil {
+		err = fmt.Errorf("cannot read `%s`: %s", weekpb, err.Error())
+		return
+	}
+
+	value := ""
+	if strings.HasPrefix(string(data), "WEEK") {
+		s := strings.TrimPrefix(string(data), "WEEK")
+		s = strings.TrimSpace(s)
+		value, _, _ = strings.Cut(s, " ")
+	}
+	if value == "" {
+
+		_, a, ok := strings.Cut(string(data), "{")
+
+		if !ok {
+			err = fmt.Errorf("`%s` does not contain `{`", weekpb)
+			return
+		}
+
+		m, _, ok := strings.Cut(a, "}")
+		if !ok {
+			err = fmt.Errorf("`%s` does not contain `}` after first `{`", weekpb)
+			return
+		}
+
+		m = "{" + m + "}"
+
+		meta := make(map[string]string)
+		err = json.Unmarshal([]byte(m), &meta)
+		if err != nil {
+			err = fmt.Errorf("`%s` does not contain valid JSON between first `{` and `}`", weekpb)
+			return
+		}
+
+		value = meta["id"]
+	}
+	y, w, ok := strings.Cut(value, "-")
+	if !ok {
+		if y == "" || w == "" {
+			err = fmt.Errorf("`id` is missing in `%s", weekpb)
+			return
+		}
+	}
+	year, e := strconv.Atoi(y)
+	if e != nil {
+		err = fmt.Errorf("id `%s` should start with a valid year in `%s", value, weekpb)
+		return
+	}
+	week, e = strconv.Atoi(w)
+	if e != nil {
+		err = fmt.Errorf("id `%s` should end with a valid week in `%s", value, weekpb)
+		return
+	}
+	return
+}
+
+func Parse(reader io.Reader, dir string) (doc *pstructure.Document, codes map[string]bool, alts map[string]*pstructure.Image, err error) {
 	blob, linenos, err := IsUTF8(reader, true)
 	if err != nil {
 		return
@@ -32,7 +112,7 @@ func Parse(reader io.Reader, dir string) (doc *pstructure.Document, codes map[st
 	mode := ""
 	until := 0
 	codes = make(map[string]bool)
-	alts = make(map[string]string)
+	alts = make(map[string]*pstructure.Image)
 	err = parse(doc, docnode, blob, nil, &start, &content, &mode, &until, linenos, codes, alts, dir)
 	if err != nil {
 		codes = nil
@@ -42,7 +122,7 @@ func Parse(reader io.Reader, dir string) (doc *pstructure.Document, codes map[st
 	return
 }
 
-func parse(doc *pstructure.Document, n mast.Node, blob []byte, pn mast.Node, start *int, content *string, mode *string, until *int, linenos []int, codes map[string]bool, alts map[string]string, dir string) (err error) {
+func parse(doc *pstructure.Document, n mast.Node, blob []byte, pn mast.Node, start *int, content *string, mode *string, until *int, linenos []int, codes map[string]bool, alts map[string]*pstructure.Image, dir string) (err error) {
 	kind := n.Kind()
 	name := kind.String()
 	ty := n.Type()
@@ -277,10 +357,9 @@ func AstFencedCodeBlock(doc *pstructure.Document, node mast.Node, blob []byte, p
 func AstParagraph(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.Node, start *int, content *string, mode *string, until *int, linenos []int) (err error) {
 	//n := node.(*mast.Paragraph)
 	line := node.Lines().At(0)
-	lno := Lineno(line.Start, linenos)
+	//lno := Lineno(line.Start, linenos)
 
-	pnm := node.Kind().String()
-	fmt.Println(line.Start, lno, pn, ">para:", pnm)
+	//pnm := node.Kind().String()
 	if err == nil {
 		*content += "\n\n"
 		*start = line.Stop
@@ -296,51 +375,34 @@ func AstEmphasis(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.
 	return
 }
 
-func AstImage(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.Node, start *int, content *string, linenos []int, alts map[string]string, dir string) (err error) {
+func AstImage(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.Node, start *int, content *string, linenos []int, alts map[string]*pstructure.Image, dir string) (err error) {
 	n := node.(*mast.Image)
-	btext := n.Text(blob)
-	//pnm := node.Kind().String()
-	alt := strings.TrimSpace(string(btext))
 	lineno := Lineno(*start, linenos)
-	// if err == nil {
-	// 	*mode = ""
-	// }
-	url := bytes.TrimSpace(n.Destination)
+	url := string(bytes.TrimSpace(n.Destination))
 	if len(url) == 0 {
 		err = perror.Error("image-url", lineno, "missing file]")
 		return
 	}
-
-	if len(alt) != 1 || !strings.Contains("abcdefghijklmnopqrstuvwxyz", alt) {
-		if len(url) != 0 {
-			rest := blob[*start:]
-			k := bytes.Index(rest, url)
-			if k != -1 {
-				lineno = Lineno(k+*start, linenos)
-			}
-		}
-		err = perror.Error("image-alt", lineno, "invalid alt attribute ["+alt+"]")
-		return
+	btext := n.Text(blob)
+	alt := strings.TrimSpace(string(btext))
+	rest := string(blob[*start:])
+	k := strings.Index(rest, url)
+	if k != -1 {
+		lineno = Lineno(k+*start, linenos)
 	}
-	surl := string(url)
-
-	if alts[alt] != "" && alts[alt] != surl {
-		if len(url) != 0 {
-			rest := blob[*start:]
-			k := bytes.Index(rest, url)
-			if k != -1 {
-				lineno = Lineno(k+*start, linenos)
-			}
-		}
-		err = perror.Error("image-url", lineno, "alt attribute does not match url ["+alt+":"+surl+"]")
-		return
+	title := string(bytes.TrimSpace(n.Title))
+	if title != "" {
+		title = url + " " + title
+	} else {
+		title = url
 	}
 
-	fmt.Println("\n>IMAGE", alt)
+	cpright := LastCopyRight(doc)
+	err = NewImage(title, lineno, cpright, doc, dir, alt, alts)
 	return
 }
 
-func AstText(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.Node, start *int, content *string, mode *string, until *int, linenos []int, alts map[string]string, dir string) (err error) {
+func AstText(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.Node, start *int, content *string, mode *string, until *int, linenos []int, alts map[string]*pstructure.Image, dir string) (err error) {
 	//pnm := node.Kind().String()
 	n := node.(*mast.Text)
 	segment := n.Segment
@@ -398,7 +460,13 @@ func AstText(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.Node
 		}
 	}
 	if strings.Contains(text, ".jpg") {
-		fmt.Println("IMAGE:", text)
+
+		lno += 2
+		title := text
+		err = NewImage(title, lno, "", doc, dir, "", alts)
+		if err != nil {
+			return
+		}
 	}
 	if err == nil {
 		*start = segment.Stop
@@ -433,7 +501,6 @@ func AstCodeSpan(doc *pstructure.Document, node mast.Node, blob []byte, pn mast.
 		*mode = "`"
 	}
 
-	fmt.Println("\ncodespan:", "["+code+"]", lineno, pn.Kind().String())
 	return
 }
 

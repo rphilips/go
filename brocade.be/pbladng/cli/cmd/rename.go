@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"archive/zip"
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +23,7 @@ var Fmatch = ""
 var Fsort = ""
 var Fname = ""
 var Freport = ""
+var Fask = false
 
 var renameCmd = &cobra.Command{
 	Use:   "rename",
@@ -38,6 +40,7 @@ func init() {
 	renameCmd.PersistentFlags().StringVar(&Fmatch, "match", "", "regular expression within ^...$")
 	renameCmd.PersistentFlags().StringVar(&Fname, "name", "", "new name: a replacement template")
 	renameCmd.PersistentFlags().StringVar(&Freport, "report", "", "identifier of report section")
+	renameCmd.PersistentFlags().BoolVar(&Fask, "ask", false, "ask arguments")
 	rootCmd.AddCommand(renameCmd)
 }
 
@@ -83,6 +86,25 @@ func rename(cmd *cobra.Command, args []string) error {
 	rev := make(map[string]bool)
 	for _, f := range files {
 		rev[f.Name()] = true
+	}
+
+	if len(args) == 0 && Fask {
+		regexp := regexp.MustCompile(`"(\S[^"]+\S)"`)
+		fmt.Printf("Give arguments (one per line):")
+		reader := bufio.NewReader(os.Stdin)
+		btext, err := io.ReadAll(reader)
+		if err != nil {
+			return err
+		}
+		text := strings.TrimSpace(string(btext))
+
+		for _, arg := range regexp.FindAllString(text, -1) {
+			arg := strings.Trim(arg, `"`)
+			if arg == "" {
+				continue
+			}
+			args = append(args, arg)
+		}
 	}
 
 	work := make([]os.FileInfo, 0, len(files))
@@ -244,14 +266,20 @@ func rename(cmd *cobra.Command, args []string) error {
 			result := []byte{}
 			sresult = string(pattern.ExpandString(result, report, f.Name(), pattern.FindAllStringSubmatchIndex(f.Name(), -1)[0]))
 		}
-		fmt.Println("report:", report)
-		fmt.Println("sresult:", sresult)
 		ext := filepath.Ext(f.Name())
 		reports[f.Name()] = strings.TrimSuffix(strings.TrimSpace(sresult), ext)
 	}
 
+	return dorename(renames, reports)
+}
+
+func dorename(renames map[string]string, reports map[string]string) (err error) {
+	if len(renames) == 0 {
+		return nil
+	}
 	maxo := 0
 	maxn := 0
+	work := make([]string, 0, len(renames))
 	for old, new := range renames {
 		if len(old) > maxo {
 			maxo = len(old)
@@ -259,10 +287,14 @@ func rename(cmd *cobra.Command, args []string) error {
 		if len(new) > maxn {
 			maxn = len(new)
 		}
+		work = append(work, old)
 	}
-	frame = "%-" + strconv.Itoa(maxo) + "s -> %-" + strconv.Itoa(maxn) + "s %s\n"
+
+	sort.Strings(work)
+
+	frame := "%-" + strconv.Itoa(maxo) + "s -> %-" + strconv.Itoa(maxn) + "s %s\n"
 	for _, oldf := range work {
-		old := oldf.Name()
+		old := oldf
 		new := renames[old]
 
 		fmt.Printf(frame, old, new, reports[old])
@@ -276,7 +308,7 @@ func rename(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, oldf := range work {
-		old := oldf.Name()
+		old := oldf
 		new := renames[old]
 
 		err := os.Rename(old, new)
@@ -287,6 +319,7 @@ func rename(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+
 }
 
 func unzip(source string, dir string) (err error) {

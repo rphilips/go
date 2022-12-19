@@ -9,36 +9,37 @@ import (
 	"strings"
 
 	bfs "brocade.be/base/fs"
+	perror "brocade.be/pbladng/lib/error"
 	pfs "brocade.be/pbladng/lib/fs"
 	pregistry "brocade.be/pbladng/lib/registry"
-	pbstatus "brocade.be/pbladng/lib/status"
 	pstructure "brocade.be/pbladng/lib/structure"
-	ptools "brocade.be/pbladng/lib/tools"
 )
 
-func NewImage(line string, lineno int, name string, alt string, dir string, cpright string, manifest []pstructure.Manifest) (image pstructure.Image, err error) {
-	legend := ""
+func NewImage(s string, lineno int, cpright string, doc *pstructure.Document, dir string, alt string, alts map[string]*pstructure.Image) (err error) {
+	name, legend, ok := strings.Cut(s, ".jpg")
+	if !ok {
+		err = perror.Error("image-jpg", lineno, "line should contain .jpg")
+		return
+	}
+	if strings.TrimSpace(alt) != "" {
+		err = perror.Error("image-alt", lineno, "image alt should be empty")
+		return
+	}
+
 	if name == "" {
-		ok := false
-		name, legend, ok = strings.Cut(line, ".jpg")
-		if !ok {
-			err = ptools.Error("image-jpg", lineno, "line should contain .jpg")
-			return
-		}
-		name += "."
-		k := strings.IndexAny(name, "-_.")
-		name = name[:k]
-		name = strings.ToLower(strings.TrimSpace(name))
-		if name == "" {
-			err = ptools.Error("topic-image-name", lineno, "name is empty")
-			return
-		}
-		if dir == "" {
-			dir = pfs.FName("workspace")
-		}
-		imgmap := ImageMap(dir)
-		if imgmap[name] == "" {
-			err = ptools.Error("topic-image-file", lineno, "cannot find image `"+name+"` in "+"`"+dir+"`")
+		err = perror.Error("image-name", lineno, "name is empty")
+		return
+	}
+	name += ".jpg"
+	fname, e := FindImage(name, doc, dir)
+	if e != nil {
+		err = perror.Error("image-unknown", lineno, e.Error())
+		return
+	}
+
+	for _, img := range alts {
+		if fname == img.Fname {
+			err = perror.Error("image-double", lineno, "image also used on line `"+strconv.Itoa(img.Lineno)+"`")
 			return
 		}
 	}
@@ -59,30 +60,62 @@ func NewImage(line string, lineno int, name string, alt string, dir string, cpri
 		break
 	}
 	if copyright == "" {
+		if cpright == "" {
+			cpright = pregistry.Registry["copyright-default"].(string)
+		}
 		copyright = cpright
 	}
 
 	if copyright == "" {
-		err = ptools.Error("topic-image-copyright", lineno, "no copyright for `"+name+"`")
+		err = perror.Error("image-copyright", lineno, "no copyright for `"+name+"`")
 		return
 	}
 
-	image = pstructure.Image{
-		Name:      name,
+	if len(alts) > 25 {
+		err = perror.Error("image-limit", lineno, "too many images")
+		return
+	}
+	image := pstructure.Image{
+		Name:      string(rune(97 + len(alts))),
 		Legend:    legend,
 		Copyright: copyright,
-		//Fname:     imgmap[name],
-		Lineno: lineno,
+		Fname:     fname,
+		Lineno:    lineno,
 	}
+	c := doc.LastChapter()
+	if c == nil {
+		return perror.Error("illegal-image1", lineno, "image before chapter")
+	}
+	t := c.LastTopic()
+	if t == nil {
+		return perror.Error("illegal-image2", lineno, "image before topic")
+	}
+	if t.Type == "mass" {
+		return perror.Error("illegal-image3", lineno, "images are not allowed in type `mass`")
+	}
+	t.Images = append(t.Images, &image)
+	alts[image.Name] = &image
 	return
 }
 
-// ImageMap creates a map with the identifier (lowercase) mapped to the relpath to dir
-func ImageMap(dir string) map[string]string {
-	if dir == "" {
-		dir = pfs.FName("workspace")
+func ImageStore(sdir string, tdir string) (err error) {
+	// images with extension .jpg or .jpeg
+	// unique identifier: [a-zA-Z0-9]+ (lowercase)
+	if tdir == "" {
+		tdir = pfs.FName("workspace")
 	}
-	m := make(map[string]string)
+	if sdir == "" {
+		sdir = tdir
+	}
+	type img struct {
+		dir  string
+		info fs.DirEntry
+		name string
+		id   string
+	}
+
+	jpegs := make([]img, 0)
+
 	fn := func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -90,170 +123,108 @@ func ImageMap(dir string) map[string]string {
 		if info.IsDir() {
 			return nil
 		}
-		path, _ = filepath.Rel(dir, path)
 		name := info.Name()
 		ext := strings.ToLower(filepath.Ext(name))
 		if ext != ".jpg" && ext != ".jpeg" {
 			return nil
 		}
 		k := strings.IndexAny(name, "-_.")
-		index := name[:k]
-		found, ok := m[index]
-		if ok {
-			idirname := filepath.Join(filepath.Dir(path), "x")
-			fdirname := filepath.Join(filepath.Dir(found), "x")
-			if !strings.HasPrefix(fdirname, idirname) {
-				return nil
-			}
-		}
-		m[index] = path
+		index := strings.ToLower(name[:k])
+		pname := index + "-" + name[k+1:]
+		pname = strings.TrimSuffix(pname, filepath.Ext(pname)) + ".jpg"
+		jpegs = append(jpegs, img{
+			dir:  filepath.Dir(path),
+			info: info,
+			name: pname,
+			id:   index,
+		})
 		return nil
 	}
-	filepath.WalkDir(dir, fn)
-	return m
-}
-
-func ImageRef(images []string, dir string) (err error) {
-	if dir == "" {
-		dir = pregistry.Registry["workspace-dir"].(string)
-	}
-	pstatus, err := pbstatus.DirStatus(dir)
+	err = filepath.WalkDir(sdir, fn)
 	if err != nil {
-		return err
+		err = fmt.Errorf("error walking `%s`: %s", sdir, err)
+		return
 	}
-	refimages := make(map[string]string)
-	m := ImageMap(dir)
+	match := make(map[string]bool)
 
-	notfound := make(map[string]bool)
-	toomany := make(map[string]bool)
-	suffix := strconv.Itoa(pstatus.Week)
-	if len(suffix) == 1 {
-		suffix = "0" + suffix
-	}
-	suffix += ".jpg"
-	prefix := "F" + pstatus.Pcode
-	for _, imag := range images {
-		k := strings.IndexAny(imag, "-_.")
-		index := imag[:k]
-		if m[index] == "" {
-			notfound[imag] = true
+	for _, jpg := range jpegs {
+		path := filepath.Join(jpg.dir, jpg.info.Name())
+		if jpg.id == "" {
+			err = fmt.Errorf("invalid id for image `%s`", path)
+			return
 		}
-		if len(notfound) != 0 {
+		if match[jpg.id] {
+			err = fmt.Errorf("double id `%s` for image `%s`", jpg.id, path)
+			return
+		}
+		_, e := os.ReadFile(path)
+		if e != nil {
+			err = fmt.Errorf("cannot read image `%s`: `%s`", path, e.Error())
+			return
+		}
+
+		sfile := path
+		tfile := filepath.Join(tdir, jpg.name)
+		if bfs.SameFile(sfile, tfile) {
 			continue
 		}
-		i := len(refimages)
-		if i > 25 {
-			toomany[imag] = true
+		if filepath.Dir(sfile) == filepath.Dir(tfile) {
+			err = os.Rename(sfile, tfile)
+			if err != nil {
+				err = fmt.Errorf("cannot rename `%s` to `%s`", sfile, tfile)
+				return
+			}
 			continue
 		}
-		ch := string(rune(97 + i))
-		refimages[index] = prefix + ch + suffix
-	}
-	pstatus.Images = refimages
-	err = pstatus.Save(dir)
-	if err != nil {
-		return err
-	}
-	if len(notfound) != 0 {
-		nf := make([]string, len(notfound))
-		i := 0
-		for imag := range notfound {
-			nf[i] = imag
-			i++
-		}
-		return fmt.Errorf("ERROR images: %s not found", strings.Join(nf, ", "))
-	}
-	if len(toomany) != 0 {
-		nf := make([]string, len(notfound))
-		i := 0
-		for imag := range toomany {
-			nf[i] = imag
-			i++
-		}
-		return fmt.Errorf("ERROR images: %s too many", strings.Join(nf, ", "))
-	}
 
+		err = bfs.CopyFile(sfile, tfile, "", false)
+		if err != nil {
+			err = fmt.Errorf("cannot copy `%s` to `%s`", sfile, tfile)
+			return
+		}
+	}
 	return err
-
 }
 
-func ReduceSize(imgpath string, kbsize int) (err error) {
-	if kbsize < 0 {
-		kbsize, _ = strconv.Atoi(pregistry.Registry["image-size-kb"].(string))
+func FindImage(index string, doc *pstructure.Document, dir string) (fname string, err error) {
+
+	bindex := index
+	index = strings.TrimSuffix(index, ".jpg")
+
+	if index == "" {
+		return "", fmt.Errorf("reference to image should not be empty")
 	}
 
-	fi, err := os.Stat(imgpath)
-	if err != nil {
-		return
-	}
-	if int64(kbsize)*1024 > fi.Size() {
-		return
+	indexen := strings.SplitN(index, "-", -1)
+
+	if strings.TrimLeft(index, "abcdefghijklmnopqrstuvwxyz1234567890") != "" {
+		return "", fmt.Errorf("invalid reference to image `%s`", index)
 	}
 
-	small := strings.TrimSuffix(imgpath, filepath.Ext(imgpath)) + "__small__.jpg"
-	bfs.Rmpath(small)
-	worker := pregistry.Registry["image-resize-exe"].([]any)
-	keys := map[string]string{"source": imgpath, "kbsize": strconv.Itoa(kbsize), "target": small}
-	out, err := ptools.Launch(worker, keys, "", true)
-	if err != nil {
-		err = fmt.Errorf("%s:\n%s", err.Error(), string(out))
-		return
+	dirs := []string{dir, pfs.FName("workspace"), pfs.FName(fmt.Sprintf("archive/%d/%02d", doc.Year, doc.Week))}
+	index = ""
+	for _, dir := range dirs {
+		if dir == "" {
+			continue
+		}
+		index := ""
+		for _, inx := range indexen {
+			index = index + "-" + inx
+			index = strings.TrimPrefix(index, "-")
+			globber := filepath.Join(dir, index+"[_.\\-]*jpg")
+			matches, e := filepath.Glob(globber)
+			if e != nil {
+				return "", fmt.Errorf("cannot glob `%s`: %s", globber, e.Error())
+			}
+			if len(matches) > 1 {
+				return "", fmt.Errorf("too many image results `%s` for `%s`", strings.Join(matches, ", "), index)
+			}
+			if len(matches) == 1 {
+				bfs.CopyFile(matches[0], pfs.FName("workspace"), "", false)
+				return matches[0], nil
+			}
+		}
 	}
-	_, err = os.Stat(small)
-	if err != nil {
-		return
-	}
-	bfs.Rmpath(imgpath + ".ori")
-	err = os.Rename(imgpath, imgpath+".ori")
-	if err != nil {
-		return
-	}
-	err = os.Rename(small, imgpath)
-	return
-}
+	return "", fmt.Errorf("no image found for `%s`", bindex)
 
-func ChangeType(imgpath string) (err error) {
-
-	_, err = os.Stat(imgpath)
-	if err != nil {
-		return
-	}
-	ext := filepath.Ext(imgpath)
-
-	if ext == ".jpg" {
-		return
-	}
-	lext := strings.ToLower(ext)
-
-	if lext == ".jpg" || lext == ".jpeg" {
-		jpeg := strings.TrimSuffix(imgpath, ext) + ".jpg"
-		err = os.Rename(imgpath, jpeg)
-		return
-	}
-
-	if lext != ".png" {
-		err = fmt.Errorf("not the right extension: `%s`", ext)
-		return
-	}
-
-	jpeg := strings.TrimSuffix(imgpath, ext) + "__jpeg__.jpg"
-	bfs.Rmpath(jpeg)
-	worker := pregistry.Registry["image-resize-exe"].([]any)
-	keys := map[string]string{"source": imgpath, "kbsize": pregistry.Registry["image-size-kb"].(string), "target": jpeg}
-	out, err := ptools.Launch(worker, keys, "", true)
-	if err != nil {
-		err = fmt.Errorf("%s:\n%s", err.Error(), string(out))
-		return
-	}
-	_, err = os.Stat(jpeg)
-	if err != nil {
-		return
-	}
-	bfs.Rmpath(imgpath + ".ori")
-	err = os.Rename(imgpath, imgpath+".ori")
-	if err != nil {
-		return
-	}
-	err = os.Rename(jpeg, strings.TrimSuffix(imgpath, ext)+".jpg")
-	return
 }

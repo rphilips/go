@@ -502,59 +502,65 @@ for (let i in elements) {
 
 //}
 
-func sum(sumscore string, score string) string {
-	score = strings.ReplaceAll(score, " ", "")
-	x1, x2, _ := strings.Cut(score, "-")
-	s1, s2, _ := strings.Cut(sumscore, "-")
-	half := "½"
-	add1 := 0
-	add2 := 0
-	if strings.Contains(s1, half) {
-		add1 += 1
-		s1 = strings.ReplaceAll(s1, half, "")
-	}
-	if strings.Contains(s2, half) {
-		add2 += 1
-		s2 = strings.ReplaceAll(s2, half, "")
-	}
-	if x1 == x2 {
-		add1 += 1
-		add2 += 1
-	} else {
-		if x2 != "0" {
-			add2 += 2
-		}
-		if x1 != "0" {
-			add1 += 2
-		}
-	}
-	is1, _ := strconv.Atoi(s1)
-	is2, _ := strconv.Atoi(s2)
-	is1 *= 2
-	is2 *= 2
-	is1 += add1
-	is2 += add2
+// func sum(sumscore string, score string) string {
+// 	score = strings.ReplaceAll(score, " ", "")
+// 	x1, x2, _ := strings.Cut(score, "-")
+// 	s1, s2, _ := strings.Cut(sumscore, "-")
+// 	x1 = strings.TrimSuffix(x1, " f")
+// 	x2 = strings.TrimSuffix(x2, " f")
+// 	s1 = strings.TrimSuffix(s1, " f")
+// 	s2 = strings.TrimSuffix(s2, " f")
+// 	half := "½"
+// 	add1 := 0
+// 	add2 := 0
+// 	if strings.Contains(s1, half) {
+// 		add1 += 1
+// 		s1 = strings.ReplaceAll(s1, half, "")
+// 	}
+// 	if strings.Contains(s2, half) {
+// 		add2 += 1
+// 		s2 = strings.ReplaceAll(s2, half, "")
+// 	}
+// 	x1 = strings.TrimSuffix(x1, " f")
+// 	x2 = strings.TrimSuffix(x2, " f")
+// 	if x1 == x2 {
+// 		add1 += 1
+// 		add2 += 1
+// 	} else {
+// 		if x2 != "0" {
+// 			add2 += 2
+// 		}
+// 		if x1 != "0" {
+// 			add1 += 2
+// 		}
+// 	}
+// 	is1, _ := strconv.Atoi(s1)
+// 	is2, _ := strconv.Atoi(s2)
+// 	is1 *= 2
+// 	is2 *= 2
+// 	is1 += add1
+// 	is2 += add2
 
-	if is1%2 == 0 {
-		s1 = strconv.Itoa(is1 / 2)
-	} else {
-		s1 = strconv.Itoa((is1-1)/2) + half
-	}
-	if is2%2 == 0 {
-		s2 = strconv.Itoa(is2 / 2)
-	} else {
-		s2 = strconv.Itoa((is2-1)/2) + half
-	}
-	if s1 == ("0" + half) {
-		s1 = half
-	}
-	if s2 == ("0" + half) {
-		s2 = half
-	}
+// 	if is1%2 == 0 {
+// 		s1 = strconv.Itoa(is1 / 2)
+// 	} else {
+// 		s1 = strconv.Itoa((is1-1)/2) + half
+// 	}
+// 	if is2%2 == 0 {
+// 		s2 = strconv.Itoa(is2 / 2)
+// 	} else {
+// 		s2 = strconv.Itoa((is2-1)/2) + half
+// 	}
+// 	if s1 == ("0" + half) {
+// 		s1 = half
+// 	}
+// 	if s2 == ("0" + half) {
+// 		s2 = half
+// 	}
 
-	return s1 + "-" + s2
+// 	return s1 + "-" + s2
 
-}
+// }
 
 func color(sumscore string, reverse bool) string {
 	s1, s2, _ := strings.Cut(sumscore, "-")

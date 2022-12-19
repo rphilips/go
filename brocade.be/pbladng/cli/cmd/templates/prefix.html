@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Prefix files</title>
+    <style type="text/css">
+        .label {
+            font-size: smaller;
+        }
+
+        .info {
+            font-size: smaller;
+            color: green;
+        }
+
+        input:invalid {
+            border: solid red 3px;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+
+
+        h1 {
+            font-weight: bold;
+            font-style: italic;
+            border-bottom: 2px solid #FF5733;
+            margin-bottom: 20px;
+            font-size: 1em;
+            padding-bottom: 1px;
+        }
+
+        h2 {
+            font-weight: bold;
+            color: green;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            font-size: larger;
+            padding-top: 5px;
+        }
+    </style>
+    <script type="text/javascript">
+        function makeJSON(action) {
+            let js = {
+                "action": action
+            }
+
+            let i = -1
+            for (; ;) {
+                i++
+                let key = "img" + i
+                let elm = document.getElementById(key)
+                if (!elm) {
+                    break
+                }
+                checked = "0"
+                if (document.getElementById(key + "-remove").checked) {
+                    checked = "1"
+                }
+                js[key + "-prefix"] = document.getElementById(key + "-prefix").value.trim()
+                js[key + "-new"] = document.getElementById(key + "-new").value.trim()
+                js[key + "-remove"] = checked
+                js[key + "-old"] = document.getElementById(key).value.trim()
+            }
+            return JSON.stringify(js);
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <h1>Prefix files</h1>
+
+    <form class="pblad-form-base" onkeydown="return event.key != 'Enter';"></form>
+    <table>
+        {{range .Images}}
+        <tr>
+            <td><img src="{{ .URL }}" /></td>
+            <td>{{ .Name }}<input type="hidden" id="{{ .Id }}" value="{{ .Name }}" /></td>
+            <td><input type="text" id="{{ .Id }}-prefix" value="" /></td>
+            <td><input type="text" id="{{ .Id }}-new" value="{{ .Base }}" /></td>
+            <td><input type="checkbox" id="{{ .Id }}-remove" value="1" /></td>
+        </tr>
+        {{end}}
+        <tr>
+            <td></td>
+            <td></td>
+            <td><input class="label" type="submit" value="Done" onclick='register(makeJSON("exec"))' /></td>
+            <td><input class="label" type="submit" value="Stop" onclick='register(makeJSON("stop"))' /></td>
+        </tr>
+    </table>
+
+    </form>
+</body>
+
+</html>

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path"
@@ -17,8 +16,8 @@ import (
 
 var importCmd = &cobra.Command{
 	Use:   "import",
-	Short: "import `gopblad`",
-	Long:  "import `gopblad`",
+	Short: "import documents from the correspondents directories",
+	Long:  "import documents from the correspondents directories",
 
 	Args:    cobra.NoArgs,
 	Example: `gopblad import`,
@@ -32,20 +31,11 @@ func init() {
 
 func doimport(cmd *cobra.Command, args []string) error {
 	install(cmd, args)
-	weekpb := filepath.Join(Fcwd, "week.md")
-	f, err := os.Open(weekpb)
+	err := pdocument.Archive(Fcwd)
 	if err != nil {
-		return fmt.Errorf("cannot read `week.md` in `%s`: %s", Fcwd, err.Error())
+		return err
 	}
-	defer f.Close()
-	source := bufio.NewReader(f)
-	doc, _, _, err := pdocument.Parse(source, "")
-	if err != nil {
-		return fmt.Errorf("cannot parse `week.md` in `%s`: %s", Fcwd, err.Error())
-	}
-	year := doc.Year
-	week := doc.Week
-
+	year, week, _ := pdocument.DocRef(Fcwd)
 	dst := Fcwd
 
 	correspondents := pregistry.Registry["correspondents"].(map[string]any)
