@@ -24,10 +24,10 @@ func init() {
 
 func info(cmd *cobra.Command, args []string) error {
 
-	year, week, err := document.DocRef(Fcwd)
+	year, week, mailed, err := document.DocRef("")
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Information at `%s`:\n    year: %d\n    week: %02d\n", Fcwd, year, week)
+	fmt.Printf("Information at `%s`:\n    year: %d\n    week: %02d\n    mail: %s", Fcwd, year, week, mailed)
 	return nil
 }

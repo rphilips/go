@@ -33,5 +33,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %s\n", v.(string))
 		os.Exit(1)
 	}
+	if len(os.Args) == 1 {
+		os.Args = append(os.Args, "warn")
+	}
 	cmd.Execute(buildTime, goVersion, buildHost, os.Args)
 }

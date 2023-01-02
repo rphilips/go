@@ -99,7 +99,8 @@ func Season(date *time.Time) string {
 
 func FName(date *time.Time, key string) (fname string) {
 	season := Season(date)
-	return vregistry.Registry["season"].(map[string]any)[season].(map[string]any)[key].(string)
+	s := vregistry.Registry["season"].(map[string]any)[season].(map[string]any)[key].(string)
+	return strings.ReplaceAll(s, "{season}", season)
 }
 
 func Elo(date *time.Time, stamnr string) (string, string) {
@@ -374,6 +375,7 @@ func Matches(records [][]string, date *time.Time, iround string) []Match {
 
 func Load(date *time.Time) (records [][]string, err error) {
 	rooster := FName(date, "rooster")
+	fmt.Println("rooster:", rooster)
 	f, err := os.Open(rooster)
 	if err != nil {
 		panic(err)

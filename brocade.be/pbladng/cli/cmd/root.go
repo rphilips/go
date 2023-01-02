@@ -133,9 +133,14 @@ func checkCwd(cwd string) (dir string, err error) {
 		if Fdebug {
 			dir = filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test")
 		} else {
-			dir = pfs.FName("workspace")
-		}
+			d, ok := pregistry.Registry["distribute-dir"]
 
+			if !ok || d.(string) == "" {
+				dir = pfs.FName("workspace")
+			} else {
+				dir = d.(string)
+			}
+		}
 	}
 	if !bfs.Exists(dir) || !bfs.IsDir(dir) {
 		err = fmt.Errorf("`%s` does not exist or is not a directory", dir)

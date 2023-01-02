@@ -2,12 +2,42 @@
     "pblad": {
         "mails": {
             "correspondents": {
-                "subject": "Parochieblad {id}{msg}",
-                "body": "Parochieblad {id} staat klaar in uw Dropbox folder\n{msg}\nR.",
-                "body-thursday": "\n\nOPGELET: vervroegde inzending!\nGelieve de aanvullingen klaar te zetten TEN LAATSTE woensdagavond\n",
-                "subject-thursday": ": OPGELET! Vervroegde inzending!",
-                "body-holiday": "\n\nOPGELET: vakantie inzending!\nGelieve de aanvullingen voor 3 weken aan te maken\n",
-                "subject-holiday": "\n\nOPGELET: vakantie inzending!"
+                "subject": "Parochieblad {id}",
+                "body": "Parochieblad {id} staat klaar in uw Dropbox folder\nR.",
+                "body-thursday": "Parochieblad {id} staat klaar in uw Dropbox folder\n\nOPGELET: vervroegde inzending!\nGelieve de aanvullingen klaar te zetten TEN LAATSTE woensdagavond\n",
+                "subject-thursday": "Parochieblad {id}: OPGELET! Vervroegde inzending!",
+                "body-holiday1": "Parochieblad {id} staat klaar in uw Dropbox folder\\n\nOPGELET: vakantie inzending!\nGelieve de aanvullingen voor 3 weken aan te maken\n",
+                "subject-holiday1": "Parochieblad {id}: OPGELET! Vakantie inzending!"
+            },
+            "interested": {
+                "to": [
+                    "richard.philips@gmail.com",
+                    "guy.claus2@telenet.be"
+                ],
+                "body-thursday": "Gelieve parochieblad {id} te sturen.\n\nOPGELET: vervroegde inzending!\nGelieve de aanvullingen klaar te zetten TEN LAATSTE woensdagavond\n",
+                "subject-thursday": "Parochieblad {id}: OPGELET! Vervroegde inzending!",
+                "body-holiday1": "Gelieve parochieblad {id} te sturen.\n\nOPGELET: vakantie inzending!\nGelieve de aanvullingen voor 3 weken aan te maken\n",
+                "subject-holiday1": "Parochieblad {id}: OPGELET: Vakantie inzending!"
+            }
+        },
+        "warn": {
+            "dir": "/home/rphilips/Dropbox/pblad/warn",
+            "mail": "richard.philips@gmail.com",
+            "invalid-logfile": {
+                "subject": "Problem with logging",
+                "body": "Logfile {logfile} is invalid JSON:\n{err}"
+            },
+            "new": {
+                "subject": "New pblad {nextid}",
+                "body": "Initialise new pblad {nextid}.\n\nIt has to be finished in {days} days."
+            },
+            "distribute": {
+                "subject": "Distribute {id}",
+                "body": "Do not forget to distribute {id}"
+            },
+            "mailed": {
+                "subject": "Mail {id}",
+                "body": "Mail {id}!\n\n You have until {until} in the morning ..."
             }
         },
         "valid-until": "2023-12-01",
@@ -259,14 +289,57 @@
         },
         "year": {
             "2022": {
-                "max": "52",
-                "thursday": "",
-                "holiday": ""
+                "52": "2022-12-26"
             },
             "2023": {
-                "max": "52",
-                "thursday": "15,18,22,33,52",
-                "holiday": "26/27/28,29/30/31"
+                "01": "2023-01-02",
+                "02": "2023-01-09",
+                "03": "2023-01-16",
+                "04": "2023-01-23",
+                "05": "2023-01-30",
+                "06": "2023-02-06",
+                "07": "2023-02-13",
+                "08": "2023-02-20",
+                "09": "2023-02-27",
+                "10": "2023-03-06",
+                "11": "2023-03-13",
+                "12": "2023-03-20",
+                "13": "2023-03-27",
+                "14": "2023-04-03",
+                "15": "2023-04-07",
+                "16": "2023-04-17",
+                "17": "2023-04-24",
+                "18": "2023-04-28",
+                "19": "2023-05-08",
+                "20": "2023-05-15",
+                "21": "2023-05-22",
+                "22": "2023-05-26",
+                "23": "2023-06-05",
+                "24": "2023-06-12",
+                "25": "2023-06-19",
+                "26": "2023-06-26",
+                "29": "2023-07-17",
+                "32": "2023-08-07",
+                "33": "2023-08-11",
+                "34": "2023-08-21",
+                "35": "2023-08-28",
+                "36": "2023-09-04",
+                "37": "2023-09-11",
+                "38": "2023-09-18",
+                "39": "2023-09-25",
+                "40": "2023-10-02",
+                "41": "2023-10-09",
+                "42": "2023-10-16",
+                "43": "2023-10-23",
+                "44": "2023-10-30",
+                "45": "2023-11-06",
+                "46": "2023-11-13",
+                "47": "2023-11-20",
+                "48": "2023-11-27",
+                "49": "2023-12-04",
+                "50": "2023-12-11",
+                "51": "2023-12-18",
+                "52": "2023-12-22"
             }
         }
     },
@@ -300,7 +373,8 @@
             "login": "https://www.frbe-kbsb.be/sites/manager/GestionCOMMON/GestionLogin.php",
             "userid": "25518",
             "passwd": "eXr25F9zT^!UCS",
-            "url": "https://www.frbe-kbsb.be/sites/manager/GestionFICHES/FRBE_Club.php?club={stamno}"
+            "url": "https://www.frbe-kbsb.be/sites/manager/GestionFICHES/FRBE_Club.php?club={stamno}",
+            "club": "https://www.frbe-kbsb.be/sites/manager/ICN/Inscriptions.php"
         },
         "prefixen": [
             "LANDEGEM",

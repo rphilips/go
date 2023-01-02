@@ -15,6 +15,7 @@ import (
 	bfs "brocade.be/base/fs"
 	perror "brocade.be/pbladng/lib/error"
 	pfs "brocade.be/pbladng/lib/fs"
+	pregistry "brocade.be/pbladng/lib/registry"
 	pstructure "brocade.be/pbladng/lib/structure"
 	ptools "brocade.be/pbladng/lib/tools"
 	mgold "github.com/yuin/goldmark"
@@ -23,9 +24,16 @@ import (
 )
 
 // Retrieve year and week without parsing
-func DocRef(dir string) (year int, week int, err error) {
+func DocRef(dir string) (year int, week int, mailed string, err error) {
 	if dir == "" {
-		dir = pfs.FName("workspace")
+		d, ok := pregistry.Registry["distribute-dir"]
+
+		if !ok || d.(string) == "" {
+			dir = pfs.FName("workspace")
+		} else {
+			dir = d.(string)
+		}
+
 	}
 	weekpb := ""
 	for _, base := range []string{"week.md", "week.pb"} {
@@ -50,6 +58,13 @@ func DocRef(dir string) (year int, week int, err error) {
 		s := strings.TrimPrefix(string(data), "WEEK")
 		s = strings.TrimSpace(s)
 		value, _, _ = strings.Cut(s, " ")
+		jmail := filepath.Join(dir, "mailed.ok")
+		data, e := os.ReadFile(jmail)
+		if e == nil {
+			m := make(map[string]string)
+			json.Unmarshal(data, &m)
+			mailed = m["nazareth"]
+		}
 	}
 	if value == "" {
 
@@ -76,6 +91,7 @@ func DocRef(dir string) (year int, week int, err error) {
 		}
 
 		value = meta["id"]
+		mailed = meta["mailed"]
 	}
 	y, w, ok := strings.Cut(value, "-")
 	if !ok {

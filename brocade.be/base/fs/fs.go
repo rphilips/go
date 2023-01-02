@@ -3,12 +3,13 @@ package fs
 import (
 	"bytes"
 	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -89,8 +90,8 @@ type Property struct {
 }
 
 // Properties returns:
-//    - uid (*user.User)
-//    - gid / access for a pathmode according to the registry
+//   - uid (*user.User)
+//   - gid / access for a pathmode according to the registry
 func Properties(pathmode string) (prop Property, err error) {
 	if !QSetPathMode() {
 		return prop, nil
@@ -546,6 +547,7 @@ func TempFile(dir, prefix string) (name string, err error) {
 //   - "": nothing extra will be done
 //   - "=": the same values of src will be applied
 //   - otherwise a rgeistere dpathmode will be applied
+//
 // - keepmtime: ctime/mtime of src will be applied to dst
 func CopyFile(src, dst, pathmode string, keepmtime bool) (err error) {
 	src = filepath.Clean(src)
@@ -799,8 +801,9 @@ func glob(fsys fs.FS, root string, dir string, patterns []string, matches []stri
 }
 
 // Find lists regular files matching one of a list of patterns on the basename
-//      if there are no patterns, all files are listed
-//      results start with root
+//
+//	if there are no patterns, all files are listed
+//	results start with root
 func Find(root string, patterns []string, recurse bool, files bool, dirs bool) (matches []string, err error) {
 	fsys := os.DirFS(root)
 	for _, pattern := range patterns {
@@ -883,7 +886,7 @@ func FilesDirs(dir string) (files []os.FileInfo, dirs []os.FileInfo, err error) 
 	return
 }
 
-//SameFile file1, file2
+// SameFile file1, file2
 func SameFile(file1, file2 string) bool {
 	old, err := os.Stat(file1)
 	if err != nil {
@@ -998,7 +1001,7 @@ func Write(p []byte) (n int, err error) {
 
 func init() {
 	NullReader = new(reader)
-	NullWriter = ioutil.Discard
+	NullWriter = io.Discard
 }
 
 func Log(v ...interface{}) {
@@ -1039,4 +1042,58 @@ func ChangedAfter(rootdir string, after time.Time, skipsubdirs []string) (paths 
 	}
 	err = filepath.Walk(rootdir, fn)
 	return paths, err
+}
+
+func Doubles(dir string) (result [][]string, err error) {
+
+	files, _, err := FilesDirs(dir)
+	if err != nil {
+		return
+	}
+
+	m := make(map[int64][]string)
+
+	for _, f := range files {
+		size := f.Size()
+		_, ok := m[size]
+		if !ok {
+			m[size] = make([]string, 0)
+		}
+		m[size] = append(m[size], f.Name())
+	}
+
+	for size, group := range m {
+		if len(group) < 2 {
+			continue
+		}
+		if size == 0 {
+			result = append(result, group)
+			continue
+		}
+		hm := make(map[string][]string)
+		for _, f := range group {
+			fname := filepath.Join(dir, f)
+			reader, err := os.Open(fname)
+			if err != nil {
+				return nil, err
+			}
+			h := sha256.New()
+			if _, err := io.Copy(h, reader); err != nil {
+				return nil, err
+			}
+			hash := hex.EncodeToString(h.Sum(nil))
+			_, ok := hm[hash]
+			if !ok {
+				hm[hash] = make([]string, 0)
+			}
+			hm[hash] = append(hm[hash], f)
+		}
+		for _, grp := range hm {
+			if len(grp) < 2 {
+				continue
+			}
+			result = append(result, grp)
+		}
+	}
+	return
 }

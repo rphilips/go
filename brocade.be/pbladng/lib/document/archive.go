@@ -14,7 +14,7 @@ func Archive(dir string) (err error) {
 		dir = pfs.FName("workspace")
 	}
 
-	year, week, err := DocRef(dir)
+	year, week, _, err := DocRef(dir)
 	if err != nil {
 		err = fmt.Errorf("cannot deduce previous year and week: %s", err)
 		return

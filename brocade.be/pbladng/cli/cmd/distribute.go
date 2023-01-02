@@ -11,8 +11,11 @@ import (
 
 	bfs "brocade.be/base/fs"
 	bmail "brocade.be/base/gmail"
+	bstrings "brocade.be/base/strings"
 	pdocument "brocade.be/pbladng/lib/document"
 	pfs "brocade.be/pbladng/lib/fs"
+	plog "brocade.be/pbladng/lib/log"
+	pnext "brocade.be/pbladng/lib/next"
 	pregistry "brocade.be/pbladng/lib/registry"
 )
 
@@ -39,18 +42,23 @@ func distribute(cmd *cobra.Command, args []string) error {
 	}
 	mails := make([]string, 0)
 	dir := d.(string)
+	year, week, _, err := pdocument.DocRef(dir)
+	if err != nil {
+		return err
+	}
+
+	id := fmt.Sprintf("%d-%02d", year, week)
+	value, _ := plog.GetMark("distribute")
+	if value != "" && value >= id {
+		return nil
+	}
+
 	rex := regexp.MustCompile("^[0-9]{4}-[0-9]{2}$")
-	id := ""
 	for _, base := range []string{"parochieblad.docx", "nazareth.docx"} {
 		fname := filepath.Join(dir, base)
 		if !bfs.Exists(fname) {
 			continue
 		}
-		year, week, err := pdocument.DocRef(dir)
-		if err != nil {
-			return err
-		}
-		id = fmt.Sprintf("%d-%02d", year, week)
 		correspondents := pregistry.Registry["correspondents"].(map[string]any)
 
 		for _, x := range correspondents {
@@ -65,6 +73,7 @@ func distribute(cmd *cobra.Command, args []string) error {
 				if err != nil {
 					return err
 				}
+				fmt.Println("→", target)
 			}
 			if !bfs.IsFile(target) {
 				err := fmt.Errorf("could not copy to %s", target)
@@ -97,6 +106,8 @@ func distribute(cmd *cobra.Command, args []string) error {
 
 	}
 	if len(mails) != 0 {
+		//mails = []string{"richard.philips@gmail.com"}
+		//id = "2023-27"
 		// "year": {
 		//     "2022": {
 		//         "max": "52",
@@ -109,52 +120,62 @@ func distribute(cmd *cobra.Command, args []string) error {
 		//         "holiday": "26/27/28,29/30/31"
 		//     }
 
-		year, week, _ := strings.Cut(id, "-")
+		_, msgcode := pnext.Special(id)
 
-		msgcode := ""
-		specials := pregistry.Registry["year"].(map[string]any)
-		_, ok := specials[year]
-		if ok {
-			specials := specials[year].(map[string]any)
-			x, ok := specials["thursday"]
-			if ok {
-				weeks := "," + x.(string) + ","
-				if strings.Contains(weeks, ","+week+",") {
-					msgcode = "thursday"
-				}
-			}
-			if msgcode == "" {
-				x, ok := specials["holiday"]
-				if ok {
-					weeks := strings.ReplaceAll(","+x.(string)+",", "/", ",")
-					if strings.Contains(weeks, ","+week+",") {
-						msgcode = "holiday"
-					}
-				}
-			}
+		if msgcode == "holiday" {
+			return nil
 		}
 
 		subject := pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["subject"].(string)
-		msg := ""
 		if msgcode != "" {
-			msg = pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["subject-"+msgcode].(string)
+			subject = pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["subject-"+msgcode].(string)
 		}
-		fmt.Println(strings.TrimLeft(msg, ": "))
 		subject = strings.ReplaceAll(subject, "{id}", id)
-		subject = strings.ReplaceAll(subject, "{msg}", msg)
 
 		body := pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["body"].(string)
-		msg = ""
 		if msgcode != "" {
-			msg = pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["body-"+msgcode].(string)
+			body = pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["body-"+msgcode].(string)
 		}
 		body = strings.ReplaceAll(body, "{id}", id)
-		body = strings.ReplaceAll(body, "{msg}", msg)
 		err := bmail.Send(mails, nil, nil, subject, body, "", nil)
 		if err != nil {
 			return err
 		}
+		fmt.Println(bstrings.JSON(mails))
+		plog.SetMark("distribute", id)
 
+		interested := pregistry.Registry["mails"].(map[string]any)["interested"].(map[string]any)
+		amails, ok := interested["to"]
+		if !ok {
+			return nil
+		}
+		mails = amails.([]string)
+		if len(mails) == 0 {
+			return nil
+		}
+		asubject, ok := interested["subject-"+msgcode]
+		if !ok {
+			return nil
+		}
+		subject = asubject.(string)
+		if subject == "" {
+			return nil
+		}
+		abody, ok := interested["body-"+msgcode]
+		if !ok {
+			return nil
+		}
+		body = abody.(string)
+		if body == "" {
+			return nil
+		}
+		subject = strings.ReplaceAll(subject, "{id}", id)
+		body = strings.ReplaceAll(body, "{id}", id)
+		err = bmail.Send(mails, nil, nil, subject, body, "", nil)
+		if err != nil {
+			return err
+		}
+		fmt.Println(bstrings.JSON(mails))
 	}
 
 	return nil
