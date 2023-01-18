@@ -65,12 +65,12 @@ func compile(cmd *cobra.Command, args []string) error {
 		os.Setenv("PBLADNG_BUILDHOST", hostname)
 
 		cwd := filepath.Join(basedir, "brocade.be", "base")
-		ptools.Launch([]string{"go", "install", "./..."}, nil, cwd, true)
+		ptools.Launch([]string{"go", "install", "./..."}, nil, cwd, true, true)
 		cwd = filepath.Join(basedir, "brocade.be", pkg, "cli")
 		basename := strings.Join([]string{cwd, bexe, GOOS, GOARCH}, "-")
 		flags := []string{"-X", "main.buildTime=" + now, "-X", "main.buildHost=" + hostname, "-X", "main.goVersion=" + version}
 		params := []string{"go", "build", "-o", basename, "-ldflags", strings.Join(flags, " "), "."}
-		out, err := ptools.Launch(params, nil, cwd, true)
+		out, err := ptools.Launch(params, nil, cwd, true, true)
 		sout := string(out)
 		if err != nil {
 			fmt.Printf("%s %s at %s:\n%s\n\nargs:%v", basename, err.Error(), cwd, sout, params)
@@ -104,7 +104,7 @@ func compile(cmd *cobra.Command, args []string) error {
 
 func goversion() (string, error) {
 	args := []string{"go", "version"}
-	out, err := ptools.Launch(args, nil, "", true)
+	out, err := ptools.Launch(args, nil, "", true, true)
 	sout := string(out)
 	if err != nil {
 		err = fmt.Errorf("%s:\n%s", err.Error(), sout)

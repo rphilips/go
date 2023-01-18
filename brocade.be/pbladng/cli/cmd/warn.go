@@ -106,6 +106,9 @@ func warn(cmd *cobra.Command, args []string) error {
 }
 
 func logmail(logid string, info map[string]string, log map[string]string) bool {
+	if Fdebug {
+		fmt.Println("debug1: ", logid)
+	}
 
 	now := time.Now()
 	mailid := "mail-" + logid
@@ -134,10 +137,15 @@ func logmail(logid string, info map[string]string, log map[string]string) bool {
 	subject = "[pblad] " + subject
 
 	mails := []string{warnmail}
+	mdir, ok := pregistry.Registry["mail-dir"]
+	maildir := ""
+	if ok {
+		maildir = mdir.(string)
+	}
 	if Fdebug {
-		fmt.Println("debug: ", logid)
+		fmt.Println("debug2: ", logid)
 	} else {
-		bmail.Send(mails, nil, nil, subject, body, "", nil)
+		bmail.Send(mails, nil, nil, subject, body, "", nil, maildir)
 		log[mailid] = t
 		bfs.Store(info["logfile"], log, "process")
 	}

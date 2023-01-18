@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	bfs "brocade.be/base/fs"
-	ptools "brocade.be/pbladng/lib/tools"
 
 	"github.com/spf13/cobra"
 )
@@ -24,6 +23,7 @@ var Fsort = ""
 var Fname = ""
 var Freport = ""
 var Fask = false
+var Fdir = ""
 
 var renameCmd = &cobra.Command{
 	Use:   "rename",
@@ -290,23 +290,6 @@ func dorename(renames map[string]string, reports map[string]string) (err error) 
 		work = append(work, old)
 	}
 
-	sort.Strings(work)
-
-	frame := "%-" + strconv.Itoa(maxo) + "s -> %-" + strconv.Itoa(maxn) + "s %s\n"
-	for _, oldf := range work {
-		old := oldf
-		new := renames[old]
-
-		fmt.Printf(frame, old, new, reports[old])
-
-	}
-	ask := "\nRename ? (y/n): "
-	rn := ptools.YesNo(ask)
-
-	if !rn {
-		return nil
-	}
-
 	for _, oldf := range work {
 		old := oldf
 		new := renames[old]
@@ -315,7 +298,6 @@ func dorename(renames map[string]string, reports map[string]string) (err error) 
 		if err != nil {
 			return fmt.Errorf("`%s` renames to `%s`: error %s", old, renames[old], err)
 		}
-		fmt.Printf(frame, old, new, reports[old])
 	}
 
 	return nil

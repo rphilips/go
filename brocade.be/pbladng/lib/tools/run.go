@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func Launch[T any | string](params []T, keys map[string]string, cwd string, stderr bool) (output []byte, err error) {
+func Launch[T any | string](params []T, keys map[string]string, cwd string, stderr bool, capture bool) (output []byte, err error) {
 	if len(params) == 0 {
 		err = fmt.Errorf("missing name of executable")
 		return
@@ -36,6 +36,12 @@ func Launch[T any | string](params []T, keys map[string]string, cwd string, stde
 	if !stderr {
 		cmd.Stderr, _ = os.Open(os.DevNull)
 	}
-	output, err = cmd.Output()
+	if capture {
+		output, err = cmd.Output()
+		return
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	err = cmd.Run()
 	return
 }

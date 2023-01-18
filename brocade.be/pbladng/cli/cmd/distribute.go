@@ -17,6 +17,7 @@ import (
 	plog "brocade.be/pbladng/lib/log"
 	pnext "brocade.be/pbladng/lib/next"
 	pregistry "brocade.be/pbladng/lib/registry"
+	ptools "brocade.be/pbladng/lib/tools"
 )
 
 var distributeCmd = &cobra.Command{
@@ -59,6 +60,14 @@ func distribute(cmd *cobra.Command, args []string) error {
 		if !bfs.Exists(fname) {
 			continue
 		}
+		found, err := ptools.Grep(fname, id)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return fmt.Errorf("before distributing, first publish " + id)
+		}
+
 		correspondents := pregistry.Registry["correspondents"].(map[string]any)
 
 		for _, x := range correspondents {
@@ -121,6 +130,9 @@ func distribute(cmd *cobra.Command, args []string) error {
 		//     }
 
 		_, msgcode := pnext.Special(id)
+		if Fdebug {
+			fmt.Println(msgcode)
+		}
 
 		if msgcode == "holiday" {
 			return nil
@@ -137,9 +149,16 @@ func distribute(cmd *cobra.Command, args []string) error {
 			body = pregistry.Registry["mails"].(map[string]any)["correspondents"].(map[string]any)["body-"+msgcode].(string)
 		}
 		body = strings.ReplaceAll(body, "{id}", id)
-		err := bmail.Send(mails, nil, nil, subject, body, "", nil)
-		if err != nil {
-			return err
+		mdir, ok := pregistry.Registry["mail-dir"]
+		maildir := ""
+		if ok {
+			maildir = mdir.(string)
+		}
+		if !Fdebug {
+			err := bmail.Send(mails, nil, nil, subject, body, "", nil, maildir)
+			if err != nil {
+				return err
+			}
 		}
 		fmt.Println(bstrings.JSON(mails))
 		plog.SetMark("distribute", id)
@@ -149,7 +168,10 @@ func distribute(cmd *cobra.Command, args []string) error {
 		if !ok {
 			return nil
 		}
-		mails = amails.([]string)
+		mails := make([]string, 0)
+		for _, m := range amails.([]any) {
+			mails = append(mails, m.(string))
+		}
 		if len(mails) == 0 {
 			return nil
 		}
@@ -171,7 +193,7 @@ func distribute(cmd *cobra.Command, args []string) error {
 		}
 		subject = strings.ReplaceAll(subject, "{id}", id)
 		body = strings.ReplaceAll(body, "{id}", id)
-		err = bmail.Send(mails, nil, nil, subject, body, "", nil)
+		err = bmail.Send(mails, nil, nil, subject, body, "", nil, maildir)
 		if err != nil {
 			return err
 		}

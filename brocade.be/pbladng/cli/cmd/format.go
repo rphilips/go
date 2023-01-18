@@ -3,15 +3,15 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
-	pdocument "brocade.be/pbladng/lib/document"
-	perror "brocade.be/pbladng/lib/error"
 	pfs "brocade.be/pbladng/lib/fs"
 	pregistry "brocade.be/pbladng/lib/registry"
+	pstructure "brocade.be/pbladng/lib/structure"
 )
 
 var formatCmd = &cobra.Command{
@@ -32,19 +32,30 @@ func format(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		if Fdebug {
 			Fcwd = filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test")
-			args = append(args, filepath.Join(Fcwd, "week.md"))
+			args = append(args, filepath.Join(Fcwd, "week.pb"))
 		} else {
-			args = append(args, pfs.FName("workspace/week.md"))
+			args = append(args, pfs.FName("workspace/week.pb"))
 		}
 	}
 	fname := args[0]
-
-	file, err := os.Open(fname)
-	if err != nil {
-		return perror.Error("document-notexist", 0, err)
+	var source io.Reader
+	dir := pfs.FName("workspace")
+	if fname == "-" {
+		source = os.Stdin
+	} else {
+		file, err := os.Open(fname)
+		if err != nil {
+			return err
+		}
+		dir = filepath.Dir(fname)
+		source = bufio.NewReader(file)
 	}
-	source := bufio.NewReader(file)
-	doc, _, _, err := pdocument.Parse(source, Fcwd)
+	doc := new(pstructure.Document)
+	doc.Dir = dir
+	err := doc.Load(source)
+	if err != nil {
+		return err
+	}
 	if err == nil {
 		fmt.Print(doc.String())
 	}

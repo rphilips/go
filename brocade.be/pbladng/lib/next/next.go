@@ -15,12 +15,13 @@ func Special(id string) (send *time.Time, status string) {
 	year, week, _ := strings.Cut(id, "-")
 
 	specials := pregistry.Registry["year"].(map[string]any)
-	_, ok := specials[year]
+	specials1, ok := specials[year]
 	if !ok {
 		return nil, ""
 	}
 
-	_, ok = specials[week]
+	wspecials := specials1.(map[string]any)
+	_, ok = wspecials[week]
 	if !ok && week < "52" {
 		return nil, "holiday"
 	}
@@ -29,12 +30,12 @@ func Special(id string) (send *time.Time, status string) {
 	}
 	i, _ := strconv.Atoi(week)
 	next := fmt.Sprintf("%02d", i+1)
-	_, ok = specials[next]
+	_, ok = wspecials[next]
 	if !ok && next < "52" {
-		send = btime.DetectDate(specials[week].(string))
+		send = btime.DetectDate(wspecials[week].(string))
 		return send, "holiday1"
 	}
-	send = btime.DetectDate(specials[week].(string))
+	send = btime.DetectDate(wspecials[week].(string))
 	return send, ""
 
 }

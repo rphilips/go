@@ -40,9 +40,21 @@
             font-size: larger;
             padding-top: 5px;
         }
+
+        var {
+            font-size: 1em;
+            color: blue;
+        }
     </style>
     <script type="text/javascript">
+        function Rename(data) {
+            let confirm = document.getElementById("confirm");
+            confirm.innerHTML = "<h1>Confirm</h1>" + data;
+        }
         function makeJSON(action) {
+            if (!action) {
+                action = "confirm"
+            }
             let js = {
                 "action": action
             }
@@ -72,7 +84,15 @@
 </head>
 
 <body>
-    <h1>Prefix files</h1>
+    <h1>Change file names</h1>
+    <p style="font-size:smaller;">Change image file names in <var>{{ .Root }}</var>:
+    <ul style="font-size:smaller;">
+        <li>First input field: new filename to use ('#'' is counter, '@'' is text of second input field)</li>
+        <li>Second input field: change image name if needed (this is the value of '@')</li>
+    </ul>
+
+
+    </p>
 
     <form class="pblad-form-base" onkeydown="return event.key != 'Enter';"></form>
     <table>
@@ -82,16 +102,18 @@
             <td>{{ .Name }}<input type="hidden" id="{{ .Id }}" value="{{ .Name }}" /></td>
             <td><input type="text" id="{{ .Id }}-prefix" value="" /></td>
             <td><input type="text" id="{{ .Id }}-new" value="{{ .Base }}" /></td>
-            <td><input type="checkbox" id="{{ .Id }}-remove" value="1" /></td>
+            <td><input type="hidden" id="{{ .Id }}-remove" value="1" /></td>
         </tr>
         {{end}}
         <tr>
             <td></td>
             <td></td>
-            <td><input class="label" type="submit" value="Done" onclick='register(makeJSON("exec"))' /></td>
+            <td><input class="label" type="submit" value="Done" onclick='register(makeJSON("rename"))' /></td>
             <td><input class="label" type="submit" value="Stop" onclick='register(makeJSON("stop"))' /></td>
         </tr>
     </table>
+
+    <div id="confirm"></div>
 
     </form>
 </body>

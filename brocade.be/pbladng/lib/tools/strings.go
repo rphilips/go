@@ -6,7 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"unicode"
 
 	bstrings "brocade.be/base/strings"
 )
@@ -27,19 +26,19 @@ func Heading(s string) string {
 }
 
 func Normalize(s string, trim bool) string {
+	if strings.HasPrefix(s, "=") {
+		return s
+	}
 	s = bstrings.InsertDiacritic(s)
 	s = Euro(s)
 	s = Phone(bstrings.Latin1(s))
+	s = Hour(s)
 	s = Colon(s)
 	s = spaces.ReplaceAllString(s, " ")
 	if !trim {
 		return s
 	}
 	return strings.TrimSpace(s)
-}
-
-func TrimRightSpace(s string) string {
-	return strings.TrimRightFunc(s, unicode.IsSpace)
 }
 
 func MetaChars(s string) string {
@@ -226,4 +225,75 @@ func YesNo(s string) bool {
 			return false
 		}
 	}
+}
+
+func CheckBalancedChar(s string, r rune) bool {
+	if !strings.ContainsRune(s, r) {
+		return true
+	}
+	if strings.ContainsRune(s, '\\') {
+		s = strings.ReplaceAll(s, "\\\\", "")
+		s = strings.ReplaceAll(s, string('\\')+string(r), "")
+	}
+	count := strings.Count(s, string(r))
+	return count%2 == 0
+}
+
+func CheckBalanced(s string) string {
+	if !strings.ContainsAny(s, "|*_") {
+		return ""
+	}
+	if strings.ContainsRune(s, '\\') {
+		s = strings.ReplaceAll(s, "\\\\", "")
+		for _, ch := range "|*_" {
+			s = strings.ReplaceAll(s, string('\\')+string(ch), "")
+		}
+	}
+	again := make([]rune, 0)
+	for _, ch := range "|*_" {
+		count := strings.Count(s, string(ch))
+		if count%2 != 0 {
+			return string(ch)
+		}
+		if count != 0 {
+			again = append(again, ch)
+		}
+	}
+	if len(again) < 2 {
+		return ""
+	}
+	for _, r1 := range again {
+		for _, r2 := range again {
+			if r1 == r2 {
+				continue
+			}
+			parts := strings.SplitN(s, string(r1), -1)
+			parts = parts[1 : len(parts)-1]
+			for _, part := range parts {
+				if !CheckBalancedChar(part, r2) {
+					return string(r1) + string(r2) + " :" + part
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func DoubleChar(s string, r rune) string {
+	sub := string(r) + string(r)
+	if !strings.Contains(s, sub) {
+		return s
+	}
+	ok := false
+	if strings.ContainsRune(s, '\\') {
+		ok = true
+		s = strings.ReplaceAll(s, "\\\\", string([]byte{0, 0}))
+		s = strings.ReplaceAll(s, string('\\')+string(r), string([]byte{0, 3}))
+	}
+	s = strings.ReplaceAll(s, sub, "")
+	if !ok {
+		return s
+	}
+	return strings.ReplaceAll(strings.ReplaceAll(s, string([]byte{0, 3}), string('\\')+string(r)), string([]byte{0, 0}), "\\\\")
+
 }

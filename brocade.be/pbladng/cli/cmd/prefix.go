@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"fmt"
+	"html"
 	"os"
 	"path/filepath"
 	"sort"
@@ -21,7 +21,7 @@ import (
 )
 
 //go:embed templates
-var guifs embed.FS
+var guifsp embed.FS
 
 var prefixCmd = &cobra.Command{
 	Use:   "prefix",
@@ -31,7 +31,6 @@ var prefixCmd = &cobra.Command{
 	Example: `gopblad prefix`,
 	RunE:    prefix,
 }
-var Fstderr bool
 
 func init() {
 	prefixCmd.PersistentFlags().BoolVar(&Fstderr, "stderr", false, "Show stderr")
@@ -51,10 +50,9 @@ type Dir struct {
 
 func prefix(cmd *cobra.Command, args []string) error {
 	if !Fstderr {
-		_, err := ptools.Launch([]string{"gopblad", "prefix", "--stderr", "--cwd=."}, nil, Fcwd, false)
+		_, err := ptools.Launch([]string{"gopblad", "prefix", "--stderr", "--cwd=."}, nil, Fcwd, false, false)
 		return err
 	}
-
 	if len(args) == 0 {
 		args = []string{`*.[Jj][Pp][Gg]`, `*.[Jj][Pp][Ee][Gg]`}
 	}
@@ -132,7 +130,7 @@ func prefix(cmd *cobra.Command, args []string) error {
 		Images: images,
 	}
 
-	t, err := template.ParseFS(guifs, "templates/prefix.html")
+	t, err := template.ParseFS(guifsp, "templates/prefix.html")
 	if err != nil {
 		return err
 	}
@@ -158,24 +156,20 @@ func prefix(cmd *cobra.Command, args []string) error {
 		ui.SetSize(width, height, webview.HintNone)
 		ui.SetHtml(buf.String())
 		ui.Bind("register", func(action string) {
-			guilistener <- action
-			ui.Eval("window.close()")
-			ui.Terminate()
+			handleForm(action, ui, guilistener)
 		})
-
 		ui.Run()
-		guilistener <- `{"action": "close"}`
 	}()
-	mm := <-guilistener
+	<-guilistener
 
+	return nil
+}
+
+func handleForm(action string, ui webview.WebView, guilistener chan string) {
 	info := make(map[string]string)
-	json.Unmarshal([]byte(mm), &info)
-	if info["action"] != "exec" {
-		return nil
-	}
-
+	json.Unmarshal([]byte(action), &info)
 	renames := make(map[string]string)
-
+	pcount := make(map[string]int)
 	i := -1
 	for {
 		i++
@@ -186,20 +180,16 @@ func prefix(cmd *cobra.Command, args []string) error {
 		}
 		prefix := info[key+"-prefix"]
 		newname := info[key+"-new"]
-		empty := info[key+"-remove"]
-		fmt.Println(fname, empty)
-		if empty == "1" {
-			newname = ""
-		}
-		if prefix != "" && newname != "" {
-			prefix += "-"
-		}
-		newname = prefix + newname
-		if newname == "" {
+
+		pcount[prefix] = 1 + pcount[prefix]
+		s := strings.ReplaceAll(prefix, "#", strconv.Itoa(pcount[prefix]))
+		s = strings.ReplaceAll(s, "@", newname)
+
+		if s == "" {
 			continue
 		}
 		ext := filepath.Ext(fname)
-		newname = strings.TrimSuffix(newname, ext)
+		newname = strings.TrimSuffix(s, ext)
 		if newname == "" {
 			continue
 		}
@@ -215,8 +205,39 @@ func prefix(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		renames[fname] = filepath.Join(olddir, newbase)
+	}
+	switch info["action"] {
 
+	case "stop":
+		ui.Eval("window.close()")
+		ui.Terminate()
+		guilistener <- `{"action": "close"}`
+		return
+	case "rename":
+		msg := ""
+		if len(renames) == 0 {
+			msg := "<p>Nothing to rename!</p>"
+			ui.Eval("Rename('" + msg + "')")
+			return
+		}
+		msg = "<table>"
+		fnames := make([]string, 0, len(renames))
+		for f := range renames {
+			fnames = append(fnames, f)
+		}
+		sort.Strings(fnames)
+		for _, f := range fnames {
+			msg += "<tr><td><var>" + html.EscapeString(f) + "</var></td><td>&#10230;</td><td><var>" + html.EscapeString(renames[f]) + "</var></td><tr>"
+		}
+		msg += "<tr><td></td><td></td><td><input class=\"label\" type=\"submit\" value=\"Confirm Rename\" onclick=\"register(makeJSON())\" /></td><tr>"
+		msg += "</table>"
+		ui.Eval("Rename('" + msg + "')")
+		return
+	case "confirm":
+		dorename(renames, nil)
+		ui.Eval("window.close()")
+		ui.Terminate()
+		guilistener <- `{"action": "close"}`
 	}
 
-	return dorename(renames, nil)
 }

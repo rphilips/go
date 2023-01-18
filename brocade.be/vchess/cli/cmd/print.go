@@ -336,6 +336,6 @@ func mailprint(season string, round string, pdffile string, home bool) (err erro
 	body = strings.ReplaceAll(body, "{season}", season)
 	body = strings.ReplaceAll(body, "{round}", round)
 
-	err = bmail.Send(to, cc, bcc, subject, "", string(body), []string{pdffile})
+	err = bmail.Send(to, cc, bcc, subject, "", string(body), []string{pdffile}, "")
 	return err
 }

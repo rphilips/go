@@ -81,3 +81,23 @@ func JSON[J string | []string | map[string]string](data ...J) string {
 	blob, _ := json.MarshalIndent(data, "", "    ")
 	return string(blob)
 }
+
+func Upper1(s string) string {
+	if s == "" {
+		return ""
+	}
+	if len(s) == 1 {
+		return strings.ToUpper(s)
+	}
+	r := ' '
+	for _, c := range s {
+		r = c
+		break
+	}
+	rs := string(r)
+	if len(rs) >= len(s) {
+		return strings.ToUpper(s)
+	}
+	return strings.ToUpper(rs) + s[len(rs):]
+
+}

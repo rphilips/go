@@ -2,6 +2,7 @@ package lines
 
 import (
 	"bytes"
+	"encoding/json"
 	"regexp"
 	"strings"
 
@@ -14,6 +15,13 @@ type Line struct {
 }
 
 type Text []Line
+
+func (t Text) String() string {
+
+	data, _ := json.MarshalIndent(t, "", "    ")
+	return string(data)
+
+}
 
 func Transform(text Text, fns []func(Text) Text) (t Text) {
 	if len(text) == 0 {
@@ -71,39 +79,63 @@ func Compact(text Text) (t Text) {
 	return
 }
 
-func ConvertString(body string) (t Text) {
+func ConvertString(body string, start int) (t Text) {
 	for i, s := range strings.SplitN(body, "\n", -1) {
 		t = append(t, Line{
 			Text:   s,
-			Lineno: 1 + i,
+			Lineno: start + i,
 		})
 	}
 	return
 }
 
-func ConvertByteSlice(body []byte) (t Text) {
+func ConvertByteSlice(body []byte, start int) (t Text) {
 	for i, b := range bytes.SplitN(body, []byte{10}, -1) {
 		t = append(t, Line{
 			Text:   string(b),
-			Lineno: 1 + i,
+			Lineno: start + i,
 		})
 	}
 	return
 }
 
-func Split(t Text, rexp regexp.Regexp) (ts []Text) {
+func Split(t Text, rexp *regexp.Regexp) (ts []Text) {
+	if len(t) == 0 {
+		return
+	}
+	ts = append(ts, nil)
 	for _, line := range t {
 		ok := rexp.MatchString(line.Text)
 		if !ok {
-			if len(ts) == 0 {
-				ts = append(ts, Text{line})
-			} else {
-				ts[len(ts)-1] = append(ts[len(ts)-1], line)
-			}
+			ts[len(ts)-1] = append(ts[len(ts)-1], line)
 			continue
 		}
 		ts = append(ts, Text{line})
 		ts = append(ts, nil)
 	}
 	return
+}
+
+func Index(t Text, rexp *regexp.Regexp, start int, end int) (index int) {
+	if len(t) == 0 {
+		return -1
+	}
+	if start > -1 && len(t) < start {
+		return -1
+	}
+	if end < 0 || end >= len(t) {
+		end = len(t) - 1
+	}
+	if start < 0 {
+		start = 0
+	}
+	if start > end {
+		return -1
+	}
+	for i := start; i <= end; i++ {
+		if rexp.FindStringIndex(t[i].Text) != nil {
+			return i
+		}
+	}
+	return -1
 }

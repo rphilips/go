@@ -10,6 +10,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	perror "brocade.be/pbladng/lib/error"
 )
 
 type Line struct {
@@ -61,7 +63,7 @@ func TestLine(line Line) error {
 		x = strings.ReplaceAll(x, "\\"+r, "")
 		nr := strings.Count(x, r)
 		if nr%2 != 0 {
-			return Error("line-unbalanced", line.NR, "unbalanced `"+r+"`")
+			return perror.Error("line-unbalanced", line.NR, "unbalanced `"+r+"`")
 		}
 	}
 	return nil
@@ -117,12 +119,12 @@ func IsUTF8(body []byte) (lines []string, err error) {
 	for i, bline := range blines {
 		if !utf8.Valid(bline) {
 			lines = nil
-			err = Error("utf8-noutf8", i+1, "No valid UTF-8 in line")
+			err = perror.Error("utf8-noutf8", i+1, "No valid UTF-8 in line")
 			return
 		}
 		if bytes.ContainsRune(bline, repl) {
 			lines = nil
-			err = Error("utf8-repl", i+1, "Replacement character in line")
+			err = perror.Error("utf8-repl", i+1, "Replacement character in line")
 			return
 		}
 		lines[i] = string(bline)

@@ -13,6 +13,7 @@ require (
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/natefinch/atomic v1.0.1
+	github.com/nguyenthenguyen/docx v0.0.0-20220721043308-1903da0ef37d
 	github.com/peterh/liner v1.2.2
 	github.com/rwtodd/Go.Sed v0.0.0-20210816025313-55464686f9ef
 	github.com/sergi/go-diff v1.2.0

@@ -619,6 +619,6 @@ func mailscore(season string, round string, htmlfile string, pdffile string) (er
 		return err
 	}
 
-	err = bmail.Send(to, cc, bcc, subject, "", string(html), []string{pdffile})
+	err = bmail.Send(to, cc, bcc, subject, "", string(html), []string{pdffile}, "")
 	return err
 }

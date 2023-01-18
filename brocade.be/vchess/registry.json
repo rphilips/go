@@ -119,8 +119,8 @@
                 "text": "# BEZINNING BIJ DE ZONDAGSVIERINGn\n**\n\n="
             },
             {
-                "regexp": "^PAROCHIAAL NIEUWS - ONZE-LIEVE-VROUW GEBOORTE NAZARETH & SINT-AMANDUS EKE$",
-                "heading": "PAROCHIAAL NIEUWS - ONZE-LIEVE-VROUW GEBOORTE NAZARETH & SINT-AMANDUS EKE",
+                "regexp": "^PAROCHIAAL NIEUWS$",
+                "heading": "PAROCHIAAL NIEUWS",
                 "type": "topic"
             },
             {
@@ -141,6 +141,8 @@
             }
         ],
         "base-dir": "/home/rphilips/Dropbox/pblad",
+        "log-file": "/home/rphilips/Desktop/log.json",
+        "mail-dir": "/home/rphilips/Dropbox/pblad/mails",
         "correspondents": {
             "naz": {
                 "dir": "/home/rphilips/Dropbox/Nazareth",
