@@ -2,6 +2,7 @@ package structure
 
 import (
 	"fmt"
+	"html/template"
 	"regexp"
 	"strings"
 
@@ -16,6 +17,7 @@ type Chapter struct {
 	Sort     int
 	Topics   []*Topic
 	Document *Document
+	Until    bool
 	Lineno   int
 }
 
@@ -24,6 +26,37 @@ func (c *Chapter) LastTopic() (t *Topic) {
 		return
 	}
 	return c.Topics[len(c.Topics)-1]
+}
+
+func (c Chapter) Show() bool {
+	for _, t := range c.Topics {
+		if t.Show() {
+			return true
+		}
+	}
+	return false
+}
+
+func (c Chapter) HTML() string {
+	if !c.Show() {
+		return ""
+	}
+	builder := strings.Builder{}
+
+	esc := template.HTMLEscapeString
+	dash := strings.Repeat("-", 96) + "<br />\n"
+
+	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s<b>%s</b><br />\n", dash, esc("RUBRIEKTITEL"), dash, esc(c.Heading)))
+
+	// for _, topic := range topics {
+	// 	builder.WriteString(`<br /><br /><br />`)
+	// 	builder.WriteString(topic)
+	// }
+
+	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s", dash, esc("EINDE RUBRIEK"), dash))
+
+	return builder.String()
+
 }
 
 func (c Chapter) String() string {
@@ -50,8 +83,10 @@ func (c *Chapter) Load(t blines.Text) error {
 	ok := false
 	validti := pregistry.Registry["chapter-heading-regexp"].([]any)
 	sortvalue := -1
+	wuntil := true
 	for i, ti2 := range validti {
 		ti := ti2.(map[string]any)["heading"].(string)
+		wu := ti2.(map[string]any)["until"].(bool)
 		ok = ti == heading
 		if !ok {
 			rti := ti2.(map[string]any)["regexp"].(string)
@@ -61,6 +96,7 @@ func (c *Chapter) Load(t blines.Text) error {
 		if ok {
 			sortvalue = i
 			heading = ti
+			wuntil = wu
 			break
 		}
 	}
@@ -72,6 +108,7 @@ func (c *Chapter) Load(t blines.Text) error {
 	c.Heading = heading
 	c.Lineno = lineno
 	c.Sort = sortvalue
+	c.Until = wuntil
 
 	return c.LoadTopics(t)
 }
@@ -85,7 +122,6 @@ func (c *Chapter) LoadTopics(t blines.Text) error {
 	first := blines.Compact(ts[0])
 
 	if len(first) != 0 {
-		fmt.Printf("%v\n", first)
 		err := perror.Error("chapter-preamble", first[0].Lineno, "chapters should begin with a topic")
 		return err
 	}

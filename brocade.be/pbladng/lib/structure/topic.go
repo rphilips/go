@@ -35,39 +35,69 @@ type Topic struct {
 	Lineno   int
 }
 
+func (t Topic) Show() bool {
+	c := t.Chapter
+	doc := c.Document
+	bdate := doc.Bdate
+	if t.From != nil && !t.From.Before(*bdate) {
+		return false
+	}
+	if t.Type == "mass" {
+		return true
+	}
+	if len(t.Images) != 0 {
+		return true
+	}
+	for _, line := range t.Body {
+		s := strings.TrimSpace(line.Text)
+		s = strings.TrimLeft(s, " \t=")
+		if s == "" {
+			continue
+		}
+		if strings.HasPrefix(s, "//") {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
 func (t Topic) String() string {
 	builder := strings.Builder{}
 	builder.WriteString(fmt.Sprintf("\n\n\n# %s\n", t.Heading))
 	meta := make([]string, 0)
-	if t.Type != "" {
+	if t.Type != "" || true {
 		meta = append(meta, fmt.Sprintf(`"type": %s`, bstrings.JSON(t.Type)))
 	}
-	if t.From != nil {
-		meta = append(meta, fmt.Sprintf(`"from": %s`, bstrings.JSON(ptools.StringDate(t.From, "I"))))
+
+	if t.Until != nil || true {
+		meta = append(meta, fmt.Sprintf(`"until": %s`, bstrings.JSON(btime.StringDate(t.Until, "I"))))
 	}
 
-	if t.Until != nil {
-		meta = append(meta, fmt.Sprintf(`"until": %s`, bstrings.JSON(ptools.StringDate(t.Until, "I"))))
+	if t.NotePB != "" || true {
+		s, _ := ptools.Normalize(t.NotePB, true)
+		meta = append(meta, fmt.Sprintf(`"notepb": %s`, bstrings.JSON(s)))
 	}
 
-	if t.LastPB != "" {
+	if t.From != nil || true {
+		meta = append(meta, fmt.Sprintf(`"from": %s`, bstrings.JSON(btime.StringDate(t.From, "I"))))
+	}
+
+	if t.LastPB != "" || true {
 		meta = append(meta, fmt.Sprintf(`"lastpb": %s`, bstrings.JSON(t.LastPB)))
 	}
 
-	if t.MaxCount != 0 {
+	if t.MaxCount != 0 || true {
 		meta = append(meta, fmt.Sprintf(`"maxcount": %s`, bstrings.JSON(strconv.Itoa(t.MaxCount))))
 	}
 
-	if t.Count != 0 {
+	if t.Count != 0 || true {
 		meta = append(meta, fmt.Sprintf(`"count": %s`, bstrings.JSON(strconv.Itoa(t.Count))))
 	}
 
-	if t.NotePB != "" {
-		meta = append(meta, fmt.Sprintf(`"notepb": %s`, bstrings.JSON(ptools.Normalize(t.NotePB, true))))
-	}
-
-	if t.NoteMe != "" {
-		meta = append(meta, fmt.Sprintf(`"noteme": %s`, bstrings.JSON(ptools.Normalize(t.NoteMe, true))))
+	if t.NoteMe != "" || true {
+		s, _ := ptools.Normalize(t.NoteMe, true)
+		meta = append(meta, fmt.Sprintf(`"noteme": %s`, bstrings.JSON(s)))
 	}
 	if len(meta) != 0 {
 		builder.WriteString("  { ")
@@ -78,7 +108,6 @@ func (t Topic) String() string {
 	if len(t.Images) != 0 {
 		builder.WriteString("\n")
 		for _, img := range t.Images {
-			fmt.Printf("%v\n", img)
 			builder.WriteString(img.Name + ".jpg")
 			if img.Copyright != "" {
 				img.Legend += " © " + img.Copyright
@@ -86,15 +115,21 @@ func (t Topic) String() string {
 			img.Legend = strings.TrimSpace(img.Legend)
 			if img.Legend != "" {
 				builder.WriteString(" ")
-				builder.WriteString(ptools.Normalize(img.Legend, true))
+				s, _ := ptools.Normalize(img.Legend, true)
+				builder.WriteString(s)
 				builder.WriteString("\n")
 			}
 		}
 	}
+	maxday := ""
 	if len(t.Body) != 0 {
 		builder.WriteString("\n")
 		for _, line := range t.Body {
-			builder.WriteString(ptools.Normalize(line.Text, true))
+			s, md := ptools.Normalize(line.Text, true)
+			if md > maxday {
+				maxday = md
+			}
+			builder.WriteString(s)
 			builder.WriteString("\n")
 		}
 	}
@@ -144,6 +179,38 @@ func (t *Topic) Load(ts blines.Text) error {
 		return err
 	}
 	err = t.LoadMass()
+
+	if t.Until == nil && t.Chapter.Until {
+		return perror.Error("topic-until", lineno, "`until` is missing")
+	}
+	maxday := ""
+
+	for i := 0; i < len(t.Body); i++ {
+		md := ""
+		s := t.Body[i].Text
+		if !strings.HasPrefix(s, "=") {
+			err := ptools.CheckIBAN(s)
+			if err != nil {
+				return perror.Error("topic-iban", t.Body[i].Lineno, err.Error())
+			}
+		}
+		t.Body[i].Text, md = ptools.Normalize(t.Body[i].Text, true)
+		if md > maxday {
+			maxday = md
+		}
+	}
+
+	if maxday != "" {
+		if t.Until == nil {
+			t.Until = btime.DetectDate(maxday)
+		} else {
+			uday := btime.StringDate(t.Until, "I")
+			if !strings.HasPrefix(uday, "3") {
+				t.Until = btime.DetectDate(maxday)
+			}
+		}
+	}
+
 	return err
 }
 
@@ -195,7 +262,7 @@ func (t *Topic) LoadMeta(tx blines.Text) (txo blines.Text, err error) {
 	}
 	for key, value := range mm {
 		value := strings.TrimSpace(value)
-		if value == "" {
+		if false && value == "" {
 			lineno := findLineno(key)
 			err = perror.Error("meta-value-empty", lineno, "`"+key+"` is empty")
 			return txo, err

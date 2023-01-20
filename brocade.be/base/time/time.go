@@ -90,6 +90,9 @@ func DaysUntil(year, month, day int) int64 {
 }
 
 func StringDate(t *time.Time, mode string) string {
+	if t == nil {
+		return ""
+	}
 	mode = strings.TrimSpace(strings.ToUpper(mode))
 	if mode == "" {
 		mode = "I"
@@ -124,6 +127,9 @@ func StringDate(t *time.Time, mode string) string {
 		month = "november"
 	case 12:
 		month = "december"
+	}
+	if strings.HasPrefix(mode, "NY") {
+		return fmt.Sprintf("%d %s", t.Day(), month)
 	}
 	if !strings.HasPrefix(mode, "D") {
 		return fmt.Sprintf("%d %s %d", t.Day(), month, t.Year())
@@ -165,7 +171,7 @@ func StringTime(t *time.Time, mode string) string {
 func DetectDate(s string) (t *time.Time) {
 	s = ren.ReplaceAllString(s, "")
 	s = strings.TrimSpace(s) + " "
-	d, _, e := NewDate(s)
+	d, e := NewDate(s)
 	if e == nil && d != nil {
 		return d
 	}
@@ -182,22 +188,27 @@ func DetectDate(s string) (t *time.Time) {
 	if len(parts) != 0 {
 		for _, y := range years {
 			t := parts[1] + "/" + y
-			d, _, _ := NewDate(t)
-			dates = append(dates, d)
+			d, _ := NewDate(t)
+			if d != nil {
+				dates = append(dates, d)
+			}
 		}
 	} else {
 		parts := red2.FindStringSubmatch(s)
 		if len(parts) != 0 {
 			for _, y := range years {
 				t := parts[1] + " " + parts[2] + " " + y
-				d, _, _ := NewDate(t)
-				dates = append(dates, d)
+				d, _ := NewDate(t)
+				if d != nil {
+					dates = append(dates, d)
+				}
 			}
 		}
 	}
 	if len(dates) != 3 {
 		return nil
 	}
+	fmt.Printf("dates: %s %v\n", s, dates)
 
 	d0 := dates[0].Sub(now).Abs()
 	d1 := dates[1].Sub(now).Abs()
@@ -217,7 +228,7 @@ func DetectDate(s string) (t *time.Time) {
 	}
 }
 
-func NewDate(date string) (t *time.Time, after string, err error) {
+func NewDate(date string) (t *time.Time, err error) {
 
 	udate := strings.TrimSpace(date)
 	ludate := strings.ToLower(udate)
@@ -257,9 +268,9 @@ func NewDate(date string) (t *time.Time, after string, err error) {
 			udatem := subs[1] + "/" + subs[2] + "/" + strconv.Itoa(yearm)
 			udaten := subs[1] + "/" + subs[2] + "/" + strconv.Itoa(year)
 			udatep := subs[1] + "/" + subs[2] + "/" + strconv.Itoa(yearp)
-			tm, _, em := NewDate(udatem)
-			tn, _, en := NewDate(udaten)
-			tp, _, ep := NewDate(udatep)
+			tm, em := NewDate(udatem)
+			tn, en := NewDate(udaten)
+			tp, ep := NewDate(udatep)
 			var tk *time.Time
 			if em == nil {
 				tk = tm
@@ -300,7 +311,7 @@ func NewDate(date string) (t *time.Time, after string, err error) {
 			}
 
 			if tk != nil {
-				return tk, subs[3], nil
+				return tk, nil
 			}
 		}
 	}
@@ -312,10 +323,7 @@ func NewDate(date string) (t *time.Time, after string, err error) {
 		return
 	}
 	parts = parts[:3]
-	after = date
 	for i, part := range parts {
-		k := strings.Index(after, part)
-		after = after[k+len(part):]
 		parts[i] = strings.ToUpper(part)
 	}
 

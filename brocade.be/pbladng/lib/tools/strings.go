@@ -21,20 +21,45 @@ func Heading(s string) string {
 	if k != -1 {
 		s = strings.TrimSpace(s[:k])
 	}
-	s = Normalize(s, true)
+	s, _ = Normalize(s, true)
 	return strings.TrimSpace(strings.ToUpper(s))
 }
 
-func Normalize(s string, trim bool) string {
+func Normalize(s string, trim bool) (string, string) {
 	if strings.HasPrefix(s, "=") {
+		return s, ""
+	}
+	s = bstrings.InsertDiacritic(s)
+	s = Euro(s)
+	s = Phone(bstrings.Latin1(s))
+	s = Bank(s, true)
+	s = Hour(s)
+	s, maxday := Day(s, true)
+	s = Colon(s)
+	s = spaces.ReplaceAllString(s, " ")
+	if !trim {
+		return s, maxday
+	}
+	return strings.TrimSpace(s), maxday
+}
+
+func NormalizeR(s string, trim bool) string {
+	if strings.TrimSpace(s) == "-" {
+		return "-"
+	}
+	if strings.HasPrefix(s, "-") && !strings.HasPrefix(s, "--") && !strings.HasPrefix(s, "- ") {
+		s = "- " + s[1:]
+	}
+
+	if strings.HasPrefix(s, "=") {
+		return s
+	}
+	if strings.HasPrefix(s, "-") {
 		return s
 	}
 	s = bstrings.InsertDiacritic(s)
 	s = Euro(s)
 	s = Phone(bstrings.Latin1(s))
-	s = Hour(s)
-	s = Colon(s)
-	s = spaces.ReplaceAllString(s, " ")
 	if !trim {
 		return s
 	}
@@ -225,6 +250,14 @@ func YesNo(s string) bool {
 			return false
 		}
 	}
+}
+
+func IsTrue(s string) bool {
+	if s == "" {
+		return false
+	}
+	s = strings.TrimSpace(strings.ToLower(s))
+	return !strings.HasPrefix(s, "n")
 }
 
 func CheckBalancedChar(s string, r rune) bool {

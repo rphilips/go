@@ -1,8 +1,9 @@
-{
-    "bdate": "2023-01-13",
-    "edate": "2023-01-23",
-    "id": "2023-02",
-    "mailed": ""
+{"id":"2023-04",
+
+"bdate":"2023-01-28",
+"edate":"2023-02-05",
+"colofon": "yes"
+
 }
 
 
@@ -11,18 +12,37 @@
 
 
 
-# LITURGISCHE VIERINGEN [nazareth]
+# LITURGISCHE VIERINGEN
 
-{ "type": "mass", "lastpb": "2023-02", "count": "1" }
+{"type": "mass"}
 
-Woensdag 18/01
-08.30 u. nazareth: EUCHARISTIE
-
-Donderdag 19/01
-HEMELVAART
-**Pater Pio**
+Zaterdag 28/1
+*H. Thomas van Aquino,* priester en kerkleraar
+H. Maagd Maria
+18.00 eke AT: jgt. Raymond De Coster en echtg. Martha Meirlaen
+Zondag 29/1
+*H. Poppo,* abt
+3e ZONDAG DOOR HET JAAR
+09.00 gavere: T.e.v. Onze-Lieve-Vrouw Altijddurende bijstand voor een genezing (A.E.); Lector: Rita Coryn
+10.30 u. nazareth MDS: Jgt. |Robert Piens en echtg. Marie-José De Bruycker en kleinzoon Domien|; Dank om bekomenen genezing; Voor alle slachtoffers van vluchtmisdrijf en hun families
+Maandag 30/1
 08.00 eke: EUCHARISTIE
-Er zijn ook *andere* jaargetijden
+Dinsdag 31/1
+08.00 eke: EUCHARISTIE
+Woensdag 01/2
+08.30 u. nazareth: EUCHARISTIE
+Donderdag 02/2
+OPDRACHT VAN DE HEER (MARIA-LICHTMIS)
+08.00 eke: EUCHARISTIE
+Vrijdag 03/2
+08.00 eke: EUCHARISTIE
+Zaterdag 04/2
+H. Maagd Maria
+18.00 eke: EUCHARISTIE
+Zondag 05/2
+4e ZONDAG DOOR HET JAAR
+09.00 gavere: EUCHARISTIE
+10.30 u. nazareth: EUCHARISTIE
 
 
 
@@ -30,52 +50,15 @@ Er zijn ook *andere* jaargetijden
 
 
 
+# BEZINNING BIJ DE ZONDAGSVIERING
+
+**
+
+=
+
+
+
 ## PAROCHIAAL NIEUWS [nazareth]
-
-
-
-# VORMSELCATECHESE SINT AMANDUS EKE [nazareth]
-
-{ "lastpb": "2022-39", "count": "2" }
-
-**"Geloven, niet alleen, maar samen"**
-
-Toon `aaa` en `bbb`
-`ccc`
-
-`ddd`
-
-Dag mensen allemaal,
-Samen met onze catechisten zijn we nu
-onderweg naar ons Vormsel en tijdens onze `bijeenkomsten` en *vergaderingen* en **ontmoetingen**
-willen we telkens weer een stukje Jezus ontdekken.
-We willen dan ook graag bij de groep van mensen horen
-
-
-
-# PAROCHIEBLAD - HERABONNERING 2023 [nazareth]
-
-{ "lastpb": "2022-39", "count": "2" }
-
-Hopelijk genoot u van een deugddoende vakantie. Bij Halewijn bereiden ze ondertussen volop de (her)abonneringscampagne voor.
-
-Ongetwijfeld ondervindt u het ook zelf: we beleven tijden van torenhoge inflatie. Ook de uitgeverswereld ontsnapt hier niet aan. De grondstofprijzen voor onder meer papier en inkt, alsook de energie- en distributieprijzen zijn extreem gestegen in de voorbije maanden. En de lonen volgen dezelfde trend door de indexaanpassing. De komende maanden beloven financieel weinig beterschap, integendeel allicht. Uitgeverij Halewijn moet dit helaas onvermijdelijk doorrekenen in de abonnementsprijs van het parochieblad. Op basis van alle recente en nog te verwachten prijsstijgingen - in combinatie met de jaarlijkse procentuele daling van de oplage - ziet Halewijn zich genoodzaakt de tarieven ook dit jaar te verhogen.
-
-Dit geeft dan volgende tarieven (verzending als postabonnement in België inbegrepen):
-Gewoon abonnement: **52 EUR**
-Steunabonnement: **54 EUR**
-
-We beseffen dat dit hoe dan ook een meer dan gemiddelde prijsstijging is ten opzichte van de voorgaande jaren. In de huidige omstandigheden blijven we echter met de nieuwe tarieven nog fiks ónder de reële kostprijs van een jaarabonnement. Een bewuste keuze omdat we onze trouwe lezers niet willen bruuskeren en omdat we elke week voor ongeveer 1 EUR een kwaliteitsvol blad in de brievenbus willen laten vallen.
-
-Voor Nazareth en Eke wijzigt er niets aan de manier van herabonneren. Voor alle straten waar we nog een vrijwilliger hebben, mag u een vrijwilliger aan uw deur verwachten. Indien u niet thuis bent, zal de vrijwilliger een overschrijvingsformulier in de bus steken.
-Voor de straten waar we geen vrijwilliger meer hebben, zal u gewoon een overschrijvingsformulier in de bus vinden.
-
-Mogen we vragen om bij overschrijving steeds de gestructureerde mededeling te gebruiken. Dit vergemakkelijkt het boeken van de betalingen en vermijdt fouten indien u voor iemand anders zou betalen.
-
-*Graag ook uw aandacht voor het volgende: vanaf**01 januari 2023** komt er 1 parochieblad voor de parochies Asper, Eke, Gavere en Nazareth.*
-*Meer parochies betekent ook meer parochiaal nieuws uit andere parochies.*
-*Hierdoor zullen de mededelingen van de verenigingen niet altijd kunnen opgenomen worden.*
-*Ook het mailadres voor het inzenden van teksten door de `verenigingen` zal wijzigen, maar hierover hoort u binnenkort meer.*
 
 
 
@@ -83,62 +66,90 @@ Mogen we vragen om bij overschrijving steeds de gestructureerde mededeling te ge
 
 
 
-# LANDELIJKE GILDE EN FERM (EKE EN NAZARETH) [nazareth]
+# OKRA TREFPUNT NAZARETH [2023-02-28]
 
-{ "lastpb": "2022-39", "count": "2" }
+{"until": "2023-02-28", "type": "cal"}
 
-wandel.jpg Ontbijt bij de boer (copyright Landelijke Gilde) © lg
+Activiteitenkalender voor januari 2023
 
+Maandag *30 januari 2023* Bestuursvergadering om 09.30 u. in zaal C cc De Zwaan
+Dinsdag *31 januari 2023* Petanque om 14.00 u aan de Sporthal
 
+Activiteitenkalender voor februari 2023
 
-# LANDELIJKE GILDE, FERM EN KLJ NAZARETH [nazareth]
+Donderdag *02 februari 2023*: Lijndansen om 14.00 u in zaal A cc De Zwaan
+Maandag *06 februari 2023*: Wandelen om 13.30 u. aan cc Het Centrum
+Dinsdag *07 februari 2023*: Kaarten om 14.00 u in zaal A cc De Zwaan; Rummikub om 14.00 u in zaal A cc De Zwaan
+Zondag *12 februari 2023*: Jubileumconcert om 14.00 u in Muziekcentrum De Bijloke, Gent
+Dinsdag *14 februari 2023*: Petanque om 14.00 u aan de Sporthal
+Donderdag *16 februari 2023*: Lijndansen om 14.00 u in zaal A cc De Zwaan
+Dinsdag *21 februari 2023*: Kaarten om 14.00 u in in cc De Brouwerij; Rummikub om 14.00 u in cc De Brouwerij; Crea om 14.00 u in cc De ouwerij
+Maandag *27 februari 2023*: Bestuursvergadering om 09.30 u. in zaal C cc De Zwaan
+Dinsdag *28 februari 2023*: Petanque om 14.00 u aan de Sporthal
 
-{"lastpb": "2022-39", "count": "2" }
-
-baert.jpg ti1 © copyright
-
-Landelijke Gilde, Ferm en KLJ Nazareth organiseren naar jaarlijkse gewoonte hun Barbecue.
-
-Deze barbecue gaat door op zondag ***02 oktober 2022*** in CC Het Centrum.
-
-Aanschuiven kan vanaf 11.30 u. tot en met 13.30 u.
-
-Volwassenen: 18 EUR
-Kinderen (6 jaar tem 12 jaar): 10 EUR
-Kinderen onder 6 jaar: gratis
-Inclusief dessert
-
-Kaarten reserveren kan bij onderstaande bestuursleden tot en met woensdag ***28 september 2022***:
-Peter - LG: 0484 96 90 07, Sabine - Ferm: 0498 93 10 95, Mathijs - KLJ: 0498 57 17 72
+!!! Voor meer info: tel. 09/385.53.71
 
 
 
-# SAMANA NAZARETH [nazareth]
+# FERM NAZARETH: KAASBUFFET [2023-01-28]
 
-{ "lastpb": "2022-39", "count": "2" }
-
-De activiteiten van Samana tem december 2022
-
-Crea: ***11 oktober 2022***, ***08 november 2022*** en ***13 december 2022***. Zoals gewoonlijk in CC Het Centrum om 14.00 u. Gratis inkom en iedereen is welkom.
-
-De uitstap met de leden van Samana gaat door op zaterdag ***24 september 2022***. Dit jaar gaan we naar Eurotuin in Merelbeke. Meer info volgt.
-
-Ook reeds te noteren: op zaterdag ***17 december 2022*** is er ons Kerstfeestje met koffietafel in CC Het centrum om 14.00 u.
+{"until": "2023-01-28"}
+kaas.jpg © Ferm Nazareth
 
 
 
-# OKRA TREFPUNT NAZARETH [nazareth]
+# FERM ASPER [2023-04-25]
 
-{ "lastpb": "2022-39", "count": "2" }
+{"until": "2023-04-25"}
 
-Activiteitenkalender voor september 2022
-woensdag ***21 september 2022***: Kermis koffietafel om 14.00 u in CC Het Centrum
-donderdag ***22 september 2022***: Fietsen om 14.00 u aan CC Het Centrum
-maandag ***26 september 2022***: Bestuursvergadering om 09.30 u. CC Het Centrum
-dinsdag ***27 september 2022***: Petanque om 14.00 u aan de Sporthal
-donderdag ***29 september 2022***: Lijndansen om 14.00 u in CC Het Centrum
+- Beter Bewegen: Doorlopend elke dinsdag t.e.m. *25 april 2023* van 20.00 u. tot 21.00 u. in Sporthal Overbeke (Veldstraat Asper)
 
-!!! Voor meer info: tel. 09 395 53 71
+- Appelbabbel op zaterdag *04 februari 2023* om 14.30 u. in het OC St-Martinus . Spelletjesnamiddag & bingo vergezeld van koffie en appelgebak. Ook niet-leden zijn van harte welkom.
+
+- Bloemschikles: Valentijn op woensdag *08 februari 2023* om 14.30 u. of 19.30 u.; Info en inschrijving bij Christiane Devenyns op 0474 66 74 76 of christianedevenyns@hotmail.com
+
+- Android-smartphone/tablet voor dummies. Een 5-delige reeks waarin je leert werken met jouw Adroid smartphone of tablet.
+
+Info en inschrijving bij Christiane Loontjens.
+
+
+
+# FEMMA ASPER
+
+{"until": "2023-05-24"}
+
+Maandelijkse BINGO-namiddag om 14.00 u. in het O.C. St.-Martinus (Hulstraat Asper)
+26/1 – 23/2 – 30/3 – 27/4
+Inschrijven: Lydie Vanderstichelen 09/384 14 23
+
+- Gezellig haken & Breien op woensdagen 25/1 – 22/2 – 29/3 – 26/4 – 24/5/2023 om 19.00 u. in het OC St. Martinus te Asper. Info: Steffi Beyaert op 0472/38 67 77 of steffi.beyaert@hotmail.com
+
+-YOGA – lessenreeks: dinsdagen om 19.00 u. in het OC St. Martinus te Asper.
+
+BE68539007547034
+Info: Rita Petereyns op 0479/67 51 75 of ritapetereyns@gmail.com
+
+
+
+# SAMANA ASPER
+
+{"until": "2023-05-23"}
+
+Spelnamiddagen om 14.00 u. in het OC St.Martinus te Asper op donderdag 16/2 – 23/3/2023
+Info: Lydie Vanderstichelen op 09/384 14 23
+
+
+
+# SAMANA EKE NAZARETH [2023-03-14]
+
+{"until": "2023-03-14"}
+
+Onze crea tem maart zijn op *14 februari 2023* en *14 maart 2023*
+
+Telkens om 14.00 u. in De Brouwerij.
+
+Deze bijeenkomst is gratis en iedereen is van harte welkom.
+Voor meer inlichtingen: 09/385 50 69
 
 
 
@@ -150,60 +161,17 @@ donderdag ***29 september 2022***: Lijndansen om 14.00 u in CC Het Centrum
 
 
 
-# WACHTDIENSTEN [nazareth]
+# WACHTDIENSTEN
 
-**Dokter**
+*Dokter: * Via het wachtnummer *1733*, ieder weekend van vrijdag 19.00 u. tot maandag 08.00 u.
 
-Via het wachtnummer **1733**, ieder weekend van vrijdag 19.00 u. tot maandag 08.00 u. (Huisartsenwachtpost in AZ Sint-Vincentius Deinze)
+Is de situatie levensbedreigend? Bel dan het noodnummer *112*.
 
-**Tandarts: **
+*Tandarts: * 0903 39 969 (algemeen betalend wachtdienstnummer)
 
-**0903 39 969** (algemeen betalend wachtdienstnummer)
-
-**Wit-Gele Kruis team Nazareth-Eke: **
-
-Steenweg 167A
-9810 Nazareth
-09 371 43 35
-
-a
-
-**Apotheker**
+*Apotheker: *
 
 GEOWACHT
-
-Over dag (tot 22.00 u.) kan je de apotheek van wacht terugvinden via de website *www.geowacht.be* of tel. **0903 99 000**.
-
+Overdag (tot 22.00 u.) kan je de apotheek van wacht terugvinden via de website _www.geowacht.be_ of tel. *0903/99 000*.
 Uit veiligheidsredenen worden de apotheken met nachtwacht niet geafficheerd of publiek bekend gemaakt.
-
-TEST
-
-ok quote `hier` en nog
-
-En deze hier ` space `
-
-En deze empty `a`
-is dit quoted \\`quoted?\\`
-
-Unescaped quote `en` nog
-
-Escaped quote \` en nog
-
-Met eol `hier
-tot hier met eol`
-
-tekstje
-Met eol2 `hier
-tot hier\`
-
-en met bold `met *bold*`
-
-en dit dan `met _*bold*_`
-EINDE
-
-
-
-# XYZ [nazareth]
-
-start hier een paragraaf
 

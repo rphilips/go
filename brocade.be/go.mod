@@ -10,6 +10,7 @@ require (
 	github.com/gocarina/gocsv v0.0.0-20221105105431-c8ef78125b99
 	github.com/google/uuid v1.3.0
 	github.com/hexops/gotextdiff v1.0.3
+	github.com/jbub/banking v0.7.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/mozillazg/go-unidecode v0.1.1
 	github.com/natefinch/atomic v1.0.1

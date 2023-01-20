@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,8 +38,61 @@ type Document struct {
 	Bdate    *time.Time
 	Edate    *time.Time
 	Mailed   *time.Time
+	Colofon  bool
 	Chapters []*Chapter
 	Dir      string
+}
+
+func (doc Document) HTML() string {
+
+	builder := strings.Builder{}
+	esc := template.HTMLEscapeString
+	dash := strings.Repeat("-", 96) + "<br />"
+	builder.WriteString("<!doctype html>\n<html lang='nl'>\n")
+	builder.WriteString("<head>\n")
+	builder.WriteString(fmt.Sprintf("<title>%s</title>\n", esc(doc.Title())))
+	builder.WriteString("</head>\n<body>\n")
+	builder.WriteString(fmt.Sprintf("<b>Week: %s</b>", esc(doc.ID())))
+	builder.WriteString("<br />")
+	builder.WriteString(fmt.Sprintf("<b>Editie: %s</b>", esc(doc.Title()[1:])))
+	builder.WriteString("<br />")
+	builder.WriteString(fmt.Sprintf("<b>%s</b><br />\n", strings.Repeat("-", 96)))
+
+	if doc.Colofon {
+		builder.WriteString(strings.Repeat("<br />", 3))
+		builder.WriteString(dash)
+		builder.WriteString("\n<b>OPGELET: NIEUW COLOFON</b><br />")
+		builder.WriteString(dash)
+		builder.WriteString(strings.Repeat("<br />", 3))
+		pcol := pfs.FName("support/colofon.txt")
+		col, err := bfs.Fetch(pcol)
+		if err != nil {
+			log.Fatalf("error in working with colofon at %s: %s", pcol, err)
+		}
+		scol := strings.TrimSpace(string(col))
+		builder.WriteString(scol)
+		builder.WriteString("<br />")
+	}
+
+	for _, chapter := range doc.Chapters {
+		builder.WriteString(chapter.HTML())
+	}
+	builder.WriteString("</body></html>\n")
+
+	return builder.String()
+
+}
+func (d Document) Title() string {
+	edition := "first"
+	if d.Mailed != nil {
+		edition = "other"
+	}
+	ed := pregistry.Registry["edition"].(map[string]any)[edition].(map[string]any)
+	subject := ed["subject"].(string)
+
+	subject = strings.ReplaceAll(subject, "{week}", fmt.Sprintf("%02d", d.Week))
+	subject = strings.ReplaceAll(subject, "{id}", d.ID())
+	return subject
 }
 
 func (d Document) String() string {
@@ -45,6 +100,11 @@ func (d Document) String() string {
 	m["id"] = d.ID()
 	m["bdate"] = btime.StringDate(d.Bdate, "I")
 	m["edate"] = btime.StringDate(d.Edate, "I")
+	if d.Colofon {
+		m["colofon"] = "yes"
+	} else {
+		m["colofon"] = "no"
+	}
 	if d.Mailed != nil {
 		m["mailed"] = btime.StringDate(d.Mailed, "I")
 	} else {
@@ -230,7 +290,7 @@ func (doc *Document) LoadText(source io.Reader, latin1 bool) error {
 		line := blines.Line{}
 		line.Lineno = lineno
 		if latin1 {
-			line.Text = ptools.Normalize(string(b), true)
+			line.Text = ptools.NormalizeR(string(b), true)
 		} else {
 			line.Text = string(b)
 		}
@@ -400,6 +460,8 @@ func (doc *Document) LoadMeta() error {
 				return err
 			}
 			doc.Edate = edate
+		case "colofon":
+			doc.Colofon = ptools.IsTrue(value)
 
 		case "mailed":
 			if value != "" {
@@ -506,6 +568,9 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 	doc.Year, _ = strconv.Atoi(mm["year"])
 	doc.Week, _ = strconv.Atoi(mm["week"])
 	doc.Bdate = btime.DetectDate(mm["bdate"])
+	if strings.HasPrefix(mm["edate"], "3") {
+		mm["edate"] = "2" + mm["edate"][1:]
+	}
 	doc.Edate = btime.DetectDate(mm["edate"])
 
 	validti := pregistry.Registry["chapter-title-regexp"].([]any)

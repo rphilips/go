@@ -63,6 +63,11 @@ github.com/hexops/gotextdiff/span
 # github.com/inconshreveable/mousetrap v1.0.0
 ## explicit
 github.com/inconshreveable/mousetrap
+# github.com/jbub/banking v0.7.0
+## explicit; go 1.17
+github.com/jbub/banking/bban
+github.com/jbub/banking/country
+github.com/jbub/banking/iban
 # github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 ## explicit
 github.com/jordan-wright/email

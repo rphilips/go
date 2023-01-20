@@ -137,7 +137,7 @@ func HeadingString(s string) string {
 	if k != -1 {
 		s = strings.TrimSpace(s[:k])
 	}
-	s = Normalize(s, true)
+	s, _ = Normalize(s, true)
 	return strings.TrimSpace(strings.ToUpper(s))
 }
 
