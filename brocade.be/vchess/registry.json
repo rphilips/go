@@ -178,8 +178,19 @@
         "last-day": "8",
         "image-size-kb": "1000",
         "sunday-correction": "0",
+        "html-converter-exe": [
+            "libreoffice",
+            "--headless",
+            "--nolockcheck",
+            "--norestore",
+            "--convert-to",
+            "{docty}",
+            "--outdir",
+            "{outdir}",
+            "{source}"
+        ],
         "image-resize-exe": [
-            "convert",
+            "libreoffice",
             "{source}",
             "-define",
             "jpeg:extent={kbsize}kb",
@@ -312,6 +323,18 @@
             ],
             "pdf": [
                 "evince",
+                "{file}"
+            ],
+            "doc": [
+                "libreoffice",
+                "{file}"
+            ],
+            "docx": [
+                "libreoffice",
+                "{file}"
+            ],
+            "odt": [
+                "libreoffice",
                 "{file}"
             ]
         },

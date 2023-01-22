@@ -40,27 +40,10 @@ func HTML(cmd *cobra.Command, args []string) error {
 			args = append(args, pfs.FName("workspace/week.pb"))
 		}
 	}
-	fname := args[0]
-	var source io.Reader
-	dir := pfs.FName("workspace")
-	if fname == "-" {
-		source = os.Stdin
-	} else {
-		file, err := os.Open(fname)
-		if err != nil {
-			return err
-		}
-		dir = filepath.Dir(fname)
-		source = bufio.NewReader(file)
-	}
-	doc := new(pstructure.Document)
-	doc.Dir = dir
-	err := doc.Load(source)
+	target, err := makeHTML(args[0])
 	if err != nil {
 		return err
 	}
-	target := filepath.Join(dir, "parochieblad.html")
-	bfs.Store(target, doc.HTML(), "process")
 
 	pviewer := pregistry.Registry["viewer"].(map[string]any)["html"].([]any)
 	viewer := make([]string, 0)
@@ -75,4 +58,30 @@ func HTML(cmd *cobra.Command, args []string) error {
 	}
 
 	return err
+}
+
+func makeHTML(fname string) (target string, err error) {
+
+	var source io.Reader
+	dir := pfs.FName("workspace")
+	if fname == "-" {
+		source = os.Stdin
+	} else {
+		file, e := os.Open(fname)
+		err = e
+		if err != nil {
+			return
+		}
+		dir = filepath.Dir(fname)
+		source = bufio.NewReader(file)
+	}
+	doc := new(pstructure.Document)
+	doc.Dir = dir
+	err = doc.Load(source)
+	if err != nil {
+		return
+	}
+	target = filepath.Join(dir, "parochieblad.html")
+	bfs.Store(target, doc.HTML(), "process")
+	return
 }

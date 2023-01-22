@@ -41,6 +41,7 @@ type Document struct {
 	Colofon  bool
 	Chapters []*Chapter
 	Dir      string
+	Letters  string
 }
 
 func (doc Document) HTML() string {

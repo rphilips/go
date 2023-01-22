@@ -28,6 +28,11 @@ var bold = regexp.MustCompile(`\*([^*]*)\*`)
 var italic = regexp.MustCompile("_([^_]*)_")
 
 func Html(s string) string {
+	if strings.HasPrefix(s, "//") {
+		return ""
+	}
+	s = strings.TrimPrefix(s, "=")
+
 	set := `\|*_`
 	if !strings.ContainsAny(s, set) {
 		return s

@@ -3,6 +3,7 @@ package structure
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	bstrings "brocade.be/base/strings"
 	btime "brocade.be/base/time"
 	perror "brocade.be/pbladng/lib/error"
+	pregistry "brocade.be/pbladng/lib/registry"
 	ptools "brocade.be/pbladng/lib/tools"
 )
 
@@ -60,6 +62,95 @@ func (t Topic) Show() bool {
 		return true
 	}
 	return false
+}
+func (t Topic) HTML() string {
+	if !t.Show() {
+		return ""
+	}
+	c := t.Chapter
+	doc := c.Document
+	week := doc.Week
+	letters := doc.Letters
+	builder := strings.Builder{}
+
+	esc := template.HTMLEscapeString
+	dash := strings.Repeat("-", 96) + "<br />\n"
+	h := ptools.Html
+
+	if t.NotePB != "" {
+		builder.WriteString(fmt.Sprintf("<br /><br /><br />%sBEGIN TOPIC: %s<br />%s", dash, h(esc(t.NotePB)), dash))
+	}
+	builder.WriteString(fmt.Sprintf("<br /><br /><br /><b>%s</b><br /><br />", h(esc(ptools.HeadingString(t.Heading)))))
+
+	// builder.WriteString(`<br /><br /><br />`)
+	// builder.WriteString(topic)
+	// images
+	alfabet := "abcdefghijklmnopqrstuvwxyz"
+	if len(t.Images) > 0 {
+		for _, img := range t.Images {
+			builder.WriteString(dash)
+			legend := img.Legend
+			cr := img.Copyright
+			legend += " © " + cr
+			legend = strings.TrimSpace(legend)
+			legend = strings.TrimRight(legend, "©")
+			if legend != "" {
+				legend = "\u00A0" + legend
+			}
+			letter := 1 + len(letters)
+			if len(alfabet) < letter {
+				continue
+			}
+			imgletter := alfabet[letter-1 : letter]
+			letters += imgletter
+			builder.WriteString(fmt.Sprintf("F%s%s%02d.jpg%s<br />\n", esc(pregistry.Registry["pcode"].(string)), imgletter, week, h(esc(legend))))
+			builder.WriteString(dash)
+		}
+		doc.Letters = letters
+	}
+
+	first := true
+
+	for _, line := range t.Body {
+		text := line.Text
+		if strings.HasPrefix(text, "//") {
+			continue
+		}
+
+		text = h(esc(text))
+		if first && text == "" {
+			continue
+		}
+		if first {
+			builder.WriteString("<br />")
+			first = false
+		}
+		builder.WriteString(text)
+		builder.WriteString("<br />")
+	}
+
+	if len(t.Eudays) != 0 {
+		for i, euday := range t.Eudays {
+			x := euday.HTML()
+			if x == "" {
+				continue
+			}
+			if first {
+				builder.WriteString("<br />")
+				first = false
+			}
+			builder.WriteString(x)
+			if len(t.Eudays) != i+1 {
+				builder.WriteString("<br />")
+			}
+		}
+	}
+
+	if t.NotePB != "" {
+		builder.WriteString(fmt.Sprintf("%sEINDE TOPIC<br />%s", dash, dash))
+	}
+	return builder.String()
+
 }
 
 func (t Topic) String() string {
@@ -158,6 +249,26 @@ func (t *Topic) Load(ts blines.Text) error {
 		err := perror.Error("topic-heading-empty", lineno, "empty topic heading")
 		return err
 	}
+	set := `\|*_`
+	s := heading
+	if strings.ContainsAny(s, set) {
+		for i, r := range set {
+			if !strings.ContainsRune(s, r) {
+				continue
+			}
+			rs := string(byte(i))
+			s = strings.ReplaceAll(s, `\`+string(r), rs)
+		}
+		if strings.Contains(s, `*`) {
+			err := perror.Error("topic-heading-*", lineno, "heading should not contain unescaped `*`: "+s)
+			return err
+		}
+		if strings.Contains(s, `_`) {
+			err := perror.Error("topic-heading-_", lineno, "heading should not contain unescaped `_`")
+			return err
+		}
+	}
+
 	ts = blines.Compact(tx[2])
 	lineno = tx[2][0].Lineno
 	if len(ts) == 0 {
@@ -181,7 +292,10 @@ func (t *Topic) Load(ts blines.Text) error {
 	err = t.LoadMass()
 
 	if t.Until == nil && t.Chapter.Until {
-		return perror.Error("topic-until", lineno, "`until` is missing")
+		c := t.Chapter
+		doc := c.Document
+		t.Until = doc.Bdate
+		//return perror.Error("topic-until", lineno, "`until` is missing")
 	}
 	maxday := ""
 
@@ -321,9 +435,11 @@ func (t *Topic) LoadMeta(tx blines.Text) (txo blines.Text, err error) {
 				err = perror.Error("meta-notepb-multiple", lineno, "note to pblad should be a oneliner")
 				return txo, err
 			}
+			value, _ := ptools.Normalize(value, true)
 			t.NotePB = value
 
 		case "noteme":
+			value, _ := ptools.Normalize(value, true)
 			t.NoteMe = value
 
 		case "type":

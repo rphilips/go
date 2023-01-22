@@ -21,13 +21,24 @@ func Heading(s string) string {
 	if k != -1 {
 		s = strings.TrimSpace(s[:k])
 	}
-	s, _ = Normalize(s, true)
+	s = NormalizeH(s)
 	return strings.TrimSpace(strings.ToUpper(s))
+}
+
+func NormalizeH(s string) string {
+
+	s = DeleteMeta(s)
+	s = bstrings.InsertDiacritic(s)
+	s = Euro(s)
+	s = Phone(bstrings.Latin1(s))
+	s = Colon(s)
+	s = spaces.ReplaceAllString(s, " ")
+	return strings.TrimSpace(s)
 }
 
 func Normalize(s string, trim bool) (string, string) {
 	if strings.HasPrefix(s, "=") {
-		return s, ""
+		return bstrings.Latin1(s), ""
 	}
 	s = bstrings.InsertDiacritic(s)
 	s = Euro(s)
@@ -64,6 +75,24 @@ func NormalizeR(s string, trim bool) string {
 		return s
 	}
 	return strings.TrimSpace(s)
+}
+
+func DeleteMeta(s string) string {
+	set := "*_|"
+	if !strings.ContainsAny(s, set) {
+		return s
+	}
+	s = strings.ReplaceAll(s, "\\\\", "\x00")
+	for _, r := range set {
+		if !strings.ContainsRune(s, r) {
+			continue
+		}
+		rs := `\` + string(r)
+		s = strings.ReplaceAll(s, rs, "\x03")
+		s = strings.ReplaceAll(s, string(r), "")
+		s = strings.ReplaceAll(s, "\x03", rs)
+	}
+	return strings.ReplaceAll(s, "\x00", "\\\\")
 }
 
 func MetaChars(s string) string {

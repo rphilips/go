@@ -124,12 +124,12 @@ func (d Euday) String() string {
 	return strings.TrimSpace(fmt.Sprintf("%s %02d/%02d\n%s%s", weekday, day, month, headings, mas))
 }
 
-func (d Euday) HTML() string {
-	weekday := btime.StringDate(d.Date, "D")
+func (eu Euday) HTML() string {
+	weekday := btime.StringDate(eu.Date, "D")
 	weekday = strings.ToUpper(weekday[0:1]) + weekday[1:]
 	esc := template.HTMLEscapeString
 	h := ptools.Html
-	headings := strings.Join(d.Headings, "\n")
+	headings := strings.Join(eu.Headings, "\n")
 	headings = strings.TrimSpace(headings)
 	if headings != "" {
 		headings = h(esc(headings))
@@ -137,7 +137,7 @@ func (d Euday) HTML() string {
 		headings += "<br />"
 	}
 	mas := ""
-	for _, m := range d.M {
+	for _, m := range eu.M {
 		mas += m.HTML() + "<br />"
 	}
 	return strings.TrimSpace(fmt.Sprintf("<b>%s</b><br />%s%s", weekday, headings, mas))

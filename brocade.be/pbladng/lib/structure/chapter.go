@@ -48,10 +48,11 @@ func (c Chapter) HTML() string {
 
 	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s<b>%s</b><br />\n", dash, esc("RUBRIEKTITEL"), dash, esc(c.Heading)))
 
-	// for _, topic := range topics {
-	// 	builder.WriteString(`<br /><br /><br />`)
-	// 	builder.WriteString(topic)
-	// }
+	for _, topic := range c.Topics {
+		builder.WriteString(topic.HTML())
+	}
+	// builder.WriteString(`<br /><br /><br />`)
+	// builder.WriteString(topic)
 
 	builder.WriteString(fmt.Sprintf("<br /><br /><br />%s%s<br />%s", dash, esc("EINDE RUBRIEK"), dash))
 
