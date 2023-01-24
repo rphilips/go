@@ -18,6 +18,7 @@ type Image struct {
 	Legend    string
 	Copyright string
 	Fname     string
+	Letter    string
 	Lineno    int
 }
 

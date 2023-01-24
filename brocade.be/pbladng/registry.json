@@ -47,8 +47,27 @@
             },
             "other": {
                 "subject": "N2222-03: PAROCHIEBLAD GAVERE - NAZARETH",
-                "body": "Parochieblad {id} als bijlage.."
-            }
+                "body": "Parochieblad {id} als bijlage."
+            },
+            "receivers": [
+                "partel@kerknet.be",
+                "ria.vercruysse@gmail.com",
+                "guy.claus2@telenet.be",
+                "richard.philips@gmail.com",
+                "cjungbluth@hotmail.com",
+                "christinepiens7@gmail.com",
+                "dewildepeil@skynet.be",
+                "st.amandus.gavere@skynet.be",
+                "kathy.wellems@gmail.com",
+                "vivi.depreester@yucom.be",
+                "schepen.van.ongeval@nazareth.be",
+                "dekenaat.nazareth@parochies.kerknet.be",
+                "hvanmeirhaeghe@skynet.be",
+                "parsec.nazareth@gmail.com",
+                "marc.perseyn@skynet.be",
+                "an.velghe88@telenet.be"
+            ],
+            "halewijn": "partel@kerknet.be"
         },
         "valid-until": "2023-12-01",
         "test": "pblad-test",
@@ -190,7 +209,7 @@
             "{source}"
         ],
         "image-resize-exe": [
-            "libreoffice",
+            "convert",
             "{source}",
             "-define",
             "jpeg:extent={kbsize}kb",

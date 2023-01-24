@@ -96,6 +96,19 @@ func (d Document) Title() string {
 	return subject
 }
 
+func (d Document) MailText() string {
+	edition := "first"
+	if d.Mailed != nil {
+		edition = "other"
+	}
+	ed := pregistry.Registry["edition"].(map[string]any)[edition].(map[string]any)
+	text := ed["body"].(string)
+
+	text = strings.ReplaceAll(text, "{week}", fmt.Sprintf("%02d", d.Week))
+	text = strings.ReplaceAll(text, "{id}", d.ID())
+	return text
+}
+
 func (d Document) String() string {
 	m := make(map[string]string)
 	m["id"] = d.ID()
@@ -138,7 +151,7 @@ func (doc Document) LastTopic() (t *Topic) {
 }
 
 func (doc Document) ArchiveDir() string {
-	return pfs.FName(fmt.Sprintf("archive/%04d/%02d", doc.Year, doc.Week))
+	return pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d", doc.Year, doc.Week))
 }
 
 func (doc Document) ArchiveDirPrevious() string {
@@ -149,6 +162,54 @@ func (doc Document) ArchiveDirPrevious() string {
 	return filepath.Dir(fname)
 }
 
+func (doc Document) Archive() error {
+	archive := doc.ArchiveDir()
+	sourcedir := doc.Dir
+	files, _, err := bfs.FilesDirs(sourcedir)
+	if err != nil {
+		return err
+	}
+	err = bfs.MkdirAll(archive, "process")
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		err = bfs.CopyFile(filepath.Join(sourcedir, f.Name()), archive, "", false)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
+func (doc Document) Names() (names []string) {
+	for _, line := range doc.Lines {
+		s := line.Text
+		if !strings.ContainsRune(s, '|') {
+			continue
+		}
+		rs := `\\`
+		s = strings.ReplaceAll(s, rs, "")
+		rs = `\|`
+		s = strings.ReplaceAll(s, rs, "")
+		if !strings.ContainsRune(s, '|') {
+			continue
+		}
+		parts := strings.SplitN(s, "|", -1)
+		for i, part := range parts {
+			part, _ := ptools.Normalize(part, true)
+			if part == "" {
+				continue
+			}
+			if i%2 == 0 {
+				continue
+			}
+			names = append(names, part)
+		}
+	}
+	return
+}
 func (doc Document) Next() (id string, year string, week string, bdate *time.Time, edate *time.Time) {
 
 	id, date := pnext.NextToNew(doc.ID())
@@ -206,21 +267,21 @@ func FindBefore(id string) (fname string, doc *Document, err error) {
 		week = 54
 		year = year - 1
 	}
-	fname = pfs.FName(fmt.Sprintf("archive/%04d/%02d/week.pb", year, week-1))
+	fname = pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d/week.pb", year, week-1))
 	if !bfs.IsFile(fname) {
 		fname = ""
 	}
-	if fname == "" && !bfs.IsDir(pfs.FName(fmt.Sprintf("archive/%04d", year))) {
+	if fname == "" && !bfs.IsDir(pfs.FName(fmt.Sprintf("archive/manuscripts/%04d", year))) {
 		week = 54
 		year = year - 1
-		if !bfs.IsDir(pfs.FName(fmt.Sprintf("archive/%04d", year))) {
+		if !bfs.IsDir(pfs.FName(fmt.Sprintf("archive/manuscripts/%04d", year))) {
 			err = fmt.Errorf("cannot find previous pblad")
 			return "", nil, err
 		}
 	}
 	if fname == "" {
-		for i := week - 1; week > 0; i-- {
-			try := pfs.FName(fmt.Sprintf("archive/%04d/%02d/week.pb", year, i))
+		for i := week - 1; i > 0; i-- {
+			try := pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d/week.pb", year, i))
 			if bfs.IsFile(try) {
 				fname = try
 				break
@@ -231,7 +292,7 @@ func FindBefore(id string) (fname string, doc *Document, err error) {
 		err = fmt.Errorf("cannot find previous pblad")
 		return "", nil, err
 	}
-
+	fmt.Println(fname)
 	f, err := os.Open(fname)
 	if err != nil {
 		return "", nil, err
@@ -248,7 +309,7 @@ func FindBefore(id string) (fname string, doc *Document, err error) {
 }
 
 func (doc Document) ID() string {
-	return fmt.Sprintf("%d-%02d", doc.Year, doc.Week)
+	return fmt.Sprintf("%04d-%02d", doc.Year, doc.Week)
 }
 
 func (doc *Document) Load(source io.Reader) error {

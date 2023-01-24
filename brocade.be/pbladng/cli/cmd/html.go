@@ -40,7 +40,7 @@ func HTML(cmd *cobra.Command, args []string) error {
 			args = append(args, pfs.FName("workspace/week.pb"))
 		}
 	}
-	target, err := makeHTML(args[0])
+	_, target, err := makeHTML(args[0])
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func HTML(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func makeHTML(fname string) (target string, err error) {
+func makeHTML(fname string) (doc *pstructure.Document, target string, err error) {
 
 	var source io.Reader
 	dir := pfs.FName("workspace")
@@ -75,7 +75,7 @@ func makeHTML(fname string) (target string, err error) {
 		dir = filepath.Dir(fname)
 		source = bufio.NewReader(file)
 	}
-	doc := new(pstructure.Document)
+	doc = new(pstructure.Document)
 	doc.Dir = dir
 	err = doc.Load(source)
 	if err != nil {

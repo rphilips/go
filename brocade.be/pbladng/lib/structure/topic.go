@@ -102,6 +102,7 @@ func (t Topic) HTML() string {
 				continue
 			}
 			imgletter := alfabet[letter-1 : letter]
+			img.Letter = imgletter
 			letters += imgletter
 			builder.WriteString(fmt.Sprintf("F%s%s%02d.jpg%s<br />\n", esc(pregistry.Registry["pcode"].(string)), imgletter, week, h(esc(legend))))
 			builder.WriteString(dash)
@@ -240,11 +241,11 @@ func (t Topic) String() string {
 
 func (t *Topic) Load(ts blines.Text) error {
 	tx := blines.Split(ts, tpexp)
-
 	lineno := tx[1][0].Lineno
 	heading := strings.TrimSpace(tx[1][0].Text)
 	heading = strings.TrimLeft(heading, ` \t#`)
 	heading = ptools.Heading(heading)
+
 	if heading == "" {
 		err := perror.Error("topic-heading-empty", lineno, "empty topic heading")
 		return err
@@ -381,6 +382,9 @@ func (t *Topic) LoadMeta(tx blines.Text) (txo blines.Text, err error) {
 			err = perror.Error("meta-value-empty", lineno, "`"+key+"` is empty")
 			return txo, err
 		}
+		if value == "" {
+			continue
+		}
 		switch key {
 		case "from":
 			f := btime.DetectDate(value)
@@ -463,6 +467,7 @@ func (t *Topic) LoadMeta(tx blines.Text) (txo blines.Text, err error) {
 func (t *Topic) LoadImages(tx blines.Text) (txo blines.Text, err error) {
 	doc := t.Chapter.Document
 	pdir := doc.ArchiveDirPrevious()
+
 	dirs := []string{doc.Dir, pdir}
 	copyright := ""
 	for _, line := range tx {
