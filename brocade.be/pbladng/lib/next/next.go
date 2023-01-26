@@ -46,18 +46,19 @@ func NextToNew(id string) (nextid string, date string) {
 	yr1 := strconv.Itoa(jaar + 1)
 	for _, year := range []string{yr, yr1} {
 		specials := pregistry.Registry["year"].(map[string]any)
-		data, ok := specials[year].(map[string]any)
+		_, ok := specials[year]
 		if !ok {
-			return "", ""
+			continue
 		}
+		data, _ := specials[year].(map[string]any)
 		for i := 1; i < 54; i++ {
+			thisid := fmt.Sprintf("%s-%02d", year, i)
+			if thisid <= id {
+				continue
+			}
 			j := fmt.Sprintf("%02d", i)
 			d, ok := data[j]
 			if !ok {
-				continue
-			}
-			thisid := year + "-" + j
-			if thisid <= id {
 				continue
 			}
 			date = d.(string)

@@ -194,7 +194,7 @@
         },
         "start-day-essential": "Saturday",
         "start-day": "Wednesday",
-        "last-day": "8",
+        "last-day": "Sunday",
         "image-size-kb": "1000",
         "sunday-correction": "0",
         "html-converter-exe": [

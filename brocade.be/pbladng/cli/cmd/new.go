@@ -18,7 +18,6 @@ import (
 	ptools "brocade.be/pbladng/lib/tools"
 	"github.com/spf13/cobra"
 	"github.com/webview/webview"
-	// "github.com/zserge/lorca"
 )
 
 //go:embed templates
@@ -119,7 +118,6 @@ func newedition(cmd *cobra.Command, args []string) error {
 
 func loadVars(guiFiller *GuiFiller) (mold *pstructure.Document) {
 	_, mold, _ = pstructure.FindBefore("")
-
 	id := "?"
 	period := "?"
 	mailed := "?"

@@ -31,9 +31,10 @@ func install(cmd *cobra.Command, args []string) error {
 		sub := filepath.FromSlash(sub)
 		bfs.MkdirAll(filepath.Join(basedir, sub), "process")
 	}
+
 	correspondents := pregistry.Registry["correspondents"].(map[string]any)
-	for _, dir := range correspondents {
-		bfs.MkdirAll(filepath.Join(basedir, dir.(string)), "process")
+	for _, info := range correspondents {
+		bfs.MkdirAll(filepath.Join(basedir, info.(map[string]any)["dir"].(string)), "process")
 	}
 
 	return nil

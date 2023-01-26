@@ -236,7 +236,7 @@ func (doc Document) Next() (id string, year string, week string, bdate *time.Tim
 		if edate.Weekday().String() == lastday {
 			break
 		}
-		x := edate.AddDate(0, 0, -1)
+		x := edate.AddDate(0, 0, +1)
 		edate = &x
 	}
 	return
@@ -292,7 +292,6 @@ func FindBefore(id string) (fname string, doc *Document, err error) {
 		err = fmt.Errorf("cannot find previous pblad")
 		return "", nil, err
 	}
-	fmt.Println(fname)
 	f, err := os.Open(fname)
 	if err != nil {
 		return "", nil, err
