@@ -79,7 +79,7 @@ func DocJSON(meta map[string]string, lineno int) (year int, week int, bdate *tim
 
 			ok = false
 			for _, f := range tests {
-				f = "archive/manuscripts/" + f + "/week.pb"
+				f = "archive/manuscripts/" + f + "/parochieblad.ed"
 				if pfs.Exists(f) {
 					ok = true
 					break

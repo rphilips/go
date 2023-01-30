@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -62,7 +64,7 @@ func doimport(cmd *cobra.Command, args []string) error {
 			if name == "week.md" {
 				continue
 			}
-			if name == "week.pb" {
+			if name == "parochieblad.ed" {
 				continue
 			}
 			srcPath := filepath.Join(src, name)
@@ -93,13 +95,21 @@ func doimport(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(doubles) != 0 {
-		fmt.Println(doubles)
 		fmt.Println("Found doubles in", Fcwd+":\n")
 		for _, d := range doubles {
 			fmt.Println(bstring.JSON(d))
 			fmt.Println()
 		}
 	}
+	pviewer := pregistry.Registry["viewer"].(map[string]any)["dir"].([]any)
+	viewer := make([]string, 0)
 
+	for _, piece := range pviewer {
+		viewer = append(viewer, strings.ReplaceAll(piece.(string), "{file}", dst))
+	}
+	vcmd := exec.Command(viewer[0], viewer[1:]...)
+	vcmd.Stderr = io.Discard
+	vcmd.Stdout = io.Discard
+	err = vcmd.Start()
 	return err
 }

@@ -26,7 +26,7 @@ func DocRef(dir string) (year int, week int, mailed string, err error) {
 
 	}
 	weekpb := ""
-	for _, base := range []string{"week.md", "week.pb"} {
+	for _, base := range []string{"week.md", "parochieblad.ed", "week.pb"} {
 		weekpb = filepath.Join(dir, base)
 		if bfs.Exists(weekpb) {
 			break

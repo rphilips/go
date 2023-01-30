@@ -32,9 +32,9 @@ func format(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		if Fdebug {
 			Fcwd = filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test")
-			args = append(args, filepath.Join(Fcwd, "week.pb"))
+			args = append(args, filepath.Join(Fcwd, "parochieblad.ed"))
 		} else {
-			args = append(args, pfs.FName("workspace/week.pb"))
+			args = append(args, pfs.FName("workspace/parochieblad.ed"))
 		}
 	}
 	fname := args[0]

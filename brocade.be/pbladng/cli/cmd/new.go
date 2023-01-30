@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	bfs "brocade.be/base/fs"
 	btime "brocade.be/base/time"
+	pregistry "brocade.be/pbladng/lib/registry"
 	pstructure "brocade.be/pbladng/lib/structure"
 	ptools "brocade.be/pbladng/lib/tools"
 	"github.com/spf13/cobra"
@@ -25,11 +27,11 @@ var guifs embed.FS
 
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "new `gopblad`",
-	Long:  "new `gopblad`",
+	Short: "Make a new edition",
+	Long:  "Make a new edition - based on the previous one - of pblad",
 
 	Args:    cobra.NoArgs,
-	Example: `gopblad new`,
+	Example: `pblad new`,
 	RunE:    newedition,
 }
 
@@ -42,7 +44,6 @@ var Fstderr bool
 
 func init() {
 	newCmd.PersistentFlags().BoolVar(&Fstderr, "stderr", false, "Show stderr")
-	newCmd.PersistentFlags().StringVar(&Fdir, "dir", "", "Directory")
 	rootCmd.AddCommand(newCmd)
 }
 
@@ -98,19 +99,32 @@ func newedition(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	weekpb := filepath.Join(Fcwd, "parochieblad.ed")
 	doc, err := pstructure.New(mm, mold)
 	doc.Dir = Fcwd
-
 	if err == nil {
-
-		weekpb := filepath.Join(Fcwd, "week.pb")
 		source := strings.NewReader(doc.String())
 		err := doc.Load(source)
 		if err != nil {
 			ptools.Log(err)
+			fmt.Println(err)
 			return err
 		}
 		bfs.Store(weekpb, doc.String(), "process")
+		pedit := pregistry.Registry["editor-exe"].([]any)
+		edit := make([]string, 0)
+		for _, piece := range pedit {
+			p := piece.(string)
+			p = strings.ReplaceAll(p, "{fname}", weekpb)
+			edit = append(edit, p)
+		}
+		vcmd := exec.Command(edit[0], edit[1:]...)
+		err = vcmd.Start()
+		if err != nil {
+			return err
+		}
+		fmt.Println(weekpb)
+
 	}
 
 	return err

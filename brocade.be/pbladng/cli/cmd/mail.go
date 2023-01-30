@@ -62,10 +62,10 @@ func mail(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	source := pfs.FName("workspace/week.pb")
+	source := pfs.FName("workspace/parochieblad.ed")
 	if Fdebug {
 		Fcwd = filepath.Join(pregistry.Registry["source-dir"].(string), "brocade.be", "pbladng", "test")
-		source = filepath.Join(Fcwd, "week.pb")
+		source = filepath.Join(Fcwd, "parochieblad.ed")
 	}
 	if Fdocty == "" {
 		Fdocty = "doc"
@@ -79,7 +79,7 @@ func mail(cmd *cobra.Command, args []string) error {
 	attach := make([]string, 0)
 	pcode := pregistry.Registry["pcode"].(string)
 
-	maildir := filepath.Join(filepath.Dir(pfs.FName("workspace/week.pb")), "mail")
+	maildir := filepath.Join(filepath.Dir(pfs.FName("workspace/parochieblad.ed")), "mail")
 	bfs.Rmpath(maildir)
 	bfs.MkdirAll(maildir, "process")
 

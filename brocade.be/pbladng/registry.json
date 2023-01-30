@@ -75,6 +75,12 @@
         "distribute-dir": "/home/rphilips/Dropbox/pblad/admin/workspace",
         "package": "pbladng",
         "exe": "/home/rphilips/bin/gopblad",
+        "editor-exe": [
+            "code",
+            "/home/rphilips/Dropbox/Workspaces/GoPblad.code-workspace",
+            "--goto",
+            "{fname}:1"
+        ],
         "platforms": [
             "linux/amd64"
         ],
@@ -146,7 +152,7 @@
                 "regexp": "^LITURGISCHE TEKSTEN$",
                 "heading": "LITURGISCHE TEKSTEN",
                 "type": "new",
-                "text": "# BEZINNING BIJ DE ZONDAGSVIERINGn\n**\n\n=",
+                "text": "# BEZINNING BIJ DE ZONDAGSVIERING\n**\n\n=",
                 "until": false
             },
             {
@@ -355,6 +361,10 @@
             "odt": [
                 "libreoffice",
                 "{file}"
+            ],
+            "dir": [
+                "nemo",
+                "{file}"
             ]
         },
         "year": {
@@ -444,7 +454,8 @@
             "userid": "25518",
             "passwd": "eXr25F9zT^!UCS",
             "url": "https://www.frbe-kbsb.be/sites/manager/GestionFICHES/FRBE_Club.php?club={stamno}",
-            "club": "https://www.frbe-kbsb.be/sites/manager/ICN/Inscriptions.php"
+            "club": "https://www.frbe-kbsb.be/sites/manager/ICN/Inscriptions.php",
+            "club-address": "https://www.frbe-kbsb.be/sites/manager/ICN/Inscriptions.php"
         },
         "prefixen": [
             "LANDEGEM",

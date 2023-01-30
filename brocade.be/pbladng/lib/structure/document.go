@@ -44,6 +44,18 @@ type Document struct {
 	Letters  string
 }
 
+func (doc *Document) Init() {
+	doc.Lines = nil
+	doc.Year = 0
+	doc.Week = 0
+	doc.Bdate = nil
+	doc.Edate = nil
+	doc.Mailed = nil
+	doc.Colofon = false
+	doc.Chapters = nil
+	doc.Letters = ""
+}
+
 func (doc Document) HTML() string {
 
 	builder := strings.Builder{}
@@ -267,7 +279,7 @@ func FindBefore(id string) (fname string, doc *Document, err error) {
 		week = 54
 		year = year - 1
 	}
-	fname = pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d/week.pb", year, week-1))
+	fname = pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d/parochieblad.ed", year, week-1))
 	if !bfs.IsFile(fname) {
 		fname = ""
 	}
@@ -281,7 +293,7 @@ func FindBefore(id string) (fname string, doc *Document, err error) {
 	}
 	if fname == "" {
 		for i := week - 1; i > 0; i-- {
-			try := pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d/week.pb", year, i))
+			try := pfs.FName(fmt.Sprintf("archive/manuscripts/%04d/%02d/parochieblad.ed", year, i))
 			if bfs.IsFile(try) {
 				fname = try
 				break
@@ -312,6 +324,7 @@ func (doc Document) ID() string {
 }
 
 func (doc *Document) Load(source io.Reader) error {
+	doc.Init()
 	err := doc.LoadText(source, true)
 	if err != nil {
 		return err
@@ -610,7 +623,7 @@ func (doc *Document) LoadChapters() error {
 	prevlineno := 0
 	for _, c := range doc.Chapters {
 		if c.Heading == prevheading {
-			err := perror.Error("chapter-title-double", c.Lineno, fmt.Sprintf("chapter title also found at line %d", prevlineno))
+			err := perror.Error("chapter-title-double", c.Lineno, fmt.Sprintf("chapter title also found at line %d: %s", prevlineno, prevheading))
 			return err
 		}
 		prevheading = c.Heading
@@ -634,7 +647,7 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 	}
 	doc.Edate = btime.DetectDate(mm["edate"])
 
-	validti := pregistry.Registry["chapter-title-regexp"].([]any)
+	validti := pregistry.Registry["chapter-heading-regexp"].([]any)
 	for _, ti2 := range validti {
 		ti := ti2.(map[string]any)["heading"].(string)
 		c := new(Chapter)
@@ -644,7 +657,7 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 		ty := ti2.(map[string]any)["type"].(string)
 		switch ty {
 		case "new":
-			body := ti2.(map[string]any)["text"].(string)
+			body := "##" + ti + "\n" + ti2.(map[string]any)["text"].(string)
 			tx := blines.ConvertString(body, 1)
 			tx = blines.Compact(tx)
 			c.Load(tx)
@@ -676,16 +689,24 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 				}
 				break
 			}
-			last := bdate
+			dd := make(map[string]bool)
+			last := bdate.AddDate(0, 0, -1)
 			if told != nil {
 				for _, euday := range told.Eudays {
 					if euday.Date.Before(*bdate) {
 						continue
 					}
 					if euday.Date.After(*edate) {
-						break
+						continue
 					}
-					last = euday.Date
+					d := btime.StringDate(euday.Date, "I")
+					if dd[d] {
+						continue
+					}
+					if last.Before(*euday.Date) {
+						last = *euday.Date
+					}
+					dd[d] = true
 					eudays = append(eudays, euday)
 				}
 			}
@@ -694,6 +715,13 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 				date = date.AddDate(0, 0, 1)
 				if edate.Before(date) {
 					break
+				}
+				if bdate.After(date) {
+					continue
+				}
+				d := btime.StringDate(&date, "I")
+				if dd[d] {
+					continue
 				}
 				weekday := date.Weekday().String()
 				day := pregistry.Registry["mass-day"].(map[string]any)[weekday].([]any)

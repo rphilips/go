@@ -115,10 +115,10 @@ func (c *Chapter) Load(t blines.Text) error {
 }
 
 func (c *Chapter) LoadTopics(t blines.Text) error {
-	if len(t) < 2 {
+	if len(t) < 3 {
 		return nil
 	}
-	t = t[1:]
+	t = t[2:]
 	ts := blines.Split(t, tpexp)
 	first := blines.Compact(ts[0])
 
