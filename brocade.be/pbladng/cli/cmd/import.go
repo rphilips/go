@@ -13,8 +13,8 @@ import (
 
 	bfs "brocade.be/base/fs"
 	bstring "brocade.be/base/strings"
-	pdocument "brocade.be/pbladng/lib/document"
 	pregistry "brocade.be/pbladng/lib/registry"
+	pstructure "brocade.be/pbladng/lib/structure"
 )
 
 var importCmd = &cobra.Command{
@@ -32,7 +32,7 @@ func init() {
 }
 
 func doimport(cmd *cobra.Command, args []string) error {
-	year, week, _, _ := pdocument.DocRef(Fcwd)
+	year, week, _, _ := pstructure.DocRef(Fcwd)
 	dst := Fcwd
 
 	correspondents := pregistry.Registry["correspondents"].(map[string]any)

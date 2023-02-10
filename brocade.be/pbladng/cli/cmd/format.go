@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -53,11 +54,17 @@ func format(cmd *cobra.Command, args []string) error {
 	doc := new(pstructure.Document)
 	doc.Dir = dir
 	err := doc.Load(source)
-	if err != nil {
-		return err
-	}
 	if err == nil {
 		fmt.Print(doc.String())
+		return nil
 	}
-	return err
+	errmsg := err.Error()
+	if err != nil && strings.Contains(errmsg, "docload-") {
+		return err
+	}
+	for _, line := range doc.Lines {
+		fmt.Println(line.Text)
+	}
+	fmt.Fprint(os.Stderr, errmsg)
+	return nil
 }

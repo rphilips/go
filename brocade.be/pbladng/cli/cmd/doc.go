@@ -42,12 +42,17 @@ func doc(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if Fdocty == "" {
+		Fdocty = "doc,docx"
+	}
 	_, target, err := makeDoc(args[0], Fdocty)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(target)
+	Fdocty, _, _ = strings.Cut(Fdocty, ",")
+	target, _, _ = strings.Cut(target, ",")
 
 	pviewer := pregistry.Registry["viewer"].(map[string]any)[Fdocty].([]any)
 	viewer := make([]string, 0)
@@ -62,26 +67,18 @@ func doc(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func makeDoc(file string, docty string) (doc *pstructure.Document, target string, err error) {
+func makeDoc(file string, docty string) (doc *pstructure.Document, targets string, err error) {
 
 	doc, source, err := makeHTML(file)
 	if err != nil {
 		return
 	}
 
-	docty = strings.TrimLeft(docty, ".")
-	if docty == "" {
-		docty = "doc"
-	}
-	docty = strings.ToLower(Fdocty)
-	target = strings.TrimSuffix(source, ".html") + "." + docty
 	odttarget := strings.TrimSuffix(source, ".html") + ".odt"
-
 	outdir := filepath.Dir(source)
 	if outdir == "" {
 		outdir = "."
 	}
-
 	pconvert := pregistry.Registry["html-converter-exe"].([]any)
 	convert := make([]string, 0)
 
@@ -104,9 +101,24 @@ func makeDoc(file string, docty string) (doc *pstructure.Document, target string
 		return
 	}
 
-	if docty != "odt" {
-		pconvert := pregistry.Registry["html-converter-exe"].([]any)
+	doctys := strings.SplitN(docty, ",", -1)
+
+	targets = ""
+	for _, docty := range doctys {
+		docty = strings.TrimLeft(strings.TrimSpace(docty), ".")
+		if docty == "" {
+			continue
+		}
+		docty = strings.ToLower(docty)
+		target := strings.TrimSuffix(source, ".html") + "." + docty
+		if docty == "odt" {
+			targets += "," + target
+			targets = strings.TrimPrefix(targets, ",")
+			continue
+		}
+
 		convert := make([]string, 0)
+
 		for _, piece := range pconvert {
 			p := piece.(string)
 			p = strings.ReplaceAll(p, "{docty}", docty)
@@ -119,12 +131,14 @@ func makeDoc(file string, docty string) (doc *pstructure.Document, target string
 		vcmd := exec.Command(convert[0], convert[1:]...)
 		err = vcmd.Start()
 		if err != nil {
-			return
+			continue
 		}
 		err = vcmd.Wait()
 		if err != nil {
-			return
+			continue
 		}
+		targets += "," + target
+		targets = strings.TrimPrefix(targets, ",")
 	}
 
 	return

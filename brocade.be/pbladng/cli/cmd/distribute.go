@@ -12,11 +12,11 @@ import (
 	bfs "brocade.be/base/fs"
 	bmail "brocade.be/base/gmail"
 	bstrings "brocade.be/base/strings"
-	pdocument "brocade.be/pbladng/lib/document"
 	pfs "brocade.be/pbladng/lib/fs"
 	plog "brocade.be/pbladng/lib/log"
 	pnext "brocade.be/pbladng/lib/next"
 	pregistry "brocade.be/pbladng/lib/registry"
+	pstructure "brocade.be/pbladng/lib/structure"
 	ptools "brocade.be/pbladng/lib/tools"
 )
 
@@ -43,7 +43,7 @@ func distribute(cmd *cobra.Command, args []string) error {
 	}
 	mails := make([]string, 0)
 	dir := d.(string)
-	year, week, _, err := pdocument.DocRef(dir)
+	year, week, _, err := pstructure.DocRef(dir)
 	if err != nil {
 		return err
 	}

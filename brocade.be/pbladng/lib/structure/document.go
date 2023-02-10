@@ -335,6 +335,29 @@ func (doc *Document) Load(source io.Reader) error {
 	}
 
 	err = doc.LoadChapters()
+	if err != nil {
+		return err
+	}
+
+	imgs := make(map[string]int)
+	headings := make(map[string]int)
+
+	for _, c := range doc.Chapters {
+		for _, t := range c.Topics {
+			heading := t.Heading
+			if headings[heading] != 0 {
+				return fmt.Errorf("heading `%s` at line %d also at line %d", heading, t.Lineno, headings[heading])
+			}
+			headings[heading] = t.Lineno
+			for _, img := range t.Images {
+				name := img.Name
+				if imgs[name] != 0 {
+					return fmt.Errorf("image `%s` at line %d also at line %d", name, img.Lineno, imgs[name])
+				}
+				imgs[name] = img.Lineno
+			}
+		}
+	}
 
 	return err
 }
@@ -634,6 +657,84 @@ func (doc *Document) LoadChapters() error {
 
 }
 
+func DocRef(dir string) (year int, week int, mailed string, err error) {
+	if dir == "" {
+		d, ok := pregistry.Registry["distribute-dir"]
+
+		if !ok || d.(string) == "" {
+			dir = pfs.FName("workspace")
+		} else {
+			dir = d.(string)
+		}
+
+	}
+	weekpb := ""
+	for _, base := range []string{"parochieblad.ed"} {
+		weekpb = filepath.Join(dir, base)
+		if bfs.Exists(weekpb) {
+			break
+		}
+	}
+	if weekpb == "" {
+		err = fmt.Errorf("cannot find week.[md,pb]")
+		return
+	}
+
+	data, err := os.ReadFile(weekpb)
+	if err != nil {
+		err = fmt.Errorf("cannot read `%s`: %s", weekpb, err.Error())
+		return
+	}
+
+	value := ""
+
+	if value == "" {
+
+		_, a, ok := strings.Cut(string(data), "{")
+
+		if !ok {
+			err = fmt.Errorf("`%s` does not contain `{`", weekpb)
+			return
+		}
+
+		m, _, ok := strings.Cut(a, "}")
+		if !ok {
+			err = fmt.Errorf("`%s` does not contain `}` after first `{`", weekpb)
+			return
+		}
+
+		m = "{" + m + "}"
+
+		meta := make(map[string]string)
+		err = json.Unmarshal([]byte(m), &meta)
+		if err != nil {
+			err = fmt.Errorf("`%s` does not contain valid JSON between first `{` and `}`", weekpb)
+			return
+		}
+
+		value = meta["id"]
+		mailed = meta["mailed"]
+	}
+	y, w, ok := strings.Cut(value, "-")
+	if !ok {
+		if y == "" || w == "" {
+			err = fmt.Errorf("`id` is missing in `%s", weekpb)
+			return
+		}
+	}
+	year, e := strconv.Atoi(y)
+	if e != nil {
+		err = fmt.Errorf("id `%s` should start with a valid year in `%s", value, weekpb)
+		return
+	}
+	week, e = strconv.Atoi(w)
+	if e != nil {
+		err = fmt.Errorf("id `%s` should end with a valid week in `%s", value, weekpb)
+		return
+	}
+	return
+}
+
 func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 	// {"action":"new","bdate":"2022-09-28","edate":"2022-10-02","week":"39","year":"2022"}
 	doc = new(Document)
@@ -656,6 +757,11 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 		c.Heading = ti
 		ty := ti2.(map[string]any)["type"].(string)
 		switch ty {
+		case "fix":
+			body := "##" + ti + "\n" + ti2.(map[string]any)["text"].(string)
+			tx := blines.ConvertString(body, 1)
+			tx = blines.Compact(tx)
+			c.Load(tx)
 		case "new":
 			body := "##" + ti + "\n" + ti2.(map[string]any)["text"].(string)
 			tx := blines.ConvertString(body, 1)
@@ -759,7 +865,6 @@ func New(mm map[string]string, dold *Document) (doc *Document, err error) {
 					min, _ := strconv.Atoi(sm)
 
 					ndate := time.Date(date.Year(), date.Month(), date.Day(), hour, min, 0, 0, date.Location())
-					ndate.Hour()
 					mass.Time = &ndate
 					mass.Place = p
 					for _, s := range strings.SplitN(i, "\n", -1) {

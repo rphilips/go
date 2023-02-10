@@ -215,12 +215,32 @@ func (t Topic) String() string {
 	}
 	maxday := ""
 	if len(t.Body) != 0 {
+		ty := t.Type
 		builder.WriteString("\n")
+		found := false
 		for _, line := range t.Body {
 			s, md := ptools.Normalize(line.Text, true)
 			if md > maxday {
 				maxday = md
 			}
+			if ty == "dead" || ty == "baptise" {
+				s = strings.ReplaceAll(s, ",", ", ")
+				s = strings.ReplaceAll(s, "  ", " ")
+				if found && s != "" && !strings.Contains(s, "_") {
+					b, a, ok := strings.Cut(s, ",")
+					if ok {
+						pre := "_"
+						su := "_"
+						if ty == "dead" {
+							pre = "_|"
+							su = "|_"
+						}
+						s = pre + b + su + "," + a
+					}
+
+				}
+			}
+			found = found || strings.HasPrefix(s, "//")
 			builder.WriteString(s)
 			builder.WriteString("\n")
 		}
@@ -448,7 +468,7 @@ func (t *Topic) LoadMeta(tx blines.Text) (txo blines.Text, err error) {
 
 		case "type":
 			value = strings.ToLower(value)
-			if value != "cal" && value != "mass" {
+			if value != "cal" && value != "mass" && value != "dead" && value != "baptise" {
 				lineno := findLineno(key)
 				err = perror.Error("meta-type", lineno, "`"+value+"` is invalid type")
 				return txo, err

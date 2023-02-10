@@ -2,7 +2,6 @@ package tools
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -13,16 +12,6 @@ import (
 
 	perror "brocade.be/pbladng/lib/error"
 )
-
-type Line struct {
-	L  string
-	NR int
-}
-
-func J(s any) string {
-	js, _ := json.Marshal(s)
-	return string(js)
-}
 
 var bold = regexp.MustCompile(`\*([^*]*)\*`)
 var italic = regexp.MustCompile("_([^_]*)_")
@@ -60,58 +49,6 @@ func Html(s string) string {
 		s = strings.ReplaceAll(s, rs, string(set[i]))
 	}
 	return s
-}
-
-func TestLine(line Line) error {
-	x := strings.ReplaceAll(line.L, "\\\\", "")
-	for _, r := range []string{"|", "*", "_"} {
-		x = strings.ReplaceAll(x, "\\"+r, "")
-		nr := strings.Count(x, r)
-		if nr%2 != 0 {
-			return perror.Error("line-unbalanced", line.NR, "unbalanced `"+r+"`")
-		}
-	}
-	return nil
-}
-
-func FixSpaceRune(s string) string {
-	if !strings.ContainsAny(s, "*_|") {
-		return s
-	}
-	s = escape(s)
-	for _, ch := range []string{"*", "_", "|"} {
-		if !strings.Contains(s, ch) {
-			continue
-		}
-		parts := strings.SplitN(s, ch, -1)
-		for i, part := range parts {
-			if len(parts) == (i + 1) {
-				continue
-			}
-			switch i % 2 {
-			case 0:
-				x := strings.TrimLeft(parts[i+1], " \t\n\r")
-				d := len(parts[i+1]) - len(x)
-				if d == 0 {
-					continue
-				}
-				parts[i] += parts[i+1][:d]
-				parts[i+1] = x
-			default:
-				x := strings.TrimRight(part, " \t\n\r")
-				d := len(part) - len(x)
-				if d == 0 {
-					continue
-				}
-				k := len(x)
-				parts[i+1] = part[k:] + parts[i+1]
-				parts[i] = x
-			}
-		}
-		s = strings.Join(parts, ch)
-		s = strings.ReplaceAll(s, ch+ch, "")
-	}
-	return unescape(s)
 }
 
 func IsUTF8(body []byte) (lines []string, err error) {

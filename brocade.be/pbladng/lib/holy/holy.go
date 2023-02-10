@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	btime "brocade.be/base/time"
 	pregistry "brocade.be/pbladng/lib/registry"
-	ptools "brocade.be/pbladng/lib/tools"
 )
 
 var loc = time.Now().Location()
@@ -177,7 +177,7 @@ func Mariaopdracht(year int) (*time.Time, string, bool) {
 func Advent1(year int) (*time.Time, string, bool) {
 	day := time.Date(year, 11, 27, 0, 0, 0, 0, loc)
 	for {
-		weekday := ptools.StringDate(&day, "D")
+		weekday := btime.StringDate(&day, "D")
 		if strings.HasPrefix(weekday, "zondag") {
 			return &day, "*1e ZONDAG VAN DE ADVENT*", false
 		}

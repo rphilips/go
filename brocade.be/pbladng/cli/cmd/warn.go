@@ -12,10 +12,10 @@ import (
 	bmail "brocade.be/base/gmail"
 	bstrings "brocade.be/base/strings"
 	btime "brocade.be/base/time"
-	pdocument "brocade.be/pbladng/lib/document"
 	plog "brocade.be/pbladng/lib/log"
 	pnext "brocade.be/pbladng/lib/next"
 	pregistry "brocade.be/pbladng/lib/registry"
+	pstructure "brocade.be/pbladng/lib/structure"
 )
 
 var warnCmd = &cobra.Command{
@@ -34,7 +34,7 @@ func init() {
 
 func warn(cmd *cobra.Command, args []string) error {
 
-	year, week, mailed, _ := pdocument.DocRef("")
+	year, week, mailed, _ := pstructure.DocRef("")
 	id := fmt.Sprintf("%d-%02d", year, week)
 
 	logfile := plog.Logfile()

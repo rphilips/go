@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"brocade.be/pbladng/lib/document"
+	pstructure "brocade.be/pbladng/lib/structure"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ func init() {
 
 func info(cmd *cobra.Command, args []string) error {
 
-	year, week, mailed, err := document.DocRef("")
+	year, week, mailed, err := pstructure.DocRef("")
 	if err != nil {
 		return err
 	}

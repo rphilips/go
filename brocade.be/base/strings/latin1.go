@@ -10,9 +10,13 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-var chars = map[rune]string{8364: " EUR "}
+var chars = map[rune]string{
+	8364: " EUR ",
+	8226: " - ",
+}
 
 func Latin1(s string) string {
+
 	s = norm.NFC.String(s)
 	latin1 := true
 	for _, c := range s {

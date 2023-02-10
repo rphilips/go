@@ -38,6 +38,7 @@ func NormalizeH(s string) string {
 
 func Normalize(s string, trim bool) (string, string) {
 	if strings.HasPrefix(s, "=") {
+		s = Euro(s)
 		return bstrings.Latin1(s), ""
 	}
 	s = bstrings.InsertDiacritic(s)
@@ -57,6 +58,9 @@ func Normalize(s string, trim bool) (string, string) {
 func NormalizeR(s string, trim bool) string {
 	if strings.TrimSpace(s) == "-" {
 		return "-"
+	}
+	if strings.HasPrefix(s, "•") {
+		s = "- " + s[1:]
 	}
 	if strings.HasPrefix(s, "-") && !strings.HasPrefix(s, "--") && !strings.HasPrefix(s, "- ") {
 		s = "- " + s[1:]
