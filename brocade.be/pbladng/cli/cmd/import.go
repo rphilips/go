@@ -23,7 +23,7 @@ var importCmd = &cobra.Command{
 	Long:  "import documents from the correspondents directories",
 
 	Args:    cobra.NoArgs,
-	Example: `gopblad import`,
+	Example: `pblad import`,
 	RunE:    doimport,
 }
 

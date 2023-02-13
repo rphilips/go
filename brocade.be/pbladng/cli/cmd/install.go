@@ -11,11 +11,11 @@ import (
 
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Install `gopblad`",
-	Long:  "Install `gopblad`",
+	Short: "Install `pblad`",
+	Long:  "Install `pblad`",
 
 	Args:    cobra.NoArgs,
-	Example: `gopblad install`,
+	Example: `pblad install`,
 	RunE:    install,
 }
 

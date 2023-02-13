@@ -15,7 +15,7 @@ var doubleCmd = &cobra.Command{
 	Long:  "import documents from the correspondents directories",
 
 	Args:    cobra.NoArgs,
-	Example: `gopblad double`,
+	Example: `pblad double`,
 	RunE:    double,
 }
 

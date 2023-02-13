@@ -17,11 +17,11 @@ import (
 
 var formatCmd = &cobra.Command{
 	Use:   "format",
-	Short: "Format `gopblad`",
-	Long:  "Format `gopblad`",
+	Short: "Format `pblad`",
+	Long:  "Format `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad format myfile.pb`,
+	Example: `pblad format myfile.pb`,
 	RunE:    format,
 }
 
@@ -62,7 +62,12 @@ func format(cmd *cobra.Command, args []string) error {
 	if err != nil && strings.Contains(errmsg, "docload-") {
 		return err
 	}
+	last := 1
 	for _, line := range doc.Lines {
+		for i := last; i < line.Lineno; i++ {
+			fmt.Println()
+		}
+		last = line.Lineno + 1
 		fmt.Println(line.Text)
 	}
 	fmt.Fprint(os.Stderr, errmsg)

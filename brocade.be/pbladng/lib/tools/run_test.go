@@ -6,7 +6,7 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	params := []string{"gopblad", "{verb}"}
+	params := []string{"pblad", "{verb}"}
 	keys := map[string]string{"verb": "about"}
 
 	output, err := Launch(params, keys, "", true, false)

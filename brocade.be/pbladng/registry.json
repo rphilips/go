@@ -46,7 +46,7 @@
                 "body": "Parochieblad {id} als bijlage."
             },
             "other": {
-                "subject": "N2222-03: PAROCHIEBLAD GAVERE - NAZARETH",
+                "subject": "N2222-{week}: PAROCHIEBLAD GAVERE - NAZARETH",
                 "body": "Parochieblad {id} als bijlage."
             },
             "receivers": [
@@ -73,7 +73,7 @@
         "test": "pblad-test",
         "source-dir": "/home/rphilips/go",
         "package": "pbladng",
-        "exe": "/home/rphilips/bin/gopblad",
+        "exe": "/home/rphilips/bin/pblad",
         "editor-exe": [
             "code",
             "/home/rphilips/Dropbox/Workspaces/GoPblad.code-workspace",

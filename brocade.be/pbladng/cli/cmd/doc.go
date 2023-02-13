@@ -17,11 +17,11 @@ import (
 
 var docCmd = &cobra.Command{
 	Use:   "doc",
-	Short: "doc `gopblad`",
-	Long:  "doc `gopblad`",
+	Short: "doc `pblad`",
+	Long:  "doc `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad doc myfile.pb`,
+	Example: `pblad doc myfile.pb`,
 	RunE:    doc,
 }
 

@@ -10,11 +10,11 @@ import (
 
 var aboutCmd = &cobra.Command{
 	Use:   "about",
-	Short: "Information about `gopblad`",
+	Short: "Information about `pblad`",
 	Long:  `Version and build time information about the qtechng executable.`,
 
 	Args:    cobra.NoArgs,
-	Example: `gopblad about`,
+	Example: `pblad about`,
 	RunE:    about,
 }
 

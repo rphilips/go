@@ -16,11 +16,11 @@ import (
 
 var lintCmd = &cobra.Command{
 	Use:   "lint",
-	Short: "lint `gopblad`",
-	Long:  "lint `gopblad`",
+	Short: "lint `pblad`",
+	Long:  "lint `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad lint myfile.pb`,
+	Example: `pblad lint myfile.pb`,
 	RunE:    lint,
 }
 

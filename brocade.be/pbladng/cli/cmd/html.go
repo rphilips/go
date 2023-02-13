@@ -18,11 +18,11 @@ import (
 
 var htmlCmd = &cobra.Command{
 	Use:   "html",
-	Short: "HTML `gopblad`",
-	Long:  "HTML `gopblad`",
+	Short: "HTML `pblad`",
+	Long:  "HTML `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad html myfile.pb`,
+	Example: `pblad html myfile.pb`,
 	RunE:    HTML,
 }
 

@@ -10,11 +10,11 @@ import (
 
 var markCmd = &cobra.Command{
 	Use:   "mark",
-	Short: "Markrmation mark `gopblad`",
+	Short: "Markrmation mark `pblad`",
 	Long:  `Version and build time markrmation mark the qtechng executable.`,
 
 	Args:    cobra.MaximumNArgs(2),
-	Example: `gopblad mark`,
+	Example: `pblad mark`,
 	RunE:    mark,
 }
 

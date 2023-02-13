@@ -28,7 +28,7 @@ var prefixCmd = &cobra.Command{
 	Short: "File manipulation",
 	Long:  `Prefix file names interactively`,
 
-	Example: `gopblad prefix`,
+	Example: `pblad prefix`,
 	RunE:    prefix,
 }
 
@@ -50,7 +50,7 @@ type Dir struct {
 
 func prefix(cmd *cobra.Command, args []string) error {
 	if !Fstderr {
-		_, err := ptools.Launch([]string{"gopblad", "prefix", "--stderr", "--cwd=."}, nil, Fcwd, false, false)
+		_, err := ptools.Launch([]string{"pblad", "prefix", "--stderr", "--cwd=."}, nil, Fcwd, false, false)
 		return err
 	}
 	if len(args) == 0 {

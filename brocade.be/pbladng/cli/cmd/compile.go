@@ -19,11 +19,11 @@ import (
 
 var compileCmd = &cobra.Command{
 	Use:   "compile",
-	Short: "Compile `gopblad`",
-	Long:  "Compile `gopblad`",
+	Short: "Compile `pblad`",
+	Long:  "Compile `pblad`",
 
 	Args:    cobra.NoArgs,
-	Example: `gopblad compile`,
+	Example: `pblad compile`,
 	RunE:    compile,
 }
 

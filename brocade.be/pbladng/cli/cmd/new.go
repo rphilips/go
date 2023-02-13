@@ -49,7 +49,7 @@ func init() {
 
 func newedition(cmd *cobra.Command, args []string) error {
 	if !Fstderr {
-		_, err := ptools.Launch([]string{"gopblad", "new", "--stderr", "--cwd=" + Fcwd}, nil, "", false, false)
+		_, err := ptools.Launch([]string{"pblad", "new", "--stderr", "--cwd=" + Fcwd}, nil, "", false, false)
 		return err
 	}
 	install(cmd, args)

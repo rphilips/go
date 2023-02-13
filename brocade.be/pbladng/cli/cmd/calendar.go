@@ -19,11 +19,11 @@ var Fmax int
 
 var calendarCmd = &cobra.Command{
 	Use:   "calendar",
-	Short: "Calendar `gopblad`",
-	Long:  "Calendar `gopblad`",
+	Short: "Calendar `pblad`",
+	Long:  "Calendar `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad calendar myfile.pb`,
+	Example: `pblad calendar myfile.pb`,
 	RunE:    calendar,
 }
 

@@ -19,10 +19,10 @@ import (
 
 var mailCmd = &cobra.Command{
 	Use:   "mail",
-	Short: "mail `gopblad`",
-	Long:  "mail `gopblad`",
+	Short: "mail `pblad`",
+	Long:  "mail `pblad`",
 
-	Example: `gopblad mail myfile.pb`,
+	Example: `pblad mail myfile.pb`,
 	RunE:    mail,
 }
 

@@ -20,11 +20,11 @@ import (
 
 var warnCmd = &cobra.Command{
 	Use:   "warn",
-	Short: "Warn `gopblad`",
-	Long:  "Warn `gopblad`",
+	Short: "Warn `pblad`",
+	Long:  "Warn `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad warn myfile.pb`,
+	Example: `pblad warn myfile.pb`,
 	RunE:    warn,
 }
 

@@ -30,7 +30,7 @@ var renameCmd = &cobra.Command{
 	Short: "File manipulation",
 	Long:  `Manipulate file names`,
 
-	Example: `gopblad rename *.jpg --match='(.)(.)(.*)' --name='$1$2hallo$#.jpg' --sort=3 --report='$2$1'`,
+	Example: `pblad rename *.jpg --match='(.)(.)(.*)' --name='$1$2hallo$#.jpg' --sort=3 --report='$2$1'`,
 	RunE:    rename,
 }
 

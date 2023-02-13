@@ -22,11 +22,11 @@ import (
 
 var distributeCmd = &cobra.Command{
 	Use:   "distribute",
-	Short: "Distribute `gopblad`",
-	Long:  "Distribute `gopblad`",
+	Short: "Distribute `pblad`",
+	Long:  "Distribute `pblad`",
 
 	Args:    cobra.MaximumNArgs(1),
-	Example: `gopblad distribute myfile.pb`,
+	Example: `pblad distribute myfile.pb`,
 	RunE:    distribute,
 }
 
